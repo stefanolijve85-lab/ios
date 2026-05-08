@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  --bg: 246 247 249;
+  --fg: 7 10 28;
+  --card: 255 255 255;
+  --border: 228 230 236;
+}
+
+.dark {
+  --bg: 7 10 28;
+  --fg: 236 238 242;
+  --card: 15 19 48;
+  --border: 28 33 64;
+}
+
+html, body { height: 100%; }
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  font-feature-settings: "ss01", "cv11";
+}
+
+.card {
+  @apply rounded-xl border bg-white dark:bg-ink-900 dark:border-ink-700 shadow-soft;
+}
+.btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition;
+}
+.btn-primary {
+  @apply btn bg-accent-500 text-white hover:bg-accent-600;
+}
+.btn-ghost {
+  @apply btn text-ink-700 dark:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800;
+}
+.kbd {
+  @apply rounded border bg-ink-100 px-1.5 py-0.5 text-[11px] text-ink-700 dark:bg-ink-800 dark:text-ink-100 dark:border-ink-700;
+}
