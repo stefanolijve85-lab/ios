@@ -9,6 +9,7 @@
 --   * `created_at`/`updated_at` are populated by triggers.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS citext;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ─── Helpers ──────────────────────────────────────────────────────────────
@@ -49,9 +50,6 @@ CREATE TABLE users (
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
-
--- (citext fallback — if extension not available, swap to text + lower())
-CREATE EXTENSION IF NOT EXISTS citext;
 
 CREATE TABLE memberships (
   tenant_id   uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

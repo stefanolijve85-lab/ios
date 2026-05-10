@@ -1,16 +1,19 @@
 """Authentication endpoints. Email/password + JWT refresh."""
 from __future__ import annotations
 
+import re
+
 import ulid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import SessionLocal
 from ..deps import current_principal, Principal
 from ..models import Membership, Tenant, User
-from ..schemas import LoginIn, TokenOut, UserOut
+from ..schemas import LoginIn, SignupIn, TokenOut, UserOut
 from ..security import passwords, tokens
 from ..security.audit import append as audit_append
 
@@ -19,6 +22,62 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 def _open_session() -> Session:
     return SessionLocal()
+
+
+def _slugify(text: str) -> str:
+    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return s[:40] or "tenant"
+
+
+@router.post("/signup", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
+def signup(body: SignupIn) -> TokenOut:
+    """Create a new tenant + first admin user. Returns access + refresh tokens."""
+    s = _open_session()
+    try:
+        existing = s.execute(
+            select(User).where(User.email == body.email.lower())
+        ).scalar_one_or_none()
+        if existing:
+            raise HTTPException(status.HTTP_409_CONFLICT, "email_in_use")
+
+        slug_base = body.tenant_slug or _slugify(body.tenant_name)
+        slug = slug_base
+        suffix = 1
+        while s.execute(select(Tenant).where(Tenant.slug == slug)).scalar_one_or_none():
+            suffix += 1
+            slug = f"{slug_base}-{suffix}"
+
+        tenant = Tenant(slug=slug, name=body.tenant_name)
+        s.add(tenant)
+        s.flush()
+
+        user = User(
+            id=f"usr_{ulid.new().str}",
+            email=body.email.lower(),
+            password_hash=passwords.hash_password(body.password),
+            full_name=body.full_name,
+        )
+        s.add(user)
+        s.flush()
+
+        s.add(Membership(tenant_id=tenant.id, user_id=user.id, role="admin"))
+
+        audit_append(s, tenant_id=tenant.id, actor_id=user.id, actor_kind="user",
+                     action="auth.signup", resource_kind="tenant",
+                     resource_id=tenant.id, payload={"slug": slug})
+
+        s.commit()
+
+        return TokenOut(
+            access_token=tokens.access_token(user.id, tenant.id, "admin"),
+            refresh_token=tokens.refresh_token(user.id, tenant.id),
+            expires_in=settings.jwt_access_ttl_sec,
+        )
+    except IntegrityError:
+        s.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "signup_conflict")
+    finally:
+        s.close()
 
 
 @router.post("/login", response_model=TokenOut)

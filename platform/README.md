@@ -22,16 +22,69 @@ invoices on the go.
 
 ```bash
 cd platform
-cp api/.env.example api/.env       # tweak SECRET_KEY etc.
+cp api/.env.example api/.env       # tweak SECRET_KEY before any real use
 docker compose up --build
 ```
 
-Then:
-- API: http://localhost:8000  (`/health`, `/docs` for OpenAPI)
-- Web: http://localhost:3000  (landing) and http://localhost:3000/overview (dashboard)
+Then in a second terminal:
 
-The `mock` OCR + LLM providers are enabled by default so you can run the
-pipeline end-to-end without external services.
+```bash
+# End-to-end smoke test: signup → upload → poll → print Trust Score
+python3 scripts/demo.py
+# Or with your own PDF:
+python3 scripts/demo.py /path/to/invoice.pdf
+```
+
+Expected output:
+
+```
+→ API base: http://localhost:8000
+
+[1/4] POST /v1/auth/signup  (email=demo-…@trustline.local)
+      ↳ got access token (exp 900s)
+
+[2/4] POST /v1/invoices    (file=demo.pdf, 234 bytes)
+      ↳ invoice_id=inv_…, status=processing
+
+[3/4] GET  /v1/invoices/inv_…  (polling…)
+      ↳ Trust Score: 71 (medium)
+        Action: Dual approval recommended
+        · supplier   raw= 40  Δ= -7.7  — Could not identify supplier from invoice
+        · iban       raw=  0  Δ=-16.5  — No IBAN extracted
+        · forensics  raw= 95  Δ= +3.6  — PDF structural integrity
+        ...
+
+[4/4] GET  /v1/insights/overview
+      ↳ 1 invoices, 0 high-risk, avg trust 71.0
+```
+
+URLs:
+- API + OpenAPI: http://localhost:8000/docs
+- Landing page:  http://localhost:3000
+- Dashboard:     http://localhost:3000/overview *(currently rendered with sample data — wiring it to the live API is the next phase)*
+
+### Manual flow (curl)
+
+```bash
+# 1. Sign up — creates tenant + admin + returns tokens
+TOKEN=$(curl -s -X POST http://localhost:8000/v1/auth/signup \
+  -H 'content-type: application/json' \
+  -d '{"email":"me@example.com","password":"verysecret-1234","full_name":"Me","tenant_name":"Demo Co"}' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+
+# 2. Upload an invoice
+curl -X POST http://localhost:8000/v1/invoices \
+  -H "authorization: Bearer $TOKEN" \
+  -F "file=@invoice.pdf" -F "source=upload"
+
+# 3. List + inspect
+curl -s http://localhost:8000/v1/invoices -H "authorization: Bearer $TOKEN" | jq .
+curl -s http://localhost:8000/v1/invoices/inv_… -H "authorization: Bearer $TOKEN" | jq .
+```
+
+The `mock` OCR + LLM providers are enabled by default so the pipeline runs
+end-to-end without external services. To use real Azure Document
+Intelligence, set `OCR_PROVIDER=azure` and the Azure env vars in `api/.env`.
 
 ## What's implemented (MVP)
 

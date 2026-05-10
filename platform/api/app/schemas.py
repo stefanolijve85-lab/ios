@@ -31,6 +31,14 @@ class LoginIn(BaseModel):
     password: str
 
 
+class SignupIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=12, max_length=128)
+    full_name: str = Field(min_length=1, max_length=200)
+    tenant_name: str = Field(min_length=1, max_length=200)
+    tenant_slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{2,40}$")
+
+
 class TokenOut(BaseModel):
     access_token: str
     refresh_token: str
