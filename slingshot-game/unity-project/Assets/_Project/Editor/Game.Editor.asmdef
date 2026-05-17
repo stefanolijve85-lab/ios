@@ -1,0 +1,8 @@
+{
+    "name": "Game.EditorTools",
+    "rootNamespace": "Game.EditorTools",
+    "references": ["Game.Data"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "autoReferenced": true
+}

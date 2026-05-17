@@ -1,0 +1,8 @@
+{
+    "name": "Game.Analytics",
+    "rootNamespace": "Game.Analytics",
+    "references": ["Game.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

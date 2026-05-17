@@ -1,0 +1,22 @@
+{
+    "name": "Game.Boot",
+    "rootNamespace": "Game.Boot",
+    "references": [
+        "Game.Core",
+        "Game.Data",
+        "Game.Save",
+        "Game.Pooling",
+        "Game.Economy",
+        "Game.Progression",
+        "Game.Meta",
+        "Game.Physics",
+        "Game.Combo",
+        "Game.Audio",
+        "Game.Input",
+        "Game.Ads",
+        "Game.Analytics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": true
+}

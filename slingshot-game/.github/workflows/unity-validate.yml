@@ -1,0 +1,42 @@
+name: Unity Validate
+
+on:
+  pull_request:
+    paths:
+      - 'slingshot-game/unity-project/**'
+  push:
+    branches: [main, claude/**]
+    paths:
+      - 'slingshot-game/unity-project/**'
+
+jobs:
+  test:
+    name: Run EditMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: slingshot-game/unity-project/Library
+          key: Library-${{ hashFiles('slingshot-game/unity-project/Assets/**', 'slingshot-game/unity-project/Packages/**', 'slingshot-game/unity-project/ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: slingshot-game/unity-project
+          unityVersion: 6000.0.32f1
+          testMode: EditMode
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Test Results
+          path: artifacts

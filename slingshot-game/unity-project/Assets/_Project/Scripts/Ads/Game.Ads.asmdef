@@ -1,0 +1,8 @@
+{
+    "name": "Game.Ads",
+    "rootNamespace": "Game.Ads",
+    "references": ["Game.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

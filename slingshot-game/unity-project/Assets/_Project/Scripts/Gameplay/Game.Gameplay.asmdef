@@ -1,0 +1,15 @@
+{
+    "name": "Game.Gameplay",
+    "rootNamespace": "Game.Gameplay",
+    "references": [
+        "Game.Core",
+        "Game.Data",
+        "Game.Physics",
+        "Game.Pooling",
+        "Game.Combo",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

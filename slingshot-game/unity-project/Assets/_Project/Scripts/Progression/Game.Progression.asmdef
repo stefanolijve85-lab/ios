@@ -1,0 +1,8 @@
+{
+    "name": "Game.Progression",
+    "rootNamespace": "Game.Progression",
+    "references": ["Game.Core", "Game.Data", "Game.Economy", "Game.Save"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

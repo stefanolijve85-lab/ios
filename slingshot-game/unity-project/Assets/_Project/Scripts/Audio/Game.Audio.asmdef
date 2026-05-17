@@ -1,0 +1,8 @@
+{
+    "name": "Game.Audio",
+    "rootNamespace": "Game.Audio",
+    "references": ["Game.Core", "Game.Data"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Game.UI",
+    "rootNamespace": "Game.UI",
+    "references": [
+        "Game.Core",
+        "Game.Data",
+        "Game.Economy",
+        "Game.Progression",
+        "Game.Gameplay",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

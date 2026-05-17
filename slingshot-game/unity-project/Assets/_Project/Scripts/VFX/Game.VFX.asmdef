@@ -1,0 +1,8 @@
+{
+    "name": "Game.VFX",
+    "rootNamespace": "Game.VFX",
+    "references": ["Game.Core", "Game.Pooling", "Unity.Cinemachine"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

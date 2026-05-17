@@ -1,0 +1,33 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+sysinfo.txt
+*.csproj
+*.sln
+*.unityproj
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS / IDE
+.DS_Store
+.idea/
+.vs/
+.vscode/
+
+# Asset meta noise — keep them committed in production but ignore here since they're auto-generated when the project
+# is first opened in Unity. (The full repo would have committed meta files; this skeleton does not.)
+*.meta

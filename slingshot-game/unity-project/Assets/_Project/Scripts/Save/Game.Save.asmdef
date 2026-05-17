@@ -1,0 +1,8 @@
+{
+    "name": "Game.Save",
+    "rootNamespace": "Game.Save",
+    "references": ["Game.Core", "Game.Data"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

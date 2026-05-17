@@ -1,0 +1,8 @@
+{
+    "name": "Game.Economy",
+    "rootNamespace": "Game.Economy",
+    "references": ["Game.Core", "Game.Data", "Game.Save"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

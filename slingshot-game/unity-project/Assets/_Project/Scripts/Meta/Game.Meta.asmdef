@@ -1,0 +1,8 @@
+{
+    "name": "Game.Meta",
+    "rootNamespace": "Game.Meta",
+    "references": ["Game.Core", "Game.Data", "Game.Economy", "Game.Progression", "Game.Save"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Game.World",
+    "rootNamespace": "Game.World",
+    "references": ["Game.Core", "Game.Data", "Game.Pooling", "Unity.Addressables", "Unity.ResourceManager"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

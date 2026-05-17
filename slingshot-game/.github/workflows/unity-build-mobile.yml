@@ -1,0 +1,57 @@
+name: Unity Build Mobile
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'slingshot-game/unity-project/**'
+
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/cache@v4
+        with:
+          path: slingshot-game/unity-project/Library
+          key: Library-Android-${{ hashFiles('slingshot-game/unity-project/**') }}
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:   ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: slingshot-game/unity-project
+          unityVersion: 6000.0.32f1
+          targetPlatform: Android
+          androidAppBundle: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Android AAB
+          path: build
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/cache@v4
+        with:
+          path: slingshot-game/unity-project/Library
+          key: Library-iOS-${{ hashFiles('slingshot-game/unity-project/**') }}
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:   ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: slingshot-game/unity-project
+          unityVersion: 6000.0.32f1
+          targetPlatform: iOS
+      # Real pipeline: xcodebuild + fastlane gym/pilot to TestFlight here.
