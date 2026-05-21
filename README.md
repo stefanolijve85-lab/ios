@@ -1,50 +1,39 @@
-# Welcome to your Expo app 👋
+# Trustline
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This repository contains two projects that together form the Trustline product:
 
-## Get started
+| Project | Stack | Purpose |
+|---|---|---|
+| **`/platform`** | Next.js + FastAPI + Postgres + Redis | The SaaS — landing page, dashboard, API, AI/ML pipeline |
+| **Repo root (`/app`, `/components`, `/hooks`, `/constants`)** | Expo + React Native | Mobile companion — on-the-go approvals, push notifications, MFA |
 
-1. Install dependencies
+> **The AI trust layer for business payments.**
+> Detect invoice fraud, supplier impersonation, manipulated PDFs, and
+> abnormal payment behavior before money leaves your business.
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Get started with the SaaS
 
 ```bash
-npm run reset-project
+cd platform
+cp api/.env.example api/.env
+docker compose up --build
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- Landing + dashboard: http://localhost:3000
+- API + OpenAPI docs:   http://localhost:8000/docs
 
-## Learn more
+See [`platform/README.md`](./platform/README.md) for the full layout, and
+[`platform/docs/ARCHITECTURE.md`](./platform/docs/ARCHITECTURE.md) for the
+system design.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Get started with the mobile app
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The original Expo project remains in place at the repository root.
 
-## Join the community
+```bash
+npm install
+npx expo start
+```
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Future work wires the mobile app to the Trustline API for reviewer-on-the-go
+flows (see [`platform/docs/ROADMAP.md`](./platform/docs/ROADMAP.md)).
