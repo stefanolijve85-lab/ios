@@ -1,412 +1,20 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta name="theme-color" content="#070B14" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="description" content="RocketRush — the simplest, cleanest multiplayer crash game. Place a bet, watch the rocket rise, cash out before it crashes." />
-<link rel="manifest" href="manifest.webmanifest" />
-<title>RocketRush 🚀 — Cash out before the crash</title>
-<style>
-  :root {
-    --bg:        #070B14;
-    --bg-2:      #0B1220;
-    --panel:     rgba(255,255,255,.035);
-    --panel-2:   rgba(255,255,255,.06);
-    --line:      rgba(255,255,255,.08);
-    --primary:   #FF8A00;
-    --secondary: #9B5CF6;
-    --success:   #22C55E;
-    --danger:    #F43F5E;
-    --text:      #FFFFFF;
-    --muted:     rgba(255,255,255,.55);
-    --faint:     rgba(255,255,255,.32);
-    --safe-top:    env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --r: 16px;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin:0; padding:0; height:100%; }
-  body {
-    background:
-      radial-gradient(1200px 700px at 80% -10%, rgba(155,92,246,.16), transparent 60%),
-      radial-gradient(900px 600px at 0% 110%, rgba(255,138,0,.10), transparent 55%),
-      var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, system-ui, sans-serif;
-    overflow: hidden;
-    user-select: none; -webkit-user-select: none;
-    touch-action: manipulation;
-  }
-  button { font-family: inherit; cursor: pointer; border: none; color: inherit; }
-  .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+// @ts-nocheck
+/* RocketRush game engine — ported verbatim from the proven standalone build.
+   Client-side only: call startGame() inside a useEffect. Returns a teardown fn. */
+export function startGame(): () => void {
+  'use strict';
+  let ENGINE_ALIVE = true;
+  const _ints: number[] = [];
+  const _int = (f: any, m: number) => { const id = window.setInterval(f, m); _ints.push(id); return id; };
 
-  /* ===================== LAYOUT ===================== */
-  .app {
-    height: 100dvh;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    padding: calc(var(--safe-top) + 10px) 12px calc(var(--safe-bottom) + 10px);
-    gap: 10px;
-    max-width: 1480px; margin: 0 auto;
-  }
-
-  /* ===================== HEADER ===================== */
-  header {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 18px; letter-spacing: .2px; }
-  .logo .mark {
-    width: 30px; height: 30px; border-radius: 9px;
-    background: linear-gradient(135deg, var(--primary), #FF5E62);
-    display: grid; place-items: center; font-size: 16px;
-    box-shadow: 0 6px 18px rgba(255,138,0,.35);
-  }
-  .logo b { background: linear-gradient(90deg,#fff,#ffd9a8); -webkit-background-clip: text; background-clip:text; -webkit-text-fill-color: transparent; }
-  .logo .rush { color: var(--primary); -webkit-text-fill-color: var(--primary); }
-  .spacer { flex: 1; }
-  .pill-online {
-    display: flex; align-items: center; gap: 7px;
-    background: var(--panel); border: 1px solid var(--line);
-    padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .balance {
-    display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1;
-    background: var(--panel); border: 1px solid var(--line);
-    padding: 6px 13px; border-radius: 12px;
-  }
-  .balance small { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-  .balance b { font-size: 16px; font-weight: 800; }
-  .iconbtn {
-    width: 38px; height: 38px; border-radius: 11px; background: var(--panel);
-    border: 1px solid var(--line); display: grid; place-items: center; font-size: 16px;
-    transition: background .15s, transform .1s;
-  }
-  .iconbtn:active { transform: scale(.92); }
-  .iconbtn.off { opacity: .45; }
-  select.lang {
-    background: var(--panel); border: 1px solid var(--line); color: var(--text);
-    border-radius: 11px; height: 38px; padding: 0 8px; font-size: 13px; font-weight: 600;
-  }
-
-  /* ===================== MIDDLE GRID ===================== */
-  .grid {
-    display: grid; gap: 10px; min-height: 0;
-    grid-template-columns: 230px 1fr 270px;
-  }
-  .panel {
-    background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.012));
-    border: 1px solid var(--line); border-radius: var(--r);
-    min-height: 0; display: flex; flex-direction: column; overflow: hidden;
-    backdrop-filter: blur(6px);
-  }
-  .panel h3 {
-    margin: 0; padding: 13px 15px 10px; font-size: 12px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
-    display: flex; align-items: center; gap: 7px;
-  }
-
-  /* ----- Winners ----- */
-  .winners { overflow-y: auto; padding: 0 8px 8px; }
-  .winner {
-    display: grid; grid-template-columns: 26px 1fr auto; gap: 9px; align-items: center;
-    padding: 8px; border-radius: 11px; margin-bottom: 5px;
-    background: var(--panel); animation: slideIn .35s ease;
-  }
-  @keyframes slideIn { from { opacity:0; transform: translateY(-6px) } to { opacity:1; transform:none } }
-  .winner .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #0a0a0a; }
-  .winner .nm { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .winner .nm small { display: block; color: var(--success); font-weight: 800; font-size: 11.5px; }
-  .winner .amt { font-size: 12.5px; font-weight: 800; color: var(--success); }
-
-  /* ===================== STAGE ===================== */
-  .stage { position: relative; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
-           background: radial-gradient(120% 90% at 50% 100%, rgba(155,92,246,.10), transparent 60%), var(--bg-2); }
-  #sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .stage-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-  .multiplier { font-size: clamp(64px, 17vw, 150px); font-weight: 900; line-height: .9; letter-spacing: -2px;
-                text-shadow: 0 0 50px rgba(255,138,0,.35); transition: color .2s; }
-  .status-line { margin-top: 10px; font-size: 14px; font-weight: 700; letter-spacing: .5px; color: var(--muted); text-transform: uppercase; }
-  .countdown-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .count-num { font-size: clamp(40px,9vw,72px); font-weight: 900; color: var(--primary); }
-  .count-bar { width: min(60%, 320px); height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
-  .count-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--primary),#FF5E62); width: 100%; transform-origin: left; }
-  .crashed-tag { color: var(--danger); text-shadow: 0 0 50px rgba(244,63,94,.5); }
-  .you-won { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-             background: rgba(34,197,94,.16); border: 1px solid rgba(34,197,94,.45); color: var(--success);
-             padding: 8px 16px; border-radius: 999px; font-weight: 800; font-size: 14px; opacity: 0;
-             transition: opacity .25s, transform .25s; pointer-events: none; }
-  .you-won.show { opacity: 1; }
-  .provably-badge { position: absolute; top: 12px; right: 12px; pointer-events: auto;
-             background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 999px;
-             padding: 6px 11px; font-size: 11px; font-weight: 600; color: var(--muted); display:flex; gap:6px; align-items:center; }
-  .provably-badge .shield { color: var(--success); }
-  .history { position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; gap: 6px; overflow-x: auto; pointer-events: auto; padding-bottom: 2px; }
-  .history::-webkit-scrollbar { height: 0; }
-  .hp { flex: none; font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: 999px; background: rgba(0,0,0,.4); border: 1px solid var(--line); }
-  .hp.lo { color: #9aa3b2; } .hp.mid { color: var(--primary); } .hp.hi { color: var(--secondary); } .hp.huge { color: var(--success); }
-
-  /* ===================== CHAT ===================== */
-  .chat-body { flex: 1; overflow-y: auto; padding: 0 12px; display: flex; flex-direction: column; gap: 9px; }
-  .msg { font-size: 12.5px; line-height: 1.35; animation: slideIn .25s ease; }
-  .msg b { color: var(--secondary); font-weight: 700; margin-right: 5px; }
-  .msg.sys b { color: var(--primary); }
-  .chat-input { display: flex; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--line); }
-  .chat-input input { flex: 1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 9px 11px; font-size: 13px; outline: none; }
-  .chat-input button { width: 38px; border-radius: 10px; background: var(--secondary); font-size: 15px; }
-
-  /* ===================== CONTROLS ===================== */
-  .controls {
-    display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 10px; align-items: stretch;
-  }
-  .ctl { background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.012)); border: 1px solid var(--line);
-         border-radius: var(--r); padding: 11px 13px; }
-  .ctl label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 700; }
-  .stepper { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .stepper button { width: 40px; height: 40px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line);
-                    font-size: 22px; font-weight: 600; display: grid; place-items: center; transition: transform .08s; }
-  .stepper button:active { transform: scale(.9); }
-  .stepper .val { flex: 1; text-align: center; font-size: 19px; font-weight: 800; }
-  .quick { display: flex; gap: 6px; margin-top: 8px; }
-  .quick button { flex: 1; padding: 6px 0; font-size: 11px; font-weight: 700; border-radius: 9px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); }
-  .quick button:active { color: var(--text); }
-
-  .action {
-    border-radius: var(--r); border: none; font-weight: 900; font-size: 19px; letter-spacing: .3px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    transition: transform .08s, filter .15s; padding: 8px; line-height: 1.1; position: relative; overflow: hidden;
-  }
-  .action:active { transform: scale(.98); }
-  .action small { font-size: 13px; font-weight: 700; opacity: .9; }
-  .action.bet     { background: linear-gradient(135deg, var(--primary), #FF5E62); color: #1a0f00; box-shadow: 0 10px 30px rgba(255,138,0,.35); }
-  .action.cashout { background: linear-gradient(135deg, #2BE07A, var(--success)); color: #04210f; box-shadow: 0 10px 30px rgba(34,197,94,.4); animation: breathe 1s infinite; }
-  @keyframes breathe { 0%,100%{ box-shadow: 0 10px 30px rgba(34,197,94,.35) } 50%{ box-shadow: 0 10px 44px rgba(34,197,94,.6) } }
-  .action.waiting { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); box-shadow: none; }
-  .action.cancel  { background: rgba(244,63,94,.12); border: 1px solid rgba(244,63,94,.4); color: var(--danger); box-shadow: none; }
-  .action:disabled { filter: grayscale(.4) brightness(.7); }
-
-  /* ===================== MODAL ===================== */
-  .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.7); backdrop-filter: blur(8px);
-              display: none; align-items: center; justify-content: center; z-index: 50; padding: 18px; }
-  .modal-bg.show { display: flex; animation: fade .2s; }
-  @keyframes fade { from{opacity:0} to{opacity:1} }
-  .modal { background: var(--bg-2); border: 1px solid var(--line); border-radius: 20px; max-width: 520px; width: 100%;
-           max-height: 86vh; overflow-y: auto; padding: 22px; }
-  .modal h2 { margin: 0 0 4px; font-size: 20px; font-weight: 800; }
-  .modal p.sub { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
-  .field { margin-bottom: 14px; }
-  .field label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 700; }
-  .field .v { margin-top: 5px; background: #05080f; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
-              font-size: 12px; word-break: break-all; font-family: ui-monospace, Menlo, monospace; color: #cdd6e6; }
-  .field input { width: 100%; margin-top: 5px; background: #05080f; border: 1px solid var(--line); border-radius: 10px;
-                 padding: 10px 12px; color: var(--text); font-size: 13px; outline: none; }
-  .verify-row { display: flex; gap: 10px; align-items: center; padding: 11px 13px; border-radius: 11px; background: var(--panel); margin-bottom: 7px; }
-  .verify-row .k { font-size: 12px; color: var(--muted); flex: 1; }
-  .verify-row .x { font-weight: 800; }
-  .modal .closebtn { width: 100%; margin-top: 8px; padding: 13px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); font-weight: 700; }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--line); }
-  .toggle-row:last-child { border-bottom: none; }
-  .toggle-row .t b { font-size: 14px; } .toggle-row .t small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .sw { width: 46px; height: 27px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; flex: none; }
-  .sw.on { background: var(--success); }
-  .sw i { position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .2s; }
-  .sw.on i { left: 22px; }
-
-  /* ===================== MOBILE TABS ===================== */
-  .mobile-tabs { display: none; }
-
-  /* ===================== RESPONSIVE ===================== */
-  @media (max-width: 900px) {
-    .grid { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-    .panel.side { display: none; }
-    .panel.side.active { display: flex; position: fixed; inset: calc(var(--safe-top) + 56px) 8px auto 8px; bottom: 150px; z-index: 30; height: auto; }
-    .controls { grid-template-columns: 1fr 1fr; }
-    .controls .action { grid-column: 1 / -1; min-height: 64px; }
-    .mobile-tabs { display: flex; gap: 8px; }
-    .mtab { flex: 1; padding: 9px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line);
-            font-size: 12px; font-weight: 700; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 5px; }
-    .mtab.active { color: var(--text); border-color: var(--primary); }
-    .balance small { display: none; }
-    header .logo span.full { display: none; }
-  }
-  @media (min-width: 901px) { .mobile-tabs { display: none; } }
-  .winners::-webkit-scrollbar, .chat-body::-webkit-scrollbar, .modal::-webkit-scrollbar { width: 6px; }
-  .winners::-webkit-scrollbar-thumb, .chat-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
-</style>
-</head>
-<body>
-<div class="app">
-
-  <!-- ===================== HEADER ===================== -->
-  <header>
-    <div class="logo">
-      <span class="mark">🚀</span>
-      <span class="full"><b>Rocket</b><span class="rush">Rush</span></span>
-    </div>
-    <div class="pill-online"><span class="dot"></span><span class="tnum" id="online">0</span>&nbsp;online</div>
-    <div class="spacer"></div>
-    <div class="balance"><small>Balance</small><b class="tnum">€<span id="balance">1000.00</span></b></div>
-    <button class="iconbtn" id="btnSound" title="Sound">🔊</button>
-    <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
-    <select class="lang" id="lang" title="Language">
-      <option value="en">EN</option><option value="nl">NL</option><option value="de">DE</option>
-      <option value="es">ES</option><option value="pt">PT</option><option value="tr">TR</option>
-    </select>
-  </header>
-
-  <!-- ===================== MIDDLE ===================== -->
-  <div class="grid">
-
-    <!-- LEFT: WINNERS -->
-    <div class="panel side" id="paneWinners">
-      <h3>🏆 Recent Winners</h3>
-      <div class="winners" id="winners"></div>
-    </div>
-
-    <!-- CENTER: STAGE -->
-    <div class="stage">
-      <canvas id="sky"></canvas>
-      <div class="provably-badge" id="badgeFair"><span class="shield">🛡️</span> Provably Fair</div>
-      <div class="you-won" id="youWon"></div>
-      <div class="stage-overlay">
-        <div id="centerMain">
-          <div class="multiplier tnum" id="mult">1.00x</div>
-          <div class="status-line" id="status">Connecting…</div>
-        </div>
-        <div class="countdown-wrap" id="countWrap" style="display:none">
-          <div class="status-line">Next round in</div>
-          <div class="count-num tnum" id="countNum">5</div>
-          <div class="count-bar"><i id="countBar"></i></div>
-        </div>
-      </div>
-      <div class="history" id="history"></div>
-    </div>
-
-    <!-- RIGHT: CHAT -->
-    <div class="panel side" id="paneChat">
-      <h3>💬 Live Chat</h3>
-      <div class="chat-body" id="chat"></div>
-      <div class="chat-input">
-        <input id="chatInput" maxlength="120" placeholder="Say something…" />
-        <button id="chatSend">➤</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MOBILE TABS -->
-  <div class="mobile-tabs">
-    <button class="mtab active" data-pane="game">🚀 Game</button>
-    <button class="mtab" data-pane="paneWinners">🏆 Winners</button>
-    <button class="mtab" data-pane="paneChat">💬 Chat</button>
-  </div>
-
-  <!-- ===================== CONTROLS ===================== -->
-  <div class="controls">
-    <div class="ctl">
-      <label>Bet Amount</label>
-      <div class="stepper">
-        <button data-bet="-">−</button>
-        <div class="val tnum">€<span id="betVal">100</span></div>
-        <button data-bet="+">+</button>
-      </div>
-      <div class="quick">
-        <button data-betq="0.5">½</button>
-        <button data-betq="2">2×</button>
-        <button data-betq="max">MAX</button>
-      </div>
-    </div>
-    <div class="ctl">
-      <label>Auto Cashout</label>
-      <div class="stepper">
-        <button data-auto="-">−</button>
-        <div class="val tnum"><span id="autoVal">2.00</span>x</div>
-        <button data-auto="+">+</button>
-      </div>
-      <div class="quick">
-        <button data-autoq="off">OFF</button>
-        <button data-autoq="2">2x</button>
-        <button data-autoq="10">10x</button>
-      </div>
-    </div>
-    <button class="action waiting" id="action" disabled>
-      <span id="actionMain">WAITING…</span>
-      <small id="actionSub"></small>
-    </button>
-  </div>
-</div>
-
-<!-- ===================== SETTINGS MODAL ===================== -->
-<div class="modal-bg" id="settingsModal">
-  <div class="modal">
-    <h2>Settings</h2>
-    <p class="sub">Keep it simple. Play responsibly.</p>
-    <div class="toggle-row">
-      <div class="t"><b>Sound effects</b><small>Launch, cash out & crash sounds</small></div>
-      <div class="sw on" id="swSound"><i></i></div>
-    </div>
-    <div class="toggle-row">
-      <div class="t"><b>Low bandwidth mode</b><small>Fewer stars & particles for slow networks</small></div>
-      <div class="sw" id="swLow"><i></i></div>
-    </div>
-    <div class="toggle-row">
-      <div class="t"><b>Reality check</b><small>Remind me how long I've been playing</small></div>
-      <div class="sw on" id="swReality"><i></i></div>
-    </div>
-    <div class="toggle-row">
-      <div class="t"><b>Session limit</b><small>Auto-pause after a set time (responsible gaming)</small></div>
-      <div class="sw" id="swSession"><i></i></div>
-    </div>
-    <button class="closebtn" data-close>Done</button>
-  </div>
-</div>
-
-<!-- ===================== PROVABLY FAIR MODAL ===================== -->
-<div class="modal-bg" id="fairModal">
-  <div class="modal">
-    <h2>🛡️ Provably Fair</h2>
-    <p class="sub">Every crash point is determined <b>before</b> the round by a hashed server seed. Verify it yourself — the result cannot be changed mid-round.</p>
-
-    <div class="field">
-      <label>Server Seed (hashed — shown before round)</label>
-      <div class="v" id="fSeedHash">—</div>
-    </div>
-    <div class="field">
-      <label>Server Seed (revealed — previous round)</label>
-      <div class="v" id="fSeedReveal">—</div>
-    </div>
-    <div class="field">
-      <label>Your Client Seed (editable)</label>
-      <input id="fClientSeed" />
-    </div>
-    <div class="field">
-      <label>Nonce (round #)</label>
-      <div class="v tnum" id="fNonce">—</div>
-    </div>
-
-    <div style="margin:18px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700">Verify last round</div>
-    <div class="verify-row"><span class="k">HMAC-SHA256(server, client:nonce)</span></div>
-    <div class="field"><div class="v" id="fHmac">—</div></div>
-    <div class="verify-row"><span class="k">Computed crash point</span><span class="x" id="fComputed">—</span></div>
-    <div class="verify-row"><span class="k">Actual crash point</span><span class="x" id="fActual">—</span></div>
-    <div class="verify-row"><span class="k">Result</span><span class="x" id="fMatch">—</span></div>
-
-    <button class="closebtn" data-close>Close</button>
-  </div>
-</div>
-
-<script>
 /* ============================================================
    RocketRush — single-file playable demo
    Game loop, provably-fair engine, simulated multiplayer.
    In production: this client-side loop is driven by the
    NestJS game server over Socket.io (see /docs).
    ============================================================ */
-(() => {
-'use strict';
+
+
 
 /* ---------- tiny helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -422,9 +30,10 @@ const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFracti
 const HOUSE_EDGE = 0.02;
 const enc = new TextEncoder();
 
-/* crypto.subtle only exists on https/localhost; over LAN http (iPhone) it is
-   undefined, so we ship a pure-JS SHA-256 + HMAC fallback. Byte-identical to
-   WebCrypto, so provably-fair verification still passes everywhere. */
+/* ---- crypto.subtle is ONLY available on https or localhost. On an iPhone
+   hitting http://192.168.x.x:3000 over the LAN it is undefined, so we ship a
+   tiny pure-JS SHA-256 + HMAC fallback. Output is byte-identical to WebCrypto
+   and to node's crypto, so provably-fair verification still passes. ---- */
 const _K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
 const _rotr = (n,x) => (x>>>n)|(x<<(32-n));
 function _sha256bytes(bytes){
@@ -608,7 +217,7 @@ function rocketPos(t){ // t in seconds; returns point on flight curve in canvas 
 }
 
 let shakeT=0;
-function draw(ts){
+function draw(ts){ if(!ENGINE_ALIVE) return;
   ctx.clearRect(0,0,W,H);
 
   // stars (parallax drift; faster while running)
@@ -717,7 +326,7 @@ async function newServerSeed(){
   $('fNonce').textContent = S.nonce;
 }
 
-async function startBetting(){
+async function startBetting(){ if(!ENGINE_ALIVE) return;
   S.phase='betting';
   S.mult=1.00; S.cashedOut=false; S.bet_placed=false; S.bet_amount=0;
   particles=[];
@@ -742,7 +351,7 @@ async function startBetting(){
   $('countNum').textContent=Math.ceil(c);
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
-  S.cdTimer=setInterval(()=>{
+  S.cdTimer=_int(()=>{
     c-=0.1;
     $('countBar').style.transform='scaleX('+Math.max(0,c/5)+')';
     if(Math.ceil(c)!==+$('countNum').textContent && c>0){ $('countNum').textContent=Math.ceil(c); if(c<=3) sfx.tick(); }
@@ -767,7 +376,7 @@ function multAt(t){ // exponential growth; ~ reaches 2x at ~4.2s
   return Math.max(1, Math.pow(Math.E, 0.16*t));
 }
 
-function tickRun(){
+function tickRun(){ if(!ENGINE_ALIVE) return;
   if(S.phase!=='running') return;
   const t=(performance.now()-S.startTs)/1000;
   S.mult = multAt(t);
@@ -994,10 +603,10 @@ $('fClientSeed').addEventListener('change',e=>{ const v=e.target.value.trim(); i
 function ambient(){
   // online count wobble
   let base = 2800 + Math.floor(rnd(-120,120));
-  setInterval(()=>{ base += Math.floor(rnd(-25,28)); base=Math.max(1800,base); $('online').textContent=base.toLocaleString('en-US'); }, 2200);
+  _int(()=>{ base += Math.floor(rnd(-25,28)); base=Math.max(1800,base); $('online').textContent=base.toLocaleString('en-US'); }, 2200);
   $('online').textContent=base.toLocaleString('en-US');
   // bot chat
-  setInterval(()=>{
+  _int(()=>{
     if(Math.random()<.7){
       const n=NAMES[Math.floor(Math.random()*NAMES.length)];
       addChat(n, CHATTER[Math.floor(Math.random()*CHATTER.length)], false);
@@ -1029,7 +638,6 @@ function boot(){
 }
 boot();
 
-})();
-</script>
-</body>
-</html>
+
+  return () => { ENGINE_ALIVE = false; _ints.forEach(clearInterval); if (typeof S !== "undefined" && S.cdTimer) clearInterval(S.cdTimer); };
+}

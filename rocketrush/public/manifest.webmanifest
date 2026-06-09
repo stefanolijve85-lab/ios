@@ -1,0 +1,14 @@
+{
+  "name": "RocketRush",
+  "short_name": "RocketRush",
+  "description": "The simplest, cleanest multiplayer crash game. Place a bet, watch the rocket rise, cash out before it crashes.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070B14",
+  "theme_color": "#070B14",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
