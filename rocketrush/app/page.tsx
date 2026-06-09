@@ -22,7 +22,7 @@ export default function Page() {
       {/* ===================== ONLINE + BALANCE ===================== */}
       <div className="online-row">
         <div className="online-pill">🌍 <span className="tnum" id="online">0</span> players online</div>
-        <div className="balance-chip tnum">€<span id="balance">1000.00</span></div>
+        <div className="balance-chip tnum" id="balanceChip">€<span id="balance">1000.00</span></div>
       </div>
 
       {/* ===================== STAGE ===================== */}
@@ -124,6 +124,8 @@ export default function Page() {
         </div>
         <div className="screen-body">
           <div className="stat-grid" id="statGrid" />
+          <div className="sec-title">Recent transactions</div>
+          <div id="statTx" />
         </div>
       </div>
 
@@ -132,6 +134,7 @@ export default function Page() {
         <div className="modal">
           <h2>Settings</h2>
           <p className="sub">Keep it simple. Play responsibly.</p>
+          <button className="closebtn" id="btnAccount" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>👤 <span id="acctLabel">Account</span></button>
           <div className="field">
             <label>Language</label>
             <select id="lang" defaultValue="en">
@@ -155,8 +158,56 @@ export default function Page() {
             <div className="t"><b>Session limit</b><small>Auto-pause after a set time (responsible gaming)</small></div>
             <div className="sw" id="swSession"><i /></div>
           </div>
-          <button className="closebtn" id="btnReset" style={{ background: 'rgba(244,63,94,.12)', border: '1px solid rgba(244,63,94,.4)', color: 'var(--danger)', marginTop: 14 }}>Reset progress</button>
+          <button className="closebtn" id="btnReset" style={{ background: 'rgba(244,63,94,.12)', border: '1px solid rgba(244,63,94,.4)', color: 'var(--danger)', marginTop: 14 }}>Reset balance to €1,000</button>
           <button className="closebtn" data-close>Done</button>
+        </div>
+      </div>
+
+      {/* ===================== ACCOUNT MODAL ===================== */}
+      <div className="modal-bg" id="accountModal">
+        <div className="modal">
+          <h2 id="acctTitle">Account</h2>
+          <p className="sub" id="acctNote" />
+
+          {/* logged out — login / register */}
+          <div id="authView">
+            <div className="auth-tabs">
+              <button className="atab active" data-auth="login">Log in</button>
+              <button className="atab" data-auth="register">Register</button>
+            </div>
+            <div className="field" id="fldUser" style={{ display: 'none' }}>
+              <label>Username</label>
+              <input id="auUser" placeholder="rocketpilot" autoComplete="username" />
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input id="auEmail" type="email" placeholder="you@example.com" autoComplete="email" />
+            </div>
+            <div className="field">
+              <label>Password</label>
+              <input id="auPass" type="password" placeholder="••••••••" autoComplete="current-password" />
+            </div>
+            <div className="auth-msg" id="auMsg" />
+            <button className="closebtn" id="auSubmit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-2))', color: '#1a0f00' }}>Log in</button>
+            <button className="linkbtn" id="auForgot">Forgot password?</button>
+          </div>
+
+          {/* logged in — profile + demo wallet */}
+          <div id="profileView" style={{ display: 'none' }}>
+            <div className="profile-head">
+              <div className="avatar" id="pfAvatar">R</div>
+              <div><div className="pf-name" id="pfName">—</div><div className="pf-email" id="pfEmail">—</div></div>
+            </div>
+            <div className="stat-grid" style={{ marginTop: 14 }}>
+              <div className="stat-card"><div className="v" id="pfBalance">€0.00</div><div className="l">Balance</div></div>
+              <div className="stat-card"><div className="v" id="pfProfit">€0.00</div><div className="l">Net Profit</div></div>
+            </div>
+            <div className="sec-title">Transaction history</div>
+            <div id="pfTx" />
+            <button className="closebtn" id="auLogout" style={{ background: 'rgba(244,63,94,.12)', border: '1px solid rgba(244,63,94,.4)', color: 'var(--danger)', marginTop: 6 }}>Log out</button>
+          </div>
+
+          <button className="closebtn" data-close>Close</button>
         </div>
       </div>
 

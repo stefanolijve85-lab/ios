@@ -3,7 +3,10 @@
 /out
 *.log
 .DS_Store
-.env*
+.env
+.env.local
+.env.*.local
+!.env.example
 /next-env.d.ts
 
 /screens-tmp

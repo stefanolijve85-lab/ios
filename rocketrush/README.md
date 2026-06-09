@@ -31,6 +31,10 @@ with a live online count, shared winners feed and chat.
 > The single-file `index.html` is a pure-local version you can open with no
 > install at all.
 
+> **Accounts are optional.** Without Supabase keys the game runs in **guest
+> mode** (progress saved per browser/device). Add Supabase to enable real
+> accounts that sync across devices — see [Accounts](#-accounts-optional) below.
+
 ### How it looks (iPhone 16 Pro)
 
 | Betting / countdown | Rocket rising | Provably fair |
@@ -129,7 +133,10 @@ Everything below works right now, client-side:
 - 🕘 **History screen** — your bets (win/loss) + verifiable round history
 - 📊 **Stats screen** — net profit, win rate, best multiplier, streaks
 - 💾 **Persistent progress** — balance, history & stats survive refresh (and
-  server restart); "Reset progress" in Settings starts you fresh
+  server restart)
+- 👤 **Accounts** (optional, Supabase) — register / login / logout / profile,
+  so your progress follows you across devices
+- 💳 **Demo wallet** — €1,000 play money, transaction history, reset balance
 - 🛡️ **Provably Fair** verifier — tap the badge to verify any round
 - 🔊 Procedural sound, 🌐 6 languages, ♿ low-bandwidth mode, 📲 PWA install
 
@@ -171,10 +178,15 @@ rocketrush/
 ├─ app/
 │  ├─ layout.tsx          # html shell, mobile viewport + PWA metadata
 │  ├─ page.tsx            # the game screen (static JSX, rendered once)
-│  ├─ game-engine.ts      # client: rendering, controls, net client + local fallback
+│  ├─ game-engine.ts      # client: rendering, controls, net client, auth + local fallback
+│  ├─ lib/supabase.ts     # browser Supabase client (null → guest mode)
 │  └─ globals.css         # design system + responsive layout (one file)
 ├─ server/
-│  └─ game-server.mjs     # authoritative Socket.io game server (shared rounds)
+│  ├─ game-server.mjs     # authoritative Socket.io game server (shared rounds)
+│  └─ store.mjs           # data store: JSON (guests) / Supabase Postgres (accounts)
+├─ supabase/
+│  └─ schema.sql          # wallets, stats, bets, transactions + RLS
+├─ .env.example           # Supabase keys (copy to .env.local to enable accounts)
 ├─ public/
 │  ├─ manifest.webmanifest, icon.svg   # PWA install
 ├─ index.html             # the same game as a zero-install single file (local-only)
@@ -207,8 +219,45 @@ in `server/.data/balances.json` (gitignored) so progress survives both a refresh
 and a server restart — no database needed for the MVP (maps to the wallet table
 in [`docs/03`](docs/03-data-and-api.md)). Your **history & stats** persist in the
 browser (`localStorage`). If you ever hit €0 you get a free re-up, and
-**Settings → Reset progress** wipes the slate (clears local data + resets the
-server balance). Verified: play → refresh → balance/history/stats restored.
+**Settings → Reset balance** sets it back to €1,000. Verified: play → refresh →
+balance/history/stats restored.
+
+### 👤 Accounts (optional)
+
+Out of the box the game runs in **guest mode** (no login; progress saved per
+device). To make progress follow a user **across devices** (laptop ↔ iPhone),
+enable Supabase — it stays the simple MVP, no real-money rails.
+
+**What you get:** Register · Login · Logout · Forgot-password (placeholder) ·
+Profile, plus a **demo wallet** (€1,000 start, transaction history, reset). The
+**game server is authoritative** — it verifies the Supabase token and stores
+each user's balance, stats, bets and transactions in Supabase Postgres, then
+pushes them to every device the user is logged in on. The client never controls
+the balance.
+
+**Setup (~5 min):**
+1. Create a project at [supabase.com](https://supabase.com).
+2. In the SQL editor, run [`supabase/schema.sql`](supabase/schema.sql) (wallets,
+   stats, bets, transactions + row-level security).
+3. (Optional) Auth → Providers → Email: turn **off** "Confirm email" for instant
+   sign-in during testing.
+4. Copy `.env.example` → `.env.local` and fill in:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=...        # Settings → API → Project URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...   # Settings → API → anon public key
+   SUPABASE_URL=...                    # same Project URL (for the game server)
+   SUPABASE_SERVICE_ROLE_KEY=...       # Settings → API → service_role key (server only!)
+   ```
+5. `npm run dev` — tap the **balance** (or Settings → Account) to register/login.
+
+> The `service_role` key is server-only — it's read by `server/game-server.mjs`
+> and **never** shipped to the browser. The browser only uses the public anon
+> key. Guests still work alongside accounts.
+
+**Verified:** the entire account data path (server-authoritative balance, stats,
+bet history and transactions pushed to the client, plus reset) is exercised by
+guest mode in CI-style checks — the Supabase store is a drop-in with the same
+interface, so accounts use the identical, tested flow.
 
 ---
 

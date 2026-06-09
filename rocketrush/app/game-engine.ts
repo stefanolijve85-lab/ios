@@ -6,13 +6,15 @@
      same loop as a client-side simulation so the game is ALWAYS playable.
    Client-side only: call startGame() inside a useEffect. Returns a teardown fn. */
 import { io } from 'socket.io-client';
+import { supabase, ACCOUNTS_ENABLED } from './lib/supabase';
 
 export function startGame(): () => void {
   'use strict';
   let ENGINE_ALIVE = true;
   const _ints: number[] = [];
   const _int = (f: any, m: number) => { const id = window.setInterval(f, m); _ints.push(id); return id; };
-  const NET = { sock: null, port: 3001 };
+  const NET = { sock: null, port: 3001, token: null, connected: false };
+  let authMode = 'login';   // account modal: 'login' | 'register'
 
 /* ============================================================
    RocketRush — single-file playable demo
@@ -129,6 +131,8 @@ const S = {
   myBets: [],           // player outcomes {nonce,amount,won,mult,payout,profit}
   curBet: null,         // the bet active this round {nonce,amount}
   stats: { played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 },
+  account: null,        // {id,email,username} when logged in, else null (guest)
+  transactions: [],     // demo-wallet transactions {type,amount,balanceAfter,ts}
   phase: 'idle',        // betting | running | crashed
   mult: 1.00,
   crashAt: 0,
@@ -601,6 +605,7 @@ function renderStats(){
     ['Best Streak', s.bestStreak+'×', 'var(--primary)'],
   ];
   $('statGrid').innerHTML=cards.map(([l,v,c])=>`<div class="stat-card"><div class="v" style="color:${c}">${v}</div><div class="l">${l}</div></div>`).join('');
+  renderTx($('statTx'));
 }
 function refreshScreens(){
   if($('screenHistory').classList.contains('show')) renderHistory();
@@ -688,6 +693,15 @@ $('swLow').onclick=function(){ S.lowBw=!S.lowBw; this.classList.toggle('on',S.lo
 $('swReality').onclick=function(){ this.classList.toggle('on'); };
 $('swSession').onclick=function(){ this.classList.toggle('on'); };
 { const rb=$('btnReset'); if(rb) rb.onclick=()=>{ resetProgress(); $('settingsModal').classList.remove('show'); }; }
+// account
+{
+  const ab=$('btnAccount'); if(ab) ab.onclick=()=>{ $('settingsModal').classList.remove('show'); openAccount(); };
+  const bc=$('balanceChip'); if(bc) bc.onclick=openAccount;
+  document.querySelectorAll('.atab').forEach(t=>t.onclick=()=>switchAuthTab(t.dataset.auth));
+  const sub=$('auSubmit'); if(sub) sub.onclick=()=>{ authMode==='register'?doRegister():doLogin(); };
+  const fg=$('auForgot'); if(fg) fg.onclick=doForgot;
+  const lo=$('auLogout'); if(lo) lo.onclick=doLogout;
+}
 
 // language
 $('lang').onchange=e=>{ S.lang=e.target.value; renderAction(); };
@@ -781,19 +795,21 @@ function bindNet(sock){
   sock.on('round:betting', d=>{ if(S.mode==='net') netBetting(d); });
   sock.on('round:start',  ()=>{ if(S.mode==='net') netStart(); });
   sock.on('round:crash',  d=>{ if(S.mode==='net') netCrash(d); });
-  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; recordBetPlaced(S.nonce, d.amount); updateBalance(); renderAction(); });
-  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.curBet=null; S.balance=d.balance; updateBalance(); renderAction(); });
+  // In net mode the SERVER is authoritative for balance/stats/bets/tx and pushes
+  // them via 'profile'. The client only reflects round UX (sound, flash, action).
+  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; updateBalance(); renderAction(); });
+  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.balance=d.balance; updateBalance(); renderAction(); });
   sock.on('bet:rejected',  ()=>{ renderAction(); });
   sock.on('cashout:confirmed', d=>{
     S.cashedOut=true; S.bet_placed=false; S.cashedAt=d.multiplier; S.balance=d.balance; updateBalance();
-    sfx.cash(); recordWin(d.multiplier, d.payout); addWinner('You','#22C55E',d.multiplier,d.payout,true);
+    sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
     flashWon('+€'+fmt(d.payout)+'  @ '+d.multiplier.toFixed(2)+'x', true); renderAction();
   });
   sock.on('winner', d=>{ if(d.name!=='You') addWinner(d.name, d.color||'#FF8A00', d.multiplier, d.amount); });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false); });
   sock.on('players',d=>{ setOnline(d.count); });
-  sock.on('welcome',d=>{ S.balance=d.balance; updateBalance(); setOnline(d.online); });
-  sock.on('balance',d=>{ S.balance=d.balance; updateBalance(); });
+  sock.on('welcome',d=>{ setOnline(d.online); });
+  sock.on('profile',d=>{ applyProfile(d); });
   sock.on('history',d=>{
     S.rounds=(d.rounds||[]).map(r=>({ nonce:r.nonce, crash:r.crash, serverSeed:r.serverSeed, clientSeed:r.clientSeed, hmac:r.hmac }));
     if(S.rounds.length){ S.history=S.rounds.slice(0,18).map(r=>r.crash); renderPills(); }
@@ -807,22 +823,130 @@ function startLocal(){
   ambient();
   startBetting();
 }
+function applyProfile(d){
+  S.account = d.account || null;
+  if(typeof d.balance==='number'){ S.balance=d.balance; updateBalance(); }
+  if(d.stats) S.stats=d.stats;
+  if(Array.isArray(d.bets)) S.myBets=d.bets;
+  if(Array.isArray(d.tx)) S.transactions=d.tx;
+  updateAccountUI(); refreshScreens();
+}
 function connectNet(){
   let settled=false;
   try{
     const proto = location.protocol==='https:' ? 'https' : 'http';
     const url = `${proto}://${location.hostname||'localhost'}:${NET.port}`;
-    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500, auth:{ playerId:getPid() } });
+    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500, auth:{ playerId:getPid(), token:NET.token } });
     NET.sock=sock;
     bindNet(sock);
     sock.on('connect', ()=>{
+      NET.connected=true;
       if(!settled){ settled=true; S.mode='net'; clearInterval(S.cdTimer); sysChat('🌍 Connected — playing live with everyone online.'); }
     });
+    sock.on('disconnect', ()=>{ NET.connected=false; });
     sock.on('connect_error', ()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } });
     setTimeout(()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } }, 1800);
   }catch(e){
     startLocal();
   }
+}
+function reconnectNet(){
+  try{ if(NET.sock){ NET.sock.removeAllListeners(); NET.sock.close(); } }catch(e){}
+  NET.sock=null; NET.connected=false; S.mode='net'; // server is up; re-key under new identity
+  connectNet();
+}
+
+/* ============================================================
+   ACCOUNT (Supabase auth) + demo wallet
+   ============================================================ */
+function authMsg(t){ const e=$('auMsg'); if(e) e.textContent=t||''; }
+function txLabel(t){ return ({signup_bonus:'Signup bonus', bet:'Bet placed', win:'Cashout win', refund:'Bet cancelled', reset:'Balance reset', reup:'Free re-up'})[t]||t; }
+function renderTx(el){
+  if(!el) return; el.innerHTML='';
+  if(!S.transactions.length){ el.innerHTML='<div class="empty">No transactions yet.</div>'; return; }
+  S.transactions.slice(0,50).forEach(t=>{
+    const row=document.createElement('div'); row.className='tx-row'; const pos=t.amount>=0;
+    row.innerHTML=`<span class="tl">${txLabel(t.type)}</span><span class="ta ${pos?'pos':'neg'}">${pos?'+':'−'}€${fmt(Math.abs(t.amount))}</span><span class="tb">€${fmt(t.balanceAfter)}</span>`;
+    el.appendChild(row);
+  });
+}
+function switchAuthTab(mode){
+  authMode=mode;
+  document.querySelectorAll('.atab').forEach(x=>x.classList.toggle('active', x.dataset.auth===mode));
+  const fu=$('fldUser'); if(fu) fu.style.display = mode==='register'?'block':'none';
+  const sb=$('auSubmit'); if(sb) sb.textContent = mode==='register'?'Create account':'Log in';
+  authMsg('');
+}
+function renderAccount(){
+  const note=$('acctNote'), auth=$('authView'), prof=$('profileView');
+  if(!note) return;
+  if(!ACCOUNTS_ENABLED){
+    note.textContent='Accounts need Supabase (see README). You’re playing as a guest — progress is saved on this device & synced to the game server.';
+    auth.style.display='none'; prof.style.display='none'; return;
+  }
+  if(S.account){
+    auth.style.display='none'; prof.style.display='block';
+    note.textContent='Your balance & stats sync across every device you log in on.';
+    const u=S.account.username||'player';
+    $('pfAvatar').textContent=(u[0]||'R').toUpperCase();
+    $('pfName').textContent=u;
+    $('pfEmail').textContent=S.account.email||'';
+    $('pfBalance').textContent='€'+fmt(S.balance);
+    const profit=Math.round((S.stats.returned-S.stats.wagered)*100)/100;
+    const pf=$('pfProfit'); pf.textContent=(profit>=0?'+':'−')+'€'+fmt(Math.abs(profit)); pf.style.color = profit>=0?'var(--success)':'var(--danger)';
+    renderTx($('pfTx'));
+  } else {
+    auth.style.display='block'; prof.style.display='none';
+    note.textContent='Log in or create an account to sync your balance & stats across devices.';
+    switchAuthTab(authMode);
+  }
+}
+function updateAccountUI(){
+  const lbl=$('acctLabel'); if(lbl) lbl.textContent = S.account ? (S.account.username||'Account') : (ACCOUNTS_ENABLED?'Log in / Register':'Account (guest)');
+  const am=$('accountModal'); if(am && am.classList.contains('show')) renderAccount();
+}
+function openAccount(){ renderAccount(); $('accountModal').classList.add('show'); }
+async function doRegister(){
+  if(!supabase) return;
+  const email=$('auEmail').value.trim(), pass=$('auPass').value, user=$('auUser').value.trim();
+  if(!email||!pass) return authMsg('Enter email and password.');
+  if(!user) return authMsg('Choose a username.');
+  if(pass.length<6) return authMsg('Password must be at least 6 characters.');
+  authMsg('Creating account…');
+  const { data, error } = await supabase.auth.signUp({ email, password:pass, options:{ data:{ username:user } } });
+  if(error) return authMsg(error.message);
+  if(data.session) authMsg('Account created 🎉');
+  else authMsg('Account created — check your email to confirm, then log in.');
+}
+async function doLogin(){
+  if(!supabase) return;
+  const email=$('auEmail').value.trim(), pass=$('auPass').value;
+  if(!email||!pass) return authMsg('Enter email and password.');
+  authMsg('Signing in…');
+  const { error } = await supabase.auth.signInWithPassword({ email, password:pass });
+  if(error) return authMsg(error.message);
+  authMsg('');
+}
+async function doForgot(){
+  if(!supabase) return;
+  const email=$('auEmail').value.trim();
+  if(!email) return authMsg('Enter your email above first.');
+  try{ await supabase.auth.resetPasswordForEmail(email); }catch(e){}
+  authMsg('If that email exists, a reset link is on its way. (Demo placeholder.)');
+}
+async function doLogout(){ if(supabase){ try{ await supabase.auth.signOut(); }catch(e){} } $('accountModal').classList.remove('show'); }
+async function authInit(){
+  if(supabase){
+    try{ const { data } = await supabase.auth.getSession(); NET.token = data && data.session ? data.session.access_token : null; }catch(e){ NET.token=null; }
+    supabase.auth.onAuthStateChange((event, session)=>{
+      NET.token = session ? session.access_token : null;
+      updateAccountUI();
+      if(event==='SIGNED_IN'){ const am=$('accountModal'); if(am) am.classList.remove('show'); }
+      if((event==='SIGNED_IN' || event==='SIGNED_OUT') && NET.connected){ reconnectNet(); }
+    });
+  }
+  updateAccountUI();
+  connectNet();
 }
 
 /* ============================================================
@@ -842,11 +966,10 @@ function loadSave(){
     }
   }catch(e){}
 }
-function resetProgress(){
-  S.myBets=[]; S.curBet=null;
-  S.stats={ played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 };
-  if(S.mode==='net' && NET.sock){ NET.sock.emit('reset'); } else { S.balance=1000; updateBalance(); }
-  persist(); refreshScreens();
+function resetProgress(){   // demo wallet: reset balance to €1000 (keeps stats/history)
+  if(S.mode==='net' && NET.sock){ NET.sock.emit('reset'); }
+  else { S.balance=1000; updateBalance(); }
+  refreshScreens();
 }
 
 /* ============================================================
@@ -875,7 +998,7 @@ function boot(){
   syncSound();
   updateBalance();
   setBet(100); setAuto(2.00);
-  connectNet();   // tries the live server; falls back to local simulation
+  authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
 }
 boot();
 
