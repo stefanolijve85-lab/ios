@@ -18,6 +18,7 @@ import { randomBytes } from 'node:crypto';
 import { Server } from 'socket.io';
 import { crashPoint, hmacHex, sha256 } from '../verify-fairness.mjs';
 import { makeStores, START_BALANCE } from './store.mjs';
+import { upsertProfile, recordPlay, getProfile, leaderboard, pushActivity, recentActivity, seedBots } from './social.mjs';
 
 const PORT = process.env.GAME_PORT ? Number(process.env.GAME_PORT) : 3001;
 const RATE = 0.16;       // growth rate — MUST match the client (multAt: e^(RATE*t))
@@ -30,8 +31,13 @@ const COLORS = ['#FF8A00','#9B5CF6','#22C55E','#38BDF8','#F43F5E','#EAB308','#EC
 const CHATTER = ['gg 🚀','cashed at last sec 😮‍💨','to the moon!','rip my bet','easy 2x','who else holding?','that was brutal','provably fair ftw','nice round','10x incoming i feel it','lfg 🔥','red wall incoming','green day today'];
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
+const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+const colorFor = pid => COLORS[hash(pid) % COLORS.length];
+const guestName = pid => 'Pilot-' + (hash(pid) % 9000 + 1000);   // stable friendly name for guests
+const ACTIVITY = (io, ev, toOthers, sock) => { pushActivity(ev); (toOthers && sock ? sock.broadcast : io).emit('activity', ev); };
 
 const stores = await makeStores();   // { supabase, account, guest }
+seedBots(NAMES, COLORS);             // believable bot profiles + initial leaderboard
 
 /* ----------------------------- round state ----------------------------- */
 const CLIENT_SEED = 'rocketrush-public-v1';
@@ -43,6 +49,7 @@ const game = {
   recentRounds: [],
 };
 const players = new Map();   // socketId -> player
+const recentJoins = new Set();  // throttle duplicate "joined" activity on reconnects
 
 const httpServer = createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('RocketRush game server OK'); });
 const io = new Server(httpServer, { cors: { origin: '*' } });
@@ -72,7 +79,10 @@ function settleCashout(sock, p, mult) {
   p.store.saveBalance(p.key, p.rec); p.store.saveBet(p.key, p.rec); p.store.saveTx(p.key, p.rec);
   sock.emit('cashout:confirmed', { multiplier: mult, payout, balance: p.rec.balance });
   pushProfile(sock, p);
-  sock.broadcast.emit('winner', { name: p.display, color: p.color, multiplier: mult, amount: payout });
+  // social: leaderboard + public profile + live activity feed (others see it)
+  recordPlay(p.key, true, mult, payout);
+  ACTIVITY(io, { type: 'win', pid: p.key, name: p.display, color: p.color, amount: payout, mult }, true, sock);
+  if (mult >= 10) ACTIVITY(io, { type: 'bigmult', pid: p.key, name: p.display, color: p.color, mult }, true, sock);
 }
 
 /* --------------------------- round lifecycle --------------------------- */
@@ -121,6 +131,7 @@ function doCrash() {
       statsLoss(p.rec.stats, p.bet.amount);
       addBet(p, { nonce: p.bet.nonce, amount: p.bet.amount, won: false, profit: -p.bet.amount, ts: Date.now() });
       p.store.saveBet(p.key, p.rec);
+      recordPlay(p.key, false, 0, 0);
       const s = io.sockets.sockets.get(id); if (s) pushProfile(s, p);
     }
     p.bet = null;
@@ -131,16 +142,25 @@ function doCrash() {
 function scheduleBots(durMs) {
   const n = 2 + Math.floor(rnd(0, 5));
   for (let i = 0; i < n; i++) {
-    const target = rnd(1.15, Math.max(1.2, game.crash * 0.95));
+    const target = r2(rnd(1.15, Math.max(1.2, game.crash * 0.95)));
     if (target >= game.crash) continue;
     setTimeout(() => {
       if (game.phase !== 'running') return;
-      const bet = Math.round(rnd(20, 800) / 10) * 10;
-      io.emit('winner', { name: pick(NAMES), color: pick(COLORS), multiplier: target, amount: r2(bet * target) });
+      const name = pick(NAMES), pid = 'b:' + name, color = colorFor(pid);
+      const payout = r2(Math.round(rnd(20, 800) / 10) * 10 * target);
+      recordPlay(pid, true, target, payout);
+      ACTIVITY(io, { type: 'win', pid, name, color, amount: payout, mult: target });
+      if (target >= 10) ACTIVITY(io, { type: 'bigmult', pid, name, color, mult: target });
     }, (Math.log(target) / RATE) * 1000);
   }
 }
-setInterval(() => { if (Math.random() < 0.75) io.emit('chat', { user: pick(NAMES), text: pick(CHATTER) }); }, 3600);
+setInterval(() => {
+  if (Math.random() < 0.75) { const name = pick(NAMES); io.emit('chat', { user: name, pid: 'b:' + name, text: pick(CHATTER) }); }
+}, 3600);
+// occasional bot "joins" so the feed feels alive even when you're solo
+setInterval(() => {
+  if (Math.random() < 0.4) { const name = pick(NAMES); const pid = 'b:' + name; ACTIVITY(io, { type: 'join', pid, name, color: colorFor(pid) }); }
+}, 7000);
 
 function snapshotFor(sock) {
   if (game.phase === 'betting') sock.emit('round:betting', { nonce: game.nonce, serverSeedHash: game.serverSeedHash, prevServerSeed: game.prevServerSeed, clientSeed: CLIENT_SEED, startsInMs: Math.max(0, game.bettingEndsAt - Date.now()) });
@@ -156,7 +176,8 @@ async function resolveAuth(sock) {
       if (!error && data && data.user) {
         const u = data.user;
         const username = (u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) || (u.email ? u.email.split('@')[0] : 'player');
-        return { account: { id: u.id, email: u.email, username }, store: stores.account, key: u.id };
+        const joinDate = u.created_at ? Date.parse(u.created_at) : Date.now();
+        return { account: { id: u.id, email: u.email, username, joinDate }, store: stores.account, key: u.id };
       }
     } catch { /* fall through to guest */ }
   }
@@ -167,16 +188,25 @@ async function resolveAuth(sock) {
 /* ----------------------------- connections ----------------------------- */
 io.on('connection', async (sock) => {
   const auth = await resolveAuth(sock);
-  const p = { name: 'You', display: auth.account ? auth.account.username : 'You', color: '#22C55E', account: auth.account, store: auth.store, key: auth.key, bet: null, rec: null };
+  const publicName = auth.account ? auth.account.username : guestName(auth.key);
+  const p = { name: 'You', display: publicName, color: colorFor(auth.key), account: auth.account, store: auth.store, key: auth.key, bet: null, rec: null };
   p.rec = await auth.store.init(auth.key);
   if (!(p.rec.balance >= 10)) { const old = p.rec.balance; p.rec.balance = START_BALANCE; addTx(p, 'reup', START_BALANCE - old); p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec); } // free re-up (play money)
   players.set(sock.id, p);
 
-  sock.emit('welcome', { name: p.name, online: online() });
+  // public profile + social feeds
+  upsertProfile(p.key, { name: publicName, color: p.color, joinDate: auth.account && auth.account.joinDate ? auth.account.joinDate : Date.now() });
+  sock.emit('welcome', { name: p.name, online: online(), pid: p.key });
   pushProfile(sock, p);
   sock.emit('history', { rounds: game.recentRounds.slice(0, 20) });
+  sock.emit('leaderboard', leaderboard());
+  sock.emit('activity:recent', { events: recentActivity() });
+  if (!recentJoins.has(p.key)) { recentJoins.add(p.key); setTimeout(() => recentJoins.delete(p.key), 60000); ACTIVITY(io, { type: 'join', pid: p.key, name: publicName, color: p.color }, true, sock); }
   broadcastPlayers();
   snapshotFor(sock);
+
+  sock.on('profile:get', ({ id } = {}) => { const prof = getProfile(id); if (prof) sock.emit('profile:data', prof); });
+  sock.on('leaderboard:get', () => sock.emit('leaderboard', leaderboard()));
 
   sock.on('bet:place', ({ amount, auto } = {}) => {
     amount = Number(amount);
@@ -217,7 +247,7 @@ io.on('connection', async (sock) => {
 
   sock.on('chat:send', ({ text } = {}) => {
     text = String(text || '').slice(0, 120).trim();
-    if (text) io.emit('chat', { user: p.display || 'Guest', text });
+    if (text) io.emit('chat', { user: p.display || 'Guest', pid: p.key, text });
   });
 
   sock.on('disconnect', () => { players.delete(sock.id); broadcastPlayers(); });

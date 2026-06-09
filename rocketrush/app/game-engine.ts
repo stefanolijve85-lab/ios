@@ -133,6 +133,9 @@ const S = {
   stats: { played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 },
   account: null,        // {id,email,username} when logged in, else null (guest)
   transactions: [],     // demo-wallet transactions {type,amount,balanceAfter,ts}
+  selfPid: null,        // this player's public profile id
+  leaderboard: { winToday:[], multToday:[], winAll:[], multAll:[] },
+  lbWhen: 'today',      // leaderboard tab
   phase: 'idle',        // betting | running | crashed
   mult: 1.00,
   crashAt: 0,
@@ -518,16 +521,25 @@ function flashWon(text, good){
   el.style.borderColor = good? 'rgba(34,197,94,.45)':'rgba(244,63,94,.45)';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
 }
-function addWinner(name,color,mult,amt,you){
-  const wrap=$('winners');
+// Live Activity feed (wins, big multipliers, joins). Rows are clickable → profile.
+function addActivity(ev){
+  const wrap=$('winners'); if(!wrap) return;
   const row=document.createElement('div'); row.className='winner';
-  const initial=name[0].toUpperCase();
-  row.innerHTML=`<div class="av" style="background:${color}">${initial}</div>
-    <div class="nm">${you?'<span style="color:#22C55E">'+name+'</span>':name}<small>${mult.toFixed(2)}x</small></div>
-    <div class="amt tnum">€${fmt(amt)}</div>`;
+  if(ev.pid){ row.dataset.pid=ev.pid; row.style.cursor='pointer'; row.onclick=()=>openProfile(ev.pid); }
+  const initial=((ev.name||'?')[0]||'?').toUpperCase();
+  const av=`<div class="av" style="background:${ev.color||'#FF8A00'}">${initial}</div>`;
+  if(ev.type==='join'){
+    row.innerHTML=`${av}<div class="nm">${ev.name}<small style="color:var(--muted)">joined 👋</small></div><div class="amt" style="color:var(--faint)">·</div>`;
+  } else if(ev.type==='bigmult'){
+    row.innerHTML=`${av}<div class="nm">${ev.name}<small style="color:var(--secondary)">hit ${(ev.mult||0).toFixed(2)}x</small></div><div class="amt" style="color:var(--secondary)">🚀</div>`;
+  } else {
+    row.innerHTML=`${av}<div class="nm">${ev.name}<small>@ ${(ev.mult||0).toFixed(2)}x</small></div><div class="amt tnum">€${fmt(ev.amount||0)}</div>`;
+  }
   wrap.prepend(row);
-  while(wrap.children.length>10) wrap.lastChild.remove();
+  while(wrap.children.length>14) wrap.lastChild.remove();
 }
+// kept for existing call-sites (self cashout, local bots, seed)
+function addWinner(name,color,mult,amt,you){ addActivity({ type:'win', pid: you?S.selfPid:undefined, name: you?'You':name, color: color||'#FF8A00', amount: amt, mult }); }
 function multCls(v){ return v<2?'lo':v<5?'mid':v<10?'hi':'huge'; }
 function crashColor(v){ return v<2?'#9aa3b2':v<5?'var(--primary)':v<10?'var(--secondary)':'var(--success)'; }
 function renderPills(){
@@ -619,8 +631,7 @@ function openScreen(name){
   setNavActive(name);
 }
 function closeScreens(toGame){
-  $('screenHistory').classList.remove('show');
-  $('screenStats').classList.remove('show');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
   if(toGame!==false) setNavActive('game');
 }
 function openFairForRound(r){
@@ -636,9 +647,11 @@ function openFairForRound(r){
   $('fMatch').innerHTML = ok ? '<span style="color:#22C55E">✓ VERIFIED</span>' : '<span style="color:#F43F5E">✗ MISMATCH</span>';
   $('fairModal').classList.add('show');
 }
-function addChat(name,text,sys){
+function addChat(name,text,sys,pid){
   const c=$('chat'); const d=document.createElement('div'); d.className='msg'+(sys?' sys':'');
-  d.innerHTML=`<b>${name}</b>${text}`; c.appendChild(d);
+  d.innerHTML = pid ? `<b class="clk" data-pid="${pid}">${name}</b>${text}` : `<b>${name}</b>${text}`;
+  if(pid){ const b=d.querySelector('b'); if(b) b.onclick=()=>openProfile(pid); }
+  c.appendChild(d);
   while(c.children.length>60) c.firstChild.remove();
   c.scrollTop=c.scrollHeight;
 }
@@ -701,6 +714,11 @@ $('swSession').onclick=function(){ this.classList.toggle('on'); };
   const sub=$('auSubmit'); if(sub) sub.onclick=()=>{ authMode==='register'?doRegister():doLogin(); };
   const fg=$('auForgot'); if(fg) fg.onclick=doForgot;
   const lo=$('auLogout'); if(lo) lo.onclick=doLogout;
+}
+// social
+{
+  const lb=$('btnLeaderboard'); if(lb) lb.onclick=openLeaderboard;
+  document.querySelectorAll('.lbtab').forEach(t=>t.onclick=()=>{ S.lbWhen=t.dataset.when; renderLeaderboard(); });
 }
 
 // language
@@ -805,11 +823,15 @@ function bindNet(sock){
     sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
     flashWon('+€'+fmt(d.payout)+'  @ '+d.multiplier.toFixed(2)+'x', true); renderAction();
   });
-  sock.on('winner', d=>{ if(d.name!=='You') addWinner(d.name, d.color||'#FF8A00', d.multiplier, d.amount); });
-  sock.on('chat',   d=>{ addChat(d.user, d.text, false); });
+  sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
-  sock.on('welcome',d=>{ setOnline(d.online); });
+  sock.on('welcome',d=>{ setOnline(d.online); S.selfPid=d.pid||null; });
   sock.on('profile',d=>{ applyProfile(d); });
+  // social: live activity feed, leaderboard, public profiles
+  sock.on('activity', ev=>{ addActivity(ev); });
+  sock.on('activity:recent', d=>{ const w=$('winners'); if(w) w.innerHTML=''; (d.events||[]).slice().reverse().forEach(addActivity); });
+  sock.on('leaderboard', d=>{ S.leaderboard=d; const sc=$('screenLeaderboard'); if(sc && sc.classList.contains('show')) renderLeaderboard(); });
+  sock.on('profile:data', d=>{ renderProfile(d); });
   sock.on('history',d=>{
     S.rounds=(d.rounds||[]).map(r=>({ nonce:r.nonce, crash:r.crash, serverSeed:r.serverSeed, clientSeed:r.clientSeed, hmac:r.hmac }));
     if(S.rounds.length){ S.history=S.rounds.slice(0,18).map(r=>r.crash); renderPills(); }
@@ -970,6 +992,55 @@ function resetProgress(){   // demo wallet: reset balance to €1000 (keeps stat
   if(S.mode==='net' && NET.sock){ NET.sock.emit('reset'); }
   else { S.balance=1000; updateBalance(); }
   refreshScreens();
+}
+
+/* ============================================================
+   SOCIAL: leaderboard + public profiles
+   ============================================================ */
+function lbRow(rank, e, kind){
+  const row=document.createElement('div'); row.className='lb-row';
+  if(e.pid){ row.style.cursor='pointer'; row.onclick=()=>openProfile(e.pid); }
+  const medal = rank<=3 ? ['🥇','🥈','🥉'][rank-1] : '#'+rank;
+  const initial=((e.name||'?')[0]||'?').toUpperCase();
+  const main = kind==='win' ? '€'+fmt(e.value) : (e.value||0).toFixed(2)+'x';
+  row.innerHTML=`<span class="rk">${medal}</span><div class="av sm" style="background:${e.color||'#FF8A00'}">${initial}</div><span class="lname">${e.name}</span><span class="lval">${main}</span>`;
+  return row;
+}
+function renderLeaderboard(){
+  const today = S.lbWhen==='today';
+  const wins = today? S.leaderboard.winToday : S.leaderboard.winAll;
+  const mult = today? S.leaderboard.multToday : S.leaderboard.multAll;
+  document.querySelectorAll('.lbtab').forEach(t=>t.classList.toggle('active', t.dataset.when===S.lbWhen));
+  const wEl=$('lbWins'), mEl=$('lbMult'); if(!wEl||!mEl) return;
+  wEl.innerHTML=''; mEl.innerHTML='';
+  if(!wins||!wins.length) wEl.innerHTML='<div class="empty">No wins yet.</div>'; else wins.forEach((e,i)=>wEl.appendChild(lbRow(i+1,e,'win')));
+  if(!mult||!mult.length) mEl.innerHTML='<div class="empty">No multipliers yet.</div>'; else mult.forEach((e,i)=>mEl.appendChild(lbRow(i+1,e,'mult')));
+}
+function openLeaderboard(){
+  if(S.mode==='net' && NET.sock) NET.sock.emit('leaderboard:get');
+  closeScreens(false); renderLeaderboard(); $('screenLeaderboard').classList.add('show');
+}
+function openProfile(pid){
+  if(!pid) return;
+  if(S.mode==='net' && NET.sock) NET.sock.emit('profile:get', { id:pid });
+  else renderProfile({ name:'Player', joinDate:Date.now(), played:0, wins:0, losses:0, best:0, bestPayout:0, winRate:0 });
+}
+function renderProfile(d){
+  const u=d.name||'Player';
+  const av=$('prAvatar'); av.textContent=(u[0]||'R').toUpperCase(); if(d.color) av.style.background=d.color;
+  $('prName').textContent=u;
+  const dt=d.joinDate? new Date(d.joinDate):null;
+  $('prJoin').textContent='Joined '+(dt? dt.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'—');
+  const cards=[
+    ['Total Rounds', String(d.played||0), '#fff'],
+    ['Win Rate', (d.winRate||0)+'%', '#fff'],
+    ['Wins', String(d.wins||0), 'var(--success)'],
+    ['Losses', String(d.losses||0), 'var(--danger)'],
+    ['Highest Multiplier', (d.best||0).toFixed(2)+'x', 'var(--secondary)'],
+    ['Biggest Win', '€'+fmt(d.bestPayout||0), 'var(--success)'],
+  ];
+  $('prStats').innerHTML=cards.map(([l,v,c])=>`<div class="stat-card"><div class="v" style="color:${c}">${v}</div><div class="l">${l}</div></div>`).join('');
+  $('profileModal').classList.add('show');
 }
 
 /* ============================================================

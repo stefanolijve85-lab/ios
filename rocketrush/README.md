@@ -55,6 +55,13 @@ and live stats (net profit, win rate, best multiplier, streaks):
 |---|---|
 | ![history](screens/07-history.png) | ![stats](screens/08-stats.png) |
 
+**Social — leaderboard, public profiles & live activity** (tap any player
+anywhere to open their profile):
+
+| Leaderboard | Public profile | Live activity |
+|---|---|---|
+| ![leaderboard](screens/11-leaderboard.png) | ![profile](screens/12-profile.png) | ![activity](screens/13-activity.png) |
+
 Built to match the product mockup: `ROCKET🚀RUSH` lockup, players-online pill,
 space stage with planets, dominant multiplier + "FLY HIGHER, CASH OUT SOONER!",
 preset bet chips, the big orange **Cash Out**, split Winners/Chat panels, and a
@@ -137,6 +144,9 @@ Everything below works right now, client-side:
 - 👤 **Accounts** (optional, Supabase) — register / login / logout / profile,
   so your progress follows you across devices
 - 💳 **Demo wallet** — €1,000 play money, transaction history, reset balance
+- 🏆 **Leaderboard** — top wins & top multipliers, today & all-time
+- ⚡ **Live activity feed** — wins, big multipliers and joins, in real time
+- 🪪 **Public profiles** — tap any player to see their stats
 - 🛡️ **Provably Fair** verifier — tap the badge to verify any round
 - 🔊 Procedural sound, 🌐 6 languages, ♿ low-bandwidth mode, 📲 PWA install
 
@@ -183,7 +193,8 @@ rocketrush/
 │  └─ globals.css         # design system + responsive layout (one file)
 ├─ server/
 │  ├─ game-server.mjs     # authoritative Socket.io game server (shared rounds)
-│  └─ store.mjs           # data store: JSON (guests) / Supabase Postgres (accounts)
+│  ├─ store.mjs           # data store: JSON (guests) / Supabase Postgres (accounts)
+│  └─ social.mjs          # leaderboard, public profiles & live activity feed
 ├─ supabase/
 │  └─ schema.sql          # wallets, stats, bets, transactions + RLS
 ├─ .env.example           # Supabase keys (copy to .env.local to enable accounts)
@@ -258,6 +269,22 @@ the balance.
 bet history and transactions pushed to the client, plus reset) is exercised by
 guest mode in CI-style checks — the Supabase store is a drop-in with the same
 interface, so accounts use the identical, tested flow.
+
+### 🏆 Social layer
+
+`server/social.mjs` keeps a small global state (one JSON file) powering:
+- **Leaderboard** — top 10 wins and top 10 multipliers, **today** and **all-time**
+  (updated on every cashout; today resets at UTC midnight).
+- **Public profiles** — username, join date, total rounds, wins, losses, win
+  rate, highest multiplier and biggest win. Every event carries a `pid`, so
+  tapping a player in the **activity feed, leaderboard or chat** opens their
+  profile card.
+- **Live activity feed** — `win`, `bigmult` (≥10x) and `join` events broadcast to
+  everyone. Bots play, win and join so it feels alive even when you're solo.
+
+All of it is server-pushed over the existing Socket.io connection — no polling,
+no extra deps. Verified live: feed fills + is clickable, leaderboard (today &
+all-time) populates, and tapping an entry opens a 6-stat profile card.
 
 ---
 

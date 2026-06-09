@@ -52,6 +52,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .logo .a { color: #fff; }
 .logo .b { color: var(--primary); }
 .logo .rk { font-size: 16px; filter: drop-shadow(0 0 6px rgba(255,138,0,.6)); }
+.top-right { display: flex; gap: 8px; }
 
 /* ===================== ONLINE ROW ===================== */
 .online-row { display: flex; align-items: center; justify-content: center; gap: 8px; height: 26px; flex: none; position: relative; }
@@ -239,6 +240,19 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .tx-row .ta { font-size: 12.5px; font-weight: 800; }
 .tx-row .ta.pos { color: var(--success); } .tx-row .ta.neg { color: var(--danger); }
 .tx-row .tb { font-size: 11px; color: var(--muted); font-weight: 700; min-width: 64px; text-align: right; }
+
+/* ===================== LEADERBOARD ===================== */
+.lb-tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+.lbtab { flex: 1; padding: 11px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-weight: 800; font-size: 13px; }
+.lbtab.active { color: #fff; border-color: var(--primary); background: rgba(255,138,0,.1); }
+.lb-row { display: grid; grid-template-columns: 30px 26px 1fr auto; gap: 9px; align-items: center; padding: 9px 11px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 6px; }
+.lb-row .rk { font-size: 13px; font-weight: 800; color: var(--muted); text-align: center; }
+.lb-row .av.sm { width: 26px; height: 26px; font-size: 11px; }
+.lb-row .lname { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-row .lval { font-size: 14px; font-weight: 900; color: var(--primary); }
+.winner .nm small { cursor: inherit; }
+.clk { cursor: pointer; }
+.clk:active { opacity: .7; }
 
 /* slightly roomier on big phones / desktop */
 @media (min-height: 800px) { .stage { min-height: 220px; } .panels { height: 150px; } }

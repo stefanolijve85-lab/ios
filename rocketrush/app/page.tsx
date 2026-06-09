@@ -16,7 +16,10 @@ export default function Page() {
       <div className="topbar">
         <button className="hambtn" id="btnSettings" title="Menu">☰</button>
         <div className="logo"><span className="a">Rocket</span><span className="rk">🚀</span><span className="b">Rush</span></div>
-        <button className="iconbtn" id="btnSound" title="Sound">🔊</button>
+        <div className="top-right">
+          <button className="iconbtn" id="btnLeaderboard" title="Leaderboard">🏆</button>
+          <button className="iconbtn" id="btnSound" title="Sound">🔊</button>
+        </div>
       </div>
 
       {/* ===================== ONLINE + BALANCE ===================== */}
@@ -80,7 +83,7 @@ export default function Page() {
       {/* ===================== PANELS ===================== */}
       <div className="panels">
         <div className="panel">
-          <div className="panel-h">Recent Winners <span className="live">● Live</span></div>
+          <div className="panel-h">⚡ Live Activity <span className="live">● Live</span></div>
           <div className="winners" id="winners" />
         </div>
         <div className="panel">
@@ -126,6 +129,36 @@ export default function Page() {
           <div className="stat-grid" id="statGrid" />
           <div className="sec-title">Recent transactions</div>
           <div id="statTx" />
+        </div>
+      </div>
+
+      {/* ===================== LEADERBOARD SCREEN ===================== */}
+      <div className="screen" id="screenLeaderboard">
+        <div className="screen-head">
+          <button className="back" data-screen-close>‹</button>
+          <h2>🏆 Leaderboard</h2>
+        </div>
+        <div className="screen-body">
+          <div className="lb-tabs">
+            <button className="lbtab active" data-when="today">Today</button>
+            <button className="lbtab" data-when="all">All-time</button>
+          </div>
+          <div className="sec-title">💰 Top Wins</div>
+          <div id="lbWins" />
+          <div className="sec-title">🚀 Top Multipliers</div>
+          <div id="lbMult" />
+        </div>
+      </div>
+
+      {/* ===================== PUBLIC PROFILE MODAL ===================== */}
+      <div className="modal-bg" id="profileModal">
+        <div className="modal">
+          <div className="profile-head">
+            <div className="avatar" id="prAvatar">R</div>
+            <div><div className="pf-name" id="prName">—</div><div className="pf-email" id="prJoin">—</div></div>
+          </div>
+          <div className="stat-grid" id="prStats" style={{ marginTop: 16 }} />
+          <button className="closebtn" data-close style={{ marginTop: 14 }}>Close</button>
         </div>
       </div>
 
