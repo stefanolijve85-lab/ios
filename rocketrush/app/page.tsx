@@ -102,6 +102,31 @@ export default function Page() {
         <button className="nav-item" data-nav="menu"><i>☰</i><span>Menu</span></button>
       </nav>
 
+      {/* ===================== HISTORY SCREEN ===================== */}
+      <div className="screen" id="screenHistory">
+        <div className="screen-head">
+          <button className="back" data-screen-close>‹</button>
+          <h2>History</h2>
+        </div>
+        <div className="screen-body">
+          <div className="sec-title">My Bets</div>
+          <div id="histBets" />
+          <div className="sec-title">Recent Rounds — tap to verify</div>
+          <div id="histRounds" />
+        </div>
+      </div>
+
+      {/* ===================== STATS SCREEN ===================== */}
+      <div className="screen" id="screenStats">
+        <div className="screen-head">
+          <button className="back" data-screen-close>‹</button>
+          <h2>Stats</h2>
+        </div>
+        <div className="screen-body">
+          <div className="stat-grid" id="statGrid" />
+        </div>
+      </div>
+
       {/* ===================== SETTINGS MODAL ===================== */}
       <div className="modal-bg" id="settingsModal">
         <div className="modal">

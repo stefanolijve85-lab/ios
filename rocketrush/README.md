@@ -44,6 +44,13 @@ server-paid cashout. These are two separate browsers in one round:
 |---|---|
 | ![player A](screens/05-live.png) | ![player B](screens/06-live-b.png) |
 
+**History & Stats** (bottom nav) — your bet outcomes, verifiable round history,
+and live stats (net profit, win rate, best multiplier, streaks):
+
+| History | Stats |
+|---|---|
+| ![history](screens/07-history.png) | ![stats](screens/08-stats.png) |
+
 Built to match the product mockup: `ROCKET🚀RUSH` lockup, players-online pill,
 space stage with planets, dominant multiplier + "FLY HIGHER, CASH OUT SOONER!",
 preset bet chips, the big orange **Cash Out**, split Winners/Chat panels, and a
@@ -119,6 +126,8 @@ Everything below works right now, client-side:
 - 🏆 **Recent winners** (max 10, your wins highlighted)
 - 👥 **Online players** counter
 - 💬 **Live chat** mockup (collapses into a tab on mobile)
+- 🕘 **History screen** — your bets (win/loss) + verifiable round history
+- 📊 **Stats screen** — net profit, win rate, best multiplier, streaks
 - 🛡️ **Provably Fair** verifier — tap the badge to verify any round
 - 🔊 Procedural sound, 🌐 6 languages, ♿ low-bandwidth mode, 📲 PWA install
 

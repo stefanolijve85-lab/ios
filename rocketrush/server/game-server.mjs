@@ -44,6 +44,7 @@ const game = {
   crash: 0,
   startedAt: 0,
   bettingEndsAt: 0,
+  recentRounds: [],   // last completed rounds (revealed) for the History screen
 };
 
 // socketId -> { name, color, balance, bet: {amount, auto, cashedOut} | null }
@@ -122,13 +123,10 @@ function doCrash() {
   clearInterval(game.tick);
   game.phase = 'crashed';
   game.prevHmac = hmacHex(game.serverSeed, CLIENT_SEED, game.nonce);
-  io.emit('round:crash', {
-    nonce: game.nonce,
-    crashPoint: game.crash,
-    serverSeed: game.serverSeed,
-    clientSeed: CLIENT_SEED,
-    hmac: game.prevHmac,
-  });
+  const round = { nonce: game.nonce, crash: game.crash, serverSeed: game.serverSeed, clientSeed: CLIENT_SEED, hmac: game.prevHmac };
+  game.recentRounds.unshift(round);
+  if (game.recentRounds.length > 40) game.recentRounds.pop();
+  io.emit('round:crash', { nonce: round.nonce, crashPoint: round.crash, serverSeed: round.serverSeed, clientSeed: round.clientSeed, hmac: round.hmac });
   // un-cashed bets are already debited; nothing to refund
   setTimeout(startBetting, PAUSE_MS);
 }
@@ -169,6 +167,7 @@ io.on('connection', (sock) => {
   players.set(sock.id, p);
 
   sock.emit('welcome', { name, balance: p.balance, online: online() });
+  sock.emit('history', { rounds: game.recentRounds.slice(0, 20) });
   broadcastPlayers();
   snapshotFor(sock);
 

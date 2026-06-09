@@ -125,6 +125,10 @@ const S = {
   bet: 100,
   auto: 2.00,           // 0 = off
   mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
+  rounds: [],           // recent completed rounds {nonce,crash,serverSeed,clientSeed,hmac}
+  myBets: [],           // player outcomes {nonce,amount,won,mult,payout,profit}
+  curBet: null,         // the bet active this round {nonce,amount}
+  stats: { played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 },
   phase: 'idle',        // betting | running | crashed
   mult: 1.00,
   crashAt: 0,
@@ -426,12 +430,12 @@ function crash(){
   sfx.crash();
 
   // bust any active un-cashed bet
-  if(S.bet_placed && !S.cashedOut){
-    S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false);
-  }
+  if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
+  if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
 
   // record provably-fair last round
   S.lastRound = { nonce:S.nonce, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, crash:S.crashAt };
+  pushRound({ nonce:S.nonce, crash:S.crashAt, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, serverSeedHash:S.serverSeedHash });
   pushHistory(S.crashAt);
   S.nonce++;
   renderAction();
@@ -447,6 +451,7 @@ function placeBet(silent){
   if(S.balance<S.bet) return;
   if(S.mode==='net'){ NET.sock.emit('bet:place',{amount:S.bet, auto:S.auto}); if(!silent) sfx.bet(); return; }
   S.balance-=S.bet; S.bet_placed=true; S.bet_amount=S.bet; S.cashedOut=false;
+  recordBetPlaced(S.nonce, S.bet_amount);
   updateBalance();
   if(!silent) sfx.bet();
   renderAction();
@@ -458,6 +463,7 @@ function doCashout(){
   const win=S.bet_amount*S.mult;
   S.balance+=win; updateBalance();
   sfx.cash();
+  recordWin(S.mult, win);
   addWinner('You','#22C55E',S.mult,win,true);
   flashWon('+€'+fmt(win)+'  @ '+S.mult.toFixed(2)+'x', true);
   renderAction();
@@ -467,7 +473,7 @@ function onAction(){
   if(S.phase==='betting'){
     if(S.bet_placed){ // cancel
       if(S.mode==='net'){ NET.sock.emit('bet:cancel'); }
-      else { S.balance+=S.bet_amount; S.bet_placed=false; updateBalance(); }
+      else { S.balance+=S.bet_amount; S.bet_placed=false; S.curBet=null; updateBalance(); }
     } else placeBet();
     renderAction();
   } else if(S.phase==='running'){
@@ -518,14 +524,112 @@ function addWinner(name,color,mult,amt,you){
   wrap.prepend(row);
   while(wrap.children.length>10) wrap.lastChild.remove();
 }
-function pushHistory(m){
-  S.history.unshift(m); if(S.history.length>18) S.history.pop();
+function multCls(v){ return v<2?'lo':v<5?'mid':v<10?'hi':'huge'; }
+function crashColor(v){ return v<2?'#9aa3b2':v<5?'var(--primary)':v<10?'var(--secondary)':'var(--success)'; }
+function renderPills(){
   const h=$('history'); h.innerHTML='';
   S.history.forEach(v=>{
-    const cls = v<2?'lo':v<5?'mid':v<10?'hi':'huge';
-    const p=document.createElement('span'); p.className='hp '+cls; p.textContent=v.toFixed(2)+'x';
+    const p=document.createElement('span'); p.className='hp '+multCls(v); p.textContent=v.toFixed(2)+'x';
     h.appendChild(p);
   });
+}
+function pushHistory(m){
+  S.history.unshift(m); if(S.history.length>18) S.history.pop();
+  renderPills();
+}
+function pushRound(r){ S.rounds.unshift(r); if(S.rounds.length>50) S.rounds.pop(); }
+
+/* ============================================================
+   HISTORY & STATS (player outcomes, server-driven)
+   ============================================================ */
+// every placed bet resolves to exactly one record: a win (on cashout) or a
+// loss (on crash). If a previous bet was somehow never resolved, settle it first.
+function recordBetPlaced(nonce, amount){ if(S.curBet) recordLoss(); S.curBet={ nonce, amount }; }
+function recordWin(mult, payout){
+  if(!S.curBet) return;
+  const amount=S.curBet.amount, profit=Math.round((payout-amount)*100)/100;
+  S.myBets.unshift({ nonce:S.curBet.nonce, amount, won:true, mult, payout, profit });
+  if(S.myBets.length>100) S.myBets.pop();
+  const s=S.stats; s.played++; s.wins++; s.wagered+=amount; s.returned+=payout;
+  s.best=Math.max(s.best,mult); s.bestWin=Math.max(s.bestWin,profit);
+  s.streak++; s.bestStreak=Math.max(s.bestStreak,s.streak);
+  S.curBet=null; refreshScreens();
+}
+function recordLoss(){
+  if(!S.curBet) return;
+  const amount=S.curBet.amount;
+  S.myBets.unshift({ nonce:S.curBet.nonce, amount, won:false, profit:-amount });
+  if(S.myBets.length>100) S.myBets.pop();
+  const s=S.stats; s.played++; s.wagered+=amount; s.streak=0;
+  S.curBet=null; refreshScreens();
+}
+
+function renderHistory(){
+  const bb=$('histBets'); bb.innerHTML='';
+  if(!S.myBets.length){ bb.innerHTML='<div class="empty">No bets yet — place your first bet 🚀</div>'; }
+  else S.myBets.slice(0,50).forEach(b=>{
+    const row=document.createElement('div'); row.className='bet-row';
+    const res = b.won
+      ? `<span class="res win">+€${fmt(b.profit)} @ ${b.mult.toFixed(2)}x</span>`
+      : `<span class="res loss">−€${fmt(b.amount)}</span>`;
+    row.innerHTML=`<span class="rno">#${b.nonce}</span><span class="mid">€${fmt(b.amount)} bet</span>${res}`;
+    bb.appendChild(row);
+  });
+
+  const rr=$('histRounds'); rr.innerHTML='';
+  if(!S.rounds.length){ rr.innerHTML='<div class="empty">Rounds will appear here as they complete.</div>'; }
+  else S.rounds.slice(0,30).forEach(r=>{
+    const row=document.createElement('div'); row.className='round-row';
+    row.innerHTML=`<span class="rno">Round #${r.nonce}</span><span class="rc" style="color:${crashColor(r.crash)}">${r.crash.toFixed(2)}x</span>`;
+    const v=document.createElement('button'); v.className='vbtn'; v.textContent='🛡️ Verify';
+    if(r.hmac){ v.onclick=()=>openFairForRound(r); } else { v.disabled=true; }
+    row.appendChild(v); rr.appendChild(row);
+  });
+}
+function renderStats(){
+  const s=S.stats;
+  const profit=Math.round((s.returned-s.wagered)*100)/100;
+  const winRate=s.played? Math.round(s.wins/s.played*100):0;
+  const cards=[
+    ['Net Profit', (profit>=0?'+':'−')+'€'+fmt(Math.abs(profit)), profit>=0?'var(--success)':'var(--danger)'],
+    ['Balance', '€'+fmt(S.balance), '#fff'],
+    ['Win Rate', winRate+'%', '#fff'],
+    ['Rounds Played', String(s.played), '#fff'],
+    ['Total Wagered', '€'+fmt(s.wagered), '#fff'],
+    ['Best Win', '+€'+fmt(s.bestWin), 'var(--success)'],
+    ['Best Multiplier', s.best.toFixed(2)+'x', 'var(--secondary)'],
+    ['Best Streak', s.bestStreak+'×', 'var(--primary)'],
+  ];
+  $('statGrid').innerHTML=cards.map(([l,v,c])=>`<div class="stat-card"><div class="v" style="color:${c}">${v}</div><div class="l">${l}</div></div>`).join('');
+}
+function refreshScreens(){
+  if($('screenHistory').classList.contains('show')) renderHistory();
+  if($('screenStats').classList.contains('show')) renderStats();
+}
+function setNavActive(name){ document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active', x.dataset.nav===name)); }
+function openScreen(name){
+  closeScreens(false);
+  if(name==='history'){ renderHistory(); $('screenHistory').classList.add('show'); }
+  if(name==='stats'){ renderStats(); $('screenStats').classList.add('show'); }
+  setNavActive(name);
+}
+function closeScreens(toGame){
+  $('screenHistory').classList.remove('show');
+  $('screenStats').classList.remove('show');
+  if(toGame!==false) setNavActive('game');
+}
+function openFairForRound(r){
+  $('fSeedHash').textContent = r.serverSeedHash || '(revealed below)';
+  $('fSeedReveal').textContent = r.serverSeed || '—';
+  $('fClientSeed').value = r.clientSeed || S.clientSeed;
+  $('fNonce').textContent = r.nonce;
+  $('fHmac').textContent = r.hmac || '—';
+  const computed = r.hmac ? crashFromHmac(r.hmac) : null;
+  $('fComputed').textContent = computed!=null ? computed.toFixed(2)+'x' : '—';
+  $('fActual').textContent = r.crash.toFixed(2)+'x';
+  const ok = computed!=null && Math.abs(computed-r.crash)<0.001;
+  $('fMatch').innerHTML = ok ? '<span style="color:#22C55E">✓ VERIFIED</span>' : '<span style="color:#F43F5E">✗ MISMATCH</span>';
+  $('fairModal').classList.add('show');
 }
 function addChat(name,text,sys){
   const c=$('chat'); const d=document.createElement('div'); d.className='msg'+(sys?' sys':'');
@@ -591,10 +695,12 @@ $('lang').onchange=e=>{ S.lang=e.target.value; renderAction(); };
 document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>{
   const a=n.dataset.nav;
   if(a==='menu'){ $('settingsModal').classList.add('show'); return; }
-  if(a==='history' || a==='stats'){ openFair(); return; }
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  n.classList.add('active');
+  if(a==='history'){ openScreen('history'); return; }
+  if(a==='stats'){ openScreen('stats'); return; }
+  if(a==='game'){ closeScreens(); }
 });
+// back buttons on the full-screen tabs
+document.querySelectorAll('[data-screen-close]').forEach(b=>b.onclick=()=>closeScreens());
 // center FAB = quick place-bet / cash-out shortcut
 const fab=document.querySelector('.nav-fab'); if(fab) fab.onclick=onAction;
 
@@ -664,7 +770,9 @@ function netCrash(d){
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').classList.add('crashed-tag');
   $('status').textContent=T('crashed')+' — '+T('flew'); sfx.crash();
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
+  if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
+  pushRound({ nonce:d.nonce, crash:d.crashPoint, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac });
   pushHistory(d.crashPoint);
   renderAction();
 }
@@ -672,18 +780,23 @@ function bindNet(sock){
   sock.on('round:betting', d=>{ if(S.mode==='net') netBetting(d); });
   sock.on('round:start',  ()=>{ if(S.mode==='net') netStart(); });
   sock.on('round:crash',  d=>{ if(S.mode==='net') netCrash(d); });
-  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; updateBalance(); renderAction(); });
-  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.balance=d.balance; updateBalance(); renderAction(); });
+  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; recordBetPlaced(S.nonce, d.amount); updateBalance(); renderAction(); });
+  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.curBet=null; S.balance=d.balance; updateBalance(); renderAction(); });
   sock.on('bet:rejected',  ()=>{ renderAction(); });
   sock.on('cashout:confirmed', d=>{
     S.cashedOut=true; S.bet_placed=false; S.cashedAt=d.multiplier; S.balance=d.balance; updateBalance();
-    sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
+    sfx.cash(); recordWin(d.multiplier, d.payout); addWinner('You','#22C55E',d.multiplier,d.payout,true);
     flashWon('+€'+fmt(d.payout)+'  @ '+d.multiplier.toFixed(2)+'x', true); renderAction();
   });
   sock.on('winner', d=>{ if(d.name!=='You') addWinner(d.name, d.color||'#FF8A00', d.multiplier, d.amount); });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false); });
   sock.on('players',d=>{ setOnline(d.count); });
   sock.on('welcome',d=>{ S.balance=d.balance; updateBalance(); setOnline(d.online); });
+  sock.on('history',d=>{
+    S.rounds=(d.rounds||[]).map(r=>({ nonce:r.nonce, crash:r.crash, serverSeed:r.serverSeed, clientSeed:r.clientSeed, hmac:r.hmac }));
+    if(S.rounds.length){ S.history=S.rounds.slice(0,18).map(r=>r.crash); renderPills(); }
+    refreshScreens();
+  });
 }
 function startLocal(){
   if(S.mode==='net') return;

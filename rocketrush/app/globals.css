@@ -186,5 +186,43 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .winners::-webkit-scrollbar, .chat-body::-webkit-scrollbar, .modal::-webkit-scrollbar { width: 4px; }
 .winners::-webkit-scrollbar-thumb, .chat-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
 
+/* ===================== FULL-SCREEN TABS (History / Stats) ===================== */
+.screen {
+  position: fixed; left: 0; right: 0; top: 0;
+  bottom: calc(var(--safe-bottom) + 60px);   /* leave the bottom nav usable */
+  background:
+    radial-gradient(900px 600px at 50% -20%, rgba(155,92,246,.14), transparent 55%),
+    var(--bg);
+  z-index: 40; display: none; flex-direction: column;
+  padding: calc(var(--safe-top) + 12px) 14px 6px;
+}
+.screen.show { display: flex; animation: fade .2s; }
+.screen-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.screen-head h2 { margin: 0; font-size: 21px; font-weight: 800; flex: 1; }
+.screen-head .back { width: 38px; height: 38px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line); font-size: 22px; display: grid; place-items: center; }
+.screen-body { flex: 1; overflow-y: auto; padding-bottom: 14px; }
+.screen-body::-webkit-scrollbar { width: 4px; }
+.screen-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
+.sec-title { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 800; margin: 14px 4px 9px; }
+.sec-title:first-child { margin-top: 6px; }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 15px 14px; }
+.stat-card .v { font-size: 24px; font-weight: 900; line-height: 1; }
+.stat-card .l { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; margin-top: 7px; }
+
+.bet-row { display: grid; grid-template-columns: 42px 1fr auto; gap: 10px; align-items: center; padding: 11px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 7px; }
+.bet-row .rno { font-size: 11px; color: var(--muted); font-weight: 700; }
+.bet-row .mid { font-size: 13px; font-weight: 700; }
+.bet-row .res { font-size: 13px; font-weight: 800; text-align: right; white-space: nowrap; }
+.bet-row .res.win { color: var(--success); } .bet-row .res.loss { color: var(--danger); }
+
+.round-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 6px; }
+.round-row .rno { font-size: 12px; color: var(--muted); font-weight: 700; flex: 1; }
+.round-row .rc { font-weight: 800; font-size: 14px; }
+.round-row .vbtn { font-size: 11px; font-weight: 800; color: var(--success); background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); padding: 6px 11px; border-radius: 999px; }
+.round-row .vbtn:disabled { color: var(--faint); background: var(--panel-2); border-color: var(--line); }
+.empty { text-align: center; color: var(--muted); font-size: 13px; padding: 34px 16px; line-height: 1.5; }
+
 /* slightly roomier on big phones / desktop */
 @media (min-height: 800px) { .stage { min-height: 220px; } .panels { height: 150px; } }
