@@ -4,10 +4,8 @@ import { useEffect } from 'react';
 import { startGame } from './game-engine';
 
 /**
- * RocketRush — main game screen.
- * The high-frequency game loop (60fps multiplier, canvas) runs imperatively
- * in the engine via direct DOM updates — the React tree is rendered once and
- * never re-renders, which is exactly what keeps it at 60 FPS on mobile.
+ * RocketRush — main game screen (mobile-first, matches the product mockup).
+ * The 60fps loop runs imperatively in the engine; this tree renders once.
  */
 export default function Page() {
   useEffect(() => startGame(), []);
@@ -15,94 +13,63 @@ export default function Page() {
   return (
     <div className="app">
       {/* ===================== HEADER ===================== */}
-      <header>
-        <div className="logo">
-          <span className="mark">🚀</span>
-          <span className="full"><b>Rocket</b><span className="rush">Rush</span></span>
-        </div>
-        <div className="pill-online"><span className="dot" /><span className="tnum" id="online">0</span>&nbsp;online</div>
-        <div className="spacer" />
-        <div className="balance"><small>Balance</small><b className="tnum">€<span id="balance">1000.00</span></b></div>
+      <div className="topbar">
+        <button className="hambtn" id="btnSettings" title="Menu">☰</button>
+        <div className="logo"><span className="a">Rocket</span><span className="rk">🚀</span><span className="b">Rush</span></div>
         <button className="iconbtn" id="btnSound" title="Sound">🔊</button>
-        <button className="iconbtn" id="btnSettings" title="Settings">⚙️</button>
-        <select className="lang" id="lang" title="Language" defaultValue="en">
-          <option value="en">EN</option><option value="nl">NL</option><option value="de">DE</option>
-          <option value="es">ES</option><option value="pt">PT</option><option value="tr">TR</option>
-        </select>
-      </header>
-
-      {/* ===================== MIDDLE ===================== */}
-      <div className="grid">
-        {/* LEFT: WINNERS */}
-        <div className="panel side" id="paneWinners">
-          <h3>🏆 Recent Winners</h3>
-          <div className="winners" id="winners" />
-        </div>
-
-        {/* CENTER: STAGE */}
-        <div className="stage">
-          <canvas id="sky" />
-          <div className="provably-badge" id="badgeFair"><span className="shield">🛡️</span> Provably Fair</div>
-          <div className="you-won" id="youWon" />
-          <div className="stage-overlay">
-            <div id="centerMain">
-              <div className="multiplier tnum" id="mult">1.00x</div>
-              <div className="status-line" id="status">Connecting…</div>
-            </div>
-            <div className="countdown-wrap" id="countWrap" style={{ display: 'none' }}>
-              <div className="status-line">Next round in</div>
-              <div className="count-num tnum" id="countNum">5</div>
-              <div className="count-bar"><i id="countBar" /></div>
-            </div>
-          </div>
-          <div className="history" id="history" />
-        </div>
-
-        {/* RIGHT: CHAT */}
-        <div className="panel side" id="paneChat">
-          <h3>💬 Live Chat</h3>
-          <div className="chat-body" id="chat" />
-          <div className="chat-input">
-            <input id="chatInput" maxLength={120} placeholder="Say something…" />
-            <button id="chatSend">➤</button>
-          </div>
-        </div>
       </div>
 
-      {/* MOBILE TABS */}
-      <div className="mobile-tabs">
-        <button className="mtab active" data-pane="game">🚀 Game</button>
-        <button className="mtab" data-pane="paneWinners">🏆 Winners</button>
-        <button className="mtab" data-pane="paneChat">💬 Chat</button>
+      {/* ===================== ONLINE + BALANCE ===================== */}
+      <div className="online-row">
+        <div className="online-pill">🌍 <span className="tnum" id="online">0</span> players online</div>
+        <div className="balance-chip tnum">€<span id="balance">1000.00</span></div>
       </div>
+
+      {/* ===================== STAGE ===================== */}
+      <div className="stage">
+        <div className="planet p1" />
+        <div className="planet p2" />
+        <div className="planet p3" />
+        <canvas id="sky" />
+        <div className="you-won" id="youWon" />
+        <div className="stage-overlay">
+          <div id="centerMain">
+            <div className="multiplier tnum" id="mult">1.00x</div>
+            <div className="status-line" id="status">Connecting…</div>
+          </div>
+          <div className="countdown-wrap" id="countWrap" style={{ display: 'none' }}>
+            <div className="status-line">Next round in</div>
+            <div className="count-num tnum" id="countNum">5</div>
+            <div className="count-bar"><i id="countBar" /></div>
+          </div>
+        </div>
+        <div className="provably-badge" id="badgeFair"><span className="shield">🛡️</span> Provably Fair</div>
+      </div>
+
+      {/* ===================== HISTORY PILLS ===================== */}
+      <div className="history" id="history" />
 
       {/* ===================== CONTROLS ===================== */}
       <div className="controls">
-        <div className="ctl">
-          <label>Bet Amount</label>
+        <div className="ctl-labels"><span>Bet Amount</span><span>Auto Cash Out</span></div>
+        <div className="ctl-row">
           <div className="stepper">
             <button data-bet="-">−</button>
             <div className="val tnum">€<span id="betVal">100</span></div>
             <button data-bet="+">+</button>
           </div>
-          <div className="quick">
-            <button data-betq="0.5">½</button>
-            <button data-betq="2">2×</button>
-            <button data-betq="max">MAX</button>
-          </div>
-        </div>
-        <div className="ctl">
-          <label>Auto Cashout</label>
           <div className="stepper">
             <button data-auto="-">−</button>
             <div className="val tnum"><span id="autoVal">2.00</span>x</div>
             <button data-auto="+">+</button>
           </div>
-          <div className="quick">
-            <button data-autoq="off">OFF</button>
-            <button data-autoq="2">2x</button>
-            <button data-autoq="10">10x</button>
-          </div>
+        </div>
+        <div className="chips">
+          <button className="chip" data-betset="10">10</button>
+          <button className="chip" data-betset="25">25</button>
+          <button className="chip" data-betset="50">50</button>
+          <button className="chip active" data-betset="100">100</button>
+          <button className="chip" data-betset="500">500</button>
         </div>
         <button className="action waiting" id="action" disabled>
           <span id="actionMain">WAITING…</span>
@@ -110,11 +77,43 @@ export default function Page() {
         </button>
       </div>
 
+      {/* ===================== PANELS ===================== */}
+      <div className="panels">
+        <div className="panel">
+          <div className="panel-h">Recent Winners <span className="live">● Live</span></div>
+          <div className="winners" id="winners" />
+        </div>
+        <div className="panel">
+          <div className="panel-h">Chat <span className="live ghost">● <span className="tnum">1,245</span></span></div>
+          <div className="chat-body" id="chat" />
+          <div className="chat-input">
+            <input id="chatInput" maxLength={120} placeholder="Type a message…" />
+            <button id="chatSend">➤</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== BOTTOM NAV ===================== */}
+      <nav className="bottom-nav">
+        <button className="nav-item active" data-nav="game"><i>🚀</i><span>Game</span></button>
+        <button className="nav-item" data-nav="history"><i>🕘</i><span>History</span></button>
+        <button className="nav-fab" data-nav="bet">+</button>
+        <button className="nav-item" data-nav="stats"><i>📊</i><span>Stats</span></button>
+        <button className="nav-item" data-nav="menu"><i>☰</i><span>Menu</span></button>
+      </nav>
+
       {/* ===================== SETTINGS MODAL ===================== */}
       <div className="modal-bg" id="settingsModal">
         <div className="modal">
           <h2>Settings</h2>
           <p className="sub">Keep it simple. Play responsibly.</p>
+          <div className="field">
+            <label>Language</label>
+            <select id="lang" defaultValue="en">
+              <option value="en">English</option><option value="nl">Nederlands</option><option value="de">Deutsch</option>
+              <option value="es">Español</option><option value="pt">Português</option><option value="tr">Türkçe</option>
+            </select>
+          </div>
           <div className="toggle-row">
             <div className="t"><b>Sound effects</b><small>Launch, cash out & crash sounds</small></div>
             <div className="sw on" id="swSound"><i /></div>

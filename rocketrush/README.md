@@ -23,6 +23,17 @@ Rounds are generated client-side — **no backend, no database, no API keys.**
 > Already have it open and just want to glance at it without installing anything?
 > Open `index.html` directly in a browser — it's the exact same game in one file.
 
+### How it looks (iPhone 16 Pro)
+
+| Betting / countdown | Rocket rising | Provably fair |
+|---|---|---|
+| ![betting](screens/01-betting.png) | ![running](screens/02-running.png) | ![fair](screens/03-fair.png) |
+
+Built to match the product mockup: `ROCKET🚀RUSH` lockup, players-online pill,
+space stage with planets, dominant multiplier + "FLY HIGHER, CASH OUT SOONER!",
+preset bet chips, the big orange **Cash Out**, split Winners/Chat panels, and a
+bottom tab bar (Game · History · Bet · Stats · Menu).
+
 ---
 
 ## 📱 Test on your iPhone (same WiFi) — the whole point

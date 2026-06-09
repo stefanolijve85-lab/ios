@@ -365,7 +365,7 @@ function startRunning(){
   S.startTs=performance.now();
   $('countWrap').style.display='none';
   $('centerMain').style.display='block';
-  $('status').textContent=T('launching');
+  $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
   $('mult').classList.remove('crashed-tag');
   sfx.launch();
   renderAction();
@@ -400,7 +400,7 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   $('mult').textContent=S.mult.toFixed(2)+'x';
   const col = S.mult<2? '#fff' : S.mult<5? 'var(--primary)' : S.mult<10? 'var(--secondary)':'var(--success)';
   $('mult').style.color=col;
-  $('status').textContent = T('rising');
+  $('status').textContent = 'FLY HIGHER, CASH OUT SOONER!';
   if(S.bet_placed && !S.cashedOut) renderAction();
   requestAnimationFrame(tickRun);
 }
@@ -525,14 +525,17 @@ function sysChat(t){ addChat('RocketRush', t, true); }
 function setBet(v){ S.bet=Math.max(10,Math.min(Math.round(v), Math.max(10,Math.floor(S.balance)))); $('betVal').textContent=S.bet; renderAction(); }
 function setAuto(v){ S.auto = v<=1? 0 : Math.min(v,1000); $('autoVal').textContent = S.auto===0? 'OFF' : S.auto.toFixed(2); }
 
+function clearChips(){ document.querySelectorAll('[data-betset]').forEach(x=>x.classList.remove('active')); }
+function syncChips(){ clearChips(); document.querySelectorAll('[data-betset]').forEach(x=>{ if(+x.dataset.betset===S.bet) x.classList.add('active'); }); }
 document.querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{
   const step = S.bet<100?10:S.bet<500?50:100;
   setBet(S.bet + (b.dataset.bet==='+'?step:-step));
+  syncChips();
 });
-document.querySelectorAll('[data-betq]').forEach(b=>b.onclick=()=>{
-  const q=b.dataset.betq;
-  if(q==='max') setBet(S.balance);
-  else setBet(S.bet*parseFloat(q));
+// preset bet chips (10 / 25 / 50 / 100 / 500)
+document.querySelectorAll('[data-betset]').forEach(b=>b.onclick=()=>{
+  setBet(parseFloat(b.dataset.betset));
+  clearChips(); b.classList.add('active');
 });
 document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{
   const step = S.auto<2?0.1:S.auto<10?0.5:1;
@@ -568,13 +571,16 @@ $('swSession').onclick=function(){ this.classList.toggle('on'); };
 // language
 $('lang').onchange=e=>{ S.lang=e.target.value; renderAction(); };
 
-// mobile tabs
-document.querySelectorAll('.mtab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  document.querySelectorAll('.panel.side').forEach(p=>p.classList.remove('active'));
-  if(t.dataset.pane!=='game') $(t.dataset.pane).classList.add('active');
+// bottom navigation (Game / History / Bet / Stats / Menu)
+document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>{
+  const a=n.dataset.nav;
+  if(a==='menu'){ $('settingsModal').classList.add('show'); return; }
+  if(a==='history' || a==='stats'){ openFair(); return; }
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
 });
+// center FAB = quick place-bet / cash-out shortcut
+const fab=document.querySelector('.nav-fab'); if(fab) fab.onclick=onAction;
 
 /* ============================================================
    PROVABLY FAIR MODAL
@@ -624,11 +630,17 @@ function seedWinners(){
     addWinner(n,COLORS[i%COLORS.length],m,bet*m);
   }
 }
+function seedHistory(){
+  const demo=[1.23,2.15,8.42,1.08,12.65,2.34,1.91];
+  // pushHistory prepends (newest = leftmost), so insert reversed to keep order
+  [...demo].reverse().forEach(v=>pushHistory(v));
+}
 function boot(){
   S.bots=makeBots(18);
   resize();
   requestAnimationFrame(draw);
   seedWinners();
+  seedHistory();
   ambient();
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
