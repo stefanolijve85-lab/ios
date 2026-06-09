@@ -155,6 +155,7 @@ export default function Page() {
             <div className="t"><b>Session limit</b><small>Auto-pause after a set time (responsible gaming)</small></div>
             <div className="sw" id="swSession"><i /></div>
           </div>
+          <button className="closebtn" id="btnReset" style={{ background: 'rgba(244,63,94,.12)', border: '1px solid rgba(244,63,94,.4)', color: 'var(--danger)', marginTop: 14 }}>Reset progress</button>
           <button className="closebtn" data-close>Done</button>
         </div>
       </div>

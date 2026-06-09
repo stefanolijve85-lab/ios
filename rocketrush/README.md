@@ -128,6 +128,8 @@ Everything below works right now, client-side:
 - 💬 **Live chat** mockup (collapses into a tab on mobile)
 - 🕘 **History screen** — your bets (win/loss) + verifiable round history
 - 📊 **Stats screen** — net profit, win rate, best multiplier, streaks
+- 💾 **Persistent progress** — balance, history & stats survive refresh (and
+  server restart); "Reset progress" in Settings starts you fresh
 - 🛡️ **Provably Fair** verifier — tap the badge to verify any round
 - 🔊 Procedural sound, 🌐 6 languages, ♿ low-bandwidth mode, 📲 PWA install
 
@@ -196,6 +198,17 @@ kept as plain Node + Socket.io so the whole thing runs with one command.
 **Verified end-to-end** with two real browsers in one room: shared online count,
 a server-paid cashout, and the client verifying a live round's crash point
 against the server seed (`✓ VERIFIED`).
+
+### Persistence
+
+Your **balance is server-authoritative and persisted** keyed by a stable
+`playerId` (stored in your browser, sent on connect). The server keeps balances
+in `server/.data/balances.json` (gitignored) so progress survives both a refresh
+and a server restart — no database needed for the MVP (maps to the wallet table
+in [`docs/03`](docs/03-data-and-api.md)). Your **history & stats** persist in the
+browser (`localStorage`). If you ever hit €0 you get a free re-up, and
+**Settings → Reset progress** wipes the slate (clears local data + resets the
+server balance). Verified: play → refresh → balance/history/stats restored.
 
 ---
 

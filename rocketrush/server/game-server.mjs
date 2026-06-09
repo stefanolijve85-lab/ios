@@ -15,8 +15,31 @@
  */
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import path from 'node:path';
 import { Server } from 'socket.io';
 import { crashPoint, hmacHex, sha256 } from '../verify-fairness.mjs';
+
+/* ---- persistent balances (keyed by a stable per-browser playerId) ----
+   Simple JSON file so balances survive refreshes AND server restarts with no
+   database. In production this is the wallet table (docs/03). ---- */
+const DATA_DIR = path.join(process.cwd(), 'server', '.data');
+const DATA_FILE = path.join(DATA_DIR, 'balances.json');
+const balances = new Map();
+function loadBalances() {
+  try { if (existsSync(DATA_FILE)) for (const [k, v] of Object.entries(JSON.parse(readFileSync(DATA_FILE, 'utf8')))) balances.set(k, v); }
+  catch { /* start fresh */ }
+}
+let saveTimer = null;
+function saveBalances() {
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    try { mkdirSync(DATA_DIR, { recursive: true }); writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries(balances))); } catch { /* ignore */ }
+  }, 400);
+}
+const commit = p => { balances.set(p.pid, p.balance); saveBalances(); };
+loadBalances();
 
 const PORT = process.env.GAME_PORT ? Number(process.env.GAME_PORT) : 3001;
 
@@ -68,6 +91,7 @@ function settleCashout(sock, p, mult) {
   p.bet.cashedOut = true;
   const payout = Math.round(p.bet.amount * mult * 100) / 100;
   p.balance = Math.round((p.balance + payout) * 100) / 100;
+  commit(p);
   sock.emit('cashout:confirmed', { multiplier: mult, payout, balance: p.balance });
   io.emit('winner', { name: p.name, color: p.color, multiplier: mult, amount: payout });
 }
@@ -163,8 +187,12 @@ function snapshotFor(sock) {
 /* ----------------------------- connections ----------------------------- */
 io.on('connection', (sock) => {
   const name = 'You'; // the player is "You" on their own screen
-  const p = { name, color: '#22C55E', balance: START_BALANCE, bet: null };
+  const pid = (sock.handshake.auth && sock.handshake.auth.playerId) || sock.id;
+  let bal = balances.has(pid) ? balances.get(pid) : START_BALANCE;
+  if (!(bal >= 10)) bal = START_BALANCE;          // free re-up so you're never stuck (play money)
+  const p = { pid, name, color: '#22C55E', balance: bal, bet: null };
   players.set(sock.id, p);
+  commit(p);
 
   sock.emit('welcome', { name, balance: p.balance, online: online() });
   sock.emit('history', { rounds: game.recentRounds.slice(0, 20) });
@@ -178,6 +206,7 @@ io.on('connection', (sock) => {
     if (!(amount > 0) || amount > p.balance) return sock.emit('bet:rejected', { reason: 'INSUFFICIENT_BALANCE' });
     p.balance = Math.round((p.balance - amount) * 100) / 100;
     p.bet = { amount, auto: Number(auto) || 0, cashedOut: false };
+    commit(p);
     sock.emit('bet:confirmed', { amount, auto: p.bet.auto, balance: p.balance });
   });
 
@@ -185,7 +214,13 @@ io.on('connection', (sock) => {
     if (game.phase !== 'betting' || !p.bet || p.bet.cashedOut) return;
     p.balance = Math.round((p.balance + p.bet.amount) * 100) / 100;
     p.bet = null;
+    commit(p);
     sock.emit('bet:cancelled', { balance: p.balance });
+  });
+
+  sock.on('reset', () => {
+    p.balance = START_BALANCE; p.bet = null; commit(p);
+    sock.emit('balance', { balance: p.balance });
   });
 
   sock.on('cashout', () => {
@@ -200,7 +235,7 @@ io.on('connection', (sock) => {
     if (text) io.emit('chat', { user: 'Guest', text });
   });
 
-  sock.on('disconnect', () => { players.delete(sock.id); broadcastPlayers(); });
+  sock.on('disconnect', () => { commit(p); players.delete(sock.id); broadcastPlayers(); });
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {

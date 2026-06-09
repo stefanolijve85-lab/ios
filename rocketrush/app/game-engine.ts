@@ -506,7 +506,7 @@ function renderAction(){
 /* ============================================================
    UI: winners, chat, history, balance
    ============================================================ */
-function updateBalance(){ $('balance').textContent=fmt(S.balance); }
+function updateBalance(){ $('balance').textContent=fmt(S.balance); persist(); }
 function flashWon(text, good){
   const el=$('youWon'); el.textContent=text;
   el.style.color = good? 'var(--success)':'var(--danger)';
@@ -553,7 +553,7 @@ function recordWin(mult, payout){
   const s=S.stats; s.played++; s.wins++; s.wagered+=amount; s.returned+=payout;
   s.best=Math.max(s.best,mult); s.bestWin=Math.max(s.bestWin,profit);
   s.streak++; s.bestStreak=Math.max(s.bestStreak,s.streak);
-  S.curBet=null; refreshScreens();
+  S.curBet=null; persist(); refreshScreens();
 }
 function recordLoss(){
   if(!S.curBet) return;
@@ -561,7 +561,7 @@ function recordLoss(){
   S.myBets.unshift({ nonce:S.curBet.nonce, amount, won:false, profit:-amount });
   if(S.myBets.length>100) S.myBets.pop();
   const s=S.stats; s.played++; s.wagered+=amount; s.streak=0;
-  S.curBet=null; refreshScreens();
+  S.curBet=null; persist(); refreshScreens();
 }
 
 function renderHistory(){
@@ -687,6 +687,7 @@ $('swSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
 $('swLow').onclick=function(){ S.lowBw=!S.lowBw; this.classList.toggle('on',S.lowBw); resize(); };
 $('swReality').onclick=function(){ this.classList.toggle('on'); };
 $('swSession').onclick=function(){ this.classList.toggle('on'); };
+{ const rb=$('btnReset'); if(rb) rb.onclick=()=>{ resetProgress(); $('settingsModal').classList.remove('show'); }; }
 
 // language
 $('lang').onchange=e=>{ S.lang=e.target.value; renderAction(); };
@@ -792,6 +793,7 @@ function bindNet(sock){
   sock.on('chat',   d=>{ addChat(d.user, d.text, false); });
   sock.on('players',d=>{ setOnline(d.count); });
   sock.on('welcome',d=>{ S.balance=d.balance; updateBalance(); setOnline(d.online); });
+  sock.on('balance',d=>{ S.balance=d.balance; updateBalance(); });
   sock.on('history',d=>{
     S.rounds=(d.rounds||[]).map(r=>({ nonce:r.nonce, crash:r.crash, serverSeed:r.serverSeed, clientSeed:r.clientSeed, hmac:r.hmac }));
     if(S.rounds.length){ S.history=S.rounds.slice(0,18).map(r=>r.crash); renderPills(); }
@@ -810,7 +812,7 @@ function connectNet(){
   try{
     const proto = location.protocol==='https:' ? 'https' : 'http';
     const url = `${proto}://${location.hostname||'localhost'}:${NET.port}`;
-    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500 });
+    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500, auth:{ playerId:getPid() } });
     NET.sock=sock;
     bindNet(sock);
     sock.on('connect', ()=>{
@@ -821,6 +823,30 @@ function connectNet(){
   }catch(e){
     startLocal();
   }
+}
+
+/* ============================================================
+   PERSISTENCE: balance (server-authoritative) + history/stats (local)
+   ============================================================ */
+function getPid(){ try{ let p=localStorage.getItem('rr_pid'); if(!p){ p=randSeed(); localStorage.setItem('rr_pid',p); } return p; }catch(e){ return randSeed(); } }
+function persist(){
+  try{ localStorage.setItem('rr_save', JSON.stringify({ v:1, balance:S.balance, myBets:S.myBets.slice(0,100), stats:S.stats })); }catch(e){}
+}
+function loadSave(){
+  try{
+    const j=JSON.parse(localStorage.getItem('rr_save')||'null');
+    if(j && j.v===1){
+      if(Array.isArray(j.myBets)) S.myBets=j.myBets;
+      if(j.stats) S.stats=Object.assign(S.stats, j.stats);
+      if(typeof j.balance==='number') S.balance=j.balance;  // local mode; net welcome overrides
+    }
+  }catch(e){}
+}
+function resetProgress(){
+  S.myBets=[]; S.curBet=null;
+  S.stats={ played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 };
+  if(S.mode==='net' && NET.sock){ NET.sock.emit('reset'); } else { S.balance=1000; updateBalance(); }
+  persist(); refreshScreens();
 }
 
 /* ============================================================
@@ -844,6 +870,7 @@ function boot(){
   requestAnimationFrame(draw);
   seedWinners();
   seedHistory();
+  loadSave();   // restore balance (local) + history/stats from a previous session
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
