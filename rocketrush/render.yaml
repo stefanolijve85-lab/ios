@@ -1,0 +1,25 @@
+# RocketRush — Render Blueprint. In Render: New → Blueprint → point at this repo.
+# Single web service; WebSockets work on all Render plans.
+services:
+  - type: web
+    name: rocketrush
+    runtime: node
+    plan: free
+    rootDir: rocketrush          # remove if rocketrush/ is the repo root
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # --- Optional: enable Supabase accounts (set values in the dashboard). ---
+      # NEXT_PUBLIC_* are inlined at BUILD time, so set them before the build runs.
+      # - key: NEXT_PUBLIC_SUPABASE_URL
+      #   sync: false
+      # - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      #   sync: false
+      # - key: SUPABASE_URL
+      #   sync: false
+      # - key: SUPABASE_SERVICE_ROLE_KEY
+      #   sync: false

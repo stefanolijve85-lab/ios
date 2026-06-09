@@ -16,11 +16,13 @@ your iPhone.
 
 ```bash
 npm install
-npm run dev          # starts BOTH the game server (:3001) and the web app (:3000)
+npm run dev          # single-origin: the app + realtime game on one port (3000)
 ```
 
-Then open **http://localhost:3000** on your computer. `npm run dev` runs the
-game server and the web app together — **no database, no API keys, no config.**
+Then open **http://localhost:3000** on your computer. The Next.js app and the
+Socket.io game run on **one origin/port** (`server.mjs`) — **no database, no API
+keys, no config**, and it deploys as a single web service (see
+[Deploy](#-deploy-public-url)).
 
 **It's truly multiplayer:** open the URL on your **phone and your laptop at the
 same time** (same WiFi) and you'll share the exact same rocket, round, and crash —
@@ -116,10 +118,34 @@ it as a PWA — it launches full-screen like a real App Store app.
 | Symptom | Fix |
 |---------|-----|
 | Page won't load on iPhone | Same WiFi? Some routers enable "AP/client isolation" — disable it, or use a phone hotspot for both devices |
-| macOS firewall prompt | Allow incoming connections for `node` (you may be asked once for the web app and once for the game server) |
-| Shows "Offline mode" in chat | The client couldn't reach the game server on `:3001`. Make sure `npm run dev` is running (it starts both) and that port 3001 isn't blocked by your firewall |
+| macOS firewall prompt | Allow incoming connections for `node` |
+| Shows "Offline mode" in chat | The client couldn't reach the server. Make sure `npm run dev` is running and port 3000 isn't blocked by your firewall (the game falls back to a local simulation either way) |
 | Windows can't connect | Set the WiFi network to **Private**, or allow Node.js through Windows Defender Firewall |
 | Wrong IP | Pick the `192.168.*` / `10.*` address, not `127.0.0.1` |
+
+---
+
+## 🚀 Deploy (public URL)
+
+Because the app and the realtime game share **one origin/port**, RocketRush
+deploys as a single web service — give testers a public HTTPS URL they can open
+on any phone, no local machine needed.
+
+```
+Build:  npm install && npm run build
+Start:  npm start            # node server.mjs --prod  (binds $PORT)
+Health: GET /
+```
+
+- **Render** — New → Blueprint (uses `render.yaml`), or a Node web service with
+  the build/start commands above. WebSockets work on all plans.
+- **Railway** — Deploy from repo (Nixpacks or the included `Dockerfile`), then
+  generate a domain.
+- **Any Docker host** — `docker build -t rocketrush . && docker run -p 3000:3000 rocketrush`.
+
+Without Supabase keys the public build runs in **guest mode** — fully playable
+and shareable. Full step-by-step (env vars, persistence notes) →
+**[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
 
 ---
 
@@ -191,10 +217,12 @@ rocketrush/
 │  ├─ game-engine.ts      # client: rendering, controls, net client, auth + local fallback
 │  ├─ lib/supabase.ts     # browser Supabase client (null → guest mode)
 │  └─ globals.css         # design system + responsive layout (one file)
+├─ server.mjs            # single-origin server: serves Next + Socket.io on one port
 ├─ server/
-│  ├─ game-server.mjs     # authoritative Socket.io game server (shared rounds)
+│  ├─ game-server.mjs     # authoritative game logic, attachGame(io) (shared rounds)
 │  ├─ store.mjs           # data store: JSON (guests) / Supabase Postgres (accounts)
 │  └─ social.mjs          # leaderboard, public profiles & live activity feed
+├─ Dockerfile, render.yaml # deploy (see docs/DEPLOY.md)
 ├─ supabase/
 │  └─ schema.sql          # wallets, stats, bets, transactions + RLS
 ├─ .env.example           # Supabase keys (copy to .env.local to enable accounts)
@@ -210,12 +238,13 @@ rocketrush/
 
 ### How multiplayer works (MVP)
 
-The server (`server/game-server.mjs`) owns one round clock for everyone:
+The game logic (`server/game-server.mjs`) owns one round clock for everyone:
 decides the crash point **before** each round (provably fair), broadcasts
 `betting → start → crash`, validates every bet/cashout, and owns each player's
-balance. The client connects to `http://<same-host>:3001` automatically (so your
-phone reaches the server on your Mac with no config). This is the real product
-loop — it maps 1:1 to the NestJS `GameGateway` in [`docs/02`](docs/02-architecture.md);
+balance. It's attached to the **same HTTP server** that serves the app
+(`server.mjs`), so the client connects **same-origin** — identical on localhost,
+your LAN (iPhone), and a public HTTPS host. This is the real product loop — it
+maps 1:1 to the NestJS `GameGateway` in [`docs/02`](docs/02-architecture.md);
 kept as plain Node + Socket.io so the whole thing runs with one command.
 
 **Verified end-to-end** with two real browsers in one room: shared online count,
@@ -293,10 +322,9 @@ all-time) populates, and tapping an entry opens a 6-stat profile card.
 | Command | What it does |
 |---------|--------------|
 | `npm install` | Install deps |
-| `npm run dev` | Start game server (:3001) **and** web app (:3000), LAN-accessible |
-| `npm run dev:web` / `npm run dev:server` | Start just one side |
-| `npm run build` | Production build of the web app |
-| `npm run start` | Serve production web app + game server |
+| `npm run dev` | Single-origin dev server (app + game) on port 3000, LAN-accessible |
+| `npm run build` | Production build |
+| `npm start` | Production single-origin server (`node server.mjs --prod`) |
 | `npm run verify` | Run the provably-fair verifier over 200k rounds |
 
 ## ✅ Verify fairness yourself

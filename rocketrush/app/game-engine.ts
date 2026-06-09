@@ -856,9 +856,10 @@ function applyProfile(d){
 function connectNet(){
   let settled=false;
   try{
-    const proto = location.protocol==='https:' ? 'https' : 'http';
-    const url = `${proto}://${location.hostname||'localhost'}:${NET.port}`;
-    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500, auth:{ playerId:getPid(), token:NET.token } });
+    // Same-origin: the game runs on the same host/port as this page (single origin),
+    // so this works on localhost, LAN (iPhone) and a public HTTPS host alike.
+    const url = (typeof location!=='undefined' && location.origin) ? location.origin : undefined;
+    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:2500, auth:{ playerId:getPid(), token:NET.token } });
     NET.sock=sock;
     bindNet(sock);
     sock.on('connect', ()=>{
@@ -867,7 +868,7 @@ function connectNet(){
     });
     sock.on('disconnect', ()=>{ NET.connected=false; });
     sock.on('connect_error', ()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } });
-    setTimeout(()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } }, 1800);
+    setTimeout(()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } }, 3000);
   }catch(e){
     startLocal();
   }

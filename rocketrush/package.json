@@ -4,13 +4,9 @@
   "private": true,
   "description": "RocketRush — a mobile-first multiplayer crash game (Next.js + Socket.io).",
   "scripts": {
-    "dev": "concurrently -k -n GAME,WEB -c magenta,blue \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:web": "next dev -H 0.0.0.0 -p 3000",
-    "dev:server": "node server/game-server.mjs",
+    "dev": "node server.mjs",
     "build": "next build",
-    "start": "concurrently -k -n GAME,WEB -c magenta,blue \"npm:start:server\" \"npm:start:web\"",
-    "start:web": "next start -H 0.0.0.0 -p 3000",
-    "start:server": "node server/game-server.mjs",
+    "start": "node server.mjs --prod",
     "lint": "next lint",
     "verify": "node verify-fairness.mjs"
   },
@@ -26,7 +22,6 @@
     "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
-    "concurrently": "9.1.2",
     "typescript": "5.5.3"
   }
 }
