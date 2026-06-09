@@ -1,11 +1,18 @@
 // @ts-nocheck
-/* RocketRush game engine — ported verbatim from the proven standalone build.
+/* RocketRush game engine.
+   - NET mode: connects to the authoritative game server (server/game-server.mjs)
+     so all players share one round clock. The server owns crash points + balances.
+   - LOCAL mode: if the server can't be reached (offline / file://), it runs the
+     same loop as a client-side simulation so the game is ALWAYS playable.
    Client-side only: call startGame() inside a useEffect. Returns a teardown fn. */
+import { io } from 'socket.io-client';
+
 export function startGame(): () => void {
   'use strict';
   let ENGINE_ALIVE = true;
   const _ints: number[] = [];
   const _int = (f: any, m: number) => { const id = window.setInterval(f, m); _ints.push(id); return id; };
+  const NET = { sock: null, port: 3001 };
 
 /* ============================================================
    RocketRush — single-file playable demo
@@ -117,6 +124,7 @@ const S = {
   balance: 1000.00,
   bet: 100,
   auto: 2.00,           // 0 = off
+  mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
   phase: 'idle',        // betting | running | crashed
   mult: 1.00,
   crashAt: 0,
@@ -344,20 +352,25 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
     S.queuedBet=false; placeBet(true);
   }
 
-  // countdown UI
+  showCountdown(5000, startRunning);
+  renderAction();
+}
+
+// Shared countdown UI. onDone is null in net mode (the server starts the round).
+function showCountdown(ms, onDone){
   $('centerMain').style.display='none';
   $('countWrap').style.display='flex';
-  let c=5.0;
-  $('countNum').textContent=Math.ceil(c);
+  const total=Math.max(1,ms); let left=ms;
+  $('countNum').textContent=Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
-    c-=0.1;
-    $('countBar').style.transform='scaleX('+Math.max(0,c/5)+')';
-    if(Math.ceil(c)!==+$('countNum').textContent && c>0){ $('countNum').textContent=Math.ceil(c); if(c<=3) sfx.tick(); }
-    if(c<=0){ clearInterval(S.cdTimer); startRunning(); }
+    left-=100;
+    $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
+    const sec=Math.max(0,Math.ceil(left/1000));
+    if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3) sfx.tick(); }
+    if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
-  renderAction();
 }
 
 function startRunning(){
@@ -381,20 +394,20 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   const t=(performance.now()-S.startTs)/1000;
   S.mult = multAt(t);
 
-  if(S.mult>=S.crashAt){
-    S.mult=S.crashAt; S.crashTime=t;
-    return crash();
-  }
-
-  // auto cashout
-  if(S.bet_placed && !S.cashedOut && S.auto>0 && S.mult>=S.auto){ doCashout(); }
-
-  // bots cash out
-  S.bots.forEach(b=>{
-    if(b.active && !b.done && S.mult>=b.target && b.target<S.crashAt){
-      b.done=true; addWinner(b.name,b.color,b.target,b.bet*b.target);
+  if(S.mode==='local'){
+    if(S.mult>=S.crashAt){
+      S.mult=S.crashAt; S.crashTime=t;
+      return crash();
     }
-  });
+    // auto cashout (server handles this in net mode)
+    if(S.bet_placed && !S.cashedOut && S.auto>0 && S.mult>=S.auto){ doCashout(); }
+    // bots cash out (server sends winners in net mode)
+    S.bots.forEach(b=>{
+      if(b.active && !b.done && S.mult>=b.target && b.target<S.crashAt){
+        b.done=true; addWinner(b.name,b.color,b.target,b.bet*b.target);
+      }
+    });
+  }
 
   // UI
   $('mult').textContent=S.mult.toFixed(2)+'x';
@@ -432,6 +445,7 @@ function crash(){
    ============================================================ */
 function placeBet(silent){
   if(S.balance<S.bet) return;
+  if(S.mode==='net'){ NET.sock.emit('bet:place',{amount:S.bet, auto:S.auto}); if(!silent) sfx.bet(); return; }
   S.balance-=S.bet; S.bet_placed=true; S.bet_amount=S.bet; S.cashedOut=false;
   updateBalance();
   if(!silent) sfx.bet();
@@ -439,6 +453,7 @@ function placeBet(silent){
 }
 function doCashout(){
   if(!S.bet_placed||S.cashedOut) return;
+  if(S.mode==='net'){ NET.sock.emit('cashout'); return; } // server confirms + pays
   S.cashedOut=true; S.bet_placed=false; S.cashedAt=S.mult;
   const win=S.bet_amount*S.mult;
   S.balance+=win; updateBalance();
@@ -451,7 +466,8 @@ function doCashout(){
 function onAction(){
   if(S.phase==='betting'){
     if(S.bet_placed){ // cancel
-      S.balance+=S.bet_amount; S.bet_placed=false; updateBalance();
+      if(S.mode==='net'){ NET.sock.emit('bet:cancel'); }
+      else { S.balance+=S.bet_amount; S.bet_placed=false; updateBalance(); }
     } else placeBet();
     renderAction();
   } else if(S.phase==='running'){
@@ -621,6 +637,80 @@ function ambient(){
 }
 
 /* ============================================================
+   NETWORK: authoritative server, with graceful local fallback
+   ============================================================ */
+function setOnline(n){ $('online').textContent = (typeof n==='number'? n : 0).toLocaleString('en-US'); }
+
+function netBetting(d){
+  S.phase='betting'; S.mult=1.00; S.cashedOut=false; S.bet_placed=false; S.bet_amount=0; particles=[];
+  S.nonce=d.nonce; S.serverSeedHash=d.serverSeedHash; S.prevServerSeed=d.prevServerSeed; if(d.clientSeed) S.clientSeed=d.clientSeed;
+  $('fSeedHash').textContent=S.serverSeedHash||'—';
+  $('fSeedReveal').textContent=S.prevServerSeed||'—';
+  $('fNonce').textContent=S.nonce;
+  if(S.queuedBet && S.balance>=S.bet){ S.queuedBet=false; placeBet(true); }
+  showCountdown(d.startsInMs, null);   // the server triggers round:start
+  renderAction();
+}
+function netStart(){
+  S.phase='running'; S.startTs=performance.now();
+  $('countWrap').style.display='none'; $('centerMain').style.display='block';
+  $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
+  $('mult').classList.remove('crashed-tag');
+  sfx.launch(); renderAction(); tickRun();
+}
+function netCrash(d){
+  S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
+  S.crashTime=(performance.now()-S.startTs)/1000;
+  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').classList.add('crashed-tag');
+  $('status').textContent=T('crashed')+' — '+T('flew'); sfx.crash();
+  if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
+  S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
+  pushHistory(d.crashPoint);
+  renderAction();
+}
+function bindNet(sock){
+  sock.on('round:betting', d=>{ if(S.mode==='net') netBetting(d); });
+  sock.on('round:start',  ()=>{ if(S.mode==='net') netStart(); });
+  sock.on('round:crash',  d=>{ if(S.mode==='net') netCrash(d); });
+  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; updateBalance(); renderAction(); });
+  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.balance=d.balance; updateBalance(); renderAction(); });
+  sock.on('bet:rejected',  ()=>{ renderAction(); });
+  sock.on('cashout:confirmed', d=>{
+    S.cashedOut=true; S.bet_placed=false; S.cashedAt=d.multiplier; S.balance=d.balance; updateBalance();
+    sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
+    flashWon('+€'+fmt(d.payout)+'  @ '+d.multiplier.toFixed(2)+'x', true); renderAction();
+  });
+  sock.on('winner', d=>{ if(d.name!=='You') addWinner(d.name, d.color||'#FF8A00', d.multiplier, d.amount); });
+  sock.on('chat',   d=>{ addChat(d.user, d.text, false); });
+  sock.on('players',d=>{ setOnline(d.count); });
+  sock.on('welcome',d=>{ S.balance=d.balance; updateBalance(); setOnline(d.online); });
+}
+function startLocal(){
+  if(S.mode==='net') return;
+  S.mode='local';
+  sysChat('Offline mode — playing a local simulation. Start the game server for live multiplayer.');
+  ambient();
+  startBetting();
+}
+function connectNet(){
+  let settled=false;
+  try{
+    const proto = location.protocol==='https:' ? 'https' : 'http';
+    const url = `${proto}://${location.hostname||'localhost'}:${NET.port}`;
+    const sock = io(url, { transports:['websocket','polling'], reconnection:true, timeout:1500 });
+    NET.sock=sock;
+    bindNet(sock);
+    sock.on('connect', ()=>{
+      if(!settled){ settled=true; S.mode='net'; clearInterval(S.cdTimer); sysChat('🌍 Connected — playing live with everyone online.'); }
+    });
+    sock.on('connect_error', ()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } });
+    setTimeout(()=>{ if(!settled){ settled=true; try{sock.close();}catch(e){} startLocal(); } }, 1800);
+  }catch(e){
+    startLocal();
+  }
+}
+
+/* ============================================================
    BOOT
    ============================================================ */
 function seedWinners(){
@@ -641,15 +731,14 @@ function boot(){
   requestAnimationFrame(draw);
   seedWinners();
   seedHistory();
-  ambient();
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
   setBet(100); setAuto(2.00);
-  startBetting();
+  connectNet();   // tries the live server; falls back to local simulation
 }
 boot();
 
 
-  return () => { ENGINE_ALIVE = false; _ints.forEach(clearInterval); if (typeof S !== "undefined" && S.cdTimer) clearInterval(S.cdTimer); };
+  return () => { ENGINE_ALIVE = false; _ints.forEach(clearInterval); if (typeof S !== "undefined" && S.cdTimer) clearInterval(S.cdTimer); try { if (NET.sock) NET.sock.close(); } catch (e) {} };
 }

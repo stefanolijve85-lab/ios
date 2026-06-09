@@ -2,11 +2,13 @@
 
 **The Apple of crash games.** Simple. Fast. Premium. Instantly understandable.
 
-A mobile-first multiplayer crash game prototype. Place a bet → watch the rocket
-rise → cash out before it crashes. A new player understands it in 3 seconds.
+A mobile-first **multiplayer** crash game. Place a bet → watch the rocket rise →
+cash out before it crashes. A new player understands it in 3 seconds.
 
-This is a **real, runnable Next.js app** — not a design concept. Two commands and
-you're playing it on your iPhone.
+This is a **real, runnable app with a real backend** — not a design concept.
+An authoritative Node + Socket.io server runs one shared round clock for every
+player; the Next.js client renders it. Two commands and you're playing it on
+your iPhone.
 
 ---
 
@@ -14,20 +16,33 @@ you're playing it on your iPhone.
 
 ```bash
 npm install
-npm run dev
+npm run dev          # starts BOTH the game server (:3001) and the web app (:3000)
 ```
 
-Then open **http://localhost:3000** on your computer.
-Rounds are generated client-side — **no backend, no database, no API keys.**
+Then open **http://localhost:3000** on your computer. `npm run dev` runs the
+game server and the web app together — **no database, no API keys, no config.**
 
-> Already have it open and just want to glance at it without installing anything?
-> Open `index.html` directly in a browser — it's the exact same game in one file.
+**It's truly multiplayer:** open the URL on your **phone and your laptop at the
+same time** (same WiFi) and you'll share the exact same rocket, round, and crash —
+with a live online count, shared winners feed and chat.
+
+> **Always playable.** If the game server isn't reachable, the client
+> automatically falls back to a local simulation so the game never gets stuck.
+> The single-file `index.html` is a pure-local version you can open with no
+> install at all.
 
 ### How it looks (iPhone 16 Pro)
 
 | Betting / countdown | Rocket rising | Provably fair |
 |---|---|---|
 | ![betting](screens/01-betting.png) | ![running](screens/02-running.png) | ![fair](screens/03-fair.png) |
+
+**Live multiplayer** — note `2 PLAYERS ONLINE` (the real shared count) and a
+server-paid cashout. These are two separate browsers in one round:
+
+| Player A (live) | Player B (same round) |
+|---|---|
+| ![player A](screens/05-live.png) | ![player B](screens/06-live-b.png) |
 
 Built to match the product mockup: `ROCKET🚀RUSH` lockup, players-online pill,
 space stage with planets, dominant multiplier + "FLY HIGHER, CASH OUT SOONER!",
@@ -83,7 +98,8 @@ it as a PWA — it launches full-screen like a real App Store app.
 | Symptom | Fix |
 |---------|-----|
 | Page won't load on iPhone | Same WiFi? Some routers enable "AP/client isolation" — disable it, or use a phone hotspot for both devices |
-| macOS firewall prompt | Allow incoming connections for `node` |
+| macOS firewall prompt | Allow incoming connections for `node` (you may be asked once for the web app and once for the game server) |
+| Shows "Offline mode" in chat | The client couldn't reach the game server on `:3001`. Make sure `npm run dev` is running (it starts both) and that port 3001 isn't blocked by your firewall |
 | Windows can't connect | Set the WiFi network to **Private**, or allow Node.js through Windows Defender Firewall |
 | Wrong IP | Pick the `192.168.*` / `10.*` address, not `127.0.0.1` |
 
@@ -106,8 +122,9 @@ Everything below works right now, client-side:
 - 🛡️ **Provably Fair** verifier — tap the badge to verify any round
 - 🔊 Procedural sound, 🌐 6 languages, ♿ low-bandwidth mode, 📲 PWA install
 
-The game **simulates real rounds** (5s betting → launch → rising → crash → repeat)
-with simulated other players, so it feels multiplayer with zero infrastructure.
+Rounds are **driven by the authoritative server** (5s betting → launch → rising →
+crash → repeat) and shared by everyone connected. Bots keep the room lively when
+you're the only human. If the server is unreachable, the same loop runs locally.
 
 ---
 
@@ -130,8 +147,8 @@ On desktop (≥901px) they expand into side panels — same code, no redesign.
 ### Performance
 - **60 FPS** via a single `requestAnimationFrame` canvas loop; the React tree
   renders **once** and never re-renders (the engine updates the DOM imperatively).
-- **No heavy libraries** — just Next + React. No animation framework, no socket
-  client, no UI kit. First load ≈ **96 kB**, page chunk ≈ **9 kB**.
+- **No heavy libraries** — Next + React + Socket.io only. No animation framework,
+  no UI kit. First load ≈ **110 kB**. The 60fps loop is hand-rolled canvas.
 - Low-bandwidth mode drops star/particle counts for older devices.
 
 ---
@@ -143,11 +160,13 @@ rocketrush/
 ├─ app/
 │  ├─ layout.tsx          # html shell, mobile viewport + PWA metadata
 │  ├─ page.tsx            # the game screen (static JSX, rendered once)
-│  ├─ game-engine.ts      # round loop, provably-fair, simulated multiplayer
+│  ├─ game-engine.ts      # client: rendering, controls, net client + local fallback
 │  └─ globals.css         # design system + responsive layout (one file)
+├─ server/
+│  └─ game-server.mjs     # authoritative Socket.io game server (shared rounds)
 ├─ public/
 │  ├─ manifest.webmanifest, icon.svg   # PWA install
-├─ index.html             # the same game as a zero-install single file
+├─ index.html             # the same game as a zero-install single file (local-only)
 ├─ verify-fairness.mjs    # provably-fair verifier (run: npm run verify)
 ├─ docs/                  # full architecture & design deliverables
 ├─ package.json           # scripts: dev / build / start / verify
@@ -155,16 +174,31 @@ rocketrush/
 └─ tsconfig.json
 ```
 
+### How multiplayer works (MVP)
+
+The server (`server/game-server.mjs`) owns one round clock for everyone:
+decides the crash point **before** each round (provably fair), broadcasts
+`betting → start → crash`, validates every bet/cashout, and owns each player's
+balance. The client connects to `http://<same-host>:3001` automatically (so your
+phone reaches the server on your Mac with no config). This is the real product
+loop — it maps 1:1 to the NestJS `GameGateway` in [`docs/02`](docs/02-architecture.md);
+kept as plain Node + Socket.io so the whole thing runs with one command.
+
+**Verified end-to-end** with two real browsers in one room: shared online count,
+a server-paid cashout, and the client verifying a live round's crash point
+against the server seed (`✓ VERIFIED`).
+
 ---
 
 ## 🧪 Commands
 
 | Command | What it does |
 |---------|--------------|
-| `npm install` | Install deps (Next + React only) |
-| `npm run dev` | Dev server on `0.0.0.0:3000` (LAN-accessible) |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build on `0.0.0.0:3000` |
+| `npm install` | Install deps |
+| `npm run dev` | Start game server (:3001) **and** web app (:3000), LAN-accessible |
+| `npm run dev:web` / `npm run dev:server` | Start just one side |
+| `npm run build` | Production build of the web app |
+| `npm run start` | Serve production web app + game server |
 | `npm run verify` | Run the provably-fair verifier over 200k rounds |
 
 ## ✅ Verify fairness yourself
@@ -186,8 +220,8 @@ UI and swaps the client-side simulation for an authoritative server.
 
 | Phase | Theme | Highlights |
 |-------|-------|-----------|
-| **Now — Prototype** | Feel & fairness | This app: real loop, provably fair, mobile-first, PWA |
-| **P1 — Real backend** | Authoritative rounds | NestJS game server owns the crash point + clock; client renders. Socket.io contract in `docs/02` |
+| **Now — MVP** | Real multiplayer | This app: authoritative Socket.io server, shared rounds, provably fair, mobile-first, PWA |
+| **P1 — Harden the backend** | Production server | Port `server/game-server.mjs` to the NestJS `GameGateway` (`docs/02`), add Redis adapter + leader election for multi-node |
 | **P2 — Accounts & wallet** | Real money loop | Auth + 2FA, double-entry ledger, atomic idempotent bet/cashout (`docs/03`) |
 | **P3 — Scale realtime** | Concurrency | Redis Socket.io adapter, leader-elected engine, sticky WSS, HPA (`docs/04`) |
 | **P4 — Data backbone** | Analytics & risk | Kafka stream → ledger, analytics, fraud, payout consumers |
