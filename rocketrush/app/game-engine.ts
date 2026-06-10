@@ -319,8 +319,13 @@ function resize(){
   const r = cvs.getBoundingClientRect();
   W=r.width; H=r.height;
   cvs.width=W*DPR; cvs.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
-  const count = S.lowBw? 40 : 130;
-  stars = Array.from({length:count}, ()=>({ x:Math.random()*W, y:Math.random()*H, z:Math.random()*.8+.2, r:Math.random()*1.4+.3 }));
+  const count = S.lowBw? 46 : 150;
+  stars = Array.from({length:count}, ()=>{
+    const bright = Math.random()<0.12;
+    return { x:Math.random()*W, y:Math.random()*H, z:Math.random()*.8+.2,
+      r:(bright?1.5:0.95)*(Math.random()*1.0+.4), tw:Math.random()*7, tws:rnd(0.5,1.7),
+      bright, blu:Math.random()<0.4 };
+  });
 }
 window.addEventListener('resize', resize);
 
@@ -340,15 +345,28 @@ let shakeT=0;
 function draw(ts){ if(!ENGINE_ALIVE) return;
   ctx.clearRect(0,0,W,H);
 
-  // stars (parallax drift; faster while running)
-  const speed = S.phase==='running' ? Math.min(S.mult*0.4, 8) : 0.3;
-  ctx.fillStyle='#fff';
+  // stars (parallax drift; twinkle; turn into speed streaks when flying fast)
+  const now = performance.now();
+  const speed = S.phase==='running' ? Math.min(S.mult*0.45, 9) : 0.3;
+  const streak = S.phase==='running' && speed>2.4;   // motion-blur speed sensation
   for(const s of stars){
     s.y += s.z*speed;
     if(s.y>H){ s.y=0; s.x=Math.random()*W; }
-    ctx.globalAlpha = s.z*0.9;
-    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+    const tw = 0.55 + 0.45*Math.sin(now*0.001*s.tws + s.tw);
+    ctx.globalAlpha = s.z*0.9*tw;
+    ctx.fillStyle = s.blu ? '#cfe0ff' : '#ffffff';
+    if(streak){ const len = Math.min(s.z*speed*2.2, 28); ctx.fillRect(s.x-s.r*0.5, s.y, s.r, len); }
+    else { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill(); }
   }
+  // additive bloom on the brightest stars
+  ctx.globalCompositeOperation='lighter';
+  for(const s of stars){ if(!s.bright) continue;
+    const tw = 0.5 + 0.5*Math.sin(now*0.001*s.tws + s.tw);
+    ctx.globalAlpha = s.z*0.45*tw;
+    ctx.fillStyle = s.blu ? 'rgba(150,190,255,.9)' : 'rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*2.4,0,7); ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
   ctx.globalAlpha=1;
 
   // BETTING: the rocket sits on the pad at bottom-left, engine warming up,
@@ -380,15 +398,20 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // up. Shows ONLY while flying — on crash it vanishes, leaving just the explosion.
     // No filled area / horizontal base line anymore.
     if(!crashed){
-      const steps=36; const pts=[{x:0.12*W,y:0.86*H}];
+      const steps=S.lowBw?22:36; const pts=[{x:0.12*W,y:0.86*H}];
       for(let i=1;i<=steps;i++) pts.push(rocketPos(tt*i/steps));
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
-      const grad = ctx.createLinearGradient(0.12*W,0.86*H,p.x,p.y);
-      grad.addColorStop(0,'rgba(255,138,0,0)');
-      grad.addColorStop(1,'rgba(255,170,40,1)');
-      ctx.strokeStyle=grad; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+      const SCt = rocketScale();
+      const trace=()=>{ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); };
+      const lg=(...st)=>{ const g=ctx.createLinearGradient(0.12*W,0.86*H,p.x,p.y); st.forEach(s=>g.addColorStop(s[0],s[1])); return g; };
+      ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.globalCompositeOperation='lighter';   // additive → glow / light bloom
+      // wide soft bloom
+      trace(); ctx.strokeStyle=lg([0,'rgba(255,80,20,0)'],[.6,'rgba(255,120,20,.10)'],[1,'rgba(255,180,60,.22)']); ctx.lineWidth=12*SCt; ctx.stroke();
+      // mid orange→yellow body
+      trace(); ctx.strokeStyle=lg([0,'rgba(255,120,0,0)'],[.55,'rgba(255,150,30,.5)'],[1,'rgba(255,210,90,.8)']); ctx.lineWidth=5*SCt; ctx.stroke();
+      // hot near-white core at the tip
+      trace(); ctx.strokeStyle=lg([0,'rgba(255,180,60,0)'],[.7,'rgba(255,232,150,.7)'],[1,'rgba(255,255,235,1)']); ctx.lineWidth=2*SCt; ctx.stroke();
+      ctx.globalCompositeOperation='source-over';
     }
 
     // rocket — bigger and bobbing up & down as it powers to the moon
@@ -403,8 +426,11 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     if(Math.hypot(dx,dy) < 0.3){ ang = (S.lastAng!=null? S.lastAng : 0); }
     else { ang = Math.atan2(dy,dx) + Math.PI/2; S.lastAng = ang; }   // nose follows the curve (starts vertical, tips right)
     if(S.phase==='running'){
-      if(!S.lowBw && Math.random()<.95){
-        particles.push({x:p.x,y:ry, vx:rnd(-.7,.7)-1.4, vy:rnd(-.5,.5)+1.6, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
+      if(!S.lowBw){
+        const n = Math.random()<.85?2:1;
+        for(let k=0;k<n;k++) particles.push({x:p.x+rnd(-2,2),y:ry+rnd(0,3), vx:rnd(-.8,.8)-1.2, vy:rnd(-.4,.6)+1.7,
+          life:1, fade:rnd(.05,.085), r:rnd(1.3,3.0), glow:true,
+          c: Math.random()<.45?'#FFE08A':(Math.random()<.6?'#FF8A00':'#FF5A2A')});
       }
       drawRocket(p.x, ry, ang);
     } else {
@@ -419,9 +445,10 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     pt.vy += (pt.grav!=null?pt.grav:0); pt.vx*=0.99;
     pt.x+=pt.vx; pt.y+=pt.vy; pt.life-=(pt.fade!=null?pt.fade:.04);
     if(pt.life<=0){ particles.splice(i,1); continue; }
-    if(pt.smoke){ ctx.globalAlpha=pt.life*0.45; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r||4)*(1.6-pt.life),0,7); ctx.fill(); }
-    else { ctx.globalAlpha=pt.life; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r?pt.r*pt.life+0.4:2.4*pt.life+.6),0,7); ctx.fill(); }
+    if(pt.smoke){ ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=pt.life*0.42; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r||4)*(1.7-pt.life),0,7); ctx.fill(); }
+    else { ctx.globalCompositeOperation = pt.glow?'lighter':'source-over'; ctx.globalAlpha=pt.life; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r?pt.r*pt.life+0.4:2.4*pt.life+.6),0,7); ctx.fill(); }
   }
+  ctx.globalCompositeOperation='source-over';
   ctx.globalAlpha=1;
   requestAnimationFrame(draw);
 }
@@ -430,76 +457,96 @@ function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
 function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
-  // flame (behind body) — layered for depth. On the pad (heat 0→1) it grows from a
-  // small ignition flicker to full thrust; in flight (heat undefined) it's full.
-  const flick = Math.sin(performance.now()/32)*5;
-  const f = (heat==null) ? (10+flick) : (1.5 + heat*16 + flick*heat);
-  let fl = ctx.createLinearGradient(0,7,0,9+f);
-  fl.addColorStop(0,'rgba(255,236,170,1)'); fl.addColorStop(.45,'rgba(255,150,40,.95)'); fl.addColorStop(1,'rgba(255,80,90,0)');
-  ctx.fillStyle=fl;
-  ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.85)';
-  ctx.beginPath(); ctx.moveTo(-2.5,8); ctx.quadraticCurveTo(0,8+f*0.55,2.5,8); ctx.closePath(); ctx.fill();
+  const flick = Math.sin(performance.now()/30)*4;
+  const f = (heat==null) ? (11+flick) : (1.5 + heat*16 + flick*Math.max(.2,heat));
+  const gi = (heat==null?1:heat);   // glow intensity (warming up on the pad → full in flight)
 
-  // BODY — cylindrical shading (highlight centre-left → dark right edge) for a 3D tube
-  ctx.shadowColor='rgba(255,138,0,.5)'; ctx.shadowBlur=18;
+  // ENGINE GLOW + FLAME — additive for a real light bloom
+  ctx.globalCompositeOperation='lighter';
+  let eg = ctx.createRadialGradient(0,9,0, 0,9, 11*gi+3);
+  eg.addColorStop(0,`rgba(255,222,140,${.8*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.5*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,11*gi+3,0,7); ctx.fill();
+  let fl = ctx.createLinearGradient(0,7,0,9+f);
+  fl.addColorStop(0,'rgba(255,245,205,.95)'); fl.addColorStop(.4,'rgba(255,160,50,.85)'); fl.addColorStop(1,'rgba(255,70,60,0)');
+  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5,8); ctx.quadraticCurveTo(0,9+f,5,8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(-2.2,8); ctx.quadraticCurveTo(0,8+f*0.5,2.2,8); ctx.closePath(); ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+
+  // BODY — brushed-metal tube: cool highlight centre-left, darker steel right edge
+  ctx.shadowColor='rgba(255,150,40,.32)'; ctx.shadowBlur=12;
   let body = ctx.createLinearGradient(-7,0,7,0);
-  body.addColorStop(0,'#c9d2e0'); body.addColorStop(.32,'#ffffff'); body.addColorStop(.55,'#eef2f8'); body.addColorStop(1,'#9aa6ba');
+  body.addColorStop(0,'#aeb8c8'); body.addColorStop(.27,'#ffffff'); body.addColorStop(.5,'#dfe6f0'); body.addColorStop(.72,'#a9b3c3'); body.addColorStop(1,'#7c8698');
   ctx.fillStyle=body;
   ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(8,-4,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-4,0,-16); ctx.closePath(); ctx.fill();
   ctx.shadowBlur=0;
-  // nose cone — shaded orange
+  // specular highlight stripe (metallic sheen)
+  ctx.globalCompositeOperation='lighter';
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.0;
+  ctx.beginPath(); ctx.moveTo(-2.7,-12); ctx.quadraticCurveTo(-3.5,-2,-2.7,8); ctx.stroke();
+  ctx.globalCompositeOperation='source-over';
+  // nose cone — metallic orange
   let nose = ctx.createLinearGradient(-4,-16,4,-6);
-  nose.addColorStop(0,'#FFB454'); nose.addColorStop(.5,'#FF8A00'); nose.addColorStop(1,'#C75E00');
+  nose.addColorStop(0,'#FFD08A'); nose.addColorStop(.45,'#FF9A1F'); nose.addColorStop(1,'#B85200');
   ctx.fillStyle=nose;
   ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(6,-9,4,-5); ctx.lineTo(-4,-5); ctx.quadraticCurveTo(-6,-9,0,-16); ctx.closePath(); ctx.fill();
-  // body seam shadow (adds the cylinder roundness)
-  ctx.strokeStyle='rgba(90,100,120,.35)'; ctx.lineWidth=0.8;
-  ctx.beginPath(); ctx.moveTo(3.6,-6); ctx.quadraticCurveTo(4.4,2,3.4,9); ctx.stroke();
-  // window — recessed glass with rim
-  ctx.fillStyle='#39406b'; ctx.beginPath(); ctx.arc(0,-1.5,4,0,7); ctx.fill();
-  let glass = ctx.createRadialGradient(-1.2,-2.6,0.4,0,-1.5,4);
-  glass.addColorStop(0,'#cdb6ff'); glass.addColorStop(.5,'#9B5CF6'); glass.addColorStop(1,'#5b34a8');
+  // body seam shadow (cylinder roundness)
+  ctx.strokeStyle='rgba(68,78,98,.4)'; ctx.lineWidth=0.7;
+  ctx.beginPath(); ctx.moveTo(3.8,-6); ctx.quadraticCurveTo(4.6,2,3.4,9); ctx.stroke();
+  // window — recessed glass with rim + highlight
+  ctx.fillStyle='#2b3160'; ctx.beginPath(); ctx.arc(0,-1.5,4,0,7); ctx.fill();
+  let glass = ctx.createRadialGradient(-1.2,-2.6,0.3,0,-1.5,4);
+  glass.addColorStop(0,'#d8c6ff'); glass.addColorStop(.5,'#9B5CF6'); glass.addColorStop(1,'#4f2c95');
   ctx.fillStyle=glass; ctx.beginPath(); ctx.arc(0,-1.5,3.1,0,7); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(-1.1,-2.7,1,0,7); ctx.fill();
-  // fins — shaded
-  let fin = ctx.createLinearGradient(0,5,0,14); fin.addColorStop(0,'#FF7A5E'); fin.addColorStop(1,'#C8324A');
+  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(-1.1,-2.7,.95,0,7); ctx.fill();
+  // fins — metallic red
+  let fin = ctx.createLinearGradient(0,4,0,14); fin.addColorStop(0,'#FF8A6A'); fin.addColorStop(1,'#B82A44');
   ctx.fillStyle=fin;
   ctx.beginPath(); ctx.moveTo(-7,4); ctx.lineTo(-13,13); ctx.lineTo(-7,9); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(7,4); ctx.lineTo(13,13); ctx.lineTo(7,9); ctx.closePath(); ctx.fill();
-  // engine nozzle
-  ctx.fillStyle='#7b8398'; ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(4,9); ctx.lineTo(3,11); ctx.lineTo(-3,11); ctx.closePath(); ctx.fill();
+  // engine nozzle — shaded steel
+  let noz = ctx.createLinearGradient(0,9,0,11.5); noz.addColorStop(0,'#9aa3b5'); noz.addColorStop(1,'#5a6171');
+  ctx.fillStyle=noz; ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(4,9); ctx.lineTo(3,11.5); ctx.lineTo(-3,11.5); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 function spawnDebris(x,y){
   const SC=rocketScale();
-  for(let i=0;i<30;i++){
-    const a=Math.random()*7, sp=rnd(1.4,6.5)*Math.max(1,SC*0.5);
-    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 1.2, life:1,
-      c: Math.random()<.4?'#FFD166':(Math.random()<.5?'#FF8A00':'#F43F5E'),
-      r:(Math.random()<.3?2.2:1.2)*SC, grav:0.12, fade:0.018 });
+  // glowing energy sparks (vaporization) — additive
+  for(let i=0;i<(S.lowBw?22:36);i++){
+    const a=Math.random()*7, sp=rnd(1.6,7.5)*Math.max(1,SC*0.5);
+    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 1.2, life:1, glow:true,
+      c: Math.random()<.4?'#FFE38A':(Math.random()<.5?'#FF9A2A':'#FF5A4A'),
+      r:(Math.random()<.3?2.4:1.3)*SC, grav:0.12, fade:0.02 });
   }
   // a few dark smoke puffs
-  for(let i=0;i<6;i++){ const a=Math.random()*7, sp=rnd(.4,1.6); particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-1.4, life:1, c:'rgba(70,70,80,1)', r:5*SC, grav:-0.04, fade:0.01, smoke:true }); }
+  for(let i=0;i<6;i++){ const a=Math.random()*7, sp=rnd(.4,1.6); particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-1.4, life:1, c:'rgba(60,60,72,1)', r:5*SC, grav:-0.04, fade:0.012, smoke:true }); }
 }
 function drawBoom(x,y){
   const SC = rocketScale();
   const age = S.crashTs ? (performance.now()-S.crashTs)/1000 : 0;   // seconds since blow-up
   ctx.save(); ctx.translate(x,y);
-  // shockwave ring
-  if(age<0.55){ const ring=(10+age*150)*SC; ctx.globalAlpha=Math.max(0,0.55-age*1.1); ctx.strokeStyle='#FFE0A8'; ctx.lineWidth=2.5*SC; ctx.beginPath(); ctx.arc(0,0,ring,0,7); ctx.stroke(); ctx.globalAlpha=1; }
-  // fireball: white-hot core → orange → red → smoke, expands then fades
-  if(age<1.3){
-    const fr=(14+age*46)*SC*(age<0.45?1:Math.max(0.2,1.45-age));
-    const al=Math.max(0,1-age*0.85);
+  ctx.globalCompositeOperation='lighter';
+  // 1) instant white energy flash
+  if(age<0.18){ const a=Math.max(0,0.9-age*5), fr=(20+age*120)*SC;
+    const g=ctx.createRadialGradient(0,0,0,0,0,fr);
+    g.addColorStop(0,`rgba(255,255,255,${a})`); g.addColorStop(.5,`rgba(255,230,170,${a*0.6})`); g.addColorStop(1,'rgba(255,200,120,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,fr,0,7); ctx.fill(); }
+  // 2) crisp double shockwave ring
+  for(let k=0;k<2;k++){ const a0=k*0.06; if(age>a0 && age<0.6){ const ring=(8+(age-a0)*175)*SC;
+    ctx.globalAlpha=Math.max(0,0.5-(age-a0)*1.0); ctx.strokeStyle=k?'#FFC489':'#FFE8C0'; ctx.lineWidth=(2.4-k)*SC;
+    ctx.beginPath(); ctx.arc(0,0,ring,0,7); ctx.stroke(); ctx.globalAlpha=1; } }
+  // 3) fireball: white-hot core → orange → red, expands then fades
+  if(age<1.2){
+    const fr=(13+age*44)*SC*(age<0.4?1:Math.max(0.2,1.4-age));
+    const al=Math.max(0,1-age*0.9);
     const g=ctx.createRadialGradient(0,-age*6,0, 0,-age*6, Math.max(1,fr));
     g.addColorStop(0,`rgba(255,255,235,${al})`);
     g.addColorStop(.28,`rgba(255,190,70,${al})`);
-    g.addColorStop(.6,`rgba(240,90,40,${al*0.9})`);
-    g.addColorStop(.85,`rgba(120,40,30,${al*0.5})`);
+    g.addColorStop(.6,`rgba(240,90,40,${al*0.85})`);
+    g.addColorStop(.85,`rgba(120,40,30,${al*0.4})`);
     g.addColorStop(1,'rgba(40,20,20,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-age*6,fr,0,7); ctx.fill();
   }
+  ctx.globalCompositeOperation='source-over';
   ctx.restore();
 }
 
@@ -574,7 +621,7 @@ function startRunning(){
   $('countWrap').style.display='none';
   $('centerMain').style.display='block';
   $('status').textContent='';
-  $('mult').classList.remove('crashed-tag');
+  $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
   sfx.launch();
   setTimeout(killCdClip, 1200);   // after 'liftoff' finishes, kill the clip so it can't linger/resume mid-round
   renderAction();
@@ -606,10 +653,11 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
     });
   }
 
-  // UI
+  // UI — colour + a glow whose intensity rises with the multiplier tier
   $('mult').textContent=S.mult.toFixed(2)+'x';
-  const col = S.mult<2? '#fff' : S.mult<5? 'var(--primary)' : S.mult<10? 'var(--secondary)':'var(--success)';
-  $('mult').style.color=col;
+  const tier = S.mult<2? ['#ffffff','#ffffff',20] : S.mult<5? ['var(--primary)','#FF8A00',32] : S.mult<10? ['var(--secondary)','#9B5CF6',46] : ['var(--success)','#2BE07A',62];
+  const mEl=$('mult'); mEl.style.color=tier[0];
+  mEl.style.textShadow=`0 2px 16px rgba(0,0,0,.6), 0 0 ${tier[2]}px ${tier[1]}99`;
   $('status').textContent = '';
   S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut) renderAction(i); });
   requestAnimationFrame(tickRun);
@@ -618,8 +666,8 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
 function crash(){
   S.phase='crashed'; shakeT=240;
   $('mult').textContent=S.crashAt.toFixed(2)+'x';
-  $('mult').style.color='';                 // clear running color so the red crash style shows
-  $('mult').classList.add('crashed-tag');
+  $('mult').style.color=''; $('mult').style.textShadow='';   // clear running colour/glow so the red crash style shows
+  $('centerMain').classList.remove('live'); $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
   sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
@@ -1022,13 +1070,13 @@ function netStart(){
   S.phase='running'; S.startTs=performance.now();
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='';
-  $('mult').classList.remove('crashed-tag');
+  $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
   sfx.launch(); setTimeout(killCdClip, 1200); renderAction(); tickRun();
 }
 function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
-  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
+  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('centerMain').classList.remove('live'); $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
