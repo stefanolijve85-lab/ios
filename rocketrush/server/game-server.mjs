@@ -241,6 +241,15 @@ export async function attachGame(io) {
       pushProfile(sock, p);
     });
 
+    // DEMO/TEST ONLY: top the demo wallet up to €1,000,000 to test large stakes.
+    // (In the B2B product the operator wallet owns the balance — remove this.)
+    sock.on('testcredit', () => {
+      const TEST = 1000000, old = p.rec.balance; p.rec.balance = TEST;
+      addTx(p, 'reset', TEST - old);
+      p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec);
+      pushProfile(sock, p);
+    });
+
     sock.on('cashout', ({ slot } = {}) => {
       slot = slot === 1 ? 1 : 0; const b = p.bets[slot];
       if (game.phase !== 'running' || !b || b.cashedOut) return;
