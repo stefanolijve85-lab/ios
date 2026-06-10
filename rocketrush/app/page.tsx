@@ -76,7 +76,7 @@ export default function Page() {
           </div>
           <div className="stepper">
             <button data-auto="-">−</button>
-            <div className="val tnum"><span id="autoVal">2.00</span>x</div>
+            <div className="val tnum"><span id="autoVal">OFF</span></div>
             <button data-auto="+">+</button>
           </div>
         </div>

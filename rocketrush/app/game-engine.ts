@@ -125,7 +125,7 @@ function crashFromHmac(hex){
 const S = {
   balance: 1000.00,
   bet: 100,
-  auto: 2.00,           // 0 = off
+  auto: 0,              // 0 = OFF (manual cash out by default — you must press)
   mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
   rounds: [],           // recent completed rounds {nonce,crash,serverSeed,clientSeed,hmac}
   myBets: [],           // player outcomes {nonce,amount,won,mult,payout,profit}
@@ -359,24 +359,31 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     let ox=0,oy=0;
     if(S.phase==='crashed' && shakeT>0){ ox=rnd(-6,6); oy=rnd(-6,6); shakeT-=16; }
 
-    // flight trail (gradient curve)
     ctx.save(); ctx.translate(ox,oy);
+    const crashed = S.phase==='crashed';
+    const steps=36; const pts=[{x:0.12*W,y:0.86*H}];
+    for(let i=1;i<=steps;i++) pts.push(rocketPos(tt*i/steps));
+
+    // filled area under the curve, down to the BOTTOM of the stage (Aviator-style)
     ctx.beginPath();
-    ctx.moveTo(0.12*W, 0.86*H);
-    const steps=36;
-    for(let i=1;i<=steps;i++){
-      const q=rocketPos(tt*i/steps);
-      ctx.lineTo(q.x,q.y);
-    }
+    ctx.moveTo(0, H);
+    ctx.lineTo(0, 0.86*H);
+    for(const q of pts) ctx.lineTo(q.x, q.y);
+    ctx.lineTo(p.x, H);
+    ctx.closePath();
+    const fillG = ctx.createLinearGradient(0, Math.min(p.y, 0.86*H), 0, H);
+    if(crashed){ fillG.addColorStop(0,'rgba(244,63,94,.45)'); fillG.addColorStop(.5,'rgba(244,63,94,.18)'); fillG.addColorStop(1,'rgba(244,63,94,.03)'); }
+    else { fillG.addColorStop(0,'rgba(255,138,0,.42)'); fillG.addColorStop(.5,'rgba(255,94,98,.17)'); fillG.addColorStop(1,'rgba(255,94,98,.03)'); }
+    ctx.fillStyle=fillG; ctx.fill();
+
+    // the flight line on top
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
     const grad = ctx.createLinearGradient(0.12*W,0.86*H,p.x,p.y);
     grad.addColorStop(0,'rgba(255,138,0,0)');
-    grad.addColorStop(1, S.phase==='crashed'? 'rgba(244,63,94,.9)' : 'rgba(255,138,0,.95)');
-    ctx.strokeStyle=grad; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
-
-    // area fill under curve
-    ctx.lineTo(p.x, 0.86*H); ctx.lineTo(0.12*W,0.86*H); ctx.closePath();
-    ctx.fillStyle = S.phase==='crashed'? 'rgba(244,63,94,.06)':'rgba(255,138,0,.07)';
-    ctx.fill();
+    grad.addColorStop(1, crashed? 'rgba(244,63,94,1)' : 'rgba(255,170,40,1)');
+    ctx.strokeStyle=grad; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
 
     // rocket — bigger and bobbing up & down as it powers to the moon
     const bob = Math.sin(tt*3.4) * Math.min(0.05*H, 18);
@@ -693,7 +700,7 @@ function showWinPopup(mult, amount){
   $('wpAmt').textContent='+€'+fmt(amount);
   $('wpTotal').textContent='€'+fmt(totalWin());
   el.classList.add('show');
-  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 4500);
+  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2600);
 }
 // Live Activity feed (wins, big multipliers, joins). Rows are clickable → profile.
 function addActivity(ev){
@@ -836,7 +843,7 @@ function sysChat(t){ addChat('RocketRush', t, true); }
    CONTROLS WIRING
    ============================================================ */
 function setBet(v){ S.bet=Math.max(10,Math.min(Math.round(v), Math.max(10,Math.floor(S.balance)))); $('betVal').textContent=S.bet; renderAction(); }
-function setAuto(v){ S.auto = v<=1? 0 : Math.min(v,1000); $('autoVal').textContent = S.auto===0? 'OFF' : S.auto.toFixed(2); }
+function setAuto(v){ S.auto = v<=1? 0 : Math.min(v,1000); $('autoVal').textContent = S.auto===0? 'OFF' : S.auto.toFixed(2)+'x'; }
 
 function clearChips(){ document.querySelectorAll('[data-betset]').forEach(x=>x.classList.remove('active')); }
 function syncChips(){ clearChips(); document.querySelectorAll('[data-betset]').forEach(x=>{ if(+x.dataset.betset===S.bet) x.classList.add('active'); }); }
@@ -851,8 +858,12 @@ document.querySelectorAll('[data-betset]').forEach(b=>b.onclick=()=>{
   clearChips(); b.classList.add('active');
 });
 document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{
+  const up = b.dataset.auto==='+';
+  if(S.auto===0){ setAuto(up?1.50:0); return; }      // first step out of OFF → 1.50x
   const step = S.auto<2?0.1:S.auto<10?0.5:1;
-  setAuto((S.auto||1) + (b.dataset.auto==='+'?step:-step));
+  let v = S.auto + (up?step:-step);
+  if(v<=1.10 && !up) v=0;                              // stepping down past 1.1x → OFF
+  setAuto(v);
 });
 document.querySelectorAll('[data-autoq]').forEach(b=>b.onclick=()=>{
   const q=b.dataset.autoq; setAuto(q==='off'?0:parseFloat(q));
@@ -1253,7 +1264,7 @@ function boot(){
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
-  setBet(100); setAuto(2.00);
+  setBet(100); setAuto(0);
   authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
 }
 boot();
