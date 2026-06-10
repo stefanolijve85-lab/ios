@@ -238,12 +238,23 @@ function explosion(){
 let engineNodes=null;
 function startEngine(){
   if(!S.sound) return; stopEngine();
-  if(hasSnd('engine')){ const nodes=playSnd('engine',{loop:true,vol:0.5}); if(nodes){ engineNodes=nodes; return; } }
-  try{
+  // quiet + STATIC: loop only the steady tail of the engine clip (skip the
+  // build-up) so the sound never changes during a round and can't leak timing.
+  if(hasSnd('engine')){
+    try{
+      const a=ac(), b=_buf['engine']; if(!a||!b) throw 0;
+      const L=Math.min(4, b.duration*0.35), R=Math.max(L+1, b.duration-0.8);
+      const src=a.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=L; src.loopEnd=R;
+      const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(0.18, a.currentTime, 0.12);
+      src.connect(g); g.connect(a.destination); src.start(0, L);
+      engineNodes={src,g,a}; return;
+    }catch(e){}
+  }
+  try{ // synth fallback: constant low rumble
     const a=ac(); if(!a) return;
     const src=a.createBufferSource(); src.buffer=noiseBuffer(a,1.2); src.loop=true;
-    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=360;
-    const g=a.createGain(); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.07,a.currentTime+0.25);
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=300;
+    const g=a.createGain(); g.gain.value=0.045;
     src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
     engineNodes={src,g,a};
   }catch(e){}
@@ -385,10 +396,12 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
 
   // particles
   for(let i=particles.length-1;i>=0;i--){
-    const pt=particles[i]; pt.x+=pt.vx; pt.y+=pt.vy; pt.life-=.04;
+    const pt=particles[i];
+    pt.vy += (pt.grav!=null?pt.grav:0); pt.vx*=0.99;
+    pt.x+=pt.vx; pt.y+=pt.vy; pt.life-=(pt.fade!=null?pt.fade:.04);
     if(pt.life<=0){ particles.splice(i,1); continue; }
-    ctx.globalAlpha=pt.life; ctx.fillStyle=pt.c;
-    ctx.beginPath(); ctx.arc(pt.x,pt.y,2.4*pt.life+.6,0,7); ctx.fill();
+    if(pt.smoke){ ctx.globalAlpha=pt.life*0.45; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r||4)*(1.6-pt.life),0,7); ctx.fill(); }
+    else { ctx.globalAlpha=pt.life; ctx.fillStyle=pt.c; ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.r?pt.r*pt.life+0.4:2.4*pt.life+.6),0,7); ctx.fill(); }
   }
   ctx.globalAlpha=1;
   requestAnimationFrame(draw);
@@ -398,41 +411,74 @@ function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
 function drawRocket(x,y,ang){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
-  // flame (drawn first, behind body) — flickers
-  const f = 9+Math.sin(performance.now()/35)*5;
-  const fl = ctx.createLinearGradient(0,8,0,8+f);
-  fl.addColorStop(0,'rgba(255,209,102,.98)'); fl.addColorStop(1,'rgba(255,94,98,0)');
+  // flame (behind body) — layered for depth
+  const f = 10+Math.sin(performance.now()/32)*5;
+  let fl = ctx.createLinearGradient(0,7,0,9+f);
+  fl.addColorStop(0,'rgba(255,236,170,1)'); fl.addColorStop(.45,'rgba(255,150,40,.95)'); fl.addColorStop(1,'rgba(255,80,90,0)');
   ctx.fillStyle=fl;
-  ctx.beginPath(); ctx.moveTo(-5,8); ctx.lineTo(0,8+f); ctx.lineTo(5,8); ctx.closePath(); ctx.fill();
-  // glow
-  ctx.shadowColor='#FF8A00'; ctx.shadowBlur=22;
-  // body
-  ctx.fillStyle='#fff';
-  ctx.beginPath();
-  ctx.moveTo(0,-15); ctx.quadraticCurveTo(8,-3,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-3,0,-15); ctx.fill();
-  // nose cone
-  ctx.shadowBlur=0; ctx.fillStyle='#FF8A00';
-  ctx.beginPath(); ctx.moveTo(0,-15); ctx.quadraticCurveTo(5,-9,3.5,-5); ctx.lineTo(-3.5,-5); ctx.quadraticCurveTo(-5,-9,0,-15); ctx.fill();
-  // window
-  ctx.fillStyle='#9B5CF6';
-  ctx.beginPath(); ctx.arc(0,-1,3.4,0,7); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(-1,-2,1.1,0,7); ctx.fill();
-  // fins
-  ctx.fillStyle='#FF5E62';
-  ctx.beginPath(); ctx.moveTo(-7,5); ctx.lineTo(-13,13); ctx.lineTo(-7,9); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(7,5); ctx.lineTo(13,13); ctx.lineTo(7,9); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.beginPath(); ctx.moveTo(-2.5,8); ctx.quadraticCurveTo(0,8+f*0.55,2.5,8); ctx.closePath(); ctx.fill();
+
+  // BODY — cylindrical shading (highlight centre-left → dark right edge) for a 3D tube
+  ctx.shadowColor='rgba(255,138,0,.5)'; ctx.shadowBlur=18;
+  let body = ctx.createLinearGradient(-7,0,7,0);
+  body.addColorStop(0,'#c9d2e0'); body.addColorStop(.32,'#ffffff'); body.addColorStop(.55,'#eef2f8'); body.addColorStop(1,'#9aa6ba');
+  ctx.fillStyle=body;
+  ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(8,-4,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-4,0,-16); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  // nose cone — shaded orange
+  let nose = ctx.createLinearGradient(-4,-16,4,-6);
+  nose.addColorStop(0,'#FFB454'); nose.addColorStop(.5,'#FF8A00'); nose.addColorStop(1,'#C75E00');
+  ctx.fillStyle=nose;
+  ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(6,-9,4,-5); ctx.lineTo(-4,-5); ctx.quadraticCurveTo(-6,-9,0,-16); ctx.closePath(); ctx.fill();
+  // body seam shadow (adds the cylinder roundness)
+  ctx.strokeStyle='rgba(90,100,120,.35)'; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(3.6,-6); ctx.quadraticCurveTo(4.4,2,3.4,9); ctx.stroke();
+  // window — recessed glass with rim
+  ctx.fillStyle='#39406b'; ctx.beginPath(); ctx.arc(0,-1.5,4,0,7); ctx.fill();
+  let glass = ctx.createRadialGradient(-1.2,-2.6,0.4,0,-1.5,4);
+  glass.addColorStop(0,'#cdb6ff'); glass.addColorStop(.5,'#9B5CF6'); glass.addColorStop(1,'#5b34a8');
+  ctx.fillStyle=glass; ctx.beginPath(); ctx.arc(0,-1.5,3.1,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(-1.1,-2.7,1,0,7); ctx.fill();
+  // fins — shaded
+  let fin = ctx.createLinearGradient(0,5,0,14); fin.addColorStop(0,'#FF7A5E'); fin.addColorStop(1,'#C8324A');
+  ctx.fillStyle=fin;
+  ctx.beginPath(); ctx.moveTo(-7,4); ctx.lineTo(-13,13); ctx.lineTo(-7,9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(7,4); ctx.lineTo(13,13); ctx.lineTo(7,9); ctx.closePath(); ctx.fill();
+  // engine nozzle
+  ctx.fillStyle='#7b8398'; ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(4,9); ctx.lineTo(3,11); ctx.lineTo(-3,11); ctx.closePath(); ctx.fill();
   ctx.restore();
+}
+function spawnDebris(x,y){
+  const SC=rocketScale();
+  for(let i=0;i<30;i++){
+    const a=Math.random()*7, sp=rnd(1.4,6.5)*Math.max(1,SC*0.5);
+    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 1.2, life:1,
+      c: Math.random()<.4?'#FFD166':(Math.random()<.5?'#FF8A00':'#F43F5E'),
+      r:(Math.random()<.3?2.2:1.2)*SC, grav:0.12, fade:0.018 });
+  }
+  // a few dark smoke puffs
+  for(let i=0;i<6;i++){ const a=Math.random()*7, sp=rnd(.4,1.6); particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-1.4, life:1, c:'rgba(70,70,80,1)', r:5*SC, grav:-0.04, fade:0.01, smoke:true }); }
 }
 function drawBoom(x,y){
   const SC = rocketScale();
-  ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC);
-  ctx.shadowColor='#F43F5E'; ctx.shadowBlur=34;
-  for(let i=0;i<12;i++){
-    const a=i/12*7, r=9+(i%3)*4;
-    ctx.fillStyle = i%2 ? 'rgba(255,138,0,.92)' : 'rgba(244,63,94,.92)';
-    ctx.beginPath(); ctx.arc(Math.cos(a)*r,Math.sin(a)*r,6,0,7); ctx.fill();
+  const age = S.crashTs ? (performance.now()-S.crashTs)/1000 : 0;   // seconds since blow-up
+  ctx.save(); ctx.translate(x,y);
+  // shockwave ring
+  if(age<0.55){ const ring=(10+age*150)*SC; ctx.globalAlpha=Math.max(0,0.55-age*1.1); ctx.strokeStyle='#FFE0A8'; ctx.lineWidth=2.5*SC; ctx.beginPath(); ctx.arc(0,0,ring,0,7); ctx.stroke(); ctx.globalAlpha=1; }
+  // fireball: white-hot core → orange → red → smoke, expands then fades
+  if(age<1.3){
+    const fr=(14+age*46)*SC*(age<0.45?1:Math.max(0.2,1.45-age));
+    const al=Math.max(0,1-age*0.85);
+    const g=ctx.createRadialGradient(0,-age*6,0, 0,-age*6, Math.max(1,fr));
+    g.addColorStop(0,`rgba(255,255,235,${al})`);
+    g.addColorStop(.28,`rgba(255,190,70,${al})`);
+    g.addColorStop(.6,`rgba(240,90,40,${al*0.9})`);
+    g.addColorStop(.85,`rgba(120,40,30,${al*0.5})`);
+    g.addColorStop(1,'rgba(40,20,20,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-age*6,fr,0,7); ctx.fill();
   }
-  ctx.fillStyle='rgba(255,221,150,.95)'; ctx.beginPath(); ctx.arc(0,0,7,0,7); ctx.fill();
   ctx.restore();
 }
 
@@ -475,14 +521,24 @@ function showCountdown(ms, onDone){
   $('centerMain').style.display='none';
   $('countWrap').style.display='flex';
   const total=Math.max(1,ms); let left=ms;
+  // If the spoken clip is present, drive the on-screen number FROM the clip's word
+  // timings (3→0.00s, 2→0.74s, 1→1.54s, liftoff→2.12s) so they match exactly.
+  const voiced = hasSnd('countdown') && ms>=2400;
+  let clipFired=false;
   $('countNum').textContent=Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
-    const sec=Math.max(0,Math.ceil(left/1000));
-    if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1) sfx.count(sec); }
+    if(voiced){
+      if(left<=2120 && !clipFired){ clipFired=true; playSnd('countdown'); }   // liftoff lands at launch
+      const n = left>2120 ? Math.max(0,Math.ceil(left/1000)) : (left>1380?3:left>580?2:1);
+      if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
+    } else {
+      const sec=Math.max(0,Math.ceil(left/1000));
+      if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1) sfx.count(sec); }
+    }
     if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
 }
@@ -539,6 +595,7 @@ function crash(){
   $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
   sfx.crash(); stopEngine();
+  S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
 
   // bust any active un-cashed bet
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
@@ -922,6 +979,7 @@ function netCrash(d){
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine();
+  S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
   if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
