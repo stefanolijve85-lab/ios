@@ -478,8 +478,8 @@ function drawRocket(x,y,ang,heat){
   eg.addColorStop(0,`rgba(255,228,150,${.9*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,13*gi+3,0,7); ctx.fill();
   if(flameReady){
-    const iw=FLAME_IMG.naturalWidth||1, ih=FLAME_IMG.naturalHeight||1, fh=f+6, fw=fh*iw/ih;
-    ctx.globalAlpha=.96; ctx.drawImage(FLAME_IMG, -fw/2, 7, fw, fh); ctx.globalAlpha=1;
+    const iw=FLAME_IMG.naturalWidth||1, ih=FLAME_IMG.naturalHeight||1, fh=(f+10), fw=fh*iw/ih*2.1;
+    ctx.globalAlpha=.95; ctx.drawImage(FLAME_IMG, -fw/2, 12, fw, fh); ctx.globalAlpha=1;
   } else {
     let fl = ctx.createLinearGradient(0,7,0,9+f);   // outer orange→yellow plume
     fl.addColorStop(0,'rgba(255,240,180,.95)'); fl.addColorStop(.35,'rgba(255,170,55,.9)'); fl.addColorStop(.7,'rgba(255,110,40,.5)'); fl.addColorStop(1,'rgba(255,70,60,0)');
@@ -493,8 +493,8 @@ function drawRocket(x,y,ang,heat){
   // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
   // flame above stays. Otherwise fall through to the built-in vector rocket.
   if(rocketReady){
-    const iw=ROCKET_IMG.naturalWidth||1, ih=ROCKET_IMG.naturalHeight||1, H0=36, W0=H0*iw/ih;
-    ctx.drawImage(ROCKET_IMG, -W0/2, -25, W0, H0);
+    const iw=ROCKET_IMG.naturalWidth||1, ih=ROCKET_IMG.naturalHeight||1, H0=34, W0=H0*iw/ih;
+    ctx.drawImage(ROCKET_IMG, -W0/2, -19, W0, H0);   // centred ~y -2 (nose -19, base ~+15)
     ctx.restore(); return;
   }
 
