@@ -72,12 +72,15 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .stage {
   position: relative; flex: 1 1 auto; min-height: 180px; border-radius: 20px; overflow: hidden;
   border: 1px solid var(--line);
-  background: radial-gradient(120% 100% at 50% 0%, var(--stage-1), var(--stage-2) 70%);
+  background:
+    radial-gradient(58% 48% at 80% 26%, rgba(155,92,246,.16), transparent 70%),
+    radial-gradient(52% 44% at 16% 78%, rgba(255,94,98,.09), transparent 70%),
+    radial-gradient(120% 100% at 50% 0%, var(--stage-1), var(--stage-2) 70%);
 }
 .planet { position: absolute; border-radius: 50%; filter: blur(.3px); opacity: .9; pointer-events: none; }
 .p1 { width: 120px; height: 120px; left: -38px; top: -30px;
-      background: radial-gradient(circle at 35% 30%, #B58BFF, #6D3BE0 55%, #3A1E78 100%);
-      box-shadow: 0 0 50px rgba(155,92,246,.45); }
+      background: radial-gradient(circle at 35% 30%, #C49DFF, #6D3BE0 55%, #2E1660 100%);
+      box-shadow: 0 0 60px rgba(155,92,246,.4), inset -10px -10px 26px rgba(18,8,46,.55); }
 /* the moon — the rocket's destination, upper-right */
 .p2 { width: 40px; height: 40px; right: 20px; top: 20px;
       background:
@@ -90,7 +93,11 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 #sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .stage-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
 #centerMain { transform: translateY(-4%); text-align: center; }   /* sits just above centre */
-.multiplier { font-size: clamp(52px, 16vw, 92px); font-weight: 900; line-height: .9; letter-spacing: -2px; opacity: .72; text-shadow: 0 2px 24px rgba(0,0,0,.55), 0 0 44px rgba(255,138,0,.3); transition: color .2s; }
+.multiplier { font-size: clamp(54px, 16.5vw, 96px); font-weight: 900; line-height: .9; letter-spacing: -2.5px; opacity: .85; font-variant-numeric: tabular-nums; text-shadow: 0 2px 18px rgba(0,0,0,.6), 0 0 30px rgba(255,138,0,.28); transition: color .18s, text-shadow .25s; will-change: transform; }
+/* breathe the wrapper, not the vw-sized number itself (animating a vw font-size
+   element collapses it in Chromium) — keeps the responsive size + a subtle pulse */
+#centerMain.live { animation: multBreath 2.6s ease-in-out infinite; will-change: transform; }
+@keyframes multBreath { 0%, 100% { transform: translateY(-4%) scale(1); } 50% { transform: translateY(-4%) scale(1.02); } }
 .status-line { margin-top: 9px; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--primary); text-transform: uppercase; opacity: .9; }
 .crashed-tag { color: var(--danger); text-shadow: 0 0 44px rgba(244,63,94,.5); }
 .countdown-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
