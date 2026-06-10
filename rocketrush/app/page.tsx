@@ -35,6 +35,18 @@ export default function Page() {
         <div className="planet p3" />
         <canvas id="sky" />
         <div className="you-won" id="youWon" />
+        {/* clear win pop-up with your earnings */}
+        <div className="win-pop" id="winPop">
+          <div className="wp-main">
+            <div>
+              <div className="wp-title">YOU CASHED OUT</div>
+              <div className="wp-mult" id="wpMult">@ 2.00x</div>
+            </div>
+            <div className="wp-amt" id="wpAmt">+€0.00</div>
+            <button className="wp-x" id="wpClose">✕</button>
+          </div>
+          <div className="wp-total">Total Win&nbsp;&nbsp;<b id="wpTotal">€0.00</b></div>
+        </div>
         <div className="stage-overlay">
           <div id="centerMain">
             <div className="multiplier tnum" id="mult">1.00x</div>
@@ -46,7 +58,8 @@ export default function Page() {
             <div className="count-bar"><i id="countBar" /></div>
           </div>
         </div>
-        <div className="provably-badge" id="badgeFair"><span className="shield">🛡️</span> Provably Fair</div>
+        <div className="provably-badge left" id="badgeFair"><span className="shield">🛡️</span> Fair</div>
+        <div className="stage-players" id="stagePlayers">👥 0</div>
       </div>
 
       {/* ===================== HISTORY PILLS ===================== */}

@@ -174,23 +174,49 @@ const T = k => (I18N[S.lang]||I18N.en)[k] || I18N.en[k];
    SOUND (WebAudio, no assets)
    ============================================================ */
 let actx;
+function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }catch(e){ return null; } }
 function beep(freq, dur, type='sine', vol=.08){
   if(!S.sound) return;
   try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
-    g.gain.setValueAtTime(vol, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dur);
-    o.start(); o.stop(actx.currentTime+dur);
+    const a=ac(); if(!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime+dur);
+    o.start(); o.stop(a.currentTime+dur);
+  }catch(e){}
+}
+// noise-based explosion (real "blew up" boom)
+function explosion(){
+  if(!S.sound) return;
+  try{
+    const a=ac(); if(!a) return;
+    const dur=0.7, n=Math.floor(a.sampleRate*dur);
+    const buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2); }
+    const src=a.createBufferSource(); src.buffer=buf;
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(1200,a.currentTime); lp.frequency.exponentialRampToValueAtTime(120,a.currentTime+dur);
+    const g=a.createGain(); g.gain.setValueAtTime(0.5,a.currentTime); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
+    beep(70,.5,'sawtooth',.12); // sub rumble
+  }catch(e){ beep(110,.4,'sawtooth',.12); }
+}
+// spoken launch countdown ("3, 2, 1, Liftoff!")
+function say(text){
+  if(!S.sound) return;
+  try{
+    const sy=window.speechSynthesis; if(!sy) return;
+    const u=new SpeechSynthesisUtterance(text); u.rate=1.05; u.pitch=1; u.volume=1;
+    sy.cancel(); sy.speak(u);
   }catch(e){}
 }
 const sfx = {
   tick:  ()=>beep(880,.05,'square',.03),
   bet:   ()=>beep(440,.12,'triangle',.07),
   cash:  ()=>{beep(660,.1,'sine',.09); setTimeout(()=>beep(990,.18,'sine',.09),90);},
-  crash: ()=>beep(120,.35,'sawtooth',.10),
-  launch:()=>beep(220,.3,'sawtooth',.05),
+  crash: ()=>explosion(),
+  launch:()=>{ beep(180,.5,'sawtooth',.07); say('Liftoff!'); },
+  count: (n)=>{ beep(700,.07,'square',.045); say(String(n)); },
 };
 
 /* ============================================================
@@ -230,8 +256,8 @@ function rocketPos(t){ // t in seconds; returns point on flight curve in canvas 
   // Curve: rocket climbs from bottom-left toward top-right, easing as multiplier grows.
   const climb = Math.min(t/9, 1);
   const eased = 1 - Math.pow(1-climb, 2.2);
-  const x = 0.12*W + eased * 0.72*W;
-  const y = 0.86*H - eased * 0.66*H;
+  const x = 0.12*W + eased * 0.66*W;   // ends ~0.78W so the bigger rocket stays on-screen
+  const y = 0.86*H - eased * 0.60*H;   // ends ~0.26H
   return {x,y};
 }
 
@@ -278,16 +304,16 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     ctx.fillStyle = S.phase==='crashed'? 'rgba(244,63,94,.06)':'rgba(255,138,0,.07)';
     ctx.fill();
 
-    // rocket
+    // rocket — bigger and bobbing up & down as it powers to the moon
+    const bob = Math.sin(tt*3.4) * Math.min(0.05*H, 18);
+    const ry = p.y + (S.phase==='running'? bob : 0);
     if(S.phase==='running'){
-      // exhaust particles
-      if(!S.lowBw && Math.random()<.9){
-        particles.push({x:p.x,y:p.y, vx:rnd(-.6,.6)-1.2, vy:rnd(-.4,.4)+1.4, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
+      if(!S.lowBw && Math.random()<.95){
+        particles.push({x:p.x,y:ry, vx:rnd(-.7,.7)-1.4, vy:rnd(-.5,.5)+1.6, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
       }
-      drawRocket(p.x,p.y, Math.atan2(-( rocketPos(tt+.01).y-p.y),(rocketPos(tt+.01).x-p.x)));
+      drawRocket(p.x, ry);
     } else {
-      // explosion
-      drawBoom(p.x,p.y);
+      drawBoom(p.x, p.y);
     }
     ctx.restore();
   }
@@ -303,33 +329,45 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   requestAnimationFrame(draw);
 }
 
-function drawRocket(x,y,ang){
-  ctx.save(); ctx.translate(x,y); ctx.rotate(-0.9 + ang*0); // keep nose up-right
-  ctx.rotate(-Math.PI/4);
+function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
+function drawRocket(x,y){
+  const SC = rocketScale();
+  ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(-Math.PI/4); // nose up-right
+  // flame (drawn first, behind body) — flickers
+  const f = 9+Math.sin(performance.now()/35)*5;
+  const fl = ctx.createLinearGradient(0,8,0,8+f);
+  fl.addColorStop(0,'rgba(255,209,102,.98)'); fl.addColorStop(1,'rgba(255,94,98,0)');
+  ctx.fillStyle=fl;
+  ctx.beginPath(); ctx.moveTo(-5,8); ctx.lineTo(0,8+f); ctx.lineTo(5,8); ctx.closePath(); ctx.fill();
   // glow
-  ctx.shadowColor='#FF8A00'; ctx.shadowBlur=20;
+  ctx.shadowColor='#FF8A00'; ctx.shadowBlur=22;
   // body
   ctx.fillStyle='#fff';
   ctx.beginPath();
-  ctx.moveTo(0,-13); ctx.quadraticCurveTo(7,-3,6,8); ctx.lineTo(-6,8); ctx.quadraticCurveTo(-7,-3,0,-13); ctx.fill();
+  ctx.moveTo(0,-15); ctx.quadraticCurveTo(8,-3,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-3,0,-15); ctx.fill();
+  // nose cone
+  ctx.shadowBlur=0; ctx.fillStyle='#FF8A00';
+  ctx.beginPath(); ctx.moveTo(0,-15); ctx.quadraticCurveTo(5,-9,3.5,-5); ctx.lineTo(-3.5,-5); ctx.quadraticCurveTo(-5,-9,0,-15); ctx.fill();
   // window
-  ctx.shadowBlur=0; ctx.fillStyle='#9B5CF6';
-  ctx.beginPath(); ctx.arc(0,-2,3,0,7); ctx.fill();
+  ctx.fillStyle='#9B5CF6';
+  ctx.beginPath(); ctx.arc(0,-1,3.4,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(-1,-2,1.1,0,7); ctx.fill();
   // fins
-  ctx.fillStyle='#FF8A00';
-  ctx.beginPath(); ctx.moveTo(-6,4); ctx.lineTo(-11,11); ctx.lineTo(-6,8); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(6,4); ctx.lineTo(11,11); ctx.lineTo(6,8); ctx.fill();
-  // flame
-  const f = 8+Math.sin(performance.now()/40)*4;
-  ctx.fillStyle='rgba(255,209,102,.95)';
-  ctx.beginPath(); ctx.moveTo(-4,8); ctx.lineTo(0,8+f); ctx.lineTo(4,8); ctx.fill();
+  ctx.fillStyle='#FF5E62';
+  ctx.beginPath(); ctx.moveTo(-7,5); ctx.lineTo(-13,13); ctx.lineTo(-7,9); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(7,5); ctx.lineTo(13,13); ctx.lineTo(7,9); ctx.fill();
   ctx.restore();
 }
 function drawBoom(x,y){
-  ctx.save(); ctx.translate(x,y);
-  ctx.shadowColor='#F43F5E'; ctx.shadowBlur=30;
-  ctx.fillStyle='rgba(244,63,94,.9)';
-  for(let i=0;i<8;i++){ ctx.beginPath(); const a=i/8*7; ctx.arc(Math.cos(a)*8,Math.sin(a)*8,5,0,7); ctx.fill(); }
+  const SC = rocketScale();
+  ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC);
+  ctx.shadowColor='#F43F5E'; ctx.shadowBlur=34;
+  for(let i=0;i<12;i++){
+    const a=i/12*7, r=9+(i%3)*4;
+    ctx.fillStyle = i%2 ? 'rgba(255,138,0,.92)' : 'rgba(244,63,94,.92)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*r,Math.sin(a)*r,6,0,7); ctx.fill();
+  }
+  ctx.fillStyle='rgba(255,221,150,.95)'; ctx.beginPath(); ctx.arc(0,0,7,0,7); ctx.fill();
   ctx.restore();
 }
 
@@ -379,7 +417,7 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     const sec=Math.max(0,Math.ceil(left/1000));
-    if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3) sfx.tick(); }
+    if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1) sfx.count(sec); }
     if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
 }
@@ -432,8 +470,9 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
 function crash(){
   S.phase='crashed'; shakeT=240;
   $('mult').textContent=S.crashAt.toFixed(2)+'x';
+  $('mult').style.color='';                 // clear running color so the red crash style shows
   $('mult').classList.add('crashed-tag');
-  $('status').textContent=T('crashed')+' — '+T('flew');
+  $('status').textContent='ROCKET BLEW UP 💥';
   sfx.crash();
 
   // bust any active un-cashed bet
@@ -472,7 +511,7 @@ function doCashout(){
   sfx.cash();
   recordWin(S.mult, win);
   addWinner('You','#22C55E',S.mult,win,true);
-  flashWon('+€'+fmt(win)+'  @ '+S.mult.toFixed(2)+'x', true);
+  showWinPopup(S.mult, win);
   renderAction();
 }
 
@@ -520,6 +559,15 @@ function flashWon(text, good){
   el.style.background = good? 'rgba(34,197,94,.16)':'rgba(244,63,94,.16)';
   el.style.borderColor = good? 'rgba(34,197,94,.45)':'rgba(244,63,94,.45)';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
+}
+function totalWin(){ return (S.stats && S.stats.returned) || 0; }   // total amount won (all-time)
+function showWinPopup(mult, amount){
+  const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount)+'  @ '+mult.toFixed(2)+'x', true); return; }
+  $('wpMult').textContent='@ '+mult.toFixed(2)+'x';
+  $('wpAmt').textContent='+€'+fmt(amount);
+  $('wpTotal').textContent='€'+fmt(totalWin());
+  el.classList.add('show');
+  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 4500);
 }
 // Live Activity feed (wins, big multipliers, joins). Rows are clickable → profile.
 function addActivity(ev){
@@ -607,6 +655,7 @@ function renderStats(){
   const profit=Math.round((s.returned-s.wagered)*100)/100;
   const winRate=s.played? Math.round(s.wins/s.played*100):0;
   const cards=[
+    ['Total Win', '€'+fmt(s.returned), 'var(--success)'],
     ['Net Profit', (profit>=0?'+':'−')+'€'+fmt(Math.abs(profit)), profit>=0?'var(--success)':'var(--danger)'],
     ['Balance', '€'+fmt(S.balance), '#fff'],
     ['Win Rate', winRate+'%', '#fff'],
@@ -699,6 +748,8 @@ $('btnSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
 // settings modal
 $('btnSettings').onclick=()=>$('settingsModal').classList.add('show');
 $('badgeFair').onclick=openFair;
+{ const wc=$('wpClose'); if(wc) wc.onclick=()=>$('winPop').classList.remove('show'); }
+{ const sp=$('stagePlayers'); if(sp) sp.onclick=openLeaderboard; }
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{ b.closest('.modal-bg').classList.remove('show'); });
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }));
 $('swSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
@@ -778,7 +829,7 @@ function ambient(){
 /* ============================================================
    NETWORK: authoritative server, with graceful local fallback
    ============================================================ */
-function setOnline(n){ $('online').textContent = (typeof n==='number'? n : 0).toLocaleString('en-US'); }
+function setOnline(n){ const v=(typeof n==='number'? n : 0); $('online').textContent=v.toLocaleString('en-US'); const sp=$('stagePlayers'); if(sp) sp.textContent='👥 '+v.toLocaleString('en-US'); }
 
 function netBetting(d){
   S.phase='betting'; S.mult=1.00; S.cashedOut=false; S.bet_placed=false; S.bet_amount=0; particles=[];
@@ -800,8 +851,8 @@ function netStart(){
 function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
-  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').classList.add('crashed-tag');
-  $('status').textContent=T('crashed')+' — '+T('flew'); sfx.crash();
+  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
+  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash();
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
   if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
@@ -821,7 +872,7 @@ function bindNet(sock){
   sock.on('cashout:confirmed', d=>{
     S.cashedOut=true; S.bet_placed=false; S.cashedAt=d.multiplier; S.balance=d.balance; updateBalance();
     sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
-    flashWon('+€'+fmt(d.payout)+'  @ '+d.multiplier.toFixed(2)+'x', true); renderAction();
+    showWinPopup(d.multiplier, d.payout); renderAction();
   });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
@@ -851,6 +902,7 @@ function applyProfile(d){
   if(d.stats) S.stats=d.stats;
   if(Array.isArray(d.bets)) S.myBets=d.bets;
   if(Array.isArray(d.tx)) S.transactions=d.tx;
+  const wt=$('wpTotal'); if(wt && $('winPop') && $('winPop').classList.contains('show')) wt.textContent='€'+fmt(totalWin());
   updateAccountUI(); refreshScreens();
 }
 function connectNet(){
