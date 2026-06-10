@@ -110,19 +110,16 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .stage-players.down { border-color: rgba(244,63,94,.7); color: #ffc4cd; }
 @keyframes spPulse { 0% { transform: scale(1); } 38% { transform: scale(1.16); } 100% { transform: scale(1); } }
 
-/* ===================== WIN POP-UP ===================== */
-.win-pop { position: absolute; top: 10px; left: 50%; transform: translateX(-50%) translateY(-14px); width: min(92%, 360px);
-  background: linear-gradient(135deg, rgba(34,197,94,.96), rgba(16,160,72,.96));
-  border: 1px solid rgba(255,255,255,.25); border-radius: 16px; padding: 10px 12px; color: #042210;
-  box-shadow: 0 14px 36px rgba(34,197,94,.45); opacity: 0; pointer-events: none; z-index: 8;
-  transition: opacity .25s, transform .25s; }
-.win-pop.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-.win-pop .wp-main { display: flex; align-items: center; gap: 10px; }
-.win-pop .wp-title { font-size: 11px; font-weight: 800; letter-spacing: .6px; opacity: .85; }
-.win-pop .wp-mult { font-size: 17px; font-weight: 900; }
-.win-pop .wp-amt { margin-left: auto; font-size: 24px; font-weight: 900; }
-.win-pop .wp-x { width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.18); color: #042210; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
-.win-pop .wp-total { margin-top: 5px; font-size: 11.5px; font-weight: 700; opacity: .85; border-top: 1px solid rgba(0,0,0,.12); padding-top: 5px; }
+/* ===================== WIN POP-UP (centered, shown at round end) ===================== */
+.win-pop { position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 14px)); width: min(82%, 320px);
+  background: linear-gradient(135deg, rgba(34,197,94,.97), rgba(16,160,72,.97));
+  border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: 18px 22px 20px; color: #042210; text-align: center;
+  box-shadow: 0 20px 52px rgba(34,197,94,.5); opacity: 0; pointer-events: none; z-index: 8;
+  transition: opacity .3s ease, transform .3s ease; }
+.win-pop.show { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+.win-pop .wp-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; opacity: .82; }
+.win-pop .wp-amt { margin-top: 4px; font-size: 42px; font-weight: 900; line-height: 1; }
+.win-pop .wp-x { position: absolute; top: 8px; right: 10px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.18); color: #042210; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
 
 /* ===================== HISTORY PILLS ===================== */
 .history { display: flex; gap: 6px; overflow-x: auto; flex: none; padding: 1px; }

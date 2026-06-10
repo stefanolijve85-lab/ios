@@ -376,24 +376,12 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
 
     ctx.save(); ctx.translate(ox,oy);
     const crashed = S.phase==='crashed';
-    // The trail + filled area show ONLY while flying. On crash they vanish, leaving
-    // just the explosion and debris (no lingering red line/fill).
+    // A single trail line that starts on the ground behind the rocket and follows it
+    // up. Shows ONLY while flying — on crash it vanishes, leaving just the explosion.
+    // No filled area / horizontal base line anymore.
     if(!crashed){
       const steps=36; const pts=[{x:0.12*W,y:0.86*H}];
       for(let i=1;i<=steps;i++) pts.push(rocketPos(tt*i/steps));
-
-      // filled area under the curve, down to the BOTTOM of the stage (Aviator-style)
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      ctx.lineTo(0, 0.86*H);
-      for(const q of pts) ctx.lineTo(q.x, q.y);
-      ctx.lineTo(p.x, H);
-      ctx.closePath();
-      const fillG = ctx.createLinearGradient(0, Math.min(p.y, 0.86*H), 0, H);
-      fillG.addColorStop(0,'rgba(255,138,0,.42)'); fillG.addColorStop(.5,'rgba(255,94,98,.17)'); fillG.addColorStop(1,'rgba(255,94,98,.03)');
-      ctx.fillStyle=fillG; ctx.fill();
-
-      // the flight line on top
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -585,7 +573,7 @@ function startRunning(){
   S.startTs=performance.now();
   $('countWrap').style.display='none';
   $('centerMain').style.display='block';
-  $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
+  $('status').textContent='';
   $('mult').classList.remove('crashed-tag');
   sfx.launch();
   setTimeout(killCdClip, 1200);   // after 'liftoff' finishes, kill the clip so it can't linger/resume mid-round
@@ -621,7 +609,7 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   $('mult').textContent=S.mult.toFixed(2)+'x';
   const col = S.mult<2? '#fff' : S.mult<5? 'var(--primary)' : S.mult<10? 'var(--secondary)':'var(--success)';
   $('mult').style.color=col;
-  $('status').textContent = 'FLY HIGHER, CASH OUT SOONER!';
+  $('status').textContent = '';
   S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut) renderAction(i); });
   requestAnimationFrame(tickRun);
 }
@@ -638,6 +626,7 @@ function crash(){
   // bust any active un-cashed bets
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } if(s.curBet) recordLossLocal(s); });
   if(lost>0) flashWon('−€'+fmt(lost), false);
+  { const rw=roundWon(); if(rw>0) showRoundWin(rw); }   // one clear centered pop-up with this round's winnings
 
   // record provably-fair last round
   S.lastRound = { nonce:S.nonce, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, crash:S.crashAt };
@@ -671,8 +660,7 @@ function doCashout(i){
   sfx.cash();
   recordWinLocal(sl, S.mult, win);
   addWinner('You','#22C55E',S.mult,win,true);
-  showWinPopup(S.mult, slotProfit(sl));   // show REAL profit (payout − stake)
-  renderAction(i);
+  renderAction(i);   // win pop-up is shown once at round end (see crash)
 }
 function onAction(i){
   const sl=S.slots[i];
@@ -725,14 +713,13 @@ function flashWon(text, good){
 // real combined profit for THIS round = BET 1 + BET 2 net winnings (payout − stake)
 function slotProfit(s){ return (s.won||0) - (s.amount||0); }
 function roundWon(){ return S.slots.reduce((t,s)=> t + (s.cashedOut ? slotProfit(s) : 0), 0); }
-function showWinPopup(mult, amount){
-  const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount)+'  @ '+mult.toFixed(2)+'x', true); return; }
-  $('wpMult').textContent='@ '+mult.toFixed(2)+'x';
-  $('wpAmt').textContent='+€'+fmt(amount);
-  const tot=$('wpTotal'); if(tot) tot.textContent='€'+fmt(roundWon());
-  const lbl=$('wpTotalLbl'); if(lbl) lbl.textContent='Total win this round';
+// ONE clear centered pop-up with the round's winnings, shown when the round ends.
+function showRoundWin(amount){
+  const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount), true); return; }
+  const a=$('wpAmt'); if(a) a.textContent='+€'+fmt(amount);
+  const cm=$('centerMain'); if(cm) cm.style.display='none';   // hide the crash number so the pop-up stands alone
   el.classList.add('show');
-  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2600);
+  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2800);
 }
 // Live Activity feed (wins, big multipliers, joins). Rows are clickable → profile.
 function addActivity(ev){
@@ -1033,7 +1020,7 @@ function netBetting(d){
 function netStart(){
   S.phase='running'; S.startTs=performance.now();
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
-  $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
+  $('status').textContent='';
   $('mult').classList.remove('crashed-tag');
   sfx.launch(); setTimeout(killCdClip, 1200); renderAction(); tickRun();
 }
@@ -1045,6 +1032,7 @@ function netCrash(d){
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
   if(lost>0) flashWon('−€'+fmt(lost), false);
+  { const rw=roundWon(); if(rw>0) showRoundWin(rw); }   // one clear centered pop-up with this round's winnings
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
   pushRound({ nonce:d.nonce, crash:d.crashPoint, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac });
   pushHistory(d.crashPoint);
@@ -1062,7 +1050,7 @@ function bindNet(sock){
   sock.on('cashout:confirmed', d=>{
     const sl=S.slots[d.slot]; if(sl){ sl.cashedOut=true; sl.placed=false; sl.won=d.payout; } S.balance=d.balance; updateBalance();
     sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
-    showWinPopup(d.multiplier, sl?slotProfit(sl):d.payout); renderAction(d.slot);   // REAL profit (payout − stake)
+    renderAction(d.slot);   // win pop-up is shown once at round end (see netCrash)
   });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
@@ -1092,7 +1080,6 @@ function applyProfile(d){
   if(d.stats) S.stats=d.stats;
   if(Array.isArray(d.bets)) S.myBets=d.bets;
   if(Array.isArray(d.tx)) S.transactions=d.tx;
-  const wt=$('wpTotal'); if(wt && $('winPop') && $('winPop').classList.contains('show')) wt.textContent='€'+fmt(roundWon());
   updateAccountUI(); refreshScreens();
 }
 function connectNet(){
