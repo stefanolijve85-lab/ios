@@ -191,9 +191,30 @@ function noiseBuffer(a, dur, shape){
   for(let i=0;i<n;i++){ d[i]=(Math.random()*2-1)*(shape?shape(i/n):1); }
   return buf;
 }
+/* ---- optional real audio assets: drop files in public/sounds/ and they're used
+   automatically; otherwise we fall back to synth + speech (see public/sounds/README). ---- */
+const SND = { explosion:'/sounds/explosion.mp3', liftoff:'/sounds/liftoff.mp3', engine:'/sounds/engine.mp3',
+  '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3', cash:'/sounds/cashout.mp3' };
+const _buf = {};
+async function loadSounds(){
+  const a=ac(); if(!a) return;
+  await Promise.all(Object.entries(SND).map(async ([k,url])=>{
+    try{ const r=await fetch(url); if(!r.ok) return; const ab=await r.arrayBuffer(); _buf[k]=await a.decodeAudioData(ab); }catch(e){}
+  }));
+}
+function hasSnd(k){ return !!_buf[k]; }
+function playSnd(k, opt){
+  if(!S.sound) return null; opt=opt||{};
+  try{ const a=ac(), b=_buf[k]; if(!a||!b) return null; const src=a.createBufferSource(); src.buffer=b; src.loop=!!opt.loop; const g=a.createGain(); g.gain.value=opt.vol==null?1:opt.vol; src.connect(g); g.connect(a.destination); src.start(); return {src,g,a}; }catch(e){ return null; }
+}
+// pick a real ENGLISH voice (the device default may be your phone's language, e.g. Dutch)
+let enVoice=null;
+function pickVoice(){ try{ const vs=(window.speechSynthesis&&window.speechSynthesis.getVoices())||[]; enVoice = vs.find(v=>/en[-_]US/i.test(v.lang)) || vs.find(v=>/^en([-_]|$)/i.test(v.lang)) || null; }catch(e){} }
+try{ if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 // realistic "blew up" boom: sharp transient + filtered noise tail + sub-bass drop
 function explosion(){
   if(!S.sound) return;
+  if(hasSnd('explosion')){ playSnd('explosion',{vol:1}); return; }   // prefer real audio if provided
   try{
     const a=ac(); if(!a) return; const t=a.currentTime;
     const dur=0.95;
@@ -215,6 +236,7 @@ function explosion(){
 let engineNodes=null;
 function startEngine(){
   if(!S.sound) return; stopEngine();
+  if(hasSnd('engine')){ const nodes=playSnd('engine',{loop:true,vol:0.5}); if(nodes){ engineNodes=nodes; return; } }
   try{
     const a=ac(); if(!a) return;
     const src=a.createBufferSource(); src.buffer=noiseBuffer(a,1.2); src.loop=true;
@@ -234,19 +256,17 @@ function say(text){
   if(!S.sound) return;
   try{
     const sy=window.speechSynthesis; if(!sy) return;
-    const u=new SpeechSynthesisUtterance(text); u.rate=1.0; u.pitch=1; u.volume=1;
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; if(enVoice) u.voice=enVoice; u.rate=1.0; u.pitch=1; u.volume=1;
     sy.cancel(); sy.speak(u);
   }catch(e){}
 }
 const sfx = {
   tick:  ()=>beep(880,.05,'square',.03),
   bet:   ()=>beep(440,.12,'triangle',.07),
-  cash:  ()=>{beep(660,.1,'sine',.09); setTimeout(()=>beep(990,.18,'sine',.09),90);},
+  cash:  ()=>{ if(hasSnd('cash')){ playSnd('cash'); return; } beep(660,.1,'sine',.09); setTimeout(()=>beep(990,.18,'sine',.09),90); },
   crash: ()=>explosion(),
-  launch:()=>{ // ignition whoosh + spoken liftoff + engine starts
-    beep(140,.6,'sawtooth',.09); say('Liftoff!'); startEngine();
-  },
-  count: (n)=>{ beep(520+(3-n)*120,.16,'square',.07); say(String(n)); },  // clear, rising beep per number + voice
+  launch:()=>{ if(hasSnd('liftoff')) playSnd('liftoff'); else { beep(140,.6,'sawtooth',.09); say('Liftoff!'); } startEngine(); },
+  count: (n)=>{ if(hasSnd(String(n))) playSnd(String(n)); else { beep(520+(3-n)*120,.16,'square',.07); say(String(n)); } },
 };
 
 /* ============================================================
@@ -1156,6 +1176,7 @@ function boot(){
   requestAnimationFrame(draw);
   seedWinners();
   seedHistory();
+  loadSounds();  // preload optional /sounds/* assets (no-op if absent)
   loadSave();   // restore balance (local) + history/stats from a previous session
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
