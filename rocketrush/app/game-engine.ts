@@ -186,27 +186,55 @@ function beep(freq, dur, type='sine', vol=.08){
     o.start(); o.stop(a.currentTime+dur);
   }catch(e){}
 }
-// noise-based explosion (real "blew up" boom)
+function noiseBuffer(a, dur, shape){
+  const n=Math.floor(a.sampleRate*dur), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++){ d[i]=(Math.random()*2-1)*(shape?shape(i/n):1); }
+  return buf;
+}
+// realistic "blew up" boom: sharp transient + filtered noise tail + sub-bass drop
 function explosion(){
   if(!S.sound) return;
   try{
-    const a=ac(); if(!a) return;
-    const dur=0.7, n=Math.floor(a.sampleRate*dur);
-    const buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
-    for(let i=0;i<n;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2); }
-    const src=a.createBufferSource(); src.buffer=buf;
-    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(1200,a.currentTime); lp.frequency.exponentialRampToValueAtTime(120,a.currentTime+dur);
-    const g=a.createGain(); g.gain.setValueAtTime(0.5,a.currentTime); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    const a=ac(); if(!a) return; const t=a.currentTime;
+    const dur=0.95;
+    const src=a.createBufferSource(); src.buffer=noiseBuffer(a,dur,x=>Math.pow(1-x,1.7));
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(2600,t); lp.frequency.exponentialRampToValueAtTime(80,t+dur);
+    const g=a.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.9,t+0.015); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
     src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
-    beep(70,.5,'sawtooth',.12); // sub rumble
+    // sub-bass drop (the chest-thump)
+    const o=a.createOscillator(), og=a.createGain(); o.type='sine';
+    o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(32,t+0.55);
+    og.gain.setValueAtTime(0.6,t); og.gain.exponentialRampToValueAtTime(0.001,t+0.65);
+    o.connect(og); og.connect(a.destination); o.start(); o.stop(t+0.7);
+    // crackle
+    const c=a.createBufferSource(); c.buffer=noiseBuffer(a,0.25,x=>Math.pow(1-x,3)*(Math.random()<.3?1:0));
+    const cg=a.createGain(); cg.gain.value=0.35; c.connect(cg); cg.connect(a.destination); c.start(t+0.04);
   }catch(e){ beep(110,.4,'sawtooth',.12); }
 }
-// spoken launch countdown ("3, 2, 1, Liftoff!")
+// looping rocket-engine rumble while in flight
+let engineNodes=null;
+function startEngine(){
+  if(!S.sound) return; stopEngine();
+  try{
+    const a=ac(); if(!a) return;
+    const src=a.createBufferSource(); src.buffer=noiseBuffer(a,1.2); src.loop=true;
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=360;
+    const g=a.createGain(); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.07,a.currentTime+0.25);
+    src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
+    engineNodes={src,g,a};
+  }catch(e){}
+}
+function stopEngine(){
+  if(!engineNodes) return;
+  try{ const {src,g,a}=engineNodes; g.gain.setTargetAtTime(0,a.currentTime,0.05); setTimeout(()=>{ try{src.stop();}catch(e){} },220); }catch(e){}
+  engineNodes=null;
+}
+// spoken countdown ("3, 2, 1, Liftoff!")
 function say(text){
   if(!S.sound) return;
   try{
     const sy=window.speechSynthesis; if(!sy) return;
-    const u=new SpeechSynthesisUtterance(text); u.rate=1.05; u.pitch=1; u.volume=1;
+    const u=new SpeechSynthesisUtterance(text); u.rate=1.0; u.pitch=1; u.volume=1;
     sy.cancel(); sy.speak(u);
   }catch(e){}
 }
@@ -215,8 +243,10 @@ const sfx = {
   bet:   ()=>beep(440,.12,'triangle',.07),
   cash:  ()=>{beep(660,.1,'sine',.09); setTimeout(()=>beep(990,.18,'sine',.09),90);},
   crash: ()=>explosion(),
-  launch:()=>{ beep(180,.5,'sawtooth',.07); say('Liftoff!'); },
-  count: (n)=>{ beep(700,.07,'square',.045); say(String(n)); },
+  launch:()=>{ // ignition whoosh + spoken liftoff + engine starts
+    beep(140,.6,'sawtooth',.09); say('Liftoff!'); startEngine();
+  },
+  count: (n)=>{ beep(520+(3-n)*120,.16,'square',.07); say(String(n)); },  // clear, rising beep per number + voice
 };
 
 /* ============================================================
@@ -307,11 +337,16 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // rocket — bigger and bobbing up & down as it powers to the moon
     const bob = Math.sin(tt*3.4) * Math.min(0.05*H, 18);
     const ry = p.y + (S.phase==='running'? bob : 0);
+    // point the nose along the direction of travel (toward the moon, up-right)
+    const ahead = rocketPos(tt+0.06);
+    let dx=ahead.x-p.x, dy=ahead.y-p.y;
+    if(Math.hypot(dx,dy)<0.5){ dx=1; dy=-1; }
+    const ang = Math.atan2(dy,dx) + Math.PI/2;
     if(S.phase==='running'){
       if(!S.lowBw && Math.random()<.95){
         particles.push({x:p.x,y:ry, vx:rnd(-.7,.7)-1.4, vy:rnd(-.5,.5)+1.6, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
       }
-      drawRocket(p.x, ry);
+      drawRocket(p.x, ry, ang);
     } else {
       drawBoom(p.x, p.y);
     }
@@ -330,9 +365,9 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
 }
 
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
-function drawRocket(x,y){
+function drawRocket(x,y,ang){
   const SC = rocketScale();
-  ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(-Math.PI/4); // nose up-right
+  ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
   // flame (drawn first, behind body) — flickers
   const f = 9+Math.sin(performance.now()/35)*5;
   const fl = ctx.createLinearGradient(0,8,0,8+f);
@@ -473,7 +508,7 @@ function crash(){
   $('mult').style.color='';                 // clear running color so the red crash style shows
   $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
-  sfx.crash();
+  sfx.crash(); stopEngine();
 
   // bust any active un-cashed bet
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
@@ -742,8 +777,12 @@ $('chatSend').onclick=sendChat;
 $('chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendChat(); });
 
 // sound
-function syncSound(){ $('btnSound').textContent=S.sound?'🔊':'🔇'; $('btnSound').classList.toggle('off',!S.sound); $('swSound').classList.toggle('on',S.sound); }
+function syncSound(){ $('btnSound').textContent=S.sound?'🔊':'🔇'; $('btnSound').classList.toggle('off',!S.sound); $('swSound').classList.toggle('on',S.sound); if(!S.sound) stopEngine(); }
 $('btnSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
+// unlock WebAudio + speech on the first touch (required by iOS Safari)
+function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }catch(e){} }
+window.addEventListener('pointerdown', unlockAudio, { once:true });
+window.addEventListener('touchend', unlockAudio, { once:true });
 
 // settings modal
 $('btnSettings').onclick=()=>$('settingsModal').classList.add('show');
@@ -852,7 +891,7 @@ function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
-  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash();
+  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine();
   if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
   if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
