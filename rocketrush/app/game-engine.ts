@@ -591,12 +591,13 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   S.mult = multAt(t);
 
   if(S.mode==='local'){
+    // auto cashout FIRST (server handles this in net mode): any target the rocket
+    // reached (auto < crash) must pay, even on the frame the rocket crashes.
+    S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut && s.auto>0 && s.auto<S.crashAt && S.mult>=s.auto) doCashout(i); });
     if(S.mult>=S.crashAt){
       S.mult=S.crashAt; S.crashTime=t;
       return crash();
     }
-    // auto cashout per slot (server handles this in net mode)
-    S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut && s.auto>0 && S.mult>=s.auto) doCashout(i); });
     // bots cash out (server sends winners in net mode)
     S.bots.forEach(b=>{
       if(b.active && !b.done && S.mult>=b.target && b.target<S.crashAt){

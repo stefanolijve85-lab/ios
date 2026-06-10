@@ -72,8 +72,7 @@ export async function attachGame(io) {
     addBet(p, { nonce: b.nonce, amount, won: true, mult, payout, profit, ts: Date.now() });
     addTx(p, 'win', payout);
     p.store.saveBalance(p.key, p.rec); p.store.saveBet(p.key, p.rec); p.store.saveTx(p.key, p.rec);
-    sock.emit('cashout:confirmed', { slot, multiplier: mult, payout, balance: p.rec.balance });
-    pushProfile(sock, p);
+    if (sock) { sock.emit('cashout:confirmed', { slot, multiplier: mult, payout, balance: p.rec.balance }); pushProfile(sock, p); }
     recordPlay(p.key, true, mult, payout);
     activity({ type: 'win', pid: p.key, name: p.display, color: p.color, amount: payout, mult }, true, sock);
     if (mult >= 10) activity({ type: 'bigmult', pid: p.key, name: p.display, color: p.color, mult }, true, sock);
@@ -126,17 +125,24 @@ export async function attachGame(io) {
     if (game.recentRounds.length > 40) game.recentRounds.pop();
     io.emit('round:crash', { nonce: round.nonce, crashPoint: round.crash, serverSeed: round.serverSeed, clientSeed: round.clientSeed, hmac: round.hmac });
     for (const [id, p] of players) {
+      const s = io.sockets.sockets.get(id);
       let changed = false;
       for (let slot = 0; slot < 2; slot++) {
         const b = p.bets[slot];
-        if (b && !b.cashedOut) {
-          statsLoss(p.rec.stats, b.amount);
-          addBet(p, { nonce: b.nonce, amount: b.amount, won: false, profit: -b.amount, ts: Date.now() });
-          recordPlay(p.key, false, 0, 0);
-          changed = true;
+        if (!b || b.cashedOut) continue;
+        // Safety net: if the rocket actually reached this bet's auto-cashout target
+        // (auto < crash), it must still pay out — even if the 120ms tick skipped the
+        // exact crossing before the round crashed. Settle at the auto target.
+        if (b.auto > 0 && b.auto < game.crash) {
+          settleCashout(s, p, slot, b.auto);
+          continue;
         }
+        statsLoss(p.rec.stats, b.amount);
+        addBet(p, { nonce: b.nonce, amount: b.amount, won: false, profit: -b.amount, ts: Date.now() });
+        recordPlay(p.key, false, 0, 0);
+        changed = true;
       }
-      if (changed) { p.store.saveBet(p.key, p.rec); const s = io.sockets.sockets.get(id); if (s) pushProfile(s, p); }
+      if (changed) { p.store.saveBet(p.key, p.rec); if (s) pushProfile(s, p); }
       p.bets = [null, null];
     }
     setTimeout(startBetting, PAUSE_MS);
