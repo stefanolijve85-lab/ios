@@ -1,4 +1,4 @@
--- RocketRush — Supabase schema (run in the Supabase SQL editor).
+-- Liftoff X — Supabase schema (run in the Supabase SQL editor).
 -- Auth is handled by Supabase Auth (auth.users). These tables hold the demo
 -- wallet, statistics, bet history and transactions, all keyed by the user id.
 -- The game server writes with the service-role key (bypasses RLS); the policies

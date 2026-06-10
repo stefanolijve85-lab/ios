@@ -1,6 +1,6 @@
-# LiftoffX — Business / Go-to-Market Docs
+# Liftoff X — Business / Go-to-Market Docs
 
-This folder is the B2B starter pack for offering **LiftoffX** (our Aviator-class
+This folder is the B2B starter pack for offering **Liftoff X** (our Aviator-class
 crash game) to casino operators and aggregators — **without** spending capital on
 licensing first. The strategy is deliberately ordered: *finish the MVP → pitch →
 prove the economics → talk to the market → only then make the big licensing call.*

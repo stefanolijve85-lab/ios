@@ -1,4 +1,4 @@
-# LiftoffX — Operator / Aggregator Call Questions
+# Liftoff X — Operator / Aggregator Call Questions
 
 > Step 4 of the plan: turn 5–10 sales calls into **market research**. Go in to
 > *learn*, not just to sell. The answers here directly feed:

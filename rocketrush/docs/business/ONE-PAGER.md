@@ -1,11 +1,11 @@
-# LiftoffX — One-Pager / Sell Sheet
+# Liftoff X — One-Pager / Sell Sheet
 
 > The email-ready version. Paste into a message or export to a single PDF page.
 > Keep it scannable — an aggregator/operator BD reads this in 30 seconds.
 
 ---
 
-## LiftoffX
+## Liftoff X
 **The crash game operators actually earn from.**
 Aviator-class instant game · built-in social layer · operator-friendly economics.
 

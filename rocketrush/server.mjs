@@ -1,5 +1,5 @@
 /**
- * RocketRush — single-origin server.
+ * Liftoff X — single-origin server.
  *
  * Serves the Next.js app AND the Socket.io game on ONE HTTP server / port, so
  * the browser connects same-origin (no separate :3001). Works identically on
@@ -35,5 +35,5 @@ const io = new Server(httpServer, { cors: { origin: true }, path: '/socket.io' }
 await attachGame(io);
 
 httpServer.listen(port, hostname, () => {
-  console.log(`🚀 RocketRush on http://${hostname}:${port}  (${dev ? 'development' : 'production'}, single-origin)`);
+  console.log(`🚀 Liftoff X on http://${hostname}:${port}  (${dev ? 'development' : 'production'}, single-origin)`);
 });
