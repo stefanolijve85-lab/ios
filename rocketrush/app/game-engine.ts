@@ -457,55 +457,62 @@ function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
 function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
-  const flick = Math.sin(performance.now()/30)*4;
-  const f = (heat==null) ? (11+flick) : (1.5 + heat*16 + flick*Math.max(.2,heat));
+  const flick = Math.sin(performance.now()/28)*4;
+  const f = (heat==null) ? (14+flick) : (1.5 + heat*20 + flick*Math.max(.2,heat));
   const gi = (heat==null?1:heat);   // glow intensity (warming up on the pad → full in flight)
 
-  // ENGINE GLOW + FLAME — additive for a real light bloom
+  // ENGINE GLOW + FLAME — additive bloom; longer, brighter plume with a white-hot core
   ctx.globalCompositeOperation='lighter';
-  let eg = ctx.createRadialGradient(0,9,0, 0,9, 11*gi+3);
-  eg.addColorStop(0,`rgba(255,222,140,${.8*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.5*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
-  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,11*gi+3,0,7); ctx.fill();
-  let fl = ctx.createLinearGradient(0,7,0,9+f);
-  fl.addColorStop(0,'rgba(255,245,205,.95)'); fl.addColorStop(.4,'rgba(255,160,50,.85)'); fl.addColorStop(1,'rgba(255,70,60,0)');
-  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5,8); ctx.quadraticCurveTo(0,9+f,5,8); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(-2.2,8); ctx.quadraticCurveTo(0,8+f*0.5,2.2,8); ctx.closePath(); ctx.fill();
+  let eg = ctx.createRadialGradient(0,9,0, 0,9, 13*gi+3);
+  eg.addColorStop(0,`rgba(255,228,150,${.9*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,13*gi+3,0,7); ctx.fill();
+  let fl = ctx.createLinearGradient(0,7,0,9+f);   // outer orange→yellow plume
+  fl.addColorStop(0,'rgba(255,240,180,.95)'); fl.addColorStop(.35,'rgba(255,170,55,.9)'); fl.addColorStop(.7,'rgba(255,110,40,.5)'); fl.addColorStop(1,'rgba(255,70,60,0)');
+  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
+  let fc = ctx.createLinearGradient(0,7,0,8+f*0.62);   // inner white-hot core
+  fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
+  ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.6,8); ctx.quadraticCurveTo(0,8+f*0.62,2.6,8); ctx.closePath(); ctx.fill();
   ctx.globalCompositeOperation='source-over';
 
-  // BODY — brushed-metal tube: cool highlight centre-left, darker steel right edge
-  ctx.shadowColor='rgba(255,150,40,.32)'; ctx.shadowBlur=12;
+  // BODY — clean brushed-metal tube (white/silver, like the reference)
+  ctx.shadowColor='rgba(255,150,40,.3)'; ctx.shadowBlur=11;
   let body = ctx.createLinearGradient(-7,0,7,0);
-  body.addColorStop(0,'#aeb8c8'); body.addColorStop(.27,'#ffffff'); body.addColorStop(.5,'#dfe6f0'); body.addColorStop(.72,'#a9b3c3'); body.addColorStop(1,'#7c8698');
+  body.addColorStop(0,'#a7b2c4'); body.addColorStop(.26,'#ffffff'); body.addColorStop(.5,'#e2e8f2'); body.addColorStop(.72,'#a6b1c2'); body.addColorStop(1,'#79839a');
   ctx.fillStyle=body;
-  ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(8,-4,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-4,0,-16); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,-15); ctx.quadraticCurveTo(8,-4,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-8,-4,0,-15); ctx.closePath(); ctx.fill();
   ctx.shadowBlur=0;
-  // specular highlight stripe (metallic sheen)
+  // specular metallic sheen
   ctx.globalCompositeOperation='lighter';
-  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.0;
-  ctx.beginPath(); ctx.moveTo(-2.7,-12); ctx.quadraticCurveTo(-3.5,-2,-2.7,8); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1.0;
+  ctx.beginPath(); ctx.moveTo(-2.8,-11); ctx.quadraticCurveTo(-3.6,-2,-2.8,7); ctx.stroke();
   ctx.globalCompositeOperation='source-over';
-  // nose cone — metallic orange
-  let nose = ctx.createLinearGradient(-4,-16,4,-6);
-  nose.addColorStop(0,'#FFD08A'); nose.addColorStop(.45,'#FF9A1F'); nose.addColorStop(1,'#B85200');
+  // NOSE CONE — pointed, red→orange (matches the reference)
+  let nose = ctx.createLinearGradient(-4,-18,4,-6);
+  nose.addColorStop(0,'#FFB36A'); nose.addColorStop(.4,'#FF6A2A'); nose.addColorStop(1,'#B5241E');
   ctx.fillStyle=nose;
-  ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(6,-9,4,-5); ctx.lineTo(-4,-5); ctx.quadraticCurveTo(-6,-9,0,-16); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,-18.5); ctx.quadraticCurveTo(5.6,-9,4.4,-5.2); ctx.lineTo(-4.4,-5.2); ctx.quadraticCurveTo(-5.6,-9,0,-18.5); ctx.closePath(); ctx.fill();
+  ctx.globalCompositeOperation='lighter'; ctx.strokeStyle='rgba(255,220,180,.6)'; ctx.lineWidth=.9;
+  ctx.beginPath(); ctx.moveTo(-1.4,-16); ctx.quadraticCurveTo(-2.4,-10,-2.2,-6); ctx.stroke();
+  ctx.globalCompositeOperation='source-over';
   // body seam shadow (cylinder roundness)
-  ctx.strokeStyle='rgba(68,78,98,.4)'; ctx.lineWidth=0.7;
-  ctx.beginPath(); ctx.moveTo(3.8,-6); ctx.quadraticCurveTo(4.6,2,3.4,9); ctx.stroke();
-  // window — recessed glass with rim + highlight
-  ctx.fillStyle='#2b3160'; ctx.beginPath(); ctx.arc(0,-1.5,4,0,7); ctx.fill();
-  let glass = ctx.createRadialGradient(-1.2,-2.6,0.3,0,-1.5,4);
-  glass.addColorStop(0,'#d8c6ff'); glass.addColorStop(.5,'#9B5CF6'); glass.addColorStop(1,'#4f2c95');
-  ctx.fillStyle=glass; ctx.beginPath(); ctx.arc(0,-1.5,3.1,0,7); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(-1.1,-2.7,.95,0,7); ctx.fill();
-  // fins — metallic red
-  let fin = ctx.createLinearGradient(0,4,0,14); fin.addColorStop(0,'#FF8A6A'); fin.addColorStop(1,'#B82A44');
+  ctx.strokeStyle='rgba(66,76,96,.4)'; ctx.lineWidth=0.7;
+  ctx.beginPath(); ctx.moveTo(3.9,-5); ctx.quadraticCurveTo(4.7,1,3.4,8.5); ctx.stroke();
+  // WINDOW — dark navy porthole with a steel rim + bright highlight
+  ctx.fillStyle='#cdd6e6'; ctx.beginPath(); ctx.arc(0,-2,4.0,0,7); ctx.fill();
+  let glass = ctx.createRadialGradient(-1.3,-3.2,0.3, 0,-2,3.4);
+  glass.addColorStop(0,'#9fc0ec'); glass.addColorStop(.45,'#3a5790'); glass.addColorStop(1,'#0e1730');
+  ctx.fillStyle=glass; ctx.beginPath(); ctx.arc(0,-2,3.3,0,7); ctx.fill();
+  ctx.globalCompositeOperation='lighter';
+  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(-1.2,-3.2,.85,0,7); ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  // FINS — swept red
+  let fin = ctx.createLinearGradient(0,3,0,14); fin.addColorStop(0,'#FF8A6A'); fin.addColorStop(1,'#A82038');
   ctx.fillStyle=fin;
-  ctx.beginPath(); ctx.moveTo(-7,4); ctx.lineTo(-13,13); ctx.lineTo(-7,9); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(7,4); ctx.lineTo(13,13); ctx.lineTo(7,9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-6.6,3.5); ctx.lineTo(-14,13.5); ctx.lineTo(-6.6,9.5); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(6.6,3.5); ctx.lineTo(14,13.5); ctx.lineTo(6.6,9.5); ctx.closePath(); ctx.fill();
   // engine nozzle — shaded steel
-  let noz = ctx.createLinearGradient(0,9,0,11.5); noz.addColorStop(0,'#9aa3b5'); noz.addColorStop(1,'#5a6171');
-  ctx.fillStyle=noz; ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(4,9); ctx.lineTo(3,11.5); ctx.lineTo(-3,11.5); ctx.closePath(); ctx.fill();
+  let noz = ctx.createLinearGradient(0,9,0,12); noz.addColorStop(0,'#9aa3b5'); noz.addColorStop(1,'#565d6c');
+  ctx.fillStyle=noz; ctx.beginPath(); ctx.moveTo(-3.6,9); ctx.lineTo(3.6,9); ctx.lineTo(2.8,12); ctx.lineTo(-2.8,12); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 function spawnDebris(x,y){
@@ -658,7 +665,13 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   const tier = S.mult<2? ['#ffffff','#ffffff',20] : S.mult<5? ['var(--primary)','#FF8A00',32] : S.mult<10? ['var(--secondary)','#9B5CF6',46] : ['var(--success)','#2BE07A',62];
   const mEl=$('mult'); mEl.style.color=tier[0];
   mEl.style.textShadow=`0 2px 16px rgba(0,0,0,.6), 0 0 ${tier[2]}px ${tier[1]}99`;
-  $('status').textContent = '';
+  // once you're fully cashed out, show the gains you'd be making by holding (the
+  // FOMO ticker) — climbs until the rocket blows up, then the win pop-up shows.
+  const cashed=S.slots.filter(s=>s.cashedOut), stillIn=S.slots.some(s=>s.placed && !s.cashedOut);
+  if(cashed.length && !stillIn){
+    const missed=cashed.reduce((t,s)=> t + Math.max(0, s.amount*S.mult - (s.won||0)), 0);
+    $('status').textContent = missed>0 ? ('MISSED  €'+fmt(missed)) : '';
+  } else { $('status').textContent=''; }
   S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut) renderAction(i); });
   requestAnimationFrame(tickRun);
 }
