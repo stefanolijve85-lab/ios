@@ -150,6 +150,8 @@ const S = {
   lastRound: null,      // {nonce, serverSeed, clientSeed, hmac, crash}
   history: [],
   sound: true,
+  voicedNonce: -1,      // last round whose countdown audio we played (no replays on reconnect)
+  cdAudio: null,        // current countdown clip node (so we can stop it)
   lowBw: false,
   bots: [],
   lang: 'en',
@@ -520,14 +522,18 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
 }
 
 // Shared countdown UI. onDone is null in net mode (the server starts the round).
+function stopCountdownAudio(){ if(S.cdAudio){ try{ S.cdAudio.src.stop(); }catch(e){} S.cdAudio=null; } }
 function showCountdown(ms, onDone){
+  stopCountdownAudio();   // never let a previous clip bleed into this countdown
   $('centerMain').style.display='none';
   $('countWrap').style.display='flex';
   const total=Math.max(1,ms); let left=ms;
   // If the spoken clip is present, drive the on-screen number FROM the clip's word
-  // timings (3→0.14s, 2→1.14s, 1→2.06s, liftoff→3.22s) so they match exactly:
-  // fire the clip so 'liftoff' lands at launch, and flip the digit on each word.
+  // timings (3→0.14s, 2→1.14s, 1→2.06s, liftoff→3.22s) so they match exactly.
   const voiced = hasSnd('countdown') && ms>=3600;
+  // Announce the countdown audio ONLY ONCE per round — never again on a reconnect /
+  // snapshot of the same round (that was causing the voice to replay mid-game).
+  const announce = (S.voicedNonce !== S.nonce); if(announce) S.voicedNonce=S.nonce;
   let clipFired=false;
   $('countNum').textContent=Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
@@ -536,12 +542,12 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=3220 && !clipFired){ clipFired=true; playSnd('countdown',{vol:VOL.countdown}); }  // liftoff lands at launch
+      if(left<=3220 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playSnd('countdown',{vol:VOL.countdown}); }  // liftoff lands at launch
       const n = left>3080 ? Math.max(0,Math.ceil(left/1000)) : (left>2080?3:left>1160?2:1);
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
       const sec=Math.max(0,Math.ceil(left/1000));
-      if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1) sfx.count(sec); }
+      if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1 && announce) sfx.count(sec); }
     }
     if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
@@ -598,7 +604,7 @@ function crash(){
   $('mult').style.color='';                 // clear running color so the red crash style shows
   $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
-  sfx.crash(); stopEngine();
+  sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
 
   // bust any active un-cashed bets
@@ -977,7 +983,7 @@ function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
-  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine();
+  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
   if(lost>0) flashWon('-€'+fmt(lost), false);
