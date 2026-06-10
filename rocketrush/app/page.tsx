@@ -48,7 +48,7 @@ export default function Page() {
             <div className="wp-amt" id="wpAmt">+€0.00</div>
             <button className="wp-x" id="wpClose">✕</button>
           </div>
-          <div className="wp-total"><span id="wpTotalLbl">Total this round</span>&nbsp;&nbsp;<b id="wpTotal">€0.00</b></div>
+          <div className="wp-total"><span id="wpTotalLbl">Total win this round</span>&nbsp;&nbsp;<b id="wpTotal">€0.00</b></div>
         </div>
         <div className="stage-overlay">
           <div id="centerMain">

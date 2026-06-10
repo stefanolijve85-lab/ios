@@ -404,7 +404,10 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     const ahead = rocketPos(tt+0.06);
     let dx=ahead.x-p.x, dy=ahead.y-p.y;
     if(Math.hypot(dx,dy)<0.5){ dx=1; dy=-1; }
-    const ang = Math.atan2(dy,dx) + Math.PI/2;
+    let ang = Math.atan2(dy,dx) + Math.PI/2;
+    // ease from the vertical pad pose (0) into the flight angle over the first ~0.8s
+    // so the launch tips over in a smooth flow curve instead of snapping diagonal.
+    if(S.phase==='running'){ const k=Math.min(tt/0.8,1); ang *= (1-Math.pow(1-k,3)); }
     if(S.phase==='running'){
       if(!S.lowBw && Math.random()<.95){
         particles.push({x:p.x,y:ry, vx:rnd(-.7,.7)-1.4, vy:rnd(-.5,.5)+1.6, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
@@ -628,7 +631,7 @@ function crash(){
 
   // bust any active un-cashed bets
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } if(s.curBet) recordLossLocal(s); });
-  if(lost>0) flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(sessionWon()));
+  if(lost>0){ const tw=sessionWon(); flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(tw), tw); }
 
   // record provably-fair last round
   S.lastRound = { nonce:S.nonce, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, crash:S.crashAt };
@@ -706,26 +709,27 @@ function renderAction(i){
    UI: winners, chat, history, balance
    ============================================================ */
 function updateBalance(){ $('balance').textContent=fmt(S.balance); persist(); renderAction(); }   // re-render BOTH bet buttons so affordability (disabled) stays correct
-function flashWon(text, good, sub){
+function flashWon(text, good, sub, subVal){
   const el=$('youWon');
-  el.innerHTML = '<span class="yw-main">'+text+'</span>' + (sub? '<span class="yw-sub">'+sub+'</span>' : '');
-  el.style.color = good? 'var(--success)':'var(--danger)';
-  el.style.background = good? 'rgba(34,197,94,.16)':'rgba(244,63,94,.16)';
-  el.style.borderColor = good? 'rgba(34,197,94,.45)':'rgba(244,63,94,.45)';
+  const mainCol = good? 'var(--success)':'var(--danger)';
+  const subGood = (subVal==null)? good : subVal>=0;   // colour the session total by its own sign
+  const subCol = subGood? 'var(--success)':'var(--danger)';
+  el.innerHTML = '<span class="yw-main" style="color:'+mainCol+'">'+text+'</span>'
+    + (sub? '<span class="yw-sub" style="color:'+subCol+'">'+sub+'</span>' : '');
+  // neutral pill so each amount keeps its OWN colour (green positive / red negative)
+  el.style.color=''; el.style.background='rgba(8,10,18,.72)'; el.style.borderColor='var(--line)';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
 }
 // running total won this session (matches the "Total Win" card in Stats)
 function sessionWon(){ return (S.stats && S.stats.returned) || 0; }
 // combined winnings for THIS round = BET 1 + BET 2 cashouts added together
 function roundWon(){ return S.slots.reduce((t,s)=> t + (s.cashedOut ? (s.won||0) : 0), 0); }
-// how many of the two bets won this round (so we can label the total clearly)
-function roundWins(){ return S.slots.reduce((n,s)=> n + (s.cashedOut?1:0), 0); }
 function showWinPopup(mult, amount){
   const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount)+'  @ '+mult.toFixed(2)+'x', true); return; }
   $('wpMult').textContent='@ '+mult.toFixed(2)+'x';
   $('wpAmt').textContent='+€'+fmt(amount);
   const tot=$('wpTotal'); if(tot) tot.textContent='€'+fmt(roundWon());
-  const lbl=$('wpTotalLbl'); if(lbl) lbl.textContent = roundWins()>1 ? 'Total this round (both bets)' : 'Total this round';
+  const lbl=$('wpTotalLbl'); if(lbl) lbl.textContent='Total win this round';
   el.classList.add('show');
   clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2600);
 }
@@ -1039,7 +1043,7 @@ function netCrash(d){
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
-  if(lost>0) flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(sessionWon()));
+  if(lost>0){ const tw=sessionWon(); flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(tw), tw); }
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
   pushRound({ nonce:d.nonce, crash:d.crashPoint, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac });
   pushHistory(d.crashPoint);
