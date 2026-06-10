@@ -125,8 +125,8 @@ function crashFromHmac(hex){
 const S = {
   balance: 1000.00,
   slots: [   // two independent bets per round (Aviator-style)
-    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, queued:false, curBet:null },
-    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, queued:false, curBet:null },
+    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
+    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
   ],
   mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
   rounds: [],           // recent completed rounds {nonce,crash,serverSeed,clientSeed,hmac}
@@ -504,7 +504,7 @@ async function newServerSeed(){
 
 async function startBetting(){ if(!ENGINE_ALIVE) return;
   S.phase='betting'; S.mult=1.00; particles=[];
-  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; });
+  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; s.won=0; });
   await newServerSeed();
   // compute crash point for THIS round now (provably fair, fixed before round)
   const hmac = await hmacHex(S.serverSeed, `${S.clientSeed}:${S.nonce}`);
@@ -640,7 +640,7 @@ function doCashout(i){
   const sl=S.slots[i]; if(!sl.placed||sl.cashedOut) return;
   if(S.mode==='net'){ NET.sock.emit('cashout',{slot:i}); return; } // server confirms + pays
   sl.cashedOut=true; sl.placed=false;
-  const win=sl.amount*S.mult;
+  const win=sl.amount*S.mult; sl.won=win;
   S.balance+=win; updateBalance();
   sfx.cash();
   recordWinLocal(sl, S.mult, win);
@@ -650,6 +650,7 @@ function doCashout(i){
 }
 function onAction(i){
   const sl=S.slots[i];
+  if(sl.cashedOut && S.phase!=='betting') return;   // already won this round — leave the winnings showing
   if(S.phase==='betting'){
     if(sl.placed){ // cancel
       if(S.mode==='net'){ NET.sock.emit('bet:cancel',{slot:i}); }
@@ -670,8 +671,11 @@ function renderAction(i){
   if(S.phase==='betting'){
     if(sl.placed){ a.classList.add('cancel'); m.textContent=T('cancel'); sub.textContent='€'+fmt(sl.amount)+' in'; }
     else { a.classList.add('bet'); m.textContent=T('place'); if(S.balance<sl.bet){ a.disabled=true; sub.textContent='low balance'; } else { sub.textContent='€'+fmt(sl.bet); } }
+  } else if(sl.cashedOut){
+    // won this round — keep the winnings on the button until the next round starts
+    a.classList.add('won'); m.textContent='YOU WON'; sub.textContent='+€'+fmt(sl.won);
   } else if(S.phase==='running'){
-    if(sl.placed && !sl.cashedOut){
+    if(sl.placed){
       a.classList.add('cashout'); m.textContent=T('cashout'); sub.textContent='€'+fmt(sl.amount*S.mult);
     } else {
       a.classList.add(sl.queued?'cancel':'waiting'); m.textContent=sl.queued?T('queued'):T('place'); sub.textContent=sl.queued?'next round':'€'+fmt(sl.bet);
@@ -977,7 +981,7 @@ function setOnline(n){ const v=(typeof n==='number'? n : 0); const o=$('online')
 
 function netBetting(d){
   S.phase='betting'; S.mult=1.00; particles=[];
-  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; });
+  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; s.won=0; });
   S.nonce=d.nonce; S.serverSeedHash=d.serverSeedHash; S.prevServerSeed=d.prevServerSeed; if(d.clientSeed) S.clientSeed=d.clientSeed;
   $('fSeedHash').textContent=S.serverSeedHash||'—';
   $('fSeedReveal').textContent=S.prevServerSeed||'—';
@@ -1016,7 +1020,7 @@ function bindNet(sock){
   sock.on('bet:cancelled', d=>{ const sl=S.slots[d.slot]; if(sl) sl.placed=false; S.balance=d.balance; updateBalance(); renderAction(d.slot); });
   sock.on('bet:rejected',  d=>{ renderAction(d&&d.slot!=null?d.slot:0); });
   sock.on('cashout:confirmed', d=>{
-    const sl=S.slots[d.slot]; if(sl){ sl.cashedOut=true; sl.placed=false; } S.balance=d.balance; updateBalance();
+    const sl=S.slots[d.slot]; if(sl){ sl.cashedOut=true; sl.placed=false; sl.won=d.payout; } S.balance=d.balance; updateBalance();
     sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
     showWinPopup(d.multiplier, d.payout); renderAction(d.slot);
   });
