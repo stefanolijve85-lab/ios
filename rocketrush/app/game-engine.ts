@@ -866,8 +866,12 @@ $('chatSend').onclick=sendChat;
 $('chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendChat(); });
 
 // sound
-function syncSound(){ $('btnSound').textContent=S.sound?'🔊':'🔇'; $('btnSound').classList.toggle('off',!S.sound); $('swSound').classList.toggle('on',S.sound); if(!S.sound) stopEngine(); }
-$('btnSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
+function syncSound(){
+  const b=$('btnSound'); if(b){ b.textContent=S.sound?'🔊':'🔇'; b.classList.toggle('off',!S.sound); }
+  const sw=$('swSound'); if(sw) sw.classList.toggle('on',S.sound);
+  const msw=$('menuSoundSw'); if(msw) msw.classList.toggle('on',S.sound);
+  if(!S.sound) stopEngine();
+}
 // unlock WebAudio + speech on the first touch (required by iOS Safari)
 function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio, { once:true });
@@ -907,7 +911,9 @@ function closeMenu(){ const d=$('menuDropdown'), b=$('menuBackdrop'); if(d) d.cl
 function toggleMenu(){ const d=$('menuDropdown'), b=$('menuBackdrop'); if(!d) return; const open=!d.classList.contains('show'); d.classList.toggle('show',open); if(b) b.classList.toggle('show',open); }
 { const bm=$('btnMenu'); if(bm) bm.onclick=toggleMenu; const bk=$('menuBackdrop'); if(bk) bk.onclick=closeMenu; }
 document.querySelectorAll('.menu-item').forEach(it=>it.onclick=()=>{
-  const a=it.dataset.menu; closeMenu();
+  const a=it.dataset.menu;
+  if(a==='sound'){ S.sound=!S.sound; syncSound(); return; }   // toggle, keep menu open
+  closeMenu();
   if(a==='account') openAccount();
   else if(a==='history') openScreen('history');
   else if(a==='stats') openScreen('stats');
@@ -959,7 +965,7 @@ function ambient(){
 /* ============================================================
    NETWORK: authoritative server, with graceful local fallback
    ============================================================ */
-function setOnline(n){ const v=(typeof n==='number'? n : 0); $('online').textContent=v.toLocaleString('en-US'); const sp=$('stagePlayers'); if(sp) sp.textContent='👥 '+v.toLocaleString('en-US'); }
+function setOnline(n){ const v=(typeof n==='number'? n : 0); const o=$('online'); if(o) o.textContent=v.toLocaleString('en-US'); const sp=$('stagePlayers'); if(sp) sp.textContent='👥 '+v.toLocaleString('en-US'); }
 
 function netBetting(d){
   S.phase='betting'; S.mult=1.00; particles=[];

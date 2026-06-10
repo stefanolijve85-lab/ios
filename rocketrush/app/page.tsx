@@ -16,26 +16,19 @@ export default function Page() {
       <div className="topbar">
         <button className="hambtn" id="btnMenu" title="Menu">☰</button>
         <div className="logo"><span className="a">Rocket</span><span className="rk">🚀</span><span className="b">Rush</span></div>
-        <div className="top-right">
-          <button className="iconbtn" id="btnSound" title="Sound">🔊</button>
-        </div>
+        <div className="balance-chip tnum" id="balanceChip">€<span id="balance">1000.00</span></div>
       </div>
 
       {/* dropdown menu under the ☰ (replaces the bottom nav) */}
       <div className="menu-backdrop" id="menuBackdrop" />
       <div className="menu-dropdown" id="menuDropdown">
+        <button className="menu-item" data-menu="sound"><span className="mi-ic">🔊</span> Sound<span className="mi-sw" id="menuSoundSw"><i /></span></button>
         <button className="menu-item" data-menu="account"><span className="mi-ic">👤</span> <span id="menuAcct">Account</span></button>
         <button className="menu-item" data-menu="history"><span className="mi-ic">🕘</span> My Bets &amp; History</button>
         <button className="menu-item" data-menu="stats"><span className="mi-ic">📊</span> Statistics</button>
         <button className="menu-item" data-menu="leaderboard"><span className="mi-ic">🏆</span> Leaderboard</button>
         <button className="menu-item" data-menu="fair"><span className="mi-ic">🛡️</span> Provably Fair</button>
         <button className="menu-item" data-menu="settings"><span className="mi-ic">⚙️</span> Settings</button>
-      </div>
-
-      {/* ===================== ONLINE + BALANCE ===================== */}
-      <div className="online-row">
-        <div className="online-pill">🌍 <span className="tnum" id="online">0</span> players online</div>
-        <div className="balance-chip tnum" id="balanceChip">€<span id="balance">1000.00</span></div>
       </div>
 
       {/* ===================== STAGE ===================== */}

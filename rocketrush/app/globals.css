@@ -63,14 +63,13 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 }
 .online-pill #online { color: var(--primary); font-weight: 800; }
 .balance-chip {
-  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  font-size: 12px; font-weight: 800; color: #fff; background: var(--panel);
-  border: 1px solid var(--line); padding: 5px 10px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 800; color: #fff; background: var(--panel);
+  border: 1px solid var(--line); padding: 7px 12px; border-radius: 999px; white-space: nowrap;
 }
 
 /* ===================== STAGE ===================== */
 .stage {
-  position: relative; flex: 1 1 auto; min-height: 150px; border-radius: 20px; overflow: hidden;
+  position: relative; flex: 1 1 auto; min-height: 180px; border-radius: 20px; overflow: hidden;
   border: 1px solid var(--line);
   background: radial-gradient(120% 100% at 50% 0%, var(--stage-1), var(--stage-2) 70%);
 }
@@ -194,6 +193,10 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .menu-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-radius: 11px; font-size: 14.5px; font-weight: 600; color: var(--text); text-align: left; }
 .menu-item:active { background: var(--panel-2); }
 .menu-item .mi-ic { font-size: 17px; width: 22px; text-align: center; }
+.menu-item .mi-sw { margin-left: auto; width: 40px; height: 24px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; flex: none; }
+.menu-item .mi-sw.on { background: var(--success); }
+.menu-item .mi-sw i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .2s; }
+.menu-item .mi-sw.on i { left: 19px; }
 
 /* ===================== MODALS ===================== */
 .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.72); backdrop-filter: blur(8px); display: none; align-items: flex-end; justify-content: center; z-index: 50; }
@@ -290,4 +293,4 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .clk:active { opacity: .7; }
 
 /* slightly roomier on big phones / desktop */
-@media (min-height: 800px) { .stage { min-height: 220px; } .panels { height: 150px; } }
+@media (min-height: 800px) { .stage { min-height: 260px; } .panels { height: 140px; } }
