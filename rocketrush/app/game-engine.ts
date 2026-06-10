@@ -622,7 +622,8 @@ function showCountdown(ms, onDone){
   S.cdEndTs=performance.now()+ms; S.cdMs=Math.max(1,ms);   // drives the rocket warming up on the pad (see draw)
   const total=Math.max(1,ms); let left=ms;
   // If the spoken clip is present, drive the on-screen number FROM the clip's word
-  // timings (3→0.14s, 2→1.14s, 1→2.06s, liftoff→3.22s) so they match exactly.
+  // timings so they match exactly. Tuned to the current countdown.mp3 (NASA voice):
+  // 3→0.2s, 2→1.2s, 1→2.28s, LIFTOFF→3.44s (so liftoff lands at launch).
   const voiced = hasSnd('countdown') && ms>=3600;
   // Announce the countdown audio ONLY ONCE per round — never again on a reconnect /
   // snapshot of the same round (that was causing the voice to replay mid-game).
@@ -635,8 +636,8 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=3220 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playSnd('countdown',{vol:VOL.countdown}); }  // liftoff lands at launch
-      const n = left>3080 ? Math.max(0,Math.ceil(left/1000)) : (left>2080?3:left>1160?2:1);
+      if(left<=3440 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playSnd('countdown',{vol:VOL.countdown}); }  // fire so LIFTOFF (3.44s) lands at launch
+      const n = left>3240 ? Math.max(0,Math.ceil(left/1000)) : (left>2240?3:left>1160?2:1);
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
       const sec=Math.max(0,Math.ceil(left/1000));
@@ -654,7 +655,7 @@ function startRunning(){
   $('status').textContent='';
   $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
   sfx.launch();
-  setTimeout(killCdClip, 1200);   // after 'liftoff' finishes, kill the clip so it can't linger/resume mid-round
+  setTimeout(killCdClip, 2700);   // let the spoken "LIFTOFF!" play out, then kill the clip so it can't linger/resume mid-round
   renderAction();
   tickRun();
 }
@@ -1108,7 +1109,7 @@ function netStart(){
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='';
   $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
-  sfx.launch(); setTimeout(killCdClip, 1200); renderAction(); tickRun();
+  sfx.launch(); setTimeout(killCdClip, 2700); renderAction(); tickRun();
 }
 function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
