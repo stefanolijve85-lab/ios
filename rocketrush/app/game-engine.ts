@@ -453,6 +453,17 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   requestAnimationFrame(draw);
 }
 
+// Optional artwork: drop a transparent PNG in public/ and the game renders it
+// instead of the built-in vector rocket — pixel-perfect to your reference.
+//   public/rocket.png  → the rocket BODY only, nose pointing UP, no flame
+//   public/flame.png   → the exhaust flame, pointing DOWN (optional)
+// If a file is absent the engine falls back to the drawn vector rocket/flame.
+let ROCKET_IMG=null, rocketReady=false, FLAME_IMG=null, flameReady=false;
+function loadArt(){
+  try{ const im=new Image(); im.onload=()=>{ if(im.naturalWidth>0){ ROCKET_IMG=im; rocketReady=true; } }; im.onerror=()=>{}; im.src='/rocket.png'; }catch(e){}
+  try{ const fm=new Image(); fm.onload=()=>{ if(fm.naturalWidth>0){ FLAME_IMG=fm; flameReady=true; } }; fm.onerror=()=>{}; fm.src='/flame.png'; }catch(e){}
+}
+
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
 function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
@@ -466,13 +477,26 @@ function drawRocket(x,y,ang,heat){
   let eg = ctx.createRadialGradient(0,9,0, 0,9, 13*gi+3);
   eg.addColorStop(0,`rgba(255,228,150,${.9*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,13*gi+3,0,7); ctx.fill();
-  let fl = ctx.createLinearGradient(0,7,0,9+f);   // outer orange→yellow plume
-  fl.addColorStop(0,'rgba(255,240,180,.95)'); fl.addColorStop(.35,'rgba(255,170,55,.9)'); fl.addColorStop(.7,'rgba(255,110,40,.5)'); fl.addColorStop(1,'rgba(255,70,60,0)');
-  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
-  let fc = ctx.createLinearGradient(0,7,0,8+f*0.62);   // inner white-hot core
-  fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
-  ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.6,8); ctx.quadraticCurveTo(0,8+f*0.62,2.6,8); ctx.closePath(); ctx.fill();
+  if(flameReady){
+    const iw=FLAME_IMG.naturalWidth||1, ih=FLAME_IMG.naturalHeight||1, fh=f+6, fw=fh*iw/ih;
+    ctx.globalAlpha=.96; ctx.drawImage(FLAME_IMG, -fw/2, 7, fw, fh); ctx.globalAlpha=1;
+  } else {
+    let fl = ctx.createLinearGradient(0,7,0,9+f);   // outer orange→yellow plume
+    fl.addColorStop(0,'rgba(255,240,180,.95)'); fl.addColorStop(.35,'rgba(255,170,55,.9)'); fl.addColorStop(.7,'rgba(255,110,40,.5)'); fl.addColorStop(1,'rgba(255,70,60,0)');
+    ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
+    let fc = ctx.createLinearGradient(0,7,0,8+f*0.62);   // inner white-hot core
+    fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
+    ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.6,8); ctx.quadraticCurveTo(0,8+f*0.62,2.6,8); ctx.closePath(); ctx.fill();
+  }
   ctx.globalCompositeOperation='source-over';
+
+  // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
+  // flame above stays. Otherwise fall through to the built-in vector rocket.
+  if(rocketReady){
+    const iw=ROCKET_IMG.naturalWidth||1, ih=ROCKET_IMG.naturalHeight||1, H0=36, W0=H0*iw/ih;
+    ctx.drawImage(ROCKET_IMG, -W0/2, -25, W0, H0);
+    ctx.restore(); return;
+  }
 
   // BODY — clean brushed-metal tube (white/silver, like the reference)
   ctx.shadowColor='rgba(255,150,40,.3)'; ctx.shadowBlur=11;
@@ -1358,6 +1382,7 @@ function boot(){
   seedWinners();
   seedHistory();
   loadSounds();  // preload optional /sounds/* assets (no-op if absent)
+  loadArt();     // preload optional /rocket.png + /flame.png artwork (no-op if absent)
   loadSave();   // restore balance (local) + history/stats from a previous session
   sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
   syncSound();
