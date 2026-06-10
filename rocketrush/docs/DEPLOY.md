@@ -64,18 +64,20 @@ docker run -p 3000:3000 -e PORT=3000 rocketrush
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **build + runtime** | accounts (client) |
 | `SUPABASE_URL` | runtime | accounts (server) |
 | `SUPABASE_SERVICE_ROLE_KEY` | runtime (secret) | accounts (server) |
-| `CANONICAL_HOST` | runtime (optional) | host the redirect points to (default `liftoffx.com`) |
-| `REDIRECT_HOSTS` | runtime (optional) | comma list redirected → canonical (default `www.liftoffx.com,liftoffx.nl,www.liftoffx.nl`) |
+| `CANONICAL_HOST` | runtime (optional) | host the redirect points to (default `www.liftoffx.com`) |
+| `REDIRECT_HOSTS` | runtime (optional) | comma list redirected → canonical (default `liftoffx.com,liftoffx.nl,www.liftoffx.nl`) |
 
-## Custom domain (production: liftoffx.com)
+## Custom domain (production: www.liftoffx.com)
 
-The production URL is **https://liftoffx.com**. Wiring:
+The production URL is **https://www.liftoffx.com**. Wiring:
 1. **Render → Settings → Custom Domains**: add `liftoffx.com` and `www.liftoffx.com`.
+   Render auto-redirects the apex to `www`, so **`www` is the canonical host**.
 2. **DNS at the registrar (Hostnet)**: `liftoffx.com` → **A** record to Render's IP
    (`216.24.57.1`); `www.liftoffx.com` → **CNAME** to the service's `…onrender.com`
    host. Remove any default A/AAAA record that points the root elsewhere.
-3. The server sends the `www` / `.nl` variants to `https://liftoffx.com` with a
-   301 (see `server.mjs`; tune via `CANONICAL_HOST` / `REDIRECT_HOSTS`).
+3. The server sends the bare `liftoffx.com` (if it reaches the app) and the `.nl`
+   variants to `https://www.liftoffx.com` with a 301 (see `server.mjs`; tune via
+   `CANONICAL_HOST` / `REDIRECT_HOSTS`). Never list the canonical host itself.
 
 **Without Supabase vars the public build runs in guest mode** — fully playable,
 shareable, and great for a tester round. The `NEXT_PUBLIC_*` values are inlined

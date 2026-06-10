@@ -27,13 +27,14 @@ const handle = app.getRequestHandler();
 
 await app.prepare();
 
-// Canonical host: send the www / .nl variants to the one branded URL
-// (https://liftoffx.com). ONLY these alternate hostnames are redirected — the
+// Canonical host: send the bare / .nl variants to the one branded URL
+// (https://www.liftoffx.com — Render redirects the apex to www, so www is the
+// canonical host). ONLY these alternate hostnames are redirected — the
 // onrender.com URL, localhost and the LAN IP keep working unchanged (important
-// while DNS is still propagating, and for local dev).
-const CANONICAL = process.env.CANONICAL_HOST || 'liftoffx.com';
+// for local dev). Never list the canonical host itself here (that would loop).
+const CANONICAL = process.env.CANONICAL_HOST || 'www.liftoffx.com';
 const REDIRECT_HOSTS = new Set(
-  (process.env.REDIRECT_HOSTS || 'www.liftoffx.com,liftoffx.nl,www.liftoffx.nl')
+  (process.env.REDIRECT_HOSTS || 'liftoffx.com,liftoffx.nl,www.liftoffx.nl')
     .split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
 );
 
