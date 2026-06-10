@@ -9,7 +9,7 @@
 **The crash game operators actually earn from.**
 Aviator-class instant game · built-in social layer · operator-friendly economics.
 
-🔗 **Live demo:** https://rocket-rush-rdzn.onrender.com · 📧 stefanolijve85@gmail.com
+🔗 **Live demo:** https://liftoffx.com · 📧 stefanolijve85@gmail.com
 
 ---
 
