@@ -38,17 +38,11 @@ export default function Page() {
         <div className="planet p3" />
         <canvas id="sky" />
         <div className="you-won" id="youWon" />
-        {/* clear win pop-up with your earnings */}
+        {/* one clear centered pop-up with the round's winnings, shown when the round ends */}
         <div className="win-pop" id="winPop">
-          <div className="wp-main">
-            <div>
-              <div className="wp-title">YOU CASHED OUT</div>
-              <div className="wp-mult" id="wpMult">@ 2.00x</div>
-            </div>
-            <div className="wp-amt" id="wpAmt">+€0.00</div>
-            <button className="wp-x" id="wpClose">✕</button>
-          </div>
-          <div className="wp-total"><span id="wpTotalLbl">Total win this round</span>&nbsp;&nbsp;<b id="wpTotal">€0.00</b></div>
+          <button className="wp-x" id="wpClose">✕</button>
+          <div className="wp-title">YOU WON THIS ROUND</div>
+          <div className="wp-amt" id="wpAmt">+€0.00</div>
         </div>
         <div className="stage-overlay">
           <div id="centerMain">
