@@ -2,6 +2,8 @@
 
 **The Apple of crash games.** Simple. Fast. Premium. Instantly understandable.
 
+🌐 **Live:** https://liftoffx.com
+
 A mobile-first **multiplayer** crash game. Place a bet → watch the rocket rise →
 cash out before it crashes. A new player understands it in 3 seconds.
 

@@ -27,7 +27,24 @@ const handle = app.getRequestHandler();
 
 await app.prepare();
 
-const httpServer = createServer((req, res) => handle(req, res));
+// Canonical host: send the www / .nl variants to the one branded URL
+// (https://liftoffx.com). ONLY these alternate hostnames are redirected — the
+// onrender.com URL, localhost and the LAN IP keep working unchanged (important
+// while DNS is still propagating, and for local dev).
+const CANONICAL = process.env.CANONICAL_HOST || 'liftoffx.com';
+const REDIRECT_HOSTS = new Set(
+  (process.env.REDIRECT_HOSTS || 'www.liftoffx.com,liftoffx.nl,www.liftoffx.nl')
+    .split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
+);
+
+const httpServer = createServer((req, res) => {
+  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if (REDIRECT_HOSTS.has(host)) {
+    res.writeHead(301, { Location: `https://${CANONICAL}${req.url}` });
+    return res.end();
+  }
+  return handle(req, res);
+});
 
 // Socket.io shares the same HTTP server; it intercepts only /socket.io/* and
 // passes every other request (and Next's HMR upgrade) through to Next.
