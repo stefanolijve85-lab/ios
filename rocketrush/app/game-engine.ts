@@ -348,6 +348,20 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   }
   ctx.globalAlpha=1;
 
+  // BETTING: the rocket sits on the pad at bottom-left, engine warming up,
+  // smoke building — so during the countdown you watch it start up before it flies.
+  if(S.phase==='betting'){
+    const pad = rocketPos(0);
+    const heat = S.cdMs ? Math.min(1, Math.max(0, 1-(S.cdEndTs-performance.now())/S.cdMs)) : 0;
+    // launch smoke building under the rocket (thicker as the count nears zero)
+    if(!S.lowBw && Math.random() < 0.25 + heat*0.6){
+      particles.push({ x:pad.x+rnd(-7,7), y:pad.y+rnd(8,16), vx:rnd(-.7,.7), vy:rnd(.1,1.1)-heat*0.4,
+        life:1, c:'rgba(150,150,160,1)', r:(3+heat*5), grav:-0.02, fade:0.02, smoke:true });
+    }
+    const vib = heat*rnd(-1.6,1.6);   // the launch-pad shudder as thrust builds
+    drawRocket(pad.x+vib, pad.y - heat*2, 0, heat);
+  }
+
   if(S.phase==='running' || S.phase==='crashed'){
     const t = (performance.now()-S.startTs)/1000;
     const tt = S.phase==='crashed' ? S.crashTime : t;
@@ -416,11 +430,13 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
 }
 
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
-function drawRocket(x,y,ang){
+function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
-  // flame (behind body) — layered for depth
-  const f = 10+Math.sin(performance.now()/32)*5;
+  // flame (behind body) — layered for depth. On the pad (heat 0→1) it grows from a
+  // small ignition flicker to full thrust; in flight (heat undefined) it's full.
+  const flick = Math.sin(performance.now()/32)*5;
+  const f = (heat==null) ? (10+flick) : (1.5 + heat*16 + flick*heat);
   let fl = ctx.createLinearGradient(0,7,0,9+f);
   fl.addColorStop(0,'rgba(255,236,170,1)'); fl.addColorStop(.45,'rgba(255,150,40,.95)'); fl.addColorStop(1,'rgba(255,80,90,0)');
   ctx.fillStyle=fl;
@@ -528,6 +544,7 @@ function showCountdown(ms, onDone){
   stopCountdownAudio();   // never let a previous clip bleed into this countdown
   $('centerMain').style.display='none';
   $('countWrap').style.display='flex';
+  S.cdEndTs=performance.now()+ms; S.cdMs=Math.max(1,ms);   // drives the rocket warming up on the pad (see draw)
   const total=Math.max(1,ms); let left=ms;
   // If the spoken clip is present, drive the on-screen number FROM the clip's word
   // timings (3→0.14s, 2→1.14s, 1→2.06s, liftoff→3.22s) so they match exactly.
@@ -611,7 +628,7 @@ function crash(){
 
   // bust any active un-cashed bets
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } if(s.curBet) recordLossLocal(s); });
-  if(lost>0) flashWon('-€'+fmt(lost), false);
+  if(lost>0) flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(sessionWon()));
 
   // record provably-fair last round
   S.lastRound = { nonce:S.nonce, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, crash:S.crashAt };
@@ -689,13 +706,16 @@ function renderAction(i){
    UI: winners, chat, history, balance
    ============================================================ */
 function updateBalance(){ $('balance').textContent=fmt(S.balance); persist(); renderAction(); }   // re-render BOTH bet buttons so affordability (disabled) stays correct
-function flashWon(text, good){
-  const el=$('youWon'); el.textContent=text;
+function flashWon(text, good, sub){
+  const el=$('youWon');
+  el.innerHTML = '<span class="yw-main">'+text+'</span>' + (sub? '<span class="yw-sub">'+sub+'</span>' : '');
   el.style.color = good? 'var(--success)':'var(--danger)';
   el.style.background = good? 'rgba(34,197,94,.16)':'rgba(244,63,94,.16)';
   el.style.borderColor = good? 'rgba(34,197,94,.45)':'rgba(244,63,94,.45)';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
 }
+// running total won this session (matches the "Total Win" card in Stats)
+function sessionWon(){ return (S.stats && S.stats.returned) || 0; }
 // combined winnings for THIS round = BET 1 + BET 2 cashouts added together
 function roundWon(){ return S.slots.reduce((t,s)=> t + (s.cashedOut ? (s.won||0) : 0), 0); }
 // how many of the two bets won this round (so we can label the total clearly)
@@ -1019,7 +1039,7 @@ function netCrash(d){
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
-  if(lost>0) flashWon('-€'+fmt(lost), false);
+  if(lost>0) flashWon('−€'+fmt(lost), false, 'Total win €'+fmt(sessionWon()));
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
   pushRound({ nonce:d.nonce, crash:d.crashPoint, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac });
   pushHistory(d.crashPoint);
