@@ -180,14 +180,20 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .chat-input input { flex: 1; min-width: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 6px 8px; font-size: 11px; outline: none; }
 .chat-input button { width: 30px; flex: none; border-radius: 9px; background: var(--secondary); font-size: 13px; }
 
-/* ===================== BOTTOM NAV ===================== */
-.bottom-nav { flex: none; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 6px; margin-top: 1px; }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 56px; color: var(--faint); font-size: 9.5px; font-weight: 700; }
-.nav-item i { font-size: 19px; font-style: normal; filter: grayscale(1); opacity: .7; }
-.nav-item.active { color: var(--primary); }
-.nav-item.active i { filter: none; opacity: 1; }
-.nav-fab { width: 54px; height: 54px; border-radius: 50%; margin-top: -18px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; font-size: 28px; font-weight: 300; display: grid; place-items: center; box-shadow: 0 8px 22px rgba(255,138,0,.5); transition: transform .1s; }
-.nav-fab:active { transform: scale(.92); }
+/* ===================== DROPDOWN MENU (under the ☰) ===================== */
+.menu-backdrop { position: fixed; inset: 0; z-index: 44; display: none; }
+.menu-backdrop.show { display: block; }
+.menu-dropdown {
+  position: fixed; left: 10px; top: calc(var(--safe-top) + 52px); width: min(74vw, 280px);
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; z-index: 45;
+  padding: 6px; box-shadow: 0 18px 44px rgba(0,0,0,.55); overflow: hidden;
+  display: none; transform-origin: top left;
+}
+.menu-dropdown.show { display: block; animation: menuIn .16s ease; }
+@keyframes menuIn { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+.menu-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-radius: 11px; font-size: 14.5px; font-weight: 600; color: var(--text); text-align: left; }
+.menu-item:active { background: var(--panel-2); }
+.menu-item .mi-ic { font-size: 17px; width: 22px; text-align: center; }
 
 /* ===================== MODALS ===================== */
 .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.72); backdrop-filter: blur(8px); display: none; align-items: flex-end; justify-content: center; z-index: 50; }

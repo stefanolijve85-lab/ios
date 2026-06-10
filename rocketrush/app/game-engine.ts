@@ -867,8 +867,7 @@ function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ cons
 window.addEventListener('pointerdown', unlockAudio, { once:true });
 window.addEventListener('touchend', unlockAudio, { once:true });
 
-// settings modal
-$('btnSettings').onclick=()=>$('settingsModal').classList.add('show');
+// settings opens from the dropdown menu (see menu-item wiring)
 $('badgeFair').onclick=openFair;
 { const wc=$('wpClose'); if(wc) wc.onclick=()=>$('winPop').classList.remove('show'); }
 { const sp=$('stagePlayers'); if(sp) sp.onclick=openLeaderboard; }
@@ -897,18 +896,21 @@ $('swSession').onclick=function(){ this.classList.toggle('on'); };
 // language
 $('lang').onchange=e=>{ S.lang=e.target.value; renderAction(); };
 
-// bottom navigation (Game / History / Bet / Stats / Menu)
-document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>{
-  const a=n.dataset.nav;
-  if(a==='menu'){ $('settingsModal').classList.add('show'); return; }
-  if(a==='history'){ openScreen('history'); return; }
-  if(a==='stats'){ openScreen('stats'); return; }
-  if(a==='game'){ closeScreens(); }
+// dropdown menu under the ☰ (replaces the bottom nav — calmer, more space)
+function closeMenu(){ const d=$('menuDropdown'), b=$('menuBackdrop'); if(d) d.classList.remove('show'); if(b) b.classList.remove('show'); }
+function toggleMenu(){ const d=$('menuDropdown'), b=$('menuBackdrop'); if(!d) return; const open=!d.classList.contains('show'); d.classList.toggle('show',open); if(b) b.classList.toggle('show',open); }
+{ const bm=$('btnMenu'); if(bm) bm.onclick=toggleMenu; const bk=$('menuBackdrop'); if(bk) bk.onclick=closeMenu; }
+document.querySelectorAll('.menu-item').forEach(it=>it.onclick=()=>{
+  const a=it.dataset.menu; closeMenu();
+  if(a==='account') openAccount();
+  else if(a==='history') openScreen('history');
+  else if(a==='stats') openScreen('stats');
+  else if(a==='leaderboard') openLeaderboard();
+  else if(a==='fair') openFair();
+  else if(a==='settings') $('settingsModal').classList.add('show');
 });
 // back buttons on the full-screen tabs
 document.querySelectorAll('[data-screen-close]').forEach(b=>b.onclick=()=>closeScreens());
-// center FAB = quick place-bet / cash-out shortcut for Bet 1
-const fab=document.querySelector('.nav-fab'); if(fab) fab.onclick=()=>onAction(0);
 
 /* ============================================================
    PROVABLY FAIR MODAL
@@ -1102,6 +1104,7 @@ function renderAccount(){
 }
 function updateAccountUI(){
   const lbl=$('acctLabel'); if(lbl) lbl.textContent = S.account ? (S.account.username||'Account') : (ACCOUNTS_ENABLED?'Log in / Register':'Account (guest)');
+  const ma=$('menuAcct'); if(ma) ma.textContent = S.account ? (S.account.username||'Account') : 'Account';
   const am=$('accountModal'); if(am && am.classList.contains('show')) renderAccount();
 }
 function openAccount(){ renderAccount(); $('accountModal').classList.add('show'); }

@@ -14,12 +14,22 @@ export default function Page() {
     <div className="app">
       {/* ===================== HEADER ===================== */}
       <div className="topbar">
-        <button className="hambtn" id="btnSettings" title="Menu">☰</button>
+        <button className="hambtn" id="btnMenu" title="Menu">☰</button>
         <div className="logo"><span className="a">Rocket</span><span className="rk">🚀</span><span className="b">Rush</span></div>
         <div className="top-right">
-          <button className="iconbtn" id="btnLeaderboard" title="Leaderboard">🏆</button>
           <button className="iconbtn" id="btnSound" title="Sound">🔊</button>
         </div>
+      </div>
+
+      {/* dropdown menu under the ☰ (replaces the bottom nav) */}
+      <div className="menu-backdrop" id="menuBackdrop" />
+      <div className="menu-dropdown" id="menuDropdown">
+        <button className="menu-item" data-menu="account"><span className="mi-ic">👤</span> <span id="menuAcct">Account</span></button>
+        <button className="menu-item" data-menu="history"><span className="mi-ic">🕘</span> My Bets &amp; History</button>
+        <button className="menu-item" data-menu="stats"><span className="mi-ic">📊</span> Statistics</button>
+        <button className="menu-item" data-menu="leaderboard"><span className="mi-ic">🏆</span> Leaderboard</button>
+        <button className="menu-item" data-menu="fair"><span className="mi-ic">🛡️</span> Provably Fair</button>
+        <button className="menu-item" data-menu="settings"><span className="mi-ic">⚙️</span> Settings</button>
       </div>
 
       {/* ===================== ONLINE + BALANCE ===================== */}
@@ -106,15 +116,6 @@ export default function Page() {
 
       {/* provably-fair badge at the bottom of the game (off the main stage) */}
       <button className="fair-foot" id="badgeFair"><span className="shield">🛡️</span> Provably Fair · tap to verify</button>
-
-      {/* ===================== BOTTOM NAV ===================== */}
-      <nav className="bottom-nav">
-        <button className="nav-item active" data-nav="game"><i>🚀</i><span>Game</span></button>
-        <button className="nav-item" data-nav="history"><i>🕘</i><span>History</span></button>
-        <button className="nav-fab" data-nav="bet">+</button>
-        <button className="nav-item" data-nav="stats"><i>📊</i><span>Stats</span></button>
-        <button className="nav-item" data-nav="menu"><i>☰</i><span>Menu</span></button>
-      </nav>
 
       {/* ===================== HISTORY SCREEN ===================== */}
       <div className="screen" id="screenHistory">
