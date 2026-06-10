@@ -324,14 +324,15 @@ function resize(){
 }
 window.addEventListener('resize', resize);
 
-function rocketPos(t){ // t in seconds; returns point on flight curve in canvas space
-  // Aviator-style "J" curve: the rocket lifts almost straight up first, then the
-  // horizontal motion ramps in so it arcs over toward the moon (top-right).
-  const climb = Math.min(t/9, 1);
-  const ey = 1 - Math.pow(1-climb, 2.2);   // vertical: rises smoothly right away
-  const ex = Math.pow(climb, 1.7);          // horizontal: lags, so it goes up then curves right
-  const x = 0.12*W + ex * 0.66*W;   // ends ~0.78W so the bigger rocket stays on-screen
-  const y = 0.86*H - ey * 0.60*H;   // ends ~0.26H
+function rocketPos(t){ // t in seconds; point on the flight curve in canvas space
+  // Asymptotic climb: the rocket keeps creeping toward the moon and slows the
+  // higher it gets, so even a long round stays ONE smooth motion — it never hits
+  // the end of the path and snaps direction near the moon.
+  const prog = 1 - 1/(1 + t/7);      // 0 → ~1 (never quite reaches), eases as it climbs
+  const ey = Math.pow(prog, 0.80);   // vertical leads → lifts almost straight up first
+  const ex = Math.pow(prog, 1.5);    // horizontal lags → then arcs over to the upper-right
+  const x = 0.12*W + ex * 0.72*W;    // → ~0.84W, near the moon (top-right)
+  const y = 0.86*H - ey * 0.66*H;    // → ~0.20H
   return {x,y};
 }
 
@@ -375,38 +376,44 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
 
     ctx.save(); ctx.translate(ox,oy);
     const crashed = S.phase==='crashed';
-    const steps=36; const pts=[{x:0.12*W,y:0.86*H}];
-    for(let i=1;i<=steps;i++) pts.push(rocketPos(tt*i/steps));
+    // The trail + filled area show ONLY while flying. On crash they vanish, leaving
+    // just the explosion and debris (no lingering red line/fill).
+    if(!crashed){
+      const steps=36; const pts=[{x:0.12*W,y:0.86*H}];
+      for(let i=1;i<=steps;i++) pts.push(rocketPos(tt*i/steps));
 
-    // filled area under the curve, down to the BOTTOM of the stage (Aviator-style)
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    ctx.lineTo(0, 0.86*H);
-    for(const q of pts) ctx.lineTo(q.x, q.y);
-    ctx.lineTo(p.x, H);
-    ctx.closePath();
-    const fillG = ctx.createLinearGradient(0, Math.min(p.y, 0.86*H), 0, H);
-    if(crashed){ fillG.addColorStop(0,'rgba(244,63,94,.45)'); fillG.addColorStop(.5,'rgba(244,63,94,.18)'); fillG.addColorStop(1,'rgba(244,63,94,.03)'); }
-    else { fillG.addColorStop(0,'rgba(255,138,0,.42)'); fillG.addColorStop(.5,'rgba(255,94,98,.17)'); fillG.addColorStop(1,'rgba(255,94,98,.03)'); }
-    ctx.fillStyle=fillG; ctx.fill();
+      // filled area under the curve, down to the BOTTOM of the stage (Aviator-style)
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      ctx.lineTo(0, 0.86*H);
+      for(const q of pts) ctx.lineTo(q.x, q.y);
+      ctx.lineTo(p.x, H);
+      ctx.closePath();
+      const fillG = ctx.createLinearGradient(0, Math.min(p.y, 0.86*H), 0, H);
+      fillG.addColorStop(0,'rgba(255,138,0,.42)'); fillG.addColorStop(.5,'rgba(255,94,98,.17)'); fillG.addColorStop(1,'rgba(255,94,98,.03)');
+      ctx.fillStyle=fillG; ctx.fill();
 
-    // the flight line on top
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
-    const grad = ctx.createLinearGradient(0.12*W,0.86*H,p.x,p.y);
-    grad.addColorStop(0,'rgba(255,138,0,0)');
-    grad.addColorStop(1, crashed? 'rgba(244,63,94,1)' : 'rgba(255,170,40,1)');
-    ctx.strokeStyle=grad; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+      // the flight line on top
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+      const grad = ctx.createLinearGradient(0.12*W,0.86*H,p.x,p.y);
+      grad.addColorStop(0,'rgba(255,138,0,0)');
+      grad.addColorStop(1,'rgba(255,170,40,1)');
+      ctx.strokeStyle=grad; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+    }
 
     // rocket — bigger and bobbing up & down as it powers to the moon
     const bob = Math.sin(tt*3.4) * Math.min(0.05*H, 18);
     const ry = p.y + (S.phase==='running'? bob : 0);
-    // point the nose along the direction of travel (toward the moon, up-right)
-    const ahead = rocketPos(tt+0.06);
-    let dx=ahead.x-p.x, dy=ahead.y-p.y;
-    if(Math.hypot(dx,dy)<0.5){ dx=1; dy=-1; }
-    const ang = Math.atan2(dy,dx) + Math.PI/2;   // nose follows the curve (starts vertical, tips right)
+    // point the nose along the direction of travel (toward the moon, up-right).
+    // The look-ahead grows with time so that even when the rocket is barely creeping
+    // near the moon there's a real direction — and we keep the last good angle if the
+    // motion is tiny, so the nose never snaps.
+    const ahead = rocketPos(tt + 0.1 + tt*0.05);
+    let dx=ahead.x-p.x, dy=ahead.y-p.y, ang;
+    if(Math.hypot(dx,dy) < 0.3){ ang = (S.lastAng!=null? S.lastAng : 0); }
+    else { ang = Math.atan2(dy,dx) + Math.PI/2; S.lastAng = ang; }   // nose follows the curve (starts vertical, tips right)
     if(S.phase==='running'){
       if(!S.lowBw && Math.random()<.95){
         particles.push({x:p.x,y:ry, vx:rnd(-.7,.7)-1.4, vy:rnd(-.5,.5)+1.6, life:1, c: Math.random()<.5?'#FF8A00':'#FFD166'});
