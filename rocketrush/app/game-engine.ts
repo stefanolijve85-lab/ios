@@ -522,7 +522,8 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
 }
 
 // Shared countdown UI. onDone is null in net mode (the server starts the round).
-function stopCountdownAudio(){ if(S.cdAudio){ try{ S.cdAudio.src.stop(); }catch(e){} S.cdAudio=null; } }
+function killCdClip(){ if(S.cdAudio){ try{ S.cdAudio.src.stop(); }catch(e){} S.cdAudio=null; } }   // stop the countdown buffer (no speech)
+function stopCountdownAudio(){ killCdClip(); try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){} }
 function showCountdown(ms, onDone){
   stopCountdownAudio();   // never let a previous clip bleed into this countdown
   $('centerMain').style.display='none';
@@ -561,6 +562,7 @@ function startRunning(){
   $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
   $('mult').classList.remove('crashed-tag');
   sfx.launch();
+  setTimeout(killCdClip, 1200);   // after 'liftoff' finishes, kill the clip so it can't linger/resume mid-round
   renderAction();
   tickRun();
 }
@@ -876,6 +878,12 @@ function syncSound(){
 function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio, { once:true });
 window.addEventListener('touchend', unlockAudio, { once:true });
+// When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
+// RESUME a half-played countdown when you come back (esp. during a long round).
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ stopCountdownAudio(); stopEngine(); try{ if(actx) actx.suspend(); }catch(e){} }
+  else { try{ if(actx) actx.resume(); }catch(e){} }
+});
 
 // settings opens from the dropdown menu (see menu-item wiring)
 $('badgeFair').onclick=openFair;
@@ -983,7 +991,7 @@ function netStart(){
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='FLY HIGHER, CASH OUT SOONER!';
   $('mult').classList.remove('crashed-tag');
-  sfx.launch(); renderAction(); tickRun();
+  sfx.launch(); setTimeout(killCdClip, 1200); renderAction(); tickRun();
 }
 function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
