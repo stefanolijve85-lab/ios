@@ -193,8 +193,10 @@ function noiseBuffer(a, dur, shape){
 }
 /* ---- optional real audio assets: drop files in public/sounds/ and they're used
    automatically; otherwise we fall back to synth + speech (see public/sounds/README). ---- */
-const SND = { explosion:'/sounds/explosion.mp3', liftoff:'/sounds/liftoff.mp3', engine:'/sounds/engine.mp3',
-  '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3', cash:'/sounds/cashout.mp3' };
+const SND = { explosion:'/sounds/explosion.mp3', engine:'/sounds/engine.mp3',
+  countdown:'/sounds/countdown.mp3',           // one clip: "3, 2, 1, liftoff"
+  '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3',   // OR per-number clips
+  liftoff:'/sounds/liftoff.mp3', cash:'/sounds/cashout.mp3' };
 const _buf = {};
 async function loadSounds(){
   const a=ac(); if(!a) return;
@@ -265,8 +267,16 @@ const sfx = {
   bet:   ()=>beep(440,.12,'triangle',.07),
   cash:  ()=>{ if(hasSnd('cash')){ playSnd('cash'); return; } beep(660,.1,'sine',.09); setTimeout(()=>beep(990,.18,'sine',.09),90); },
   crash: ()=>explosion(),
-  launch:()=>{ if(hasSnd('liftoff')) playSnd('liftoff'); else { beep(140,.6,'sawtooth',.09); say('Liftoff!'); } startEngine(); },
-  count: (n)=>{ if(hasSnd(String(n))) playSnd(String(n)); else { beep(520+(3-n)*120,.16,'square',.07); say(String(n)); } },
+  launch:()=>{
+    if(hasSnd('liftoff')) playSnd('liftoff');                          // separate liftoff clip
+    else if(!hasSnd('countdown')) { beep(140,.6,'sawtooth',.09); say('Liftoff!'); }  // combined clip already says it
+    startEngine();
+  },
+  count: (n)=>{
+    if(hasSnd('countdown')){ if(n===3) playSnd('countdown'); return; }  // one combined clip, fired at "3"
+    if(hasSnd(String(n))){ playSnd(String(n)); return; }                // per-number clips
+    beep(520+(3-n)*120,.16,'square',.07); say(String(n));              // synth + English TTS
+  },
 };
 
 /* ============================================================
