@@ -487,15 +487,12 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   requestAnimationFrame(draw);
 }
 
-// Optional artwork: drop a transparent PNG in public/ and the game renders it
-// instead of the built-in vector rocket — pixel-perfect to your reference.
-//   public/rocket.png  → the rocket BODY only, nose pointing UP, no flame
-//   public/flame.png   → the exhaust flame, pointing DOWN (optional)
-// If a file is absent the engine falls back to the drawn vector rocket/flame.
-let ROCKET_IMG=null, rocketReady=false, FLAME_IMG=null, flameReady=false;
+// Optional artwork: drop public/rocket.png (rocket BODY only, nose UP, no flame)
+// and the game renders it instead of the built-in vector rocket. The exhaust flame
+// is always drawn by the engine (animated, anchored to the nozzle).
+let ROCKET_IMG=null, rocketReady=false;
 function loadArt(){
   try{ const im=new Image(); im.onload=()=>{ if(im.naturalWidth>0){ ROCKET_IMG=im; rocketReady=true; } }; im.onerror=()=>{}; im.src='/rocket.png'; }catch(e){}
-  try{ const fm=new Image(); fm.onload=()=>{ if(fm.naturalWidth>0){ FLAME_IMG=fm; flameReady=true; } }; fm.onerror=()=>{}; fm.src='/flame.png'; }catch(e){}
 }
 
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
@@ -506,22 +503,20 @@ function drawRocket(x,y,ang,heat){
   const f = (heat==null) ? (14+flick) : (1.5 + heat*20 + flick*Math.max(.2,heat));
   const gi = (heat==null?1:heat);   // glow intensity (warming up on the pad → full in flight)
 
-  // ENGINE GLOW + FLAME — additive bloom; longer, brighter plume with a white-hot core
+  // ENGINE GLOW + FLAME — additive bloom. A PROPER exhaust: WIDE & bright right at
+  // the nozzle, then tapering smoothly to a transparent tip (the tail). Anchored to
+  // the nozzle (lower for the artwork rocket, higher for the vector one).
+  const ny = rocketReady ? 14.5 : 8;
   ctx.globalCompositeOperation='lighter';
-  let eg = ctx.createRadialGradient(0,9,0, 0,9, 13*gi+3);
-  eg.addColorStop(0,`rgba(255,228,150,${.9*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
-  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,9,13*gi+3,0,7); ctx.fill();
-  if(flameReady){
-    const iw=FLAME_IMG.naturalWidth||1, ih=FLAME_IMG.naturalHeight||1, fh=(f+10), fw=fh*iw/ih*2.1;
-    ctx.globalAlpha=.95; ctx.drawImage(FLAME_IMG, -fw/2, 12, fw, fh); ctx.globalAlpha=1;
-  } else {
-    let fl = ctx.createLinearGradient(0,7,0,9+f);   // outer orange→yellow plume
-    fl.addColorStop(0,'rgba(255,240,180,.95)'); fl.addColorStop(.35,'rgba(255,170,55,.9)'); fl.addColorStop(.7,'rgba(255,110,40,.5)'); fl.addColorStop(1,'rgba(255,70,60,0)');
-    ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-5.5,8); ctx.quadraticCurveTo(0,9+f,5.5,8); ctx.closePath(); ctx.fill();
-    let fc = ctx.createLinearGradient(0,7,0,8+f*0.62);   // inner white-hot core
-    fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
-    ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.6,8); ctx.quadraticCurveTo(0,8+f*0.62,2.6,8); ctx.closePath(); ctx.fill();
-  }
+  let eg = ctx.createRadialGradient(0,ny,0, 0,ny, 10*gi+3);
+  eg.addColorStop(0,`rgba(255,230,150,${.95*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,ny,10*gi+3,0,7); ctx.fill();
+  let fl = ctx.createLinearGradient(0,ny-1,0,ny+1+f);   // outer plume: wide at nozzle → point
+  fl.addColorStop(0,'rgba(255,242,185,.95)'); fl.addColorStop(.3,'rgba(255,175,55,.92)'); fl.addColorStop(.65,'rgba(255,110,40,.55)'); fl.addColorStop(1,'rgba(255,70,60,0)');
+  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-4.4,ny); ctx.quadraticCurveTo(0,ny+1+f,4.4,ny); ctx.closePath(); ctx.fill();
+  let fc = ctx.createLinearGradient(0,ny-1,0,ny+f*0.62);   // inner white-hot core
+  fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
+  ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.1,ny); ctx.quadraticCurveTo(0,ny+f*0.62,2.1,ny); ctx.closePath(); ctx.fill();
   ctx.globalCompositeOperation='source-over';
 
   // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
