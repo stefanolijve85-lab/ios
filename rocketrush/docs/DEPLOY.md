@@ -1,6 +1,6 @@
-# Deploying RocketRush (public URL)
+# Deploying Liftoff X (public URL)
 
-RocketRush is **single-origin**: the Next.js app and the Socket.io game run on
+Liftoff X is **single-origin**: the Next.js app and the Socket.io game run on
 one HTTP server / port (`server.mjs`), so the browser connects same-origin. That
 makes it a normal single web service to deploy — no separate WebSocket host, no
 CORS juggling. WebSockets work on Render and Railway out of the box.

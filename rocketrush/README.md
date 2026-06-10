@@ -1,4 +1,4 @@
-# 🚀 RocketRush
+# 🚀 Liftoff X
 
 **The Apple of crash games.** Simple. Fast. Premium. Instantly understandable.
 
@@ -127,7 +127,7 @@ it as a PWA — it launches full-screen like a real App Store app.
 
 ## 🚀 Deploy (public URL)
 
-Because the app and the realtime game share **one origin/port**, RocketRush
+Because the app and the realtime game share **one origin/port**, Liftoff X
 deploys as a single web service — give testers a public HTTPS URL they can open
 on any phone, no local machine needed.
 

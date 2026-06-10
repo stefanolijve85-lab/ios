@@ -1,6 +1,6 @@
 {
-  "name": "RocketRush",
-  "short_name": "RocketRush",
+  "name": "Liftoff X",
+  "short_name": "Liftoff X",
   "description": "The simplest, cleanest multiplayer crash game. Place a bet, watch the rocket rise, cash out before it crashes.",
   "start_url": "/",
   "display": "standalone",

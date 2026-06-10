@@ -1,5 +1,5 @@
 /**
- * RocketRush data store — the wallet/stats/bets/transactions backend.
+ * Liftoff X data store — the wallet/stats/bets/transactions backend.
  *
  * Two interchangeable implementations behind one interface:
  *  - JsonStore     : a local JSON file. Used for guests (and when Supabase isn't

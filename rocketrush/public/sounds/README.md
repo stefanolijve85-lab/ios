@@ -1,6 +1,6 @@
 # Custom game sounds (optional)
 
-Drop audio files here and RocketRush uses them **automatically** — no code
+Drop audio files here and Liftoff X uses them **automatically** — no code
 changes. If a file is missing, the game falls back to its built-in synth + an
 English text-to-speech voice. Files are preloaded on boot and played after the
 first tap (iOS unlocks audio on a user gesture).

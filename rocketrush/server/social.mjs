@@ -1,5 +1,5 @@
 /**
- * RocketRush — social layer: global leaderboard, public player profiles and the
+ * Liftoff X — social layer: global leaderboard, public player profiles and the
  * live activity feed. Global (not per-user), so it lives in one small JSON file
  * (server/.data/social.json) regardless of whether accounts use Supabase.
  * In production these become DB aggregates / a materialized view.

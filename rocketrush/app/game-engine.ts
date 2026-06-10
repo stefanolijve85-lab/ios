@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* RocketRush game engine.
+/* Liftoff X game engine.
    - NET mode: connects to the authoritative game server (server/game-server.mjs)
      so all players share one round clock. The server owns crash points + balances.
    - LOCAL mode: if the server can't be reached (offline / file://), it runs the
@@ -17,7 +17,7 @@ export function startGame(): () => void {
   let authMode = 'login';   // account modal: 'login' | 'register'
 
 /* ============================================================
-   RocketRush — single-file playable demo
+   Liftoff X — single-file playable demo
    Game loop, provably-fair engine, simulated multiplayer.
    In production: this client-side loop is driven by the
    NestJS game server over Socket.io (see /docs).
@@ -834,7 +834,7 @@ function addChat(name,text,sys,pid){
   while(c.children.length>60) c.firstChild.remove();
   c.scrollTop=c.scrollHeight;
 }
-function sysChat(t){ addChat('RocketRush', t, true); }
+function sysChat(t){ addChat('Liftoff X', t, true); }
 
 /* ============================================================
    CONTROLS WIRING
@@ -1258,7 +1258,7 @@ function boot(){
   seedHistory();
   loadSounds();  // preload optional /sounds/* assets (no-op if absent)
   loadSave();   // restore balance (local) + history/stats from a previous session
-  sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
+  sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
   setBet(0,100); setBet(1,100); setAuto(0,0); setAuto(1,0);

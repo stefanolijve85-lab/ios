@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { startGame } from './game-engine';
 
 /**
- * RocketRush — main game screen (mobile-first, matches the product mockup).
+ * Liftoff X — main game screen (mobile-first, matches the product mockup).
  * The 60fps loop runs imperatively in the engine; this tree renders once.
  */
 export default function Page() {
@@ -15,7 +15,7 @@ export default function Page() {
       {/* ===================== HEADER ===================== */}
       <div className="topbar">
         <button className="hambtn" id="btnMenu" title="Menu">☰</button>
-        <div className="logo"><span className="a">Rocket</span><span className="rk">🚀</span><span className="b">Rush</span></div>
+        <img className="logo-img" src="/liftoffx.png" alt="Liftoff X" />
         <div className="balance-chip tnum" id="balanceChip">€<span id="balance">1000.00</span></div>
       </div>
 

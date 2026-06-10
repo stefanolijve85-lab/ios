@@ -1,5 +1,5 @@
 /**
- * RocketRush — authoritative multiplayer game logic.
+ * Liftoff X — authoritative multiplayer game logic.
  *
  * One shared round clock for ALL players. Decides the crash point before each
  * round (provably fair), broadcasts betting → start → crash, validates
@@ -243,5 +243,5 @@ export async function attachGame(io) {
 
   game.serverSeedHash = sha256(game.serverSeed);
   startBetting();
-  console.log(`🎮 RocketRush game logic attached (${stores.supabase ? 'Supabase accounts' : 'guest mode'})`);
+  console.log(`🎮 Liftoff X game logic attached (${stores.supabase ? 'Supabase accounts' : 'guest mode'})`);
 }

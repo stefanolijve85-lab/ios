@@ -49,6 +49,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .hambtn:active, .iconbtn:active { transform: scale(.9); }
 .iconbtn.off { opacity: .45; }
 .logo { display: flex; align-items: center; gap: 5px; font-weight: 800; font-size: 17px; letter-spacing: .5px; text-transform: uppercase; }
+.logo-img { height: 27px; width: auto; display: block; }
 .logo .a { color: #fff; }
 .logo .b { color: var(--primary); }
 .logo .rk { font-size: 16px; filter: drop-shadow(0 0 6px rgba(255,138,0,.6)); }

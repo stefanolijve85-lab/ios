@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#070B14" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="description" content="RocketRush — the simplest, cleanest multiplayer crash game. Place a bet, watch the rocket rise, cash out before it crashes." />
+<meta name="description" content="Liftoff X — the simplest, cleanest multiplayer crash game. Place a bet, watch the rocket rise, cash out before it crashes." />
 <link rel="manifest" href="manifest.webmanifest" />
-<title>RocketRush 🚀 — Cash out before the crash</title>
+<title>Liftoff X 🚀 — Cash out before the crash</title>
 <style>
   :root {
     --bg:        #070B14;
@@ -245,7 +245,7 @@
   <header>
     <div class="logo">
       <span class="mark">🚀</span>
-      <span class="full"><b>Rocket</b><span class="rush">Rush</span></span>
+      <span class="full"><b>Liftoff</b><span class="rush"> X</span></span>
     </div>
     <div class="pill-online"><span class="dot"></span><span class="tnum" id="online">0</span>&nbsp;online</div>
     <div class="spacer"></div>
@@ -400,7 +400,7 @@
 
 <script>
 /* ============================================================
-   RocketRush — single-file playable demo
+   Liftoff X — single-file playable demo
    Game loop, provably-fair engine, simulated multiplayer.
    In production: this client-side loop is driven by the
    NestJS game server over Socket.io (see /docs).
@@ -908,7 +908,7 @@ function addChat(name,text,sys){
   while(c.children.length>60) c.firstChild.remove();
   c.scrollTop=c.scrollHeight;
 }
-function sysChat(t){ addChat('RocketRush', t, true); }
+function sysChat(t){ addChat('Liftoff X', t, true); }
 
 /* ============================================================
    CONTROLS WIRING
@@ -1021,7 +1021,7 @@ function boot(){
   requestAnimationFrame(draw);
   seedWinners();
   ambient();
-  sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
+  sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
   setBet(100); setAuto(2.00);
