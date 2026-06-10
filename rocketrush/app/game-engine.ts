@@ -240,7 +240,7 @@ function playCountdownRadio(){
     noise.connect(nbp); nbp.connect(ng); ng.connect(a.destination); noise.start();
     // Quindar beeps: one to "open the channel" at the start, one just before liftoff
     _quindar(a, t+0.02, 0.10);
-    _quindar(a, t+3.30, 0.10);
+    _quindar(a, t+3.05, 0.10);
     return { src, g: out, a };
   }catch(e){ return playSnd('countdown',{vol:VOL.countdown}); }
 }
@@ -652,7 +652,7 @@ function showCountdown(ms, onDone){
   const total=Math.max(1,ms); let left=ms;
   // If the spoken clip is present, drive the on-screen number FROM the clip's word
   // timings so they match exactly. Tuned to the current countdown.mp3 (NASA voice):
-  // 3→0.2s, 2→1.2s, 1→2.28s, LIFTOFF→3.44s (so liftoff lands at launch).
+  // 3→0.1s, 2→1.12s, 1→2.08s, LIFTOFF→3.28s (so liftoff lands at launch).
   const voiced = hasSnd('countdown') && ms>=3600;
   // Announce the countdown audio ONLY ONCE per round — never again on a reconnect /
   // snapshot of the same round (that was causing the voice to replay mid-game).
@@ -665,8 +665,8 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=3440 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }  // fire so LIFTOFF (3.44s) lands at launch
-      const n = left>3240 ? Math.max(0,Math.ceil(left/1000)) : (left>2240?3:left>1160?2:1);
+      if(left<=3280 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }  // fire so LIFTOFF (3.28s) lands at launch
+      const n = left>3180 ? Math.max(0,Math.ceil(left/1000)) : (left>2160?3:left>1200?2:1);
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
       const sec=Math.max(0,Math.ceil(left/1000));
