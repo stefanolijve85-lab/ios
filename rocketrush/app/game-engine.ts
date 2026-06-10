@@ -198,6 +198,9 @@ const SND = { explosion:'/sounds/explosion.mp3', engine:'/sounds/engine.mp3',
   '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3',   // OR per-number clips
   liftoff:'/sounds/liftoff.mp3', cash:'/sounds/cashout.mp3' };
 const _buf = {};
+// per-file gains so all three sounds play at the SAME loudness (RMS-matched:
+// countdown 0.25, engine 0.25, explosion 0.40 → target ≈ 0.14 RMS).
+const VOL = { countdown:0.56, engine:0.56, explosion:0.35 };
 async function loadSounds(){
   const a=ac(); if(!a) return;
   await Promise.all(Object.entries(SND).map(async ([k,url])=>{
@@ -216,7 +219,7 @@ try{ if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=pickVoice
 // realistic "blew up" boom: sharp transient + filtered noise tail + sub-bass drop
 function explosion(){
   if(!S.sound) return;
-  if(hasSnd('explosion')){ playSnd('explosion',{vol:1}); return; }   // prefer real audio if provided
+  if(hasSnd('explosion')){ playSnd('explosion',{vol:VOL.explosion}); return; }   // prefer real audio if provided
   try{
     const a=ac(); if(!a) return; const t=a.currentTime;
     const dur=0.95;
@@ -245,7 +248,7 @@ function startEngine(){
       const a=ac(), b=_buf['engine']; if(!a||!b) throw 0;
       const L=Math.min(4, b.duration*0.35), R=Math.max(L+1, b.duration-0.8);
       const src=a.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=L; src.loopEnd=R;
-      const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(0.18, a.currentTime, 0.12);
+      const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(VOL.engine, a.currentTime, 0.12);
       src.connect(g); g.connect(a.destination); src.start(0, L);
       engineNodes={src,g,a}; return;
     }catch(e){}
@@ -522,8 +525,9 @@ function showCountdown(ms, onDone){
   $('countWrap').style.display='flex';
   const total=Math.max(1,ms); let left=ms;
   // If the spoken clip is present, drive the on-screen number FROM the clip's word
-  // timings (3→0.00s, 2→0.74s, 1→1.54s, liftoff→2.12s) so they match exactly.
-  const voiced = hasSnd('countdown') && ms>=2400;
+  // timings (3→0.14s, 2→1.14s, 1→2.06s, liftoff→3.22s) so they match exactly:
+  // fire the clip so 'liftoff' lands at launch, and flip the digit on each word.
+  const voiced = hasSnd('countdown') && ms>=3600;
   let clipFired=false;
   $('countNum').textContent=Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
@@ -532,8 +536,8 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=2120 && !clipFired){ clipFired=true; playSnd('countdown'); }   // liftoff lands at launch
-      const n = left>2120 ? Math.max(0,Math.ceil(left/1000)) : (left>1380?3:left>580?2:1);
+      if(left<=3220 && !clipFired){ clipFired=true; playSnd('countdown',{vol:VOL.countdown}); }  // liftoff lands at launch
+      const n = left>3080 ? Math.max(0,Math.ceil(left/1000)) : (left>2080?3:left>1160?2:1);
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
       const sec=Math.max(0,Math.ceil(left/1000));
