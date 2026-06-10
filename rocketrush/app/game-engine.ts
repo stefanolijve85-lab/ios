@@ -448,9 +448,9 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
       ctx.globalCompositeOperation='source-over';
     }
 
-    // rocket — bigger and bobbing up & down as it powers to the moon
-    const bob = Math.sin(tt*3.4) * Math.min(0.05*H, 18);
-    const ry = p.y + (S.phase==='running'? bob : 0);
+    // rocket sits exactly ON the path (no up/down bob) so the trail + flame stay
+    // attached to the nozzle instead of drifting beside it.
+    const ry = p.y;
     // point the nose along the direction of travel (toward the moon, up-right).
     // The look-ahead grows with time so that even when the rocket is barely creeping
     // near the moon there's a real direction — and we keep the last good angle if the
