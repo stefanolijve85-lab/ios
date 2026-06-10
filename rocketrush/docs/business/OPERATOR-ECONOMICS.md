@@ -1,4 +1,4 @@
-# LiftoffX — Operator Economics
+# Liftoff X — Operator Economics
 
 > The numbers behind "a better revenue model for the operator."
 > Everything here is a **model with explicit, adjustable assumptions** — treat
@@ -80,7 +80,7 @@ Rewards bigger operators with a lower marginal rate (your "better at scale" hook
 
 Versus an incumbent **15% / fixed-RTP** deal, at the **same** player base:
 
-| Per 1,000 active players/mo | Incumbent (15%) | **LiftoffX (Model A, 8%)** | Operator gain |
+| Per 1,000 active players/mo | Incumbent (15%) | **Liftoff X (Model A, 8%)** | Operator gain |
 |---|---|---|---|
 | Operator keeps (RTP 96%) | €40,800 | €44,160 | **+€3,360 / mo** |
 | Annualised | €489,600 | €529,920 | **+€40,320 / yr** |

@@ -1,4 +1,4 @@
-# LiftoffX — Pitch Deck Outline
+# Liftoff X — Pitch Deck Outline
 
 > B2B crash game for casino operators & aggregators.
 > Aviator-class gameplay + a social/retention layer + operator-friendly economics.
@@ -10,7 +10,7 @@
 ---
 
 ## Slide 1 — Title
-- **LiftoffX** — *The crash game operators actually earn from.*
+- **Liftoff X** — *The crash game operators actually earn from.*
 - One line: "Aviator-class instant game with a built-in social layer and a
   revenue model that gives operators more margin."
 - Live demo link + your contact.
@@ -24,7 +24,7 @@
 - Result: a hit game, but thin operator margin and zero brand ownership.
 
 ## Slide 3 — The solution
-- **LiftoffX**: a provably-fair crash game that is
+- **Liftoff X**: a provably-fair crash game that is
   1. **Aviator-class** on gameplay & feel (dual bets, auto-cashout, live rounds),
   2. **Social by design** — leaderboards, live activity feed, profiles, chat →
      higher engagement & retention (more rounds = more GGR),
@@ -44,7 +44,7 @@
   dominant supplier and to own more of the player relationship.
 
 ## Slide 6 — Differentiation (vs the incumbent)
-| | Incumbent (Aviator-style) | **LiftoffX** |
+| | Incumbent (Aviator-style) | **Liftoff X** |
 |---|---|---|
 | RTP | Fixed (≈97%) | **Configurable** (97/96/95%) per market |
 | Rev-share | High, flat (~15%) | **Lower + volume-tiered** |
@@ -54,7 +54,7 @@
 
 ## Slide 7 — Business model & operator economics
 - Model: **% of GGR** (volume-tiered), or flat-fee option for high-volume.
-- Headline: *at the same player base, the operator keeps more under LiftoffX.*
+- Headline: *at the same player base, the operator keeps more under Liftoff X.*
 - Pull 2–3 numbers straight from `OPERATOR-ECONOMICS.md` (e.g. "per 1,000 active
   players/month the operator keeps **€X more** than under a 15% incumbent deal").
 - Show the tiered staffel + the "better-for-operator" comparison table.

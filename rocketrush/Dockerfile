@@ -1,4 +1,4 @@
-# RocketRush — single-origin container (Next.js app + Socket.io on one port).
+# Liftoff X — single-origin container (Next.js app + Socket.io on one port).
 FROM node:20-slim
 WORKDIR /app
 

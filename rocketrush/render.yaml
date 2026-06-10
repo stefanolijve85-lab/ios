@@ -1,4 +1,4 @@
-# RocketRush — Render Blueprint. In Render: New → Blueprint → point at this repo.
+# Liftoff X — Render Blueprint. In Render: New → Blueprint → point at this repo.
 # Single web service; WebSockets work on all Render plans.
 services:
   - type: web

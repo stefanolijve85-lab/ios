@@ -1,5 +1,5 @@
 /**
- * RocketRush — Provably Fair reference verifier (Node, no deps).
+ * Liftoff X — Provably Fair reference verifier (Node, no deps).
  * This is the SAME algorithm the browser client and the game server use.
  * Run:  node verify-fairness.mjs
  *

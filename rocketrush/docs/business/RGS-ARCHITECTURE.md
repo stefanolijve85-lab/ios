@@ -1,4 +1,4 @@
-# LiftoffX — RGS & Seamless Wallet Architecture
+# Liftoff X — RGS & Seamless Wallet Architecture
 
 > How we turn the MVP into an operator-integratable product. This is the tech
 > direction to lock **before** building further, so the work counts toward
@@ -26,7 +26,7 @@ and per-player bet/cashout settlement. The piece that must change for B2B is the
 
 ```
                 ┌──────────────────────────────────────────────┐
-   Player  ◄───►│  LiftoffX Client (per-operator skin, PWA)    │
+   Player  ◄───►│  Liftoff X Client (per-operator skin, PWA)    │
                 └───────────────▲──────────────────────────────┘
                                 │ websocket (game state only)
                 ┌───────────────┴──────────────────────────────┐
