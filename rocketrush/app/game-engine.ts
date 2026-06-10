@@ -682,7 +682,7 @@ function startRunning(){
   $('countWrap').style.display='none';
   $('centerMain').style.display='block';
   $('status').textContent='';
-  $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
+  $('mult').classList.remove('crashed-tag');
   sfx.launch();
   setTimeout(killCdClip, 2700);   // let the spoken "LIFTOFF!" play out, then kill the clip so it can't linger/resume mid-round
   renderAction();
@@ -719,6 +719,19 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   const tier = S.mult<2? ['#ffffff','#ffffff',20] : S.mult<5? ['var(--primary)','#FF8A00',32] : S.mult<10? ['var(--secondary)','#9B5CF6',46] : ['var(--success)','#2BE07A',62];
   const mEl=$('mult'); mEl.style.color=tier[0];
   mEl.style.textShadow=`0 2px 16px rgba(0,0,0,.6), 0 0 ${tier[2]}px ${tier[1]}99`;
+  // X-clock dodges the rocket: as the rocket sweeps near, the multiplier ducks DOWN
+  // (so the rocket flies over the top, never behind the text) with a subtle warp
+  // (scale + blur) so it looks like it's shooting through space too.
+  { const rp=rocketPos(t), mcx=0.5*W, mcy=0.46*H;
+    const vert=Math.max(0, 1-Math.abs(mcy-rp.y)/(0.28*H));   // ducks when the rocket is at the clock's height
+    const horiz=Math.max(0, 1-Math.max(0, Math.abs(rp.x-mcx)-0.36*W)/(0.12*W));   // full duck anywhere across the wide number
+    const prox=vert*horiz;
+    const dodge=prox*Math.min(0.20*H, 80);
+    const breathe=0.012*Math.sin(t*2.4);
+    const cm=$('centerMain');
+    cm.style.transform=`translateY(calc(-4% + ${dodge.toFixed(1)}px)) translateX(${(-prox*6).toFixed(1)}px) scale(${(1+breathe+0.06*prox).toFixed(3)})`;
+    cm.style.filter = prox>0.04 ? `blur(${(prox*1.5).toFixed(2)}px)` : '';
+  }
   // once you're fully cashed out, show the gains you'd be making by holding (the
   // FOMO ticker) — climbs until the rocket blows up, then the win pop-up shows.
   const cashed=S.slots.filter(s=>s.cashedOut), stillIn=S.slots.some(s=>s.placed && !s.cashedOut);
@@ -734,7 +747,8 @@ function crash(){
   S.phase='crashed'; shakeT=240;
   $('mult').textContent=S.crashAt.toFixed(2)+'x';
   $('mult').style.color=''; $('mult').style.textShadow='';   // clear running colour/glow so the red crash style shows
-  $('centerMain').classList.remove('live'); $('mult').classList.add('crashed-tag');
+  { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
+  $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
   sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
@@ -1137,13 +1151,14 @@ function netStart(){
   S.phase='running'; S.startTs=performance.now();
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='';
-  $('mult').classList.remove('crashed-tag'); $('centerMain').classList.add('live');
+  $('mult').classList.remove('crashed-tag');
   sfx.launch(); setTimeout(killCdClip, 2700); renderAction(); tickRun();
 }
 function netCrash(d){
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
-  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('centerMain').classList.remove('live'); $('mult').classList.add('crashed-tag');
+  $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('mult').classList.add('crashed-tag');
+  { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
