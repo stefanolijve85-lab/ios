@@ -44,9 +44,16 @@ export async function attachGame(io) {
   const recentJoins = new Set();  // throttle duplicate "joined" activity on reconnects
 
   const online = () => io.engine.clientsCount;
+  // Aviator-style "players in the round": real connected sockets are tiny (1–3),
+  // so we layer a believable, drifting population on top so the stage pill feels
+  // alive and the count visibly changes with every round.
+  let simPop = Math.floor(rnd(900, 2400));
+  const popCount = () => simPop + online();
   const multAt = t => Math.max(1, Math.exp(RATE * t));
   const liveMult = () => multAt((Date.now() - game.startedAt) / 1000);
-  const broadcastPlayers = () => io.emit('players', { count: online() });
+  const broadcastPlayers = () => io.emit('players', { count: popCount() });
+  // gentle breathing drift between broadcasts
+  setInterval(() => { simPop += Math.floor(rnd(-35, 38)); simPop = Math.max(650, Math.min(3600, simPop)); broadcastPlayers(); }, 2600);
   const activity = (ev, toOthers, sock) => { pushActivity(ev); (toOthers && sock ? sock.broadcast : io).emit('activity', ev); };
 
   /* ----------------------------- bookkeeping ----------------------------- */
@@ -82,6 +89,9 @@ export async function attachGame(io) {
     game.crash = crashPoint(game.serverSeed, CLIENT_SEED, game.nonce);
     game.bettingEndsAt = Date.now() + BET_MS;
     for (const p of players.values()) p.bets = [null, null];
+    // bigger per-round jump so the live player count moves with each new round
+    simPop += Math.floor(rnd(-130, 150)); simPop = Math.max(650, Math.min(3600, simPop));
+    broadcastPlayers();
     io.emit('round:betting', { nonce: game.nonce, serverSeedHash: game.serverSeedHash, prevServerSeed: game.prevServerSeed, clientSeed: CLIENT_SEED, startsInMs: BET_MS });
     setTimeout(startRunning, BET_MS);
   }
@@ -182,7 +192,7 @@ export async function attachGame(io) {
     players.set(sock.id, p);
 
     upsertProfile(p.key, { name: publicName, color: p.color, joinDate: auth.account && auth.account.joinDate ? auth.account.joinDate : Date.now() });
-    sock.emit('welcome', { name: p.name, online: online(), pid: p.key });
+    sock.emit('welcome', { name: p.name, online: popCount(), pid: p.key });
     pushProfile(sock, p);
     sock.emit('history', { rounds: game.recentRounds.slice(0, 20) });
     sock.emit('leaderboard', leaderboard());

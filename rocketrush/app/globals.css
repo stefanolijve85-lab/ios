@@ -104,7 +104,11 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .provably-badge.left { right: auto; left: 10px; }
 .provably-badge .shield { color: var(--success); }
 /* live players, Aviator-style, bottom-right of the stage */
-.stage-players { position: absolute; bottom: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,.45); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 800; color: #fff; display: flex; gap: 5px; align-items: center; z-index: 4; }
+.stage-players { position: absolute; bottom: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,.45); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 800; color: #fff; display: flex; gap: 5px; align-items: center; z-index: 4; transition: border-color .3s, color .3s; }
+.stage-players.bump { animation: spPulse .42s ease; }
+.stage-players.up { border-color: rgba(34,197,94,.85); color: #b8ffd0; }
+.stage-players.down { border-color: rgba(244,63,94,.7); color: #ffc4cd; }
+@keyframes spPulse { 0% { transform: scale(1); } 38% { transform: scale(1.16); } 100% { transform: scale(1); } }
 
 /* ===================== WIN POP-UP ===================== */
 .win-pop { position: absolute; top: 10px; left: 50%; transform: translateX(-50%) translateY(-14px); width: min(92%, 360px);

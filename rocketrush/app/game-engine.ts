@@ -696,12 +696,16 @@ function flashWon(text, good){
   el.style.borderColor = good? 'rgba(34,197,94,.45)':'rgba(244,63,94,.45)';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
 }
-function totalWin(){ return (S.stats && S.stats.returned) || 0; }   // total amount won (all-time)
+// combined winnings for THIS round = BET 1 + BET 2 cashouts added together
+function roundWon(){ return S.slots.reduce((t,s)=> t + (s.cashedOut ? (s.won||0) : 0), 0); }
+// how many of the two bets won this round (so we can label the total clearly)
+function roundWins(){ return S.slots.reduce((n,s)=> n + (s.cashedOut?1:0), 0); }
 function showWinPopup(mult, amount){
   const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount)+'  @ '+mult.toFixed(2)+'x', true); return; }
   $('wpMult').textContent='@ '+mult.toFixed(2)+'x';
   $('wpAmt').textContent='+€'+fmt(amount);
-  $('wpTotal').textContent='€'+fmt(totalWin());
+  const tot=$('wpTotal'); if(tot) tot.textContent='€'+fmt(roundWon());
+  const lbl=$('wpTotalLbl'); if(lbl) lbl.textContent = roundWins()>1 ? 'Total this round (both bets)' : 'Total this round';
   el.classList.add('show');
   clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2600);
 }
@@ -961,10 +965,10 @@ $('fClientSeed').addEventListener('change',e=>{ const v=e.target.value.trim(); i
    AMBIENT: online count + bot chatter
    ============================================================ */
 function ambient(){
-  // online count wobble
+  // online count wobble (drives both the header count and the stage players pill)
   let base = 2800 + Math.floor(rnd(-120,120));
-  _int(()=>{ base += Math.floor(rnd(-25,28)); base=Math.max(1800,base); $('online').textContent=base.toLocaleString('en-US'); }, 2200);
-  $('online').textContent=base.toLocaleString('en-US');
+  _int(()=>{ base += Math.floor(rnd(-40,46)); base=Math.max(1800,base); setOnline(base); }, 2200);
+  setOnline(base);
   // bot chat
   _int(()=>{
     if(Math.random()<.7){
@@ -977,7 +981,18 @@ function ambient(){
 /* ============================================================
    NETWORK: authoritative server, with graceful local fallback
    ============================================================ */
-function setOnline(n){ const v=(typeof n==='number'? n : 0); const o=$('online'); if(o) o.textContent=v.toLocaleString('en-US'); const sp=$('stagePlayers'); if(sp) sp.textContent='👥 '+v.toLocaleString('en-US'); }
+function setOnline(n){
+  const v=(typeof n==='number'? n : 0);
+  const o=$('online'); if(o) o.textContent=v.toLocaleString('en-US');
+  const sp=$('stagePlayers'); if(!sp) return;
+  const prev=S._online==null? v : S._online; S._online=v;
+  sp.textContent='👥 '+v.toLocaleString('en-US');
+  if(v!==prev){                                    // pulse + up/down tint, Aviator-style, whenever it changes
+    sp.classList.remove('bump','up','down'); void sp.offsetWidth;
+    sp.classList.add('bump', v>prev?'up':'down');
+    clearTimeout(S._onlineTmr); S._onlineTmr=setTimeout(()=>sp.classList.remove('up','down'), 600);
+  }
+}
 
 function netBetting(d){
   S.phase='betting'; S.mult=1.00; particles=[];
@@ -1052,7 +1067,7 @@ function applyProfile(d){
   if(d.stats) S.stats=d.stats;
   if(Array.isArray(d.bets)) S.myBets=d.bets;
   if(Array.isArray(d.tx)) S.transactions=d.tx;
-  const wt=$('wpTotal'); if(wt && $('winPop') && $('winPop').classList.contains('show')) wt.textContent='€'+fmt(totalWin());
+  const wt=$('wpTotal'); if(wt && $('winPop') && $('winPop').classList.contains('show')) wt.textContent='€'+fmt(roundWon());
   updateAccountUI(); refreshScreens();
 }
 function connectNet(){
