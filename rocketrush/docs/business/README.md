@@ -13,7 +13,8 @@ prove the economics → talk to the market → only then make the big licensing 
 | 2 | **[PITCH-DECK.md](./PITCH-DECK.md)** | 10–12 slide outline: problem → solution → differentiation → model → GTM → ask. | Operators, partners, investors |
 | 3 | **[OPERATOR-ECONOMICS.md](./OPERATOR-ECONOMICS.md)** | The GGR model: adjustable assumptions, 3 rev-share scenarios, "better for operator" comparison, scaling. | Commercial / deal-making |
 | 4 | **[RGS-ARCHITECTURE.md](./RGS-ARCHITECTURE.md)** | How to refactor the MVP into an RGS + seamless wallet API. Tech direction to lock before building. | Engineering / integration |
-| + | **[OPERATOR-CALL-QUESTIONS.md](./OPERATOR-CALL-QUESTIONS.md)** | Question list for the market-validation calls (step 4). | You, going into calls |
+| 5 | **[OUTREACH-PACK.md](./OUTREACH-PACK.md)** | Step 4 in a box: target list, email/LinkedIn templates, demo-call script + objection handling. | You, doing outreach |
+| + | **[OPERATOR-CALL-QUESTIONS.md](./OPERATOR-CALL-QUESTIONS.md)** | Question list + capture sheet for the market-validation calls (step 4). | You, going into calls |
 
 ## How they fit the plan
 
