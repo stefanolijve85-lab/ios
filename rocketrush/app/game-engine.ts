@@ -210,6 +210,40 @@ function playSnd(k, opt){
   if(!S.sound) return null; opt=opt||{};
   try{ const a=ac(), b=_buf[k]; if(!a||!b) return null; const src=a.createBufferSource(); src.buffer=b; src.loop=!!opt.loop; const g=a.createGain(); g.gain.value=opt.vol==null?1:opt.vol; src.connect(g); g.connect(a.destination); src.start(); return {src,g,a}; }catch(e){ return null; }
 }
+// NASA mission-control radio treatment over the spoken countdown: a Quindar intro
+// beep, a low static/comms hiss bed, and a band-passed + slightly distorted parallel
+// copy of the voice for that "over the radio" texture. Returns {src} so it can be
+// stopped exactly like a normal clip (killCdClip / stopCountdownAudio).
+function _radioCurve(){ const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*2.4); } return c; }
+function _quindar(a, when, vol){ const o=a.createOscillator(), g=a.createGain(); o.type='sine'; o.frequency.value=2525; g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vol, when+0.012); g.gain.setValueAtTime(vol, when+0.15); g.gain.exponentialRampToValueAtTime(0.0001, when+0.20); o.connect(g); g.connect(a.destination); o.start(when); o.stop(when+0.22); }
+function playCountdownRadio(){
+  if(!S.sound) return null;
+  try{
+    const a=ac(), b=_buf['countdown']; if(!a||!b) return playSnd('countdown',{vol:VOL.countdown});
+    const t=a.currentTime, dur=Math.min(b.duration, 4.2);
+    const out=a.createGain(); out.gain.value=VOL.countdown; out.connect(a.destination);
+    // voice: mostly clear (dry) + a parallel radio-EQ'd, slightly gritty copy
+    const src=a.createBufferSource(); src.buffer=b;
+    const dry=a.createGain(); dry.gain.value=0.85; src.connect(dry); dry.connect(out);
+    const hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=520;
+    const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1700; bp.Q.value=0.9;
+    const ws=a.createWaveShaper(); ws.curve=_radioCurve();
+    const wet=a.createGain(); wet.gain.value=0.5;
+    src.connect(hp); hp.connect(bp); bp.connect(ws); ws.connect(wet); wet.connect(out);
+    src.start();
+    // static/comms hiss bed under the voice (fades in/out)
+    const noise=a.createBufferSource(); noise.buffer=noiseBuffer(a, dur);
+    const nbp=a.createBiquadFilter(); nbp.type='bandpass'; nbp.frequency.value=2400; nbp.Q.value=0.5;
+    const ng=a.createGain();
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.linearRampToValueAtTime(0.045, t+0.12);
+    ng.gain.setValueAtTime(0.045, t+dur-0.35); ng.gain.linearRampToValueAtTime(0.0001, t+dur);
+    noise.connect(nbp); nbp.connect(ng); ng.connect(a.destination); noise.start();
+    // Quindar beeps: one to "open the channel" at the start, one just before liftoff
+    _quindar(a, t+0.02, 0.10);
+    _quindar(a, t+3.30, 0.10);
+    return { src, g: out, a };
+  }catch(e){ return playSnd('countdown',{vol:VOL.countdown}); }
+}
 // pick a real ENGLISH voice (the device default may be your phone's language, e.g. Dutch)
 let enVoice=null;
 function pickVoice(){ try{ const vs=(window.speechSynthesis&&window.speechSynthesis.getVoices())||[]; enVoice = vs.find(v=>/en[-_]US/i.test(v.lang)) || vs.find(v=>/^en([-_]|$)/i.test(v.lang)) || null; }catch(e){} }
@@ -636,7 +670,7 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=3440 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playSnd('countdown',{vol:VOL.countdown}); }  // fire so LIFTOFF (3.44s) lands at launch
+      if(left<=3440 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }  // fire so LIFTOFF (3.44s) lands at launch
       const n = left>3240 ? Math.max(0,Math.ceil(left/1000)) : (left>2240?3:left>1160?2:1);
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
