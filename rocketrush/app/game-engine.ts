@@ -368,8 +368,8 @@ function rocketPos(t){ // t in seconds; point on the flight curve in canvas spac
   // higher it gets, so even a long round stays ONE smooth motion — it never hits
   // the end of the path and snaps direction near the moon.
   const prog = 1 - 1/(1 + t/7);      // 0 → ~1 (never quite reaches), eases as it climbs
-  const ey = Math.pow(prog, 0.80);   // vertical leads → lifts almost straight up first
-  const ex = Math.pow(prog, 1.5);    // horizontal lags → then arcs over to the upper-right
+  const ey = Math.pow(prog, 0.72);   // vertical leads → shoots almost straight up first
+  const ex = Math.pow(prog, 2.2);    // horizontal lags hard → stays vertical, then a natural gravity-turn curve to the moon
   const x = 0.12*W + ex * 0.72*W;    // → ~0.84W, near the moon (top-right)
   const y = 0.86*H - ey * 0.66*H;    // → ~0.20H
   return {x,y};
