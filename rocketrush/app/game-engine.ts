@@ -719,17 +719,21 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   const tier = S.mult<2? ['#ffffff','#ffffff',20] : S.mult<5? ['var(--primary)','#FF8A00',32] : S.mult<10? ['var(--secondary)','#9B5CF6',46] : ['var(--success)','#2BE07A',62];
   const mEl=$('mult'); mEl.style.color=tier[0];
   mEl.style.textShadow=`0 2px 16px rgba(0,0,0,.6), 0 0 ${tier[2]}px ${tier[1]}99`;
-  // X-clock dodges the rocket: as the rocket sweeps near, the multiplier ducks DOWN
-  // (so the rocket flies over the top, never behind the text) with a subtle warp
-  // (scale + blur) so it looks like it's shooting through space too.
-  { const rp=rocketPos(t), mcx=0.5*W, mcy=0.46*H;
-    const vert=Math.max(0, 1-Math.abs(mcy-rp.y)/(0.28*H));   // ducks when the rocket is at the clock's height
-    const horiz=Math.max(0, 1-Math.max(0, Math.abs(rp.x-mcx)-0.36*W)/(0.12*W));   // full duck anywhere across the wide number
-    const prox=vert*horiz;
-    const dodge=prox*Math.min(0.20*H, 80);
+  // X-clock is gently coupled to the rocket's height: it dips DOWN as the rocket
+  // climbs toward it (so the rocket flies over the top, never behind the text), then
+  // once the rocket is ABOVE it the clock floats back UP a bit in its wake. Stays
+  // razor-sharp — only a subtle bottom warp near the pass. (Wrapper only, never the
+  // vw number itself → no font-collapse.)
+  { const rp=rocketPos(t), mcy=0.46*H;
+    const cl=x=>x<0?0:x>1?1:x, sm=x=>x*x*(3-2*x);
+    const maxDown=Math.min(0.16*H,60), maxUp=Math.min(0.06*H,22);
+    let off;
+    if(rp.y>=mcy){ const k=cl((0.86*H-rp.y)/(0.86*H-mcy)); off=sm(k)*maxDown; }     // below → dip down (grows as it climbs)
+    else { const a=cl((mcy-rp.y)/(0.28*H)); off=maxDown*(1-sm(a)) - maxUp*sm(a); }  // above → ease up and float a bit higher
+    const nearCross=1-cl(Math.abs(rp.y-mcy)/(0.18*H));
     const cm=$('centerMain');
     cm.style.transformOrigin='50% 0%';   // anchor the TOP so the warp only tugs the bottom
-    cm.style.transform=`translateY(calc(-4% + ${dodge.toFixed(1)}px)) scaleY(${(1+0.06*prox).toFixed(3)})`;
+    cm.style.transform=`translateY(calc(-4% + ${off.toFixed(1)}px)) scaleY(${(1+0.05*nearCross).toFixed(3)})`;
     cm.style.filter='';   // stays razor-sharp — no blur
   }
   // once you're fully cashed out, show the gains you'd be making by holding (the
