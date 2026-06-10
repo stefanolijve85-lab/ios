@@ -727,10 +727,10 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
     const horiz=Math.max(0, 1-Math.max(0, Math.abs(rp.x-mcx)-0.36*W)/(0.12*W));   // full duck anywhere across the wide number
     const prox=vert*horiz;
     const dodge=prox*Math.min(0.20*H, 80);
-    const breathe=0.012*Math.sin(t*2.4);
     const cm=$('centerMain');
-    cm.style.transform=`translateY(calc(-4% + ${dodge.toFixed(1)}px)) translateX(${(-prox*6).toFixed(1)}px) scale(${(1+breathe+0.06*prox).toFixed(3)})`;
-    cm.style.filter = prox>0.04 ? `blur(${(prox*1.5).toFixed(2)}px)` : '';
+    cm.style.transformOrigin='50% 0%';   // anchor the TOP so the warp only tugs the bottom
+    cm.style.transform=`translateY(calc(-4% + ${dodge.toFixed(1)}px)) scaleY(${(1+0.06*prox).toFixed(3)})`;
+    cm.style.filter='';   // stays razor-sharp — no blur
   }
   // once you're fully cashed out, show the gains you'd be making by holding (the
   // FOMO ticker) — climbs until the rocket blows up, then the win pop-up shows.
