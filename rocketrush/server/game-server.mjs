@@ -56,15 +56,16 @@ export async function attachGame(io) {
   function statsLoss(s, amount) { s.played++; s.wagered = r2(s.wagered + amount); s.streak = 0; }
   function pushProfile(sock, p) { sock.emit('profile', { account: p.account, balance: p.rec.balance, stats: p.rec.stats, bets: p.rec.bets.slice(0, 50), tx: p.rec.tx.slice(0, 50) }); }
 
-  function settleCashout(sock, p, mult) {
-    p.bet.cashedOut = true;
-    const amount = p.bet.amount, payout = r2(amount * mult);
+  function settleCashout(sock, p, slot, mult) {
+    const b = p.bets[slot]; if (!b || b.cashedOut) return;
+    b.cashedOut = true;
+    const amount = b.amount, payout = r2(amount * mult);
     p.rec.balance = r2(p.rec.balance + payout);
     const profit = statsWin(p.rec.stats, amount, mult, payout);
-    addBet(p, { nonce: p.bet.nonce, amount, won: true, mult, payout, profit, ts: Date.now() });
+    addBet(p, { nonce: b.nonce, amount, won: true, mult, payout, profit, ts: Date.now() });
     addTx(p, 'win', payout);
     p.store.saveBalance(p.key, p.rec); p.store.saveBet(p.key, p.rec); p.store.saveTx(p.key, p.rec);
-    sock.emit('cashout:confirmed', { multiplier: mult, payout, balance: p.rec.balance });
+    sock.emit('cashout:confirmed', { slot, multiplier: mult, payout, balance: p.rec.balance });
     pushProfile(sock, p);
     recordPlay(p.key, true, mult, payout);
     activity({ type: 'win', pid: p.key, name: p.display, color: p.color, amount: payout, mult }, true, sock);
@@ -80,7 +81,7 @@ export async function attachGame(io) {
     game.nonce += 1;
     game.crash = crashPoint(game.serverSeed, CLIENT_SEED, game.nonce);
     game.bettingEndsAt = Date.now() + BET_MS;
-    for (const p of players.values()) p.bet = null;
+    for (const p of players.values()) p.bets = [null, null];
     io.emit('round:betting', { nonce: game.nonce, serverSeedHash: game.serverSeedHash, prevServerSeed: game.prevServerSeed, clientSeed: CLIENT_SEED, startsInMs: BET_MS });
     setTimeout(startRunning, BET_MS);
   }
@@ -93,8 +94,11 @@ export async function attachGame(io) {
     game.tick = setInterval(() => {
       const m = liveMult();
       for (const [id, p] of players) {
-        if (p.bet && !p.bet.cashedOut && p.bet.auto > 0 && p.bet.auto <= game.crash && m >= p.bet.auto) {
-          const s = io.sockets.sockets.get(id); if (s) settleCashout(s, p, p.bet.auto);
+        for (let slot = 0; slot < 2; slot++) {
+          const b = p.bets[slot];
+          if (b && !b.cashedOut && b.auto > 0 && b.auto <= game.crash && m >= b.auto) {
+            const s = io.sockets.sockets.get(id); if (s) settleCashout(s, p, slot, b.auto);
+          }
         }
       }
       io.emit('round:tick', { multiplier: m });
@@ -112,14 +116,18 @@ export async function attachGame(io) {
     if (game.recentRounds.length > 40) game.recentRounds.pop();
     io.emit('round:crash', { nonce: round.nonce, crashPoint: round.crash, serverSeed: round.serverSeed, clientSeed: round.clientSeed, hmac: round.hmac });
     for (const [id, p] of players) {
-      if (p.bet && !p.bet.cashedOut) {
-        statsLoss(p.rec.stats, p.bet.amount);
-        addBet(p, { nonce: p.bet.nonce, amount: p.bet.amount, won: false, profit: -p.bet.amount, ts: Date.now() });
-        p.store.saveBet(p.key, p.rec);
-        recordPlay(p.key, false, 0, 0);
-        const s = io.sockets.sockets.get(id); if (s) pushProfile(s, p);
+      let changed = false;
+      for (let slot = 0; slot < 2; slot++) {
+        const b = p.bets[slot];
+        if (b && !b.cashedOut) {
+          statsLoss(p.rec.stats, b.amount);
+          addBet(p, { nonce: b.nonce, amount: b.amount, won: false, profit: -b.amount, ts: Date.now() });
+          recordPlay(p.key, false, 0, 0);
+          changed = true;
+        }
       }
-      p.bet = null;
+      if (changed) { p.store.saveBet(p.key, p.rec); const s = io.sockets.sockets.get(id); if (s) pushProfile(s, p); }
+      p.bets = [null, null];
     }
     setTimeout(startBetting, PAUSE_MS);
   }
@@ -168,7 +176,7 @@ export async function attachGame(io) {
   io.on('connection', async (sock) => {
     const auth = await resolveAuth(sock);
     const publicName = auth.account ? auth.account.username : guestName(auth.key);
-    const p = { name: 'You', display: publicName, color: colorFor(auth.key), account: auth.account, store: auth.store, key: auth.key, bet: null, rec: null };
+    const p = { name: 'You', display: publicName, color: colorFor(auth.key), account: auth.account, store: auth.store, key: auth.key, bets: [null, null], rec: null };
     p.rec = await auth.store.init(auth.key);
     if (!(p.rec.balance >= 10)) { const old = p.rec.balance; p.rec.balance = START_BALANCE; addTx(p, 'reup', START_BALANCE - old); p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec); }
     players.set(sock.id, p);
@@ -186,41 +194,43 @@ export async function attachGame(io) {
     sock.on('profile:get', ({ id } = {}) => { const prof = getProfile(id); if (prof) sock.emit('profile:data', prof); });
     sock.on('leaderboard:get', () => sock.emit('leaderboard', leaderboard()));
 
-    sock.on('bet:place', ({ amount, auto } = {}) => {
-      amount = Number(amount);
-      if (game.phase !== 'betting') return sock.emit('bet:rejected', { reason: 'PHASE_CLOSED' });
-      if (p.bet) return sock.emit('bet:rejected', { reason: 'ALREADY_BET' });
-      if (!(amount > 0) || amount > p.rec.balance) return sock.emit('bet:rejected', { reason: 'INSUFFICIENT_BALANCE' });
+    sock.on('bet:place', ({ amount, auto, slot } = {}) => {
+      slot = slot === 1 ? 1 : 0; amount = Number(amount);
+      if (game.phase !== 'betting') return sock.emit('bet:rejected', { slot, reason: 'PHASE_CLOSED' });
+      if (p.bets[slot]) return sock.emit('bet:rejected', { slot, reason: 'ALREADY_BET' });
+      if (!(amount > 0) || amount > p.rec.balance) return sock.emit('bet:rejected', { slot, reason: 'INSUFFICIENT_BALANCE' });
       p.rec.balance = r2(p.rec.balance - amount);
-      p.bet = { amount, auto: Number(auto) || 0, cashedOut: false, nonce: game.nonce };
+      p.bets[slot] = { amount, auto: Number(auto) || 0, cashedOut: false, nonce: game.nonce };
       addTx(p, 'bet', -amount);
       p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec);
-      sock.emit('bet:confirmed', { amount, auto: p.bet.auto, balance: p.rec.balance });
+      sock.emit('bet:confirmed', { slot, amount, auto: p.bets[slot].auto, balance: p.rec.balance });
       pushProfile(sock, p);
     });
 
-    sock.on('bet:cancel', () => {
-      if (game.phase !== 'betting' || !p.bet || p.bet.cashedOut) return;
-      p.rec.balance = r2(p.rec.balance + p.bet.amount);
-      addTx(p, 'refund', p.bet.amount);
-      p.bet = null;
+    sock.on('bet:cancel', ({ slot } = {}) => {
+      slot = slot === 1 ? 1 : 0; const b = p.bets[slot];
+      if (game.phase !== 'betting' || !b || b.cashedOut) return;
+      p.rec.balance = r2(p.rec.balance + b.amount);
+      addTx(p, 'refund', b.amount);
+      p.bets[slot] = null;
       p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec);
-      sock.emit('bet:cancelled', { balance: p.rec.balance });
+      sock.emit('bet:cancelled', { slot, balance: p.rec.balance });
       pushProfile(sock, p);
     });
 
     sock.on('reset', () => {
-      const old = p.rec.balance; p.rec.balance = START_BALANCE; p.bet = null;
+      const old = p.rec.balance; p.rec.balance = START_BALANCE; p.bets = [null, null];
       addTx(p, 'reset', START_BALANCE - old);
       p.store.saveBalance(p.key, p.rec); p.store.saveTx(p.key, p.rec);
       pushProfile(sock, p);
     });
 
-    sock.on('cashout', () => {
-      if (game.phase !== 'running' || !p.bet || p.bet.cashedOut) return;
+    sock.on('cashout', ({ slot } = {}) => {
+      slot = slot === 1 ? 1 : 0; const b = p.bets[slot];
+      if (game.phase !== 'running' || !b || b.cashedOut) return;
       const m = liveMult();
       if (m >= game.crash) return;
-      settleCashout(sock, p, Math.floor(m * 100) / 100);
+      settleCashout(sock, p, slot, Math.floor(m * 100) / 100);
     });
 
     sock.on('chat:send', ({ text } = {}) => {

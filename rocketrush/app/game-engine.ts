@@ -124,12 +124,13 @@ function crashFromHmac(hex){
    ============================================================ */
 const S = {
   balance: 1000.00,
-  bet: 100,
-  auto: 0,              // 0 = OFF (manual cash out by default — you must press)
+  slots: [   // two independent bets per round (Aviator-style)
+    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, queued:false, curBet:null },
+    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, queued:false, curBet:null },
+  ],
   mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
   rounds: [],           // recent completed rounds {nonce,crash,serverSeed,clientSeed,hmac}
   myBets: [],           // player outcomes {nonce,amount,won,mult,payout,profit}
-  curBet: null,         // the bet active this round {nonce,amount}
   stats: { played:0, wins:0, wagered:0, returned:0, best:0, bestWin:0, streak:0, bestStreak:0 },
   account: null,        // {id,email,username} when logged in, else null (guest)
   transactions: [],     // demo-wallet transactions {type,amount,balanceAfter,ts}
@@ -147,11 +148,6 @@ const S = {
   clientSeed: randSeed().slice(0,12),
   prevServerSeed: '—',
   lastRound: null,      // {nonce, serverSeed, clientSeed, hmac, crash}
-  bet_placed: false,    // bet active this round
-  bet_amount: 0,
-  cashedOut: false,
-  cashedAt: 0,
-  queuedBet: false,     // bet queued for next round
   history: [],
   sound: true,
   lowBw: false,
@@ -505,9 +501,8 @@ async function newServerSeed(){
 }
 
 async function startBetting(){ if(!ENGINE_ALIVE) return;
-  S.phase='betting';
-  S.mult=1.00; S.cashedOut=false; S.bet_placed=false; S.bet_amount=0;
-  particles=[];
+  S.phase='betting'; S.mult=1.00; particles=[];
+  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; });
   await newServerSeed();
   // compute crash point for THIS round now (provably fair, fixed before round)
   const hmac = await hmacHex(S.serverSeed, `${S.clientSeed}:${S.nonce}`);
@@ -517,10 +512,8 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
   // bots decide their targets
   S.bots.forEach(b=>{ b.active=Math.random()<.7; b.done=false; b.bet=Math.round(rnd(20,800)/10)*10; b.target=rnd(1.15,8); });
 
-  // if a bet was queued, place it now
-  if(S.queuedBet && S.balance>=S.bet){
-    S.queuedBet=false; placeBet(true);
-  }
+  // place any queued bets for this round
+  S.slots.forEach((s,i)=>{ if(s.queued && S.balance>=s.bet){ s.queued=false; placeBet(i,true); } });
 
   showCountdown(5000, startRunning);
   renderAction();
@@ -580,8 +573,8 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
       S.mult=S.crashAt; S.crashTime=t;
       return crash();
     }
-    // auto cashout (server handles this in net mode)
-    if(S.bet_placed && !S.cashedOut && S.auto>0 && S.mult>=S.auto){ doCashout(); }
+    // auto cashout per slot (server handles this in net mode)
+    S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut && s.auto>0 && S.mult>=s.auto) doCashout(i); });
     // bots cash out (server sends winners in net mode)
     S.bots.forEach(b=>{
       if(b.active && !b.done && S.mult>=b.target && b.target<S.crashAt){
@@ -595,7 +588,7 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
   const col = S.mult<2? '#fff' : S.mult<5? 'var(--primary)' : S.mult<10? 'var(--secondary)':'var(--success)';
   $('mult').style.color=col;
   $('status').textContent = 'FLY HIGHER, CASH OUT SOONER!';
-  if(S.bet_placed && !S.cashedOut) renderAction();
+  S.slots.forEach((s,i)=>{ if(s.placed && !s.cashedOut) renderAction(i); });
   requestAnimationFrame(tickRun);
 }
 
@@ -608,9 +601,9 @@ function crash(){
   sfx.crash(); stopEngine();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
 
-  // bust any active un-cashed bet
-  if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
-  if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
+  // bust any active un-cashed bets
+  let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } if(s.curBet) recordLossLocal(s); });
+  if(lost>0) flashWon('-€'+fmt(lost), false);
 
   // record provably-fair last round
   S.lastRound = { nonce:S.nonce, serverSeed:S.serverSeed, clientSeed:S.clientSeed, hmac:S.thisHmac, crash:S.crashAt };
@@ -626,59 +619,57 @@ function crash(){
 /* ============================================================
    BETTING ACTIONS
    ============================================================ */
-function placeBet(silent){
-  if(S.balance<S.bet) return;
-  if(S.mode==='net'){ NET.sock.emit('bet:place',{amount:S.bet, auto:S.auto}); if(!silent) sfx.bet(); return; }
-  S.balance-=S.bet; S.bet_placed=true; S.bet_amount=S.bet; S.cashedOut=false;
-  recordBetPlaced(S.nonce, S.bet_amount);
+function placeBet(i, silent){
+  const sl=S.slots[i]; if(sl.placed || S.balance<sl.bet) return;
+  if(S.mode==='net'){ NET.sock.emit('bet:place',{slot:i, amount:sl.bet, auto:sl.auto}); if(!silent) sfx.bet(); return; }
+  S.balance-=sl.bet; sl.placed=true; sl.amount=sl.bet; sl.cashedOut=false;
+  sl.curBet={ nonce:S.nonce, amount:sl.amount };
   updateBalance();
   if(!silent) sfx.bet();
-  renderAction();
+  renderAction(i);
 }
-function doCashout(){
-  if(!S.bet_placed||S.cashedOut) return;
-  if(S.mode==='net'){ NET.sock.emit('cashout'); return; } // server confirms + pays
-  S.cashedOut=true; S.bet_placed=false; S.cashedAt=S.mult;
-  const win=S.bet_amount*S.mult;
+function doCashout(i){
+  const sl=S.slots[i]; if(!sl.placed||sl.cashedOut) return;
+  if(S.mode==='net'){ NET.sock.emit('cashout',{slot:i}); return; } // server confirms + pays
+  sl.cashedOut=true; sl.placed=false;
+  const win=sl.amount*S.mult;
   S.balance+=win; updateBalance();
   sfx.cash();
-  recordWin(S.mult, win);
+  recordWinLocal(sl, S.mult, win);
   addWinner('You','#22C55E',S.mult,win,true);
   showWinPopup(S.mult, win);
-  renderAction();
+  renderAction(i);
 }
-
-function onAction(){
+function onAction(i){
+  const sl=S.slots[i];
   if(S.phase==='betting'){
-    if(S.bet_placed){ // cancel
-      if(S.mode==='net'){ NET.sock.emit('bet:cancel'); }
-      else { S.balance+=S.bet_amount; S.bet_placed=false; S.curBet=null; updateBalance(); }
-    } else placeBet();
-    renderAction();
+    if(sl.placed){ // cancel
+      if(S.mode==='net'){ NET.sock.emit('bet:cancel',{slot:i}); }
+      else { S.balance+=sl.amount; sl.placed=false; sl.curBet=null; updateBalance(); }
+    } else placeBet(i);
+    renderAction(i);
   } else if(S.phase==='running'){
-    if(S.bet_placed && !S.cashedOut) doCashout();
-    else { // queue for next round
-      S.queuedBet=!S.queuedBet; renderAction();
-    }
-  } else if(S.phase==='crashed'){
-    S.queuedBet=!S.queuedBet; renderAction();
-  }
+    if(sl.placed && !sl.cashedOut) doCashout(i);
+    else { sl.queued=!sl.queued; renderAction(i); }
+  } else { sl.queued=!sl.queued; renderAction(i); }
 }
 
-function renderAction(){
-  const a=$('action'), m=$('actionMain'), sub=$('actionSub');
+function renderAction(i){
+  if(i==null){ renderAction(0); renderAction(1); return; }
+  const sl=S.slots[i], a=$('action'+i), m=$('actionMain'+i), sub=$('actionSub'+i);
+  if(!a) return;
   a.className='action'; a.disabled=false;
   if(S.phase==='betting'){
-    if(S.bet_placed){ a.classList.add('cancel'); m.textContent=T('cancel'); sub.textContent='€'+fmt(S.bet_amount)+' in'; }
-    else { a.classList.add('bet'); m.textContent=T('place'); sub.textContent='€'+fmt(S.bet); if(S.balance<S.bet) a.disabled=true; }
+    if(sl.placed){ a.classList.add('cancel'); m.textContent=T('cancel'); sub.textContent='€'+fmt(sl.amount)+' in'; }
+    else { a.classList.add('bet'); m.textContent=T('place'); sub.textContent='€'+fmt(sl.bet); if(S.balance<sl.bet) a.disabled=true; }
   } else if(S.phase==='running'){
-    if(S.bet_placed && !S.cashedOut){
-      a.classList.add('cashout'); m.textContent=T('cashout'); sub.textContent='€'+fmt(S.bet_amount*S.mult);
+    if(sl.placed && !sl.cashedOut){
+      a.classList.add('cashout'); m.textContent=T('cashout'); sub.textContent='€'+fmt(sl.amount*S.mult);
     } else {
-      a.classList.add(S.queuedBet?'cancel':'waiting'); m.textContent=S.queuedBet?T('queued'):T('place'); sub.textContent=S.queuedBet?'next round':'€'+fmt(S.bet);
+      a.classList.add(sl.queued?'cancel':'waiting'); m.textContent=sl.queued?T('queued'):T('place'); sub.textContent=sl.queued?'next round':'€'+fmt(sl.bet);
     }
   } else { // crashed
-    a.classList.add(S.queuedBet?'cancel':'waiting'); m.textContent=S.queuedBet?T('queued'):T('waiting'); sub.textContent=S.queuedBet?'next round':'';
+    a.classList.add(sl.queued?'cancel':'waiting'); m.textContent=sl.queued?T('queued'):T('waiting'); sub.textContent=sl.queued?'next round':'';
   }
 }
 
@@ -741,24 +732,24 @@ function pushRound(r){ S.rounds.unshift(r); if(S.rounds.length>50) S.rounds.pop(
    ============================================================ */
 // every placed bet resolves to exactly one record: a win (on cashout) or a
 // loss (on crash). If a previous bet was somehow never resolved, settle it first.
-function recordBetPlaced(nonce, amount){ if(S.curBet) recordLoss(); S.curBet={ nonce, amount }; }
-function recordWin(mult, payout){
-  if(!S.curBet) return;
-  const amount=S.curBet.amount, profit=Math.round((payout-amount)*100)/100;
-  S.myBets.unshift({ nonce:S.curBet.nonce, amount, won:true, mult, payout, profit });
+// local-mode stats recording (net mode stats come from the server via 'profile')
+function recordWinLocal(sl, mult, payout){
+  if(!sl.curBet) return;
+  const amount=sl.curBet.amount, profit=Math.round((payout-amount)*100)/100;
+  S.myBets.unshift({ nonce:sl.curBet.nonce, amount, won:true, mult, payout, profit });
   if(S.myBets.length>100) S.myBets.pop();
   const s=S.stats; s.played++; s.wins++; s.wagered+=amount; s.returned+=payout;
   s.best=Math.max(s.best,mult); s.bestWin=Math.max(s.bestWin,profit);
   s.streak++; s.bestStreak=Math.max(s.bestStreak,s.streak);
-  S.curBet=null; persist(); refreshScreens();
+  sl.curBet=null; persist(); refreshScreens();
 }
-function recordLoss(){
-  if(!S.curBet) return;
-  const amount=S.curBet.amount;
-  S.myBets.unshift({ nonce:S.curBet.nonce, amount, won:false, profit:-amount });
+function recordLossLocal(sl){
+  if(!sl.curBet) return;
+  const amount=sl.curBet.amount;
+  S.myBets.unshift({ nonce:sl.curBet.nonce, amount, won:false, profit:-amount });
   if(S.myBets.length>100) S.myBets.pop();
   const s=S.stats; s.played++; s.wagered+=amount; s.streak=0;
-  S.curBet=null; persist(); refreshScreens();
+  sl.curBet=null; persist(); refreshScreens();
 }
 
 function renderHistory(){
@@ -842,33 +833,23 @@ function sysChat(t){ addChat('RocketRush', t, true); }
 /* ============================================================
    CONTROLS WIRING
    ============================================================ */
-function setBet(v){ S.bet=Math.max(10,Math.min(Math.round(v), Math.max(10,Math.floor(S.balance)))); $('betVal').textContent=S.bet; renderAction(); }
-function setAuto(v){ S.auto = v<=1? 0 : Math.min(v,1000); $('autoVal').textContent = S.auto===0? 'OFF' : S.auto.toFixed(2)+'x'; }
+function setBet(i, v){ const s=S.slots[i]; s.bet=Math.max(10,Math.min(Math.round(v), Math.max(10,Math.floor(S.balance)))); const el=$('betVal'+i); if(el) el.textContent=s.bet; renderAction(i); }
+function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000); const el=$('autoVal'+i); if(el) el.textContent = s.auto===0? 'OFF' : s.auto.toFixed(2)+'x'; }
 
-function clearChips(){ document.querySelectorAll('[data-betset]').forEach(x=>x.classList.remove('active')); }
-function syncChips(){ clearChips(); document.querySelectorAll('[data-betset]').forEach(x=>{ if(+x.dataset.betset===S.bet) x.classList.add('active'); }); }
 document.querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{
-  const step = S.bet<100?10:S.bet<500?50:100;
-  setBet(S.bet + (b.dataset.bet==='+'?step:-step));
-  syncChips();
-});
-// preset bet chips (10 / 25 / 50 / 100 / 500)
-document.querySelectorAll('[data-betset]').forEach(b=>b.onclick=()=>{
-  setBet(parseFloat(b.dataset.betset));
-  clearChips(); b.classList.add('active');
+  const i=+(b.dataset.slot||0), s=S.slots[i];
+  const step = s.bet<100?10:s.bet<500?50:100;
+  setBet(i, s.bet + (b.dataset.bet==='+'?step:-step));
 });
 document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{
-  const up = b.dataset.auto==='+';
-  if(S.auto===0){ setAuto(up?1.50:0); return; }      // first step out of OFF → 1.50x
-  const step = S.auto<2?0.1:S.auto<10?0.5:1;
-  let v = S.auto + (up?step:-step);
+  const i=+(b.dataset.slot||0), s=S.slots[i], up=b.dataset.auto==='+';
+  if(s.auto===0){ setAuto(i, up?1.50:0); return; }   // first step out of OFF → 1.50x
+  const step = s.auto<2?0.1:s.auto<10?0.5:1;
+  let v = s.auto + (up?step:-step);
   if(v<=1.10 && !up) v=0;                              // stepping down past 1.1x → OFF
-  setAuto(v);
+  setAuto(i, v);
 });
-document.querySelectorAll('[data-autoq]').forEach(b=>b.onclick=()=>{
-  const q=b.dataset.autoq; setAuto(q==='off'?0:parseFloat(q));
-});
-$('action').onclick=onAction;
+document.querySelectorAll('.action[data-slot]').forEach(a=>a.onclick=()=>onAction(+a.dataset.slot));
 
 // chat
 function sendChat(){
@@ -926,8 +907,8 @@ document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>{
 });
 // back buttons on the full-screen tabs
 document.querySelectorAll('[data-screen-close]').forEach(b=>b.onclick=()=>closeScreens());
-// center FAB = quick place-bet / cash-out shortcut
-const fab=document.querySelector('.nav-fab'); if(fab) fab.onclick=onAction;
+// center FAB = quick place-bet / cash-out shortcut for Bet 1
+const fab=document.querySelector('.nav-fab'); if(fab) fab.onclick=()=>onAction(0);
 
 /* ============================================================
    PROVABLY FAIR MODAL
@@ -973,12 +954,13 @@ function ambient(){
 function setOnline(n){ const v=(typeof n==='number'? n : 0); $('online').textContent=v.toLocaleString('en-US'); const sp=$('stagePlayers'); if(sp) sp.textContent='👥 '+v.toLocaleString('en-US'); }
 
 function netBetting(d){
-  S.phase='betting'; S.mult=1.00; S.cashedOut=false; S.bet_placed=false; S.bet_amount=0; particles=[];
+  S.phase='betting'; S.mult=1.00; particles=[];
+  S.slots.forEach(s=>{ s.placed=false; s.amount=0; s.cashedOut=false; });
   S.nonce=d.nonce; S.serverSeedHash=d.serverSeedHash; S.prevServerSeed=d.prevServerSeed; if(d.clientSeed) S.clientSeed=d.clientSeed;
   $('fSeedHash').textContent=S.serverSeedHash||'—';
   $('fSeedReveal').textContent=S.prevServerSeed||'—';
   $('fNonce').textContent=S.nonce;
-  if(S.queuedBet && S.balance>=S.bet){ S.queuedBet=false; placeBet(true); }
+  S.slots.forEach((s,i)=>{ if(s.queued && S.balance>=s.bet){ s.queued=false; placeBet(i,true); } });
   showCountdown(d.startsInMs, null);   // the server triggers round:start
   renderAction();
 }
@@ -995,8 +977,8 @@ function netCrash(d){
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
-  if(S.bet_placed && !S.cashedOut){ S.bet_placed=false; flashWon('-€'+fmt(S.bet_amount), false); }
-  if(S.curBet) recordLoss();   // resolve the round's bet (win already cleared curBet)
+  let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
+  if(lost>0) flashWon('-€'+fmt(lost), false);
   S.lastRound={ nonce:d.nonce, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac, crash:d.crashPoint };
   pushRound({ nonce:d.nonce, crash:d.crashPoint, serverSeed:d.serverSeed, clientSeed:d.clientSeed||S.clientSeed, hmac:d.hmac });
   pushHistory(d.crashPoint);
@@ -1008,13 +990,13 @@ function bindNet(sock){
   sock.on('round:crash',  d=>{ if(S.mode==='net') netCrash(d); });
   // In net mode the SERVER is authoritative for balance/stats/bets/tx and pushes
   // them via 'profile'. The client only reflects round UX (sound, flash, action).
-  sock.on('bet:confirmed', d=>{ S.bet_placed=true; S.bet_amount=d.amount; S.cashedOut=false; S.balance=d.balance; updateBalance(); renderAction(); });
-  sock.on('bet:cancelled', d=>{ S.bet_placed=false; S.balance=d.balance; updateBalance(); renderAction(); });
-  sock.on('bet:rejected',  ()=>{ renderAction(); });
+  sock.on('bet:confirmed', d=>{ const sl=S.slots[d.slot]; if(sl){ sl.placed=true; sl.amount=d.amount; sl.cashedOut=false; } S.balance=d.balance; updateBalance(); renderAction(d.slot); });
+  sock.on('bet:cancelled', d=>{ const sl=S.slots[d.slot]; if(sl) sl.placed=false; S.balance=d.balance; updateBalance(); renderAction(d.slot); });
+  sock.on('bet:rejected',  d=>{ renderAction(d&&d.slot!=null?d.slot:0); });
   sock.on('cashout:confirmed', d=>{
-    S.cashedOut=true; S.bet_placed=false; S.cashedAt=d.multiplier; S.balance=d.balance; updateBalance();
+    const sl=S.slots[d.slot]; if(sl){ sl.cashedOut=true; sl.placed=false; } S.balance=d.balance; updateBalance();
     sfx.cash(); addWinner('You','#22C55E',d.multiplier,d.payout,true);
-    showWinPopup(d.multiplier, d.payout); renderAction();
+    showWinPopup(d.multiplier, d.payout); renderAction(d.slot);
   });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
@@ -1264,7 +1246,7 @@ function boot(){
   sysChat('Welcome to RocketRush 🚀  Place a bet, cash out before the crash.');
   syncSound();
   updateBalance();
-  setBet(100); setAuto(0);
+  setBet(0,100); setBet(1,100); setAuto(0,0); setAuto(1,0);
   authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
 }
 boot();

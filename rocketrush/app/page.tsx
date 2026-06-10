@@ -58,39 +58,34 @@ export default function Page() {
             <div className="count-bar"><i id="countBar" /></div>
           </div>
         </div>
-        <div className="provably-badge left" id="badgeFair"><span className="shield">🛡️</span> Fair</div>
         <div className="stage-players" id="stagePlayers">👥 0</div>
       </div>
 
       {/* ===================== HISTORY PILLS ===================== */}
       <div className="history" id="history" />
 
-      {/* ===================== CONTROLS ===================== */}
-      <div className="controls">
-        <div className="ctl-labels"><span>Bet Amount</span><span>Auto Cash Out</span></div>
-        <div className="ctl-row">
-          <div className="stepper">
-            <button data-bet="-">−</button>
-            <div className="val tnum">€<span id="betVal">100</span></div>
-            <button data-bet="+">+</button>
+      {/* ===================== CONTROLS — two bets per round ===================== */}
+      <div className="controls dual">
+        {[0, 1].map((i) => (
+          <div className="betpanel" key={i}>
+            <div className="bp-label">Bet {i + 1}</div>
+            <div className="stepper sm">
+              <button data-bet="-" data-slot={i}>−</button>
+              <div className="val tnum">€<span id={`betVal${i}`}>100</span></div>
+              <button data-bet="+" data-slot={i}>+</button>
+            </div>
+            <div className="bp-auto">
+              <span className="bp-auto-l">Auto</span>
+              <button data-auto="-" data-slot={i}>−</button>
+              <span className="bp-auto-v" id={`autoVal${i}`}>OFF</span>
+              <button data-auto="+" data-slot={i}>+</button>
+            </div>
+            <button className="action waiting" id={`action${i}`} data-slot={i} disabled>
+              <span id={`actionMain${i}`}>WAITING…</span>
+              <small id={`actionSub${i}`} />
+            </button>
           </div>
-          <div className="stepper">
-            <button data-auto="-">−</button>
-            <div className="val tnum"><span id="autoVal">OFF</span></div>
-            <button data-auto="+">+</button>
-          </div>
-        </div>
-        <div className="chips">
-          <button className="chip" data-betset="10">10</button>
-          <button className="chip" data-betset="25">25</button>
-          <button className="chip" data-betset="50">50</button>
-          <button className="chip active" data-betset="100">100</button>
-          <button className="chip" data-betset="500">500</button>
-        </div>
-        <button className="action waiting" id="action" disabled>
-          <span id="actionMain">WAITING…</span>
-          <small id="actionSub" />
-        </button>
+        ))}
       </div>
 
       {/* ===================== PANELS ===================== */}
@@ -108,6 +103,9 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* provably-fair badge at the bottom of the game (off the main stage) */}
+      <button className="fair-foot" id="badgeFair"><span className="shield">🛡️</span> Provably Fair · tap to verify</button>
 
       {/* ===================== BOTTOM NAV ===================== */}
       <nav className="bottom-nav">

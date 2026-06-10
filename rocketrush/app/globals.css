@@ -126,33 +126,38 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .hp { flex: none; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
 .hp.lo { color: #9aa3b2; } .hp.mid { color: var(--primary); } .hp.hi { color: var(--secondary); } .hp.huge { color: var(--success); }
 
-/* ===================== CONTROLS ===================== */
-.controls { flex: none; display: flex; flex-direction: column; gap: 7px; }
-.ctl-labels { display: flex; justify-content: space-between; }
-.ctl-labels span { flex: 1; text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
-.ctl-row { display: flex; gap: 10px; }
-.stepper { flex: 1; display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 13px; padding: 5px; }
-.stepper button { width: 38px; height: 38px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); font-size: 22px; font-weight: 600; display: grid; place-items: center; transition: transform .08s; }
+/* ===================== CONTROLS — two bet panels ===================== */
+.controls.dual { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.betpanel { background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.012)); border: 1px solid var(--line); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.bp-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); text-align: center; }
+.stepper { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.stepper button { width: 34px; height: 34px; border-radius: 9px; background: var(--panel-2); border: 1px solid var(--line); font-size: 20px; font-weight: 600; display: grid; place-items: center; transition: transform .08s; }
 .stepper button:active { transform: scale(.9); }
-.stepper .val { flex: 1; text-align: center; font-size: 17px; font-weight: 800; }
-.chips { display: flex; gap: 6px; }
-.chip { flex: 1; padding: 9px 0; font-size: 12.5px; font-weight: 800; border-radius: 11px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); transition: transform .08s; }
-.chip:active { transform: scale(.94); }
-.chip.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #1a0f00; border-color: transparent; box-shadow: 0 6px 16px rgba(255,138,0,.3); }
+.stepper .val { flex: 1; text-align: center; font-size: 15px; font-weight: 800; }
+.bp-auto { display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px 7px; }
+.bp-auto-l { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex: 1; }
+.bp-auto button { width: 24px; height: 24px; border-radius: 7px; background: var(--panel); border: 1px solid var(--line); font-size: 15px; font-weight: 600; display: grid; place-items: center; }
+.bp-auto button:active { transform: scale(.9); }
+.bp-auto-v { font-size: 12px; font-weight: 800; min-width: 44px; text-align: center; }
 
 .action {
-  height: 62px; border-radius: 16px; font-weight: 900; font-size: 19px; letter-spacing: .4px;
+  height: 50px; border-radius: 13px; font-weight: 900; font-size: 16px; letter-spacing: .3px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   transition: transform .08s, filter .15s; position: relative; overflow: hidden;
 }
 .action:active { transform: scale(.99); }
-.action small { font-size: 14px; font-weight: 800; opacity: .95; }
+.action small { font-size: 12px; font-weight: 800; opacity: .95; }
 .action.bet, .action.cashout { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #1a0f00; box-shadow: 0 10px 28px rgba(255,138,0,.4); }
 .action.cashout { animation: breathe 1.1s infinite; }
 @keyframes breathe { 0%,100%{ box-shadow: 0 10px 26px rgba(255,138,0,.35) } 50%{ box-shadow: 0 12px 40px rgba(255,138,0,.65) } }
 .action.waiting { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); box-shadow: none; }
 .action.cancel { background: rgba(244,63,94,.12); border: 1px solid rgba(244,63,94,.4); color: var(--danger); box-shadow: none; }
 .action:disabled { filter: grayscale(.4) brightness(.7); }
+
+/* provably-fair footer (bottom of the game, off the stage) */
+.fair-foot { flex: none; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: var(--muted); padding: 4px 0 2px; background: none; border: none; }
+.fair-foot .shield { color: var(--success); }
+.fair-foot:active { opacity: .6; }
 
 /* ===================== PANELS (winners + chat) ===================== */
 .panels { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 132px; }
