@@ -669,7 +669,7 @@ function renderAction(i){
   a.className='action'; a.disabled=false;
   if(S.phase==='betting'){
     if(sl.placed){ a.classList.add('cancel'); m.textContent=T('cancel'); sub.textContent='€'+fmt(sl.amount)+' in'; }
-    else { a.classList.add('bet'); m.textContent=T('place'); sub.textContent='€'+fmt(sl.bet); if(S.balance<sl.bet) a.disabled=true; }
+    else { a.classList.add('bet'); m.textContent=T('place'); if(S.balance<sl.bet){ a.disabled=true; sub.textContent='low balance'; } else { sub.textContent='€'+fmt(sl.bet); } }
   } else if(S.phase==='running'){
     if(sl.placed && !sl.cashedOut){
       a.classList.add('cashout'); m.textContent=T('cashout'); sub.textContent='€'+fmt(sl.amount*S.mult);
@@ -684,7 +684,7 @@ function renderAction(i){
 /* ============================================================
    UI: winners, chat, history, balance
    ============================================================ */
-function updateBalance(){ $('balance').textContent=fmt(S.balance); persist(); }
+function updateBalance(){ $('balance').textContent=fmt(S.balance); persist(); renderAction(); }   // re-render BOTH bet buttons so affordability (disabled) stays correct
 function flashWon(text, good){
   const el=$('youWon'); el.textContent=text;
   el.style.color = good? 'var(--success)':'var(--danger)';
