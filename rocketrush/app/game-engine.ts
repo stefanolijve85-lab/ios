@@ -451,12 +451,13 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // rocket sits exactly ON the path (no up/down bob) so the trail + flame stay
     // attached to the nozzle instead of drifting beside it.
     const ry = p.y;
-    // point the nose along the direction of travel (toward the moon, up-right).
-    // The look-ahead grows with time so that even when the rocket is barely creeping
-    // near the moon there's a real direction — and we keep the last good angle if the
-    // motion is tiny, so the nose never snaps.
-    const ahead = rocketPos(tt + 0.1 + tt*0.05);
-    let dx=ahead.x-p.x, dy=ahead.y-p.y, ang;
+    // Point the nose along the CURVE's tangent at the rocket (centred difference) so
+    // the body sits ON the path and the fire tail trails straight out the back —
+    // a forward-only look-ahead over-rotated the nose on the bend. The window grows
+    // with time so there's still motion near the moon; keep the last angle if tiny.
+    const h = 0.08 + tt*0.02;
+    const a1 = rocketPos(tt+h), a2 = rocketPos(Math.max(0, tt-h));
+    let dx=a1.x-a2.x, dy=a1.y-a2.y, ang;
     if(Math.hypot(dx,dy) < 0.3){ ang = (S.lastAng!=null? S.lastAng : 0); }
     else { ang = Math.atan2(dy,dx) + Math.PI/2; S.lastAng = ang; }   // nose follows the curve (starts vertical, tips right)
     if(S.phase==='running'){
