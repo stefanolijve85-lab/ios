@@ -175,8 +175,9 @@ const T = k => (I18N[S.lang]||I18N.en)[k] || I18N.en[k];
 let actx;
 function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }catch(e){ return null; } }
 // Three mix buses so the player can balance the sound from Settings:
-//   voice = the spoken/radio countdown  ·  fx ("Soundeffects") = thrust alarm,
-//   cash-out, bet, crash  ·  music = flight ambience (engine rumble).
+//   voice = the spoken/radio countdown  ·  music = the continuous flight bed
+//   (thrust alarm + engine rumble)  ·  fx ("Soundeffects") = the punchy
+//   one-shots (crash, cash-out, bet).
 // Every sound routes through its bus → the slider sets that bus's gain live.
 let _bus=null;
 function buses(){
@@ -323,8 +324,9 @@ function stopEngine(){
   try{ const {src,g,a}=engineNodes; g.gain.setTargetAtTime(0,a.currentTime,0.05); setTimeout(()=>{ try{src.stop();}catch(e){} },220); }catch(e){}
   engineNodes=null;
 }
-// thrust-alarm bed: plays on every launch and loops through the flight (FX bus),
-// stopped when the rocket crashes.
+// thrust-alarm bed: plays on every launch and loops through the flight. It's the
+// continuous flight "soundtrack", so it rides the MUSIC bus (alongside the engine
+// rumble); the Soundeffects bus is the punchy one-shots (crash/cash-out/bet).
 let thrustNodes=null;
 function startThrust(){
   if(!S.sound || !hasSnd('thrust')) return; stopThrust();
@@ -332,7 +334,7 @@ function startThrust(){
     const a=ac(), b=_buf['thrust']; if(!a||!b) return;
     const src=a.createBufferSource(); src.buffer=b; src.loop=true;
     const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(VOL.thrust, a.currentTime, 0.08);
-    src.connect(g); g.connect(busFor('fx')||a.destination); src.start();
+    src.connect(g); g.connect(busFor('music')||a.destination); src.start();
     thrustNodes={src,g,a};
   }catch(e){}
 }
