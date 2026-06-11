@@ -16,19 +16,29 @@ export default function BridgeBoard({ height = 372 }: { height?: number }) {
   const currentRow = round?.currentRow ?? (status === 'busted' && lastStep ? lastStep.row - 1 : 0);
   const order = Array.from({ length: rows }, (_, i) => rows - 1 - i);
 
-  // Walking "forward" feel: as the player advances, push slightly into the scene.
+  // Progress 0..1 across the bridge.
   const progress = rows > 1 ? currentRow / (rows - 1) : 0;
-  const bridgeScale = 1.04 + progress * 0.14;
-  const bridgeShiftY = progress * 8;
+
+  // Camera glides forward: zoom toward the vanishing point as the player advances.
+  const bridgeScale = 1.02 + progress * 0.7;
+
+  // Hero walks the lane he last chose (default: the right tile). Each jump he
+  // moves up the bridge to the next tile, the lanes converge, and he shrinks
+  // (further from the camera). The camera zoom above follows him forward.
+  const pick = lastStep?.pick === 'LEFT' ? 'LEFT' : 'RIGHT';
+  const laneSpread = 13 - progress * 11;            // % from centre, converges with distance
+  const charX = 50 + (pick === 'LEFT' ? -laneSpread : laneSpread);
+  const charFeetTop = 90 - progress * 56;           // feet Y (%), moves up/forward each step
+  const charScale = 1 - progress * 0.62;            // shrink clearly as he recedes
 
   return (
     <div className="stage" style={{ height }}>
-      {/* real bridge artwork */}
+      {/* real bridge artwork — zoom origin at the vanishing point = forward camera */}
       <motion.div
         className="absolute inset-0 z-0 bg-cover bg-top"
-        style={{ backgroundImage: `url(${bridgeUrl})` }}
+        style={{ backgroundImage: `url(${bridgeUrl})`, transformOrigin: '50% 30%' }}
         initial={false}
-        animate={{ scale: bridgeScale, y: bridgeShiftY }}
+        animate={{ scale: bridgeScale }}
         transition={{ type: 'spring', stiffness: 80, damping: 18 }}
       />
       {/* readability vignette */}
@@ -66,28 +76,33 @@ export default function BridgeBoard({ height = 372 }: { height?: number }) {
         )}
       </AnimatePresence>
 
-      {/* the hero — your character artwork */}
+      {/* the hero — your character artwork, anchored by the feet on the tile */}
       {status !== 'busted' ? (
         <motion.img
           src={characterUrl}
           alt="Aero the explorer bot"
-          className="pointer-events-none absolute bottom-[6%] left-1/2 z-20 -translate-x-1/2 select-none"
-          style={{ height: '70%', filter: 'drop-shadow(0 14px 20px rgba(0,0,0,0.6))' }}
+          className="pointer-events-none absolute z-20 select-none"
+          style={{
+            height: '50%',
+            translateX: '-50%',
+            translateY: '-100%',
+            transformOrigin: '50% 100%',
+            filter: 'drop-shadow(0 10px 16px rgba(0,0,0,0.55))',
+          }}
           draggable={false}
-          key={currentRow}
-          initial={{ scale: 0.92, y: 10, opacity: 0.9 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+          initial={false}
+          animate={{ left: `${charX}%`, top: `${charFeetTop}%`, scale: charScale }}
+          transition={{ type: 'spring', stiffness: 150, damping: 17 }}
         />
       ) : (
         <motion.img
           src={characterUrl}
           alt="Aero falling"
-          className="pointer-events-none absolute bottom-[6%] left-1/2 z-20 -translate-x-1/2 select-none"
-          style={{ height: '62%' }}
+          className="pointer-events-none absolute z-20 select-none"
+          style={{ height: '50%', translateX: '-50%', translateY: '-100%', transformOrigin: '50% 100%' }}
           draggable={false}
-          initial={{ y: 0, opacity: 1, rotate: 0 }}
-          animate={{ y: 360, opacity: 0, rotate: 210 }}
+          initial={{ left: `${charX}%`, top: `${charFeetTop}%`, scale: charScale, rotate: 0, opacity: 1 }}
+          animate={{ top: '145%', rotate: 220, opacity: 0, scale: charScale * 0.85 }}
           transition={{ duration: 0.95, ease: 'easeIn' }}
         />
       )}
