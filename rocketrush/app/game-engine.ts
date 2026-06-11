@@ -150,6 +150,7 @@ const S = {
   lastRound: null,      // {nonce, serverSeed, clientSeed, hmac, crash}
   history: [],
   sound: true,
+  vol: { music:0.7, fx:0.85, voice:0.95 },   // per-bus mix (Music / FX / Sounds sliders)
   voicedNonce: -1,      // last round whose countdown audio we played (no replays on reconnect)
   cdAudio: null,        // current countdown clip node (so we can stop it)
   lowBw: false,
@@ -173,12 +174,34 @@ const T = k => (I18N[S.lang]||I18N.en)[k] || I18N.en[k];
    ============================================================ */
 let actx;
 function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }catch(e){ return null; } }
-function beep(freq, dur, type='sine', vol=.08){
+// Three mix buses so the player can balance the sound from Settings:
+//   music = flight ambience (engine rumble)  ·  fx = effects (thrust alarm,
+//   cash-out, bet, crash)  ·  voice = the spoken/radio countdown.
+// Every sound routes through its bus → the slider sets that bus's gain live.
+let _bus=null;
+function buses(){
+  const a=ac(); if(!a) return null;
+  if(_bus && _bus.a===a) return _bus;
+  const mk=()=>{ const g=a.createGain(); g.connect(a.destination); return g; };
+  _bus={ a, music:mk(), fx:mk(), voice:mk() };
+  applyVolumes();
+  return _bus;
+}
+function busFor(cat){ const b=buses(); if(!b) return null; return b[cat]||b.fx; }
+function applyVolumes(){
+  if(!_bus) return; const v=S.vol||{}, on=S.sound?1:0;
+  try{
+    _bus.music.gain.value = on*(v.music==null?0.7:v.music);
+    _bus.fx.gain.value    = on*(v.fx==null?0.85:v.fx);
+    _bus.voice.gain.value = on*(v.voice==null?0.95:v.voice);
+  }catch(e){}
+}
+function beep(freq, dur, type='sine', vol=.08, cat='fx'){
   if(!S.sound) return;
   try{
     const a=ac(); if(!a) return;
     const o = a.createOscillator(), g = a.createGain();
-    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(a.destination);
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(busFor(cat)||a.destination);
     g.gain.setValueAtTime(vol, a.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001, a.currentTime+dur);
     o.start(); o.stop(a.currentTime+dur);
@@ -192,13 +215,14 @@ function noiseBuffer(a, dur, shape){
 /* ---- optional real audio assets: drop files in public/sounds/ and they're used
    automatically; otherwise we fall back to synth + speech (see public/sounds/README). ---- */
 const SND = { explosion:'/sounds/explosion.mp3', engine:'/sounds/engine.mp3',
+  thrust:'/sounds/thrust.mp3',                 // thrust-alarm bed, plays every flight
   countdown:'/sounds/countdown.mp3',           // one clip: "3, 2, 1, liftoff"
   '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3',   // OR per-number clips
   liftoff:'/sounds/liftoff.mp3', cash:'/sounds/cashout.mp3' };
 const _buf = {};
 // per-file gains so all three sounds play at the SAME loudness (RMS-matched:
 // countdown 0.25, engine 0.25, explosion 0.40 → target ≈ 0.14 RMS).
-const VOL = { countdown:0.56, engine:0.56, explosion:0.35 };
+const VOL = { countdown:0.56, engine:0.56, explosion:0.35, thrust:0.8 };
 async function loadSounds(){
   const a=ac(); if(!a) return;
   await Promise.all(Object.entries(SND).map(async ([k,url])=>{
@@ -208,20 +232,20 @@ async function loadSounds(){
 function hasSnd(k){ return !!_buf[k]; }
 function playSnd(k, opt){
   if(!S.sound) return null; opt=opt||{};
-  try{ const a=ac(), b=_buf[k]; if(!a||!b) return null; const src=a.createBufferSource(); src.buffer=b; src.loop=!!opt.loop; const g=a.createGain(); g.gain.value=opt.vol==null?1:opt.vol; src.connect(g); g.connect(a.destination); src.start(); return {src,g,a}; }catch(e){ return null; }
+  try{ const a=ac(), b=_buf[k]; if(!a||!b) return null; const src=a.createBufferSource(); src.buffer=b; src.loop=!!opt.loop; const g=a.createGain(); g.gain.value=opt.vol==null?1:opt.vol; src.connect(g); g.connect(busFor(opt.cat||'fx')||a.destination); src.start(); return {src,g,a}; }catch(e){ return null; }
 }
 // NASA mission-control radio treatment over the spoken countdown: a Quindar intro
 // beep, a low static/comms hiss bed, and a band-passed + slightly distorted parallel
 // copy of the voice for that "over the radio" texture. Returns {src} so it can be
 // stopped exactly like a normal clip (killCdClip / stopCountdownAudio).
 function _radioCurve(){ const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*2.4); } return c; }
-function _quindar(a, when, vol){ const o=a.createOscillator(), g=a.createGain(); o.type='sine'; o.frequency.value=2525; g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vol, when+0.012); g.gain.setValueAtTime(vol, when+0.15); g.gain.exponentialRampToValueAtTime(0.0001, when+0.20); o.connect(g); g.connect(a.destination); o.start(when); o.stop(when+0.22); }
+function _quindar(a, when, vol){ const o=a.createOscillator(), g=a.createGain(); o.type='sine'; o.frequency.value=2525; g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vol, when+0.012); g.gain.setValueAtTime(vol, when+0.15); g.gain.exponentialRampToValueAtTime(0.0001, when+0.20); o.connect(g); g.connect(busFor('voice')||a.destination); o.start(when); o.stop(when+0.22); }
 function playCountdownRadio(){
   if(!S.sound) return null;
   try{
     const a=ac(), b=_buf['countdown']; if(!a||!b) return playSnd('countdown',{vol:VOL.countdown});
     const t=a.currentTime, dur=Math.min(b.duration, 4.2);
-    const out=a.createGain(); out.gain.value=VOL.countdown; out.connect(a.destination);
+    const out=a.createGain(); out.gain.value=VOL.countdown; out.connect(busFor('voice')||a.destination);
     // voice: mostly clear (dry) + a parallel radio-EQ'd, slightly gritty copy
     const src=a.createBufferSource(); src.buffer=b;
     const dry=a.createGain(); dry.gain.value=0.85; src.connect(dry); dry.connect(out);
@@ -237,7 +261,7 @@ function playCountdownRadio(){
     const ng=a.createGain();
     ng.gain.setValueAtTime(0.0001, t); ng.gain.linearRampToValueAtTime(0.045, t+0.12);
     ng.gain.setValueAtTime(0.045, t+dur-0.35); ng.gain.linearRampToValueAtTime(0.0001, t+dur);
-    noise.connect(nbp); nbp.connect(ng); ng.connect(a.destination); noise.start();
+    noise.connect(nbp); nbp.connect(ng); ng.connect(busFor('voice')||a.destination); noise.start();
     // Quindar beeps: one to "open the channel" at the start, one just before liftoff
     _quindar(a, t+0.02, 0.10);
     _quindar(a, t+3.05, 0.10);
@@ -251,22 +275,22 @@ try{ if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=pickVoice
 // realistic "blew up" boom: sharp transient + filtered noise tail + sub-bass drop
 function explosion(){
   if(!S.sound) return;
-  if(hasSnd('explosion')){ playSnd('explosion',{vol:VOL.explosion}); return; }   // prefer real audio if provided
+  if(hasSnd('explosion')){ playSnd('explosion',{vol:VOL.explosion,cat:'fx'}); return; }   // prefer real audio if provided
   try{
-    const a=ac(); if(!a) return; const t=a.currentTime;
+    const a=ac(); if(!a) return; const t=a.currentTime; const dest=busFor('fx')||a.destination;
     const dur=0.95;
     const src=a.createBufferSource(); src.buffer=noiseBuffer(a,dur,x=>Math.pow(1-x,1.7));
     const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(2600,t); lp.frequency.exponentialRampToValueAtTime(80,t+dur);
     const g=a.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.9,t+0.015); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
+    src.connect(lp); lp.connect(g); g.connect(dest); src.start();
     // sub-bass drop (the chest-thump)
     const o=a.createOscillator(), og=a.createGain(); o.type='sine';
     o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(32,t+0.55);
     og.gain.setValueAtTime(0.6,t); og.gain.exponentialRampToValueAtTime(0.001,t+0.65);
-    o.connect(og); og.connect(a.destination); o.start(); o.stop(t+0.7);
+    o.connect(og); og.connect(dest); o.start(); o.stop(t+0.7);
     // crackle
     const c=a.createBufferSource(); c.buffer=noiseBuffer(a,0.25,x=>Math.pow(1-x,3)*(Math.random()<.3?1:0));
-    const cg=a.createGain(); cg.gain.value=0.35; c.connect(cg); cg.connect(a.destination); c.start(t+0.04);
+    const cg=a.createGain(); cg.gain.value=0.35; c.connect(cg); cg.connect(dest); c.start(t+0.04);
   }catch(e){ beep(110,.4,'sawtooth',.12); }
 }
 // looping rocket-engine rumble while in flight
@@ -281,7 +305,7 @@ function startEngine(){
       const L=Math.min(4, b.duration*0.35), R=Math.max(L+1, b.duration-0.8);
       const src=a.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=L; src.loopEnd=R;
       const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(VOL.engine, a.currentTime, 0.12);
-      src.connect(g); g.connect(a.destination); src.start(0, L);
+      src.connect(g); g.connect(busFor('music')||a.destination); src.start(0, L);
       engineNodes={src,g,a}; return;
     }catch(e){}
   }
@@ -290,7 +314,7 @@ function startEngine(){
     const src=a.createBufferSource(); src.buffer=noiseBuffer(a,1.2); src.loop=true;
     const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=300;
     const g=a.createGain(); g.gain.value=0.045;
-    src.connect(lp); lp.connect(g); g.connect(a.destination); src.start();
+    src.connect(lp); lp.connect(g); g.connect(busFor('music')||a.destination); src.start();
     engineNodes={src,g,a};
   }catch(e){}
 }
@@ -299,12 +323,30 @@ function stopEngine(){
   try{ const {src,g,a}=engineNodes; g.gain.setTargetAtTime(0,a.currentTime,0.05); setTimeout(()=>{ try{src.stop();}catch(e){} },220); }catch(e){}
   engineNodes=null;
 }
+// thrust-alarm bed: plays on every launch and loops through the flight (FX bus),
+// stopped when the rocket crashes.
+let thrustNodes=null;
+function startThrust(){
+  if(!S.sound || !hasSnd('thrust')) return; stopThrust();
+  try{
+    const a=ac(), b=_buf['thrust']; if(!a||!b) return;
+    const src=a.createBufferSource(); src.buffer=b; src.loop=true;
+    const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(VOL.thrust, a.currentTime, 0.08);
+    src.connect(g); g.connect(busFor('fx')||a.destination); src.start();
+    thrustNodes={src,g,a};
+  }catch(e){}
+}
+function stopThrust(){
+  if(!thrustNodes) return;
+  try{ const {src,g,a}=thrustNodes; g.gain.setTargetAtTime(0,a.currentTime,0.06); setTimeout(()=>{ try{src.stop();}catch(e){} },260); }catch(e){}
+  thrustNodes=null;
+}
 // spoken countdown ("3, 2, 1, Liftoff!")
 function say(text){
   if(!S.sound) return;
   try{
     const sy=window.speechSynthesis; if(!sy) return;
-    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; if(enVoice) u.voice=enVoice; u.rate=1.0; u.pitch=1; u.volume=1;
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; if(enVoice) u.voice=enVoice; u.rate=1.0; u.pitch=1; u.volume=Math.max(0,Math.min(1,(S.vol&&S.vol.voice!=null)?S.vol.voice:0.95));
     sy.cancel(); sy.speak(u);
   }catch(e){}
 }
@@ -316,12 +358,12 @@ const sfx = {
   launch:()=>{
     if(hasSnd('liftoff')) playSnd('liftoff');                          // separate liftoff clip
     else if(!hasSnd('countdown')) { beep(140,.6,'sawtooth',.09); say('Liftoff!'); }  // combined clip already says it
-    startEngine();
+    startEngine(); startThrust();
   },
   count: (n)=>{
     if(hasSnd('countdown')){ if(n===3) playSnd('countdown'); return; }  // one combined clip, fired at "3"
-    if(hasSnd(String(n))){ playSnd(String(n)); return; }                // per-number clips
-    beep(520+(3-n)*120,.16,'square',.07); say(String(n));              // synth + English TTS
+    if(hasSnd(String(n))){ playSnd(String(n),{cat:'voice'}); return; }   // per-number clips
+    beep(520+(3-n)*120,.16,'square',.07,'voice'); say(String(n));       // synth + English TTS
   },
 };
 
@@ -775,7 +817,7 @@ function crash(){
   { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
   $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
-  sfx.crash(); stopEngine(); stopCountdownAudio();
+  sfx.crash(); stopEngine(); stopThrust(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
 
   // bust any active un-cashed bets
@@ -1053,7 +1095,18 @@ function syncSound(){
   const b=$('btnSound'); if(b){ b.textContent=S.sound?'🔊':'🔇'; b.classList.toggle('off',!S.sound); }
   const sw=$('swSound'); if(sw) sw.classList.toggle('on',S.sound);
   const msw=$('menuSoundSw'); if(msw) msw.classList.toggle('on',S.sound);
-  if(!S.sound) stopEngine();
+  applyVolumes();
+  if(!S.sound){ stopEngine(); stopThrust(); }
+  const row=$('volRows'); if(row) row.style.opacity=S.sound?'1':'.4';
+  saveAudioPrefs();
+}
+// live mix control from the Music / FX / Sounds sliders
+function setVol(cat, v){ S.vol[cat]=Math.max(0,Math.min(1,v)); applyVolumes(); saveAudioPrefs(); }
+function saveAudioPrefs(){ try{ localStorage.setItem('rr_audio', JSON.stringify({ sound:S.sound, vol:S.vol })); }catch(e){} }
+function loadAudioPrefs(){
+  try{ const j=JSON.parse(localStorage.getItem('rr_audio')||'null');
+    if(j){ if(typeof j.sound==='boolean') S.sound=j.sound; if(j.vol) S.vol=Object.assign(S.vol, j.vol); }
+  }catch(e){}
 }
 // unlock WebAudio + speech on the first touch (required by iOS Safari)
 function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }catch(e){} }
@@ -1062,7 +1115,7 @@ window.addEventListener('touchend', unlockAudio, { once:true });
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
 // RESUME a half-played countdown when you come back (esp. during a long round).
 document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden){ stopCountdownAudio(); stopEngine(); try{ if(actx) actx.suspend(); }catch(e){} }
+  if(document.hidden){ stopCountdownAudio(); stopEngine(); stopThrust(); try{ if(actx) actx.suspend(); }catch(e){} }
   else { try{ if(actx) actx.resume(); }catch(e){} }
 });
 
@@ -1073,6 +1126,16 @@ $('badgeFair').onclick=openFair;
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{ b.closest('.modal-bg').classList.remove('show'); });
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }));
 $('swSound').onclick=()=>{ S.sound=!S.sound; syncSound(); };
+// Music / FX / Sounds volume sliders
+function syncVolUI(){
+  [['volMusic','music'],['volFx','fx'],['volVoice','voice']].forEach(([id,cat])=>{
+    const el=$(id); if(el){ const pct=Math.round((S.vol[cat]==null?0.8:S.vol[cat])*100); el.value=String(pct); const lab=$(id+'Val'); if(lab) lab.textContent=pct+'%'; }
+  });
+  const row=$('volRows'); if(row) row.style.opacity=S.sound?'1':'.4';
+}
+[['volMusic','music'],['volFx','fx'],['volVoice','voice']].forEach(([id,cat])=>{
+  const el=$(id); if(el) el.addEventListener('input',function(){ setVol(cat, (+this.value||0)/100); const lab=$(id+'Val'); if(lab) lab.textContent=Math.round(+this.value)+'%'; });
+});
 $('swLow').onclick=function(){ S.lowBw=!S.lowBw; this.classList.toggle('on',S.lowBw); resize(); };
 $('swReality').onclick=function(){ this.classList.toggle('on'); };
 $('swSession').onclick=function(){ this.classList.toggle('on'); };
@@ -1196,7 +1259,7 @@ function netCrash(d){
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('mult').classList.add('crashed-tag');
   { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
-  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopCountdownAudio();
+  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopThrust(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
   if(lost>0) flashWon('−€'+fmt(lost), false);
@@ -1472,8 +1535,9 @@ function boot(){
   loadSounds();  // preload optional /sounds/* assets (no-op if absent)
   loadArt();     // preload optional /rocket.png + /flame.png artwork (no-op if absent)
   loadSave();   // restore balance (local) + history/stats from a previous session
+  loadAudioPrefs();  // restore the sound on/off + Music/FX/Sounds mix
   sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
-  syncSound();
+  syncSound(); syncVolUI();
   updateBalance();
   setBet(0,100); setBet(1,100); setAuto(0,0); setAuto(1,0);
   authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
