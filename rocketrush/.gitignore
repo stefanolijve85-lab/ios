@@ -11,3 +11,6 @@
 
 /screens-tmp
 /server/.data
+
+# local test screenshots (not part of the product)
+screens/
