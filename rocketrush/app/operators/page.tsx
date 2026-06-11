@@ -46,7 +46,7 @@ export default function Operators() {
           <div className="shots">
             <img className="shot" src="/preview-3.png" alt="Liftoff X gameplay at €100 stakes" loading="lazy" />
             <img className="shot" src="/preview-1.png" alt="Liftoff X — rocket climbing at 24x with high-roller stakes" loading="lazy" />
-            <img className="shot" src="/preview-4.png" alt="Liftoff X gameplay at €100 stakes" loading="lazy" />
+            <img className="shot" src="/preview-4.png" alt="Liftoff X — a small-stakes (€20) win" loading="lazy" />
             <img className="shot" src="/preview-2.png" alt="Liftoff X — a big multi-bet win" loading="lazy" />
           </div>
           <p className="shotcap">From €0.10 stakes to high-rollers — the same game scales to every player.</p>
