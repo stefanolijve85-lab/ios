@@ -175,7 +175,7 @@ export default function Page() {
             </select>
           </div>
           <div className="toggle-row">
-            <div className="t"><b>Audio</b><small>Launch, thrust, cash out & crash sounds</small></div>
+            <div className="t"><b>Audio</b><small>Countdown voice, flight music & sound effects</small></div>
             <div className="sw on" id="swSound"><i /></div>
           </div>
           <div id="volRows" className="vol-rows">
