@@ -44,9 +44,12 @@ export default function Operators() {
             <span className="pill"><b>White-label</b></span>
           </div>
           <div className="shots">
-            <img className="shot lift" src="/preview-1.png" alt="Liftoff X gameplay — rocket climbing at 24x" loading="lazy" />
+            <img className="shot" src="/preview-3.png" alt="Liftoff X gameplay at €100 stakes" loading="lazy" />
+            <img className="shot" src="/preview-1.png" alt="Liftoff X — rocket climbing at 24x with high-roller stakes" loading="lazy" />
+            <img className="shot" src="/preview-4.png" alt="Liftoff X gameplay at €100 stakes" loading="lazy" />
             <img className="shot" src="/preview-2.png" alt="Liftoff X — a big multi-bet win" loading="lazy" />
           </div>
+          <p className="shotcap">From €0.10 stakes to high-rollers — the same game scales to every player.</p>
         </div>
       </header>
 
