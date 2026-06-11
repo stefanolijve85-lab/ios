@@ -1,6 +1,6 @@
 /* Liftoff X — operators marketing site. Self-contained scroll container so it
    works over the game's full-screen, no-scroll body. Everything scoped to .mkt. */
-.mkt{ position:fixed; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+.mkt{ position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   user-select:text; -webkit-user-select:text; color:var(--text);
   background:
     radial-gradient(900px 620px at 82% -12%, rgba(155,92,246,.16), transparent 60%),
@@ -8,6 +8,8 @@
     var(--bg);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,system-ui,sans-serif; }
 .mkt a{ color:inherit; text-decoration:none; }
+.mkt img{ max-width:100%; }
+.mkt .logo{ height:21px; display:block; width:auto; }
 .mkt .wrap{ max-width:1060px; margin:0 auto; padding:0 22px; }
 .mkt section{ padding:54px 0; }
 .mkt h2{ font-size:clamp(26px,4.2vw,38px); font-weight:900; letter-spacing:-1px; margin:0 0 10px; text-align:center; }
@@ -16,7 +18,6 @@
 /* nav */
 .mkt nav{ position:sticky; top:0; z-index:20; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); background:rgba(7,11,20,.62); border-bottom:1px solid var(--line); }
 .mkt nav .wrap{ display:flex; align-items:center; gap:12px; height:60px; }
-.mkt nav .logo{ height:21px; display:block; }
 .mkt nav .sp{ flex:1; }
 .mkt .btn{ display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:14px; padding:11px 18px; border-radius:12px; transition:transform .12s, box-shadow .2s; white-space:nowrap; }
 .mkt .btn:active{ transform:translateY(1px); }
@@ -34,6 +35,11 @@
 .mkt .pills{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:34px; }
 .mkt .pill{ font-size:12.5px; font-weight:700; color:var(--muted); border:1px solid var(--line); background:var(--panel); padding:8px 14px; border-radius:999px; }
 .mkt .pill b{ color:#fff; }
+/* hero game previews */
+.mkt .shots{ display:flex; gap:18px; justify-content:center; align-items:flex-end; flex-wrap:wrap; margin-top:46px; }
+.mkt .shot{ width:230px; max-width:46%; border-radius:22px; border:1px solid var(--line); box-shadow:0 26px 60px rgba(0,0,0,.5), 0 0 0 6px rgba(255,255,255,.02); display:block; }
+.mkt .shot.lift{ margin-bottom:26px; }
+@media (max-width:760px){ .mkt .shot{ width:160px; max-width:44%; } .mkt .shot.lift{ margin-bottom:16px; } }
 
 /* generic card grid */
 .mkt .grid{ display:grid; gap:16px; grid-template-columns:repeat(3,1fr); }

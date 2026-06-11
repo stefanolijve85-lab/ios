@@ -43,6 +43,10 @@ export default function Operators() {
             <span className="pill"><b>True multiplayer</b></span>
             <span className="pill"><b>White-label</b></span>
           </div>
+          <div className="shots">
+            <img className="shot lift" src="/preview-1.png" alt="Liftoff X gameplay — rocket climbing at 24x" loading="lazy" />
+            <img className="shot" src="/preview-2.png" alt="Liftoff X — a big multi-bet win" loading="lazy" />
+          </div>
         </div>
       </header>
 
