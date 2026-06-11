@@ -81,14 +81,10 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .p1 { width: 120px; height: 120px; left: -38px; top: -30px;
       background: radial-gradient(circle at 35% 30%, #C49DFF, #6D3BE0 55%, #2E1660 100%);
       box-shadow: 0 0 60px rgba(155,92,246,.4), inset -10px -10px 26px rgba(18,8,46,.55); }
-/* the moon — the rocket's destination, upper-right */
-.p2 { width: 40px; height: 40px; right: 20px; top: 20px;
-      background:
-        radial-gradient(5px 5px at 62% 36%, rgba(120,130,150,.55), transparent 65%),
-        radial-gradient(4px 4px at 40% 60%, rgba(120,130,150,.5), transparent 65%),
-        radial-gradient(3px 3px at 68% 66%, rgba(120,130,150,.45), transparent 65%),
-        radial-gradient(circle at 36% 32%, #f3f5fb, #d3d9e6 52%, #99a2b6 100%);
-      box-shadow: 0 0 28px rgba(205,215,235,.45), inset -4px -4px 8px rgba(80,90,110,.4); }
+/* the moon — the rocket's destination, upper-right (detailed art, glow baked in) */
+.p2 { width: 54px; height: 54px; right: 13px; top: 13px; filter: none; opacity: 1;
+      background: center/contain no-repeat url('/moon.png');
+      box-shadow: none; }
 .p3 { width: 10px; height: 10px; left: 46%; top: 22px; background: #6E7BA8; opacity: .4; }
 #sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .stage-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
