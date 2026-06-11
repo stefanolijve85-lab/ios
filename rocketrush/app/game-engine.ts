@@ -175,8 +175,8 @@ const T = k => (I18N[S.lang]||I18N.en)[k] || I18N.en[k];
 let actx;
 function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }catch(e){ return null; } }
 // Three mix buses so the player can balance the sound from Settings:
-//   music = flight ambience (engine rumble)  ·  fx = effects (thrust alarm,
-//   cash-out, bet, crash)  ·  voice = the spoken/radio countdown.
+//   voice = the spoken/radio countdown  ·  fx ("Soundeffects") = thrust alarm,
+//   cash-out, bet, crash  ·  music = flight ambience (engine rumble).
 // Every sound routes through its bus → the slider sets that bus's gain live.
 let _bus=null;
 function buses(){
