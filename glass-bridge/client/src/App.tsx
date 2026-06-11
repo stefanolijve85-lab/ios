@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { useStore } from './store/useStore.js';
-import TopBar from './components/TopBar.js';
 import AuthModal from './components/AuthModal.js';
 import GamePage from './pages/GamePage.js';
 import VerifyPage from './pages/VerifyPage.js';
@@ -17,14 +16,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen">
-        <TopBar />
-        <main>
-          <Routes>
-            <Route path="/" element={<GamePage />} />
-            <Route path="/verify" element={<VerifyPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </main>
+        <Routes>
+          <Route path="/" element={<GamePage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+        </Routes>
         {!user && <AuthModal />}
       </div>
     </BrowserRouter>

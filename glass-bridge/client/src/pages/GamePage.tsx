@@ -1,32 +1,30 @@
-import BetPanel from '../components/BetPanel.js';
-import GameCenter from '../components/GameCenter.js';
+import { useState } from 'react';
+import TopBar from '../components/TopBar.js';
+import SubHeader from '../components/SubHeader.js';
+import BridgeBoard from '../components/BridgeBoard.js';
+import Controls from '../components/Controls.js';
 import SocialPanel from '../components/SocialPanel.js';
-import ProofCard from '../components/ProofCard.js';
+import BottomNav from '../components/BottomNav.js';
+import AutoBetSheet from '../components/AutoBetSheet.js';
+import ProfileSheet from '../components/ProfileSheet.js';
 
 export default function GamePage() {
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-4 px-3 py-4 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
-      {/* left: bet / auto-bet */}
-      <div className="order-2 flex flex-col gap-4 lg:order-1">
-        <BetPanel />
-        <div className="hidden lg:block">
-          <ProofCard />
-        </div>
-      </div>
-
-      {/* center: the bridge */}
-      <div className="order-1 lg:order-2">
-        <GameCenter />
-      </div>
-
-      {/* right: chat / leaderboards */}
-      <div className="order-3 h-[520px] lg:h-auto">
+    <div className="mx-auto flex min-h-screen max-w-[460px] flex-col pb-24">
+      <TopBar />
+      <SubHeader />
+      <BridgeBoard height={372} />
+      <Controls />
+      <div className="mt-2 border-t border-white/5">
         <SocialPanel />
       </div>
 
-      <div className="order-4 lg:hidden">
-        <ProofCard />
-      </div>
+      <BottomNav onAutoBet={() => setAutoOpen(true)} onProfile={() => setProfileOpen(true)} />
+      <AutoBetSheet open={autoOpen} onClose={() => setAutoOpen(false)} />
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }

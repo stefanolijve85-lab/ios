@@ -45,6 +45,26 @@ export default function BridgeBoard({ height = 360 }: { height?: number }) {
       {/* dark fade from the horizon into the foreground */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-transparent via-void/30 to-void/80" />
 
+      {/* multiplier ladder rail (12 → 1, active rung highlighted) */}
+      <div className="absolute left-1.5 top-2 z-30 flex flex-col gap-[2px] text-[10px]">
+        {order.map((i) => {
+          const active = i === currentRow && status === 'playing';
+          return (
+            <div
+              key={i}
+              className={`flex items-center gap-1.5 rounded-lg px-1.5 py-[1.5px] font-display transition ${
+                active ? 'border border-neon-purple/70 bg-neon-purple/40 text-white shadow-neon' : ''
+              }`}
+            >
+              <span className={`grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] ${active ? 'bg-neon-cyan text-black' : 'text-white/35'}`}>
+                {i + 1}
+              </span>
+              <span className={active ? 'text-white' : 'text-neon-cyan/60'}>{config?.multipliers[i].toFixed(2)}×</span>
+            </div>
+          );
+        })}
+      </div>
+
       <motion.div
         className="floor"
         initial={false}
