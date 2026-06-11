@@ -38,6 +38,7 @@ export async function attachGame(io) {
     serverSeed: randomBytes(16).toString('hex'), serverSeedHash: '',
     prevServerSeed: '—', prevHmac: '',
     crash: 0, startedAt: 0, bettingEndsAt: 0,
+    riderBase: 0, lastRiders: -1,
     recentRounds: [], tick: null, crashTimer: null,
   };
   const players = new Map();      // socketId -> player
@@ -54,6 +55,13 @@ export async function attachGame(io) {
   const broadcastPlayers = () => io.emit('players', { count: popCount() });
   // gentle breathing drift between broadcasts
   setInterval(() => { simPop += Math.floor(rnd(-35, 38)); simPop = Math.max(650, Math.min(3600, simPop)); broadcastPlayers(); }, 2600);
+
+  // Aviator-style "still in the round" count: how many players are still riding
+  // (haven't cashed out yet). It starts near the round's rider base and decays as
+  // the multiplier climbs and players bail out, plus any real un-cashed bettors.
+  const realRiders = () => { let n = 0; for (const p of players.values()) for (let slot = 0; slot < 2; slot++) { const b = p.bets[slot]; if (b && !b.cashedOut) n++; } return n; };
+  const inRoundCount = (m) => Math.floor(game.riderBase * Math.min(1, Math.pow(Math.max(1, m), -0.55))) + realRiders();
+  const broadcastRoundPlayers = (count) => { if (count !== game.lastRiders) { game.lastRiders = count; io.emit('round:players', { count }); } };
   const activity = (ev, toOthers, sock) => { pushActivity(ev); (toOthers && sock ? sock.broadcast : io).emit('activity', ev); };
 
   /* ----------------------------- bookkeeping ----------------------------- */
@@ -91,6 +99,9 @@ export async function attachGame(io) {
     // bigger per-round jump so the live player count moves with each new round
     simPop += Math.floor(rnd(-130, 150)); simPop = Math.max(650, Math.min(3600, simPop));
     broadcastPlayers();
+    // how many will ride this round (a believable slice of the online population)
+    game.riderBase = Math.floor(simPop * (0.4 + Math.random() * 0.22));
+    game.lastRiders = -1; broadcastRoundPlayers(game.riderBase);
     io.emit('round:betting', { nonce: game.nonce, serverSeedHash: game.serverSeedHash, prevServerSeed: game.prevServerSeed, clientSeed: CLIENT_SEED, startsInMs: BET_MS });
     setTimeout(startRunning, BET_MS);
   }
@@ -111,6 +122,7 @@ export async function attachGame(io) {
         }
       }
       io.emit('round:tick', { multiplier: m });
+      broadcastRoundPlayers(inRoundCount(m));   // riders bail out as the multiplier climbs
     }, 120);
     scheduleBots(durMs);
     game.crashTimer = setTimeout(doCrash, durMs);
@@ -169,6 +181,7 @@ export async function attachGame(io) {
   function snapshotFor(sock) {
     if (game.phase === 'betting') sock.emit('round:betting', { nonce: game.nonce, serverSeedHash: game.serverSeedHash, prevServerSeed: game.prevServerSeed, clientSeed: CLIENT_SEED, startsInMs: Math.max(0, game.bettingEndsAt - Date.now()) });
     else if (game.phase === 'running') sock.emit('round:start', { startedAt: game.startedAt });
+    if (game.lastRiders >= 0) sock.emit('round:players', { count: game.lastRiders });
   }
 
   async function resolveAuth(sock) {
