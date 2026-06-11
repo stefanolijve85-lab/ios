@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import './operators.css';
 
 export const metadata: Metadata = {
-  title: 'Liftoff X — crash game for casino operators & aggregators',
+  title: 'LiftOffX — the crash game operators earn more from',
   description:
-    'Aviator-class crash game with a built-in social/retention layer and an operator-friendly revenue model. Configurable RTP, volume-tiered rev-share, provably fair, true multiplayer.',
+    'An Aviator-class instant game built for operators that prioritize revenue and retention. Provably fair, mobile-first, true shared-round multiplayer, fully white-label ready.',
 };
 
-const MAIL = 'mailto:stefanolijve85@gmail.com?subject=Liftoff%20X%20—%20partnership';
+const MAIL = 'mailto:stefanolijve85@gmail.com?subject=LiftOffX%20—%20operator%20deck%20request';
 
 export default function Operators() {
   return (
@@ -15,10 +15,10 @@ export default function Operators() {
       {/* NAV */}
       <nav>
         <div className="wrap">
-          <img className="logo" src="/liftoffx.png" alt="Liftoff X" />
+          <img className="logo" src="/liftoffx.png" alt="LiftOffX" />
           <span className="sp" />
           <a className="btn ghost hide-sm" href="/">Play demo</a>
-          <a className="btn primary" href={MAIL}>Get in touch</a>
+          <a className="btn primary" href={MAIL}>Request deck</a>
         </div>
       </nav>
 
@@ -26,121 +26,115 @@ export default function Operators() {
       <header className="hero">
         <div className="wrap">
           <span className="eyebrow">B2B crash game · operators &amp; aggregators</span>
-          <h1>The crash game operators <span className="g">actually earn from.</span></h1>
+          <h1>The crash game operators <span className="g">actually earn more from.</span></h1>
           <p className="lead">
-            An Aviator-class instant game with a built-in social/retention layer and a
-            revenue model that gives operators more margin. Provably fair, mobile-first,
-            and a real shared-round multiplayer.
+            An Aviator-class instant game built for operators that prioritize revenue and
+            retention. Provably fair, mobile-first, true shared-round multiplayer, and fully
+            deployable under your own brand.
           </p>
           <div className="cta">
-            <a className="btn primary" href="/">▶ Play the live demo</a>
-            <a className="btn ghost" href={MAIL}>Request the deck</a>
+            <a className="btn primary" href="/">▶ Play the Live Demo</a>
+            <a className="btn ghost" href={MAIL}>Request the Operator Deck</a>
           </div>
           <div className="pills">
-            <span className="pill"><b>Provably fair</b></span>
+            <span className="pill"><b>Provably Fair</b></span>
             <span className="pill"><b>Configurable RTP</b> 97/96/95%</span>
-            <span className="pill"><b>Dual bets</b> + auto-cashout</span>
-            <span className="pill"><b>True multiplayer</b></span>
-            <span className="pill"><b>White-label</b></span>
+            <span className="pill"><b>Dual Bets</b> + Auto Cash-Out</span>
+            <span className="pill"><b>True Multiplayer</b></span>
+            <span className="pill"><b>Fully White-Label Ready</b></span>
           </div>
           <div className="shots">
-            <img className="shot" src="/preview-3.png" alt="Liftoff X gameplay at €100 stakes" loading="lazy" />
-            <img className="shot" src="/preview-1.png" alt="Liftoff X — rocket climbing at 24x with high-roller stakes" loading="lazy" />
-            <img className="shot" src="/preview-4.png" alt="Liftoff X — a small-stakes (€20) win" loading="lazy" />
-            <img className="shot" src="/preview-2.png" alt="Liftoff X — a big multi-bet win" loading="lazy" />
+            <img className="shot" src="/preview-3.png" alt="LiftOffX gameplay at €100 stakes" loading="lazy" />
+            <img className="shot" src="/preview-1.png" alt="LiftOffX — rocket climbing at 24x with high-roller stakes" loading="lazy" />
+            <img className="shot" src="/preview-4.png" alt="LiftOffX — a small-stakes (€20) win" loading="lazy" />
+            <img className="shot" src="/preview-2.png" alt="LiftOffX — a big multi-bet win" loading="lazy" />
           </div>
           <p className="shotcap">From €0.10 stakes to high-rollers — the same game scales to every player.</p>
         </div>
       </header>
 
-      {/* PROBLEM */}
+      {/* BUILT FOR OPERATOR GROWTH */}
       <section>
         <div className="wrap">
-          <h2>Crash is a top category. The supply isn’t.</h2>
-          <p className="sub">
-            Instant/crash games are now a top-3 revenue category, but supply is
-            concentrated in a few providers. Operators get stuck with the same game
-            everyone else runs.
-          </p>
-          <div className="grid">
-            <div className="card"><div className="ic">🔒</div><h3>High, fixed rev-share</h3><p>One dominant supplier, take-it-or-leave-it terms.</p></div>
-            <div className="card"><div className="ic">🎚️</div><h3>Fixed RTP</h3><p>No way to tune the house edge to your market.</p></div>
-            <div className="card"><div className="ic">👤</div><h3>Zero differentiation</h3><p>The exact same game as every other casino — no brand ownership.</p></div>
+          <h2>Built for operator growth.</h2>
+          <div className="prose">
+            <p className="lead2">Launch under your own brand in days.</p>
+            <p>
+              LiftOffX delivers an Aviator-class crash experience designed to maximize operator
+              performance through stronger monetization, higher retention potential, and complete
+              flexibility.
+            </p>
+            <p>
+              Whether you integrate through an aggregator or directly, LiftOffX adapts to your
+              commercial strategy — not the other way around.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* SOLUTION */}
-      <section>
+      {/* WHITE-LABEL */}
+      <section className="tint">
         <div className="wrap">
-          <h2>Liftoff X fixes all three.</h2>
-          <p className="sub">Aviator-class on feel. Social by design. Built to make the operator more money.</p>
-          <div className="grid">
-            <div className="card"><div className="ic">🚀</div><h3>Aviator-class gameplay</h3><p>Dual simultaneous bets, auto-cashout, live shared rounds — instantly familiar, premium feel.</p></div>
-            <div className="card"><div className="ic">🏆</div><h3>Social by design</h3><p>Live leaderboard, activity feed, profiles and chat lift rounds-per-player — more engagement, more GGR.</p></div>
-            <div className="card"><div className="ic">💸</div><h3>Operator-friendly</h3><p>Configurable RTP, lower volume-tiered rev-share, and white-label / “powered by you” skinning.</p></div>
+          <h2>Fully white-label ready.</h2>
+          <p className="subh">Your logo. Your colors. Your player experience.</p>
+          <div className="prose">
+            <p>
+              Deploy LiftOffX entirely under your own brand while maintaining full ownership of the
+              customer relationship. No visible third-party branding is required.
+            </p>
+            <p>Designed for operators who want complete control without sacrificing speed to market.</p>
           </div>
         </div>
       </section>
 
-      {/* DIFFERENTIATION */}
+      {/* MORE MARGIN. BETTER RETENTION. */}
       <section>
         <div className="wrap">
-          <h2>vs. the incumbent</h2>
-          <p className="sub">Same hit format. Better terms, more control, more retention.</p>
-          <table className="cmp">
-            <thead><tr><th>Feature</th><th>Incumbent (Aviator-style)</th><th>Liftoff X</th></tr></thead>
-            <tbody>
-              <tr><td>RTP</td><td>Fixed (≈97%)</td><td>Configurable 97/96/95% per market</td></tr>
-              <tr><td>Rev-share</td><td>High, flat (~15%)</td><td>Lower + volume-tiered</td></tr>
-              <tr><td>Retention</td><td>Basic</td><td>Social layer (leaderboard, feed, profiles)</td></tr>
-              <tr><td>Branding</td><td>Provider-branded</td><td>White-label / “powered by operator”</td></tr>
-              <tr><td>Fairness</td><td>Provably fair</td><td>Provably fair + certified-RNG roadmap</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ECONOMICS */}
-      <section>
-        <div className="wrap">
-          <h2>A better revenue model</h2>
-          <p className="sub">
-            We don’t just split the pie more cheaply — the social layer grows it.
-            Illustrative figures (validated per market):
-          </p>
-          <div className="econ">
-            <div className="stat"><div className="v">+€3.4k</div><div className="l">extra kept by the operator / mo, per 1,000 active players, vs a 15% deal</div></div>
-            <div className="stat"><div className="v">97/96/95%</div><div className="l">configurable RTP — tune the house edge to your market</div></div>
-            <div className="stat"><div className="v">14→7%</div><div className="l">volume-tiered rev-share — better the bigger you get</div></div>
+          <h2>More margin. Better retention.</h2>
+          <div className="prose">
+            <p>
+              Configurable RTP options allow operators to align the game with their commercial
+              objectives.
+            </p>
+            <p>
+              At the same time, real-time multiplayer dynamics, instant gameplay loops, dual betting,
+              and auto cash-out features encourage repeat engagement and longer player sessions.
+            </p>
+            <p>
+              The result is an experience built to support both player enjoyment and operator
+              profitability.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section>
+      {/* SEAMLESS DISTRIBUTION */}
+      <section className="tint">
         <div className="wrap">
-          <h2>What’s in the box</h2>
-          <div className="grid two">
-            <div className="card"><div className="ic">🛡️</div><h3>Provably fair</h3><p>HMAC-SHA256 crash points; any player can verify any round. Independent RNG certification on the roadmap.</p></div>
-            <div className="card"><div className="ic">🎯</div><h3>Dual bets + auto-cashout</h3><p>Two simultaneous stakes per round with per-bet auto-cashout — more bets per round.</p></div>
-            <div className="card"><div className="ic">🌍</div><h3>True multiplayer</h3><p>Server-authoritative shared rounds: everyone’s in the same live round, with one online count.</p></div>
-            <div className="card"><div className="ic">📱</div><h3>Mobile-first PWA</h3><p>Built for the phone, multi-language, multi-currency-ready, add-to-home-screen.</p></div>
-            <div className="card"><div className="ic">🎨</div><h3>White-label</h3><p>Skin it as your own brand — own the player relationship.</p></div>
-            <div className="card"><div className="ic">📊</div><h3>Engagement tools</h3><p>Leaderboards, activity feed, profiles and chat that lift session length and retention.</p></div>
+          <h2>Seamless aggregator distribution.</h2>
+          <div className="prose">
+            <p>
+              Built to integrate efficiently through leading aggregators and direct operator
+              partnerships.
+            </p>
+            <p>Reduce technical overhead, simplify onboarding, and accelerate go-live timelines.</p>
+            <p>Launch faster and scale across multiple markets with minimal friction.</p>
           </div>
         </div>
       </section>
 
-      {/* TECH / COMPLIANCE */}
+      {/* WHY OPERATORS CHOOSE */}
       <section>
         <div className="wrap">
-          <h2>Built to integrate</h2>
-          <p className="sub">Standard, operator-friendly integration — the operator keeps the wallet.</p>
-          <div className="grid">
-            <div className="card"><div className="ic">🔌</div><h3>Seamless wallet API</h3><p>RGS debits on bet, credits on cashout — the operator/aggregator is the source of truth for balance.</p></div>
-            <div className="card"><div className="ic">🧩</div><h3>Aggregator-ready</h3><p>One integration via your aggregator. RTP, limits and max-win configurable per operator/jurisdiction.</p></div>
-            <div className="card"><div className="ic">✅</div><h3>Certification roadmap</h3><p>Provably fair today; independent RNG certification (GLI/iTech) and B2B licensing on the roadmap.</p></div>
+          <h2>Why operators choose LiftOffX.</h2>
+          <div className="bullets">
+            <div className="bul"><span className="ck">✓</span><span>Proven crash game mechanics players already understand.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>True shared-round multiplayer that creates social engagement.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>Configurable RTP to support different commercial models.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>Fully white-label deployment under your own brand.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>Fast integration through aggregators or direct partnerships.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>Mobile-first experience optimized for today’s player behavior.</span></div>
+            <div className="bul"><span className="ck">✓</span><span>Built to increase retention and repeat play.</span></div>
           </div>
         </div>
       </section>
@@ -149,11 +143,14 @@ export default function Operators() {
       <section>
         <div className="wrap">
           <div className="final">
-            <h2>See it live in 30 seconds.</h2>
-            <p className="sub">Play the demo on your phone, then let’s talk fit, terms and integration.</p>
+            <h2>Ready to launch?</h2>
+            <p className="sub">
+              See the live demo or request the operator deck to explore integration options,
+              commercial models, and white-label opportunities.
+            </p>
             <div className="cta">
-              <a className="btn primary" href="/">▶ Play the live demo</a>
-              <a className="btn ghost" href={MAIL}>Get in touch</a>
+              <a className="btn primary" href="/">▶ Play Live Demo</a>
+              <a className="btn ghost" href={MAIL}>Request Operator Deck</a>
             </div>
           </div>
         </div>
@@ -162,16 +159,20 @@ export default function Operators() {
       {/* FOOTER */}
       <footer>
         <div className="wrap">
-          <img className="logo" src="/liftoffx.png" alt="Liftoff X" />
+          <img className="logo" src="/liftoffx.png" alt="LiftOffX" />
           <span className="sp" />
           <a href="/">Demo</a>
           <a href={MAIL}>Contact</a>
         </div>
+        <p className="fnote">
+          Powered by LiftOffX technology. Trusted by operators seeking scalable growth, flexible
+          deployment, and stronger commercial performance.
+        </p>
         <p className="disc">
-          Liftoff X uses a provably-fair RNG. It is <b>not yet independently certified</b>
-          {' '}(e.g. GLI / iTech) and holds <b>no gaming licences</b>; no certification or
-          regulatory approval is claimed. For business / B2B enquiries only —
-          this site is not an offer of gambling to consumers. © {new Date().getFullYear()} Liftoff X.
+          LiftOffX uses a provably-fair RNG. It is <b>not yet independently certified</b>
+          {' '}(e.g. GLI / iTech) and holds <b>no gaming licences</b>; no certification or regulatory
+          approval is claimed. For business / B2B enquiries only — this site is not an offer of
+          gambling to consumers. © {new Date().getFullYear()} LiftOffX.
         </p>
       </footer>
     </div>
