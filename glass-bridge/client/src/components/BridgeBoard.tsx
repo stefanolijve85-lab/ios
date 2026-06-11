@@ -1,144 +1,131 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore.js';
 import Character, { type Mood } from './Character.js';
+import NeonCity from './NeonCity.js';
 import type { Side } from '../lib/types.js';
 
-/** A single pane of neon glass. */
-function GlassTile({
-  state,
-  onClick,
-  active,
-}: {
-  state: 'future' | 'safe' | 'broken' | 'cleared';
-  onClick?: () => void;
-  active: boolean;
-}) {
-  const palette = {
-    future: 'from-neon-cyan/10 to-neon-blue/5 border-white/10',
-    cleared: 'from-neon-green/25 to-neon-cyan/10 border-neon-green/40',
-    safe: 'from-neon-green/30 to-neon-cyan/15 border-neon-green/60',
-    broken: 'from-neon-pink/10 to-transparent border-neon-pink/50',
-  }[state];
+const ROW_H = 52; // tile height + gap in floor space
 
+type TileState = 'future' | 'magenta' | 'cleared' | 'broken' | 'active';
+
+function Crack() {
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      whileHover={onClick ? { scale: 1.04, y: -2 } : undefined}
-      whileTap={onClick ? { scale: 0.97 } : undefined}
-      className={`relative h-12 w-full rounded-lg border bg-gradient-to-br ${palette} ${
-        active ? 'shadow-neon-cyan ring-1 ring-neon-cyan/60' : ''
-      } ${onClick ? 'cursor-pointer' : 'cursor-default'} overflow-hidden`}
-    >
-      {/* glass reflection */}
-      <span className="pointer-events-none absolute inset-x-1 top-0 h-1/2 rounded-t-md bg-white/10" />
-      {state === 'broken' && (
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute inset-0 grid place-items-center text-neon-pink"
-          aria-hidden
-        >
-          <svg viewBox="0 0 40 24" className="h-full w-full opacity-80">
-            <path d="M20 0 L16 8 L22 10 L14 16 L20 24 M0 12 L16 8 M40 13 L24 10" stroke="#ff4fd8" strokeWidth="1" fill="none" />
-          </svg>
-        </motion.span>
-      )}
-    </motion.button>
+    <svg className="tile-crack" viewBox="0 0 80 46" preserveAspectRatio="none" aria-hidden>
+      <g stroke="#bfeaff" strokeWidth="0.6" fill="none">
+        <path d="M40 0 L36 16 L46 22 L30 30 L42 46" />
+        <path d="M0 24 L36 16 M80 26 L46 22 M30 30 L8 40 M46 22 L72 36" />
+      </g>
+    </svg>
   );
 }
 
-export default function BridgeBoard() {
+export default function BridgeBoard({ height = 360 }: { height?: number }) {
   const { round, config, status, lastStep, lastReveal, jump, busy } = useStore();
   const rows = config?.rows ?? 12;
-  const multipliers = config?.multipliers ?? [];
   const currentRow = round?.currentRow ?? (status === 'busted' && lastStep ? lastStep.row - 1 : 0);
-
-  const mood: Mood =
-    status === 'busted' ? 'scared' : status === 'cashed' ? 'celebrate' : status === 'playing' ? 'waiting' : 'idle';
-
-  // Render rows top (finish, row N) to bottom (start, row 1).
-  const order = Array.from({ length: rows }, (_, i) => rows - 1 - i);
-
-  function tileState(rowIdx: number, side: Side): 'future' | 'safe' | 'broken' | 'cleared' {
-    // Reveal broken trap tile when round is over.
-    if (lastReveal && status === 'busted') {
-      const o = lastReveal.layout[rowIdx];
-      const pick = lastReveal.picks[rowIdx];
-      if (o && pick === side && rowIdx === lastStep!.row - 1) return 'broken';
-    }
-    if (rowIdx < currentRow) return 'cleared';
-    if (rowIdx === currentRow && status === 'playing') return side ? 'future' : 'future';
-    return 'future';
-  }
-
+  const mood: Mood = status === 'busted' ? 'scared' : status === 'cashed' ? 'celebrate' : status === 'playing' ? 'waiting' : 'idle';
   const canPlay = status === 'playing' && round?.status === 'active' && !busy;
 
+  function tileState(rowIdx: number, side: Side): TileState {
+    if (lastReveal && status === 'busted' && lastStep && rowIdx === lastStep.row - 1) {
+      if (lastReveal.picks[rowIdx] === side) return 'broken';
+    }
+    if (rowIdx < currentRow) return 'cleared';
+    if (rowIdx === currentRow && status === 'playing') return 'active';
+    return (rowIdx + (side === 'LEFT' ? 0 : 1)) % 2 === 0 ? 'future' : 'magenta';
+  }
+
+  // Render far (row N) → near (row 1). Scroll the floor so the active row stays low.
+  const order = Array.from({ length: rows }, (_, i) => rows - 1 - i);
+  const scroll = currentRow * ROW_H * 0.62;
+
   return (
-    <div className="relative mx-auto w-full max-w-md">
-      <div className="grid-fade absolute inset-0 -z-10" />
-      {/* horizon glow / neon city */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-neon-purple/30 via-neon-blue/10 to-transparent blur-2xl" />
+    <div className="stage" style={{ height }}>
+      <NeonCity className="absolute inset-x-0 top-0 z-0 h-[58%]" />
+      {/* dark fade from the horizon into the foreground */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-transparent via-void/30 to-void/80" />
 
-      <div className="flex flex-col gap-2 py-4" style={{ perspective: 900 }}>
-        {order.map((rowIdx, displayIdx) => {
-          const isCurrent = rowIdx === currentRow && status === 'playing';
-          // Subtle perspective: rows farther from the player (higher displayIdx near top) shrink.
-          const depth = (order.length - displayIdx) / order.length;
-          const scale = 0.78 + depth * 0.22;
-          return (
-            <motion.div
-              key={rowIdx}
-              initial={false}
-              animate={{ scale, opacity: rowIdx < currentRow ? 0.45 : 1 }}
-              className="relative grid grid-cols-2 gap-3"
-              style={{ transformOrigin: 'center' }}
-            >
-              {/* multiplier tag */}
-              <span
-                className={`absolute -left-14 top-1/2 hidden -translate-y-1/2 font-display text-xs sm:block ${
-                  isCurrent ? 'text-neon-cyan neon-text' : 'text-white/40'
-                }`}
-              >
-                {multipliers[rowIdx]?.toFixed(2)}×
-              </span>
+      <motion.div
+        className="floor"
+        initial={false}
+        animate={{ transform: `translate(-50%, 0) translateY(${scroll}px) rotateX(60deg)` }}
+        transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+      >
+        {/* glowing side rails + center divider */}
+        <span className="bridge-rail" style={{ left: '-7%' }} />
+        <span className="bridge-rail" style={{ right: '-7%' }} />
+        <span className="bridge-rail" style={{ left: '50%', transform: 'translateX(-50%)', opacity: 0.5 }} />
 
-              <GlassTile state={tileState(rowIdx, 'LEFT')} active={isCurrent} onClick={canPlay && isCurrent ? () => jump('LEFT') : undefined} />
-              <GlassTile state={tileState(rowIdx, 'RIGHT')} active={isCurrent} onClick={canPlay && isCurrent ? () => jump('RIGHT') : undefined} />
+        <div className="flex flex-col gap-1.5">
+          {order.map((rowIdx) => {
+            const isActive = rowIdx === currentRow && status === 'playing';
+            const mult = config?.multipliers[rowIdx];
+            return (
+              <div key={rowIdx} className="relative grid grid-cols-2 gap-6">
+                {(['LEFT', 'RIGHT'] as Side[]).map((side) => {
+                  const st = tileState(rowIdx, side);
+                  const cls =
+                    st === 'cleared' ? 'tile tile--cleared'
+                    : st === 'broken' ? 'tile tile--broken'
+                    : st === 'active' ? 'tile tile--active'
+                    : st === 'magenta' ? 'tile tile--magenta'
+                    : 'tile';
+                  return (
+                    <button
+                      key={side}
+                      type="button"
+                      disabled={!(canPlay && isActive)}
+                      onClick={canPlay && isActive ? () => jump(side) : undefined}
+                      className={`${cls} ${canPlay && isActive ? 'cursor-pointer' : 'cursor-default'}`}
+                    >
+                      {(st === 'future' || st === 'magenta' || st === 'active') && <Crack />}
+                      {st === 'broken' && (
+                        <span className="absolute inset-0 grid place-items-center font-display text-neon-pink">✕</span>
+                      )}
+                    </button>
+                  );
+                })}
 
-              {/* the character stands on the current row (or row 0 before start) */}
-              {isCurrent && (
-                <motion.div
-                  layoutId="hero"
-                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[85%]"
-                  transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-                >
-                  <Character mood={mood} size={70} />
-                </motion.div>
-              )}
-            </motion.div>
-          );
-        })}
+                {/* multiplier label floating beside the row */}
+                {mult && (
+                  <span
+                    className={`absolute -left-2 top-1/2 -translate-x-full -translate-y-1/2 font-display text-[11px] ${
+                      isActive ? 'text-neon-cyan' : 'text-white/35'
+                    }`}
+                  >
+                    {mult.toFixed(2)}×
+                  </span>
+                )}
 
-        {/* start platform + resting hero before the round */}
-        {status !== 'playing' && (
-          <div className="relative mt-1 grid place-items-center">
-            <div className="h-2 w-40 rounded-full bg-neon-blue/40 blur-sm" />
-            <AnimatePresence>
-              <motion.div
-                key={status}
-                initial={{ y: status === 'busted' ? -40 : 0, opacity: 0 }}
-                animate={{ y: status === 'busted' ? 120 : 0, opacity: status === 'busted' ? 0 : 1, rotate: status === 'busted' ? 180 : 0 }}
-                transition={{ duration: status === 'busted' ? 0.7 : 0.3 }}
-                className="absolute -top-16"
-              >
-                <Character mood={mood} size={80} />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* The hero is a large fixed actor anchored near the bottom-centre; the
+          bridge scrolls beneath it (matches the mockup framing). */}
+      {status !== 'busted' ? (
+        <motion.div
+          className="pointer-events-none absolute bottom-[14%] left-1/2 z-20 -translate-x-1/2"
+          animate={{ scale: lastStep?.safe ? [1, 0.9, 1.05, 1] : 1 }}
+          transition={{ duration: 0.4 }}
+          key={currentRow}
+        >
+          {/* glow disc on the tile under the hero */}
+          <div className="absolute left-1/2 top-full h-5 w-28 -translate-x-1/2 -translate-y-2 rounded-[50%] bg-neon-cyan/40 blur-md" />
+          <Character mood={mood} size={132} />
+        </motion.div>
+      ) : (
+        <motion.div
+          className="pointer-events-none absolute bottom-[14%] left-1/2 z-20 -translate-x-1/2"
+          initial={{ y: 0, opacity: 1, rotate: 0 }}
+          animate={{ y: 320, opacity: 0, rotate: 220 }}
+          transition={{ duration: 0.95, ease: 'easeIn' }}
+        >
+          <Character mood="scared" size={132} />
+        </motion.div>
+      )}
     </div>
   );
 }
