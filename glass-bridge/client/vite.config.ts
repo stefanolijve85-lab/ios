@@ -12,5 +12,12 @@ export default defineConfig({
       '/socket.io': { target: API, ws: true, changeOrigin: true },
     },
   },
+  preview: {
+    port: 4173,
+    proxy: {
+      '/api': { target: API, changeOrigin: true },
+      '/socket.io': { target: API, ws: true, changeOrigin: true },
+    },
+  },
   build: { outDir: 'dist', sourcemap: false },
 });

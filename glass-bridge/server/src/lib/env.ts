@@ -7,7 +7,10 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN ?? '*',
   startingBalance: Number(process.env.STARTING_BALANCE ?? 1000),
   nodeEnv: process.env.NODE_ENV ?? 'development',
-  clientDir: process.env.CLIENT_DIR ?? '../client/dist',
+  // Resolved relative to the compiled server entry (server/dist/index.js).
+  // Default points at the sibling client build for a local production run;
+  // Docker overrides this with CLIENT_DIR=public (client copied into dist/).
+  clientDir: process.env.CLIENT_DIR ?? '../../client/dist',
 };
 
 export const isProd = env.nodeEnv === 'production';

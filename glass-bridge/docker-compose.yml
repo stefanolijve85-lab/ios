@@ -1,0 +1,43 @@
+# Local production-like stack: PostgreSQL + the single-image app.
+#   docker compose up --build
+# Then open http://localhost:4000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: glassbridge
+      POSTGRES_PASSWORD: glassbridge
+      POSTGRES_DB: glassbridge
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U glassbridge']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgres://glassbridge:glassbridge@db:5432/glassbridge
+      PGSSL: 'false'
+      JWT_SECRET: ${JWT_SECRET:-please-change-this-in-production}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-now}
+      STARTING_BALANCE: ${STARTING_BALANCE:-1000}
+    ports:
+      - '4000:4000'
+    # Run migrations + seed on boot (compiled output — no dev deps), then serve.
+    command: sh -c "node dist/db/migrate.js && node dist/db/seed.js && node dist/index.js"
+
+volumes:
+  pgdata:

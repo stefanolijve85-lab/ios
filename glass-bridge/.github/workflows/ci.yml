@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: glass-bridge
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install server deps
+        run: npm ci
+        working-directory: glass-bridge/server
+      - name: Typecheck server
+        run: npm run typecheck
+        working-directory: glass-bridge/server
+      - name: Server unit tests
+        run: npm test
+        working-directory: glass-bridge/server
+      - name: Provably-fair self-test
+        run: npm run verify
+        working-directory: glass-bridge/server
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install client deps
+        run: npm ci
+        working-directory: glass-bridge/client
+      - name: Build client (typecheck + bundle)
+        run: npm run build
+        working-directory: glass-bridge/client
+
+  # Deploy to Render only after server + client jobs pass on main.
+  # Configure RENDER_DEPLOY_HOOK_URL in repo secrets (Render service → Settings
+  # → Deploy Hook). Render also auto-deploys on push when autoDeploy: true.
+  deploy:
+    needs: [server, client]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "Render deploy triggered."
+          else
+            echo "RENDER_DEPLOY_HOOK_URL not set — skipping (Render autoDeploy may still apply)."
+          fi
