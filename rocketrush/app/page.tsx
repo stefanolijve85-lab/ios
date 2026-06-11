@@ -175,8 +175,22 @@ export default function Page() {
             </select>
           </div>
           <div className="toggle-row">
-            <div className="t"><b>Sound effects</b><small>Launch, cash out & crash sounds</small></div>
+            <div className="t"><b>Audio</b><small>Launch, thrust, cash out & crash sounds</small></div>
             <div className="sw on" id="swSound"><i /></div>
+          </div>
+          <div id="volRows" className="vol-rows">
+            <div className="vol-row">
+              <label htmlFor="volMusic">🎵 Music<span className="vol-val" id="volMusicVal">70%</span></label>
+              <input type="range" id="volMusic" min="0" max="100" defaultValue="70" />
+            </div>
+            <div className="vol-row">
+              <label htmlFor="volFx">💥 FX<span className="vol-val" id="volFxVal">85%</span></label>
+              <input type="range" id="volFx" min="0" max="100" defaultValue="85" />
+            </div>
+            <div className="vol-row">
+              <label htmlFor="volVoice">🗣️ Sounds<span className="vol-val" id="volVoiceVal">95%</span></label>
+              <input type="range" id="volVoice" min="0" max="100" defaultValue="95" />
+            </div>
           </div>
           <div className="toggle-row">
             <div className="t"><b>Low bandwidth mode</b><small>Fewer stars & particles for slow networks</small></div>

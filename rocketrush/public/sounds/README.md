@@ -12,6 +12,7 @@ first tap (iOS unlocks audio on a user gesture).
 | `explosion.mp3` | rocket blows up (crash) | ~0.8–1.5 s |
 | `liftoff.mp3` | the moment the rocket launches | ~0.6–1.5 s (a clear English "Liftoff!") |
 | `engine.mp3` | loops continuously during flight | 1–3 s, **seamless loop** |
+| `thrust.mp3` | thrust-alarm bed, loops every flight (FX slider) | 1–4 s, **seamless loop** |
 | `3.mp3`, `2.mp3`, `1.mp3` | the countdown, one per number | ~0.4–0.6 s each (English "three / two / one") |
 | `cashout.mp3` | you cash out a win | ~0.3–0.8 s |
 
