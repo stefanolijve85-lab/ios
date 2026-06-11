@@ -1,0 +1,60 @@
+# Deploys the Glass Bridge OFFLINE demo (no backend) to GitHub Pages.
+# Public URL: https://stefanolijve85-lab.github.io/ios/
+name: Deploy Glass Bridge demo (Pages)
+
+on:
+  push:
+    branches: [claude/glass-bridge-casino-omvkv5, main]
+    paths:
+      - 'glass-bridge/client/**'
+      - '.github/workflows/glass-bridge-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install client deps
+        working-directory: glass-bridge/client
+        run: npm ci
+      - name: Build offline demo
+        working-directory: glass-bridge/client
+        env:
+          VITE_OFFLINE: '1'
+          VITE_BASE: /ios/
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html   # SPA fallback for deep links
+          touch dist/.nojekyll
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: glass-bridge/client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
