@@ -36,6 +36,7 @@
 - [x] Math / RTP / volatility sheet — [`MATH-RTP-VOLATILITY.md`](./MATH-RTP-VOLATILITY.md)
 - [x] RGS + wallet architecture — [`RGS-ARCHITECTURE.md`](./RGS-ARCHITECTURE.md)
 - [x] Outreach pack + call questions — [`OUTREACH-PACK.md`](./OUTREACH-PACK.md), [`OPERATOR-CALL-QUESTIONS.md`](./OPERATOR-CALL-QUESTIONS.md)
+- [x] **B2B marketing site live** — **liftoffx.com/operators** (sections, demo link, previews)
 - [ ] Export the one-pager + deck to **PDF** for sending
 - [ ] Fill the deck's blanks (team slide, the "ask", a dated timeline)
 
