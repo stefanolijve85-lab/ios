@@ -36,10 +36,10 @@
 .mkt .pill{ font-size:12.5px; font-weight:700; color:var(--muted); border:1px solid var(--line); background:var(--panel); padding:8px 14px; border-radius:999px; }
 .mkt .pill b{ color:#fff; }
 /* hero game previews */
-.mkt .shots{ display:flex; gap:18px; justify-content:center; align-items:flex-end; flex-wrap:wrap; margin-top:46px; }
-.mkt .shot{ width:230px; max-width:46%; border-radius:22px; border:1px solid var(--line); box-shadow:0 26px 60px rgba(0,0,0,.5), 0 0 0 6px rgba(255,255,255,.02); display:block; }
-.mkt .shot.lift{ margin-bottom:26px; }
-@media (max-width:760px){ .mkt .shot{ width:160px; max-width:44%; } .mkt .shot.lift{ margin-bottom:16px; } }
+.mkt .shots{ display:flex; gap:16px; justify-content:center; align-items:flex-start; flex-wrap:wrap; margin-top:44px; }
+.mkt .shot{ width:200px; max-width:44%; border-radius:20px; border:1px solid var(--line); box-shadow:0 22px 52px rgba(0,0,0,.5), 0 0 0 5px rgba(255,255,255,.02); display:block; }
+.mkt .shotcap{ text-align:center; color:var(--muted); font-size:13.5px; margin:18px auto 0; max-width:520px; }
+@media (max-width:760px){ .mkt .shot{ width:160px; max-width:44%; } }
 
 /* generic card grid */
 .mkt .grid{ display:grid; gap:16px; grid-template-columns:repeat(3,1fr); }
