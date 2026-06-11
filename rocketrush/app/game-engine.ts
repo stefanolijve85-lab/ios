@@ -380,16 +380,29 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   ctx.clearRect(0,0,W,H);
 
   // stars (parallax drift; twinkle; turn into speed streaks when flying fast)
+  // The rocket climbs up-and-right, so the starfield drifts the opposite way:
+  // straight down at rest, then streaming diagonally down-left as it gains speed.
   const now = performance.now();
   const speed = S.phase==='running' ? Math.min(S.mult*0.45, 9) : 0.3;
   const streak = S.phase==='running' && speed>2.4;   // motion-blur speed sensation
+  const diag = Math.max(0, Math.min((speed-1.4)/6, 1)) * 0.8;  // 0 → straight down, ramps to down-left
+  const dirX = -diag, dirY = 1;                                // motion direction (down-left)
+  const dlen = Math.hypot(dirX, dirY), uX = dirX/dlen, uY = dirY/dlen;
   for(const s of stars){
-    s.y += s.z*speed;
+    s.y += s.z*speed*uY;
+    s.x += s.z*speed*uX;
+    // wrap on all edges: re-enter from the opposite side they exit
     if(s.y>H){ s.y=0; s.x=Math.random()*W; }
+    if(s.x<0){ s.x=W; s.y=Math.random()*H; }
+    else if(s.x>W){ s.x=0; s.y=Math.random()*H; }
     const tw = 0.55 + 0.45*Math.sin(now*0.001*s.tws + s.tw);
     ctx.globalAlpha = s.z*0.9*tw;
     ctx.fillStyle = s.blu ? '#cfe0ff' : '#ffffff';
-    if(streak){ const len = Math.min(s.z*speed*2.2, 28); ctx.fillRect(s.x-s.r*0.5, s.y, s.r, len); }
+    if(streak){
+      const len = Math.min(s.z*speed*2.2, 28);   // trail points back, opposite the motion
+      ctx.lineWidth = s.r; ctx.lineCap='round'; ctx.strokeStyle = s.blu ? '#cfe0ff' : '#ffffff';
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - uX*len, s.y - uY*len); ctx.stroke();
+    }
     else { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill(); }
   }
   // additive bloom on the brightest stars
@@ -638,6 +651,10 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
   // place any queued bets for this round
   S.slots.forEach((s,i)=>{ if(s.queued && S.balance>=s.bet){ s.queued=false; placeBet(i,true); } });
 
+  // how many ride this round locally (a believable slice of the online population)
+  S._riderBase=Math.floor((S._onlineVal||2800)*(0.4+Math.random()*0.22));
+  setInRound(S._riderBase);
+
   showCountdown(5000, startRunning);
   renderAction();
 }
@@ -713,6 +730,9 @@ function tickRun(){ if(!ENGINE_ALIVE) return;
         b.done=true; addWinner(b.name,b.color,b.target,b.bet*b.target);
       }
     });
+    // riders bail out as the multiplier climbs (Aviator-style "still in the round")
+    const stillRiding=S.slots.filter(s=>s.placed && !s.cashedOut).length;
+    setInRound(Math.floor((S._riderBase||0)*Math.min(1,Math.pow(Math.max(1,S.mult),-0.55)))+stillRiding);
   }
 
   // UI — colour + a glow whose intensity rises with the multiplier tier
@@ -1136,15 +1156,20 @@ function ambient(){
    NETWORK: authoritative server, with graceful local fallback
    ============================================================ */
 function setOnline(n){
-  const v=(typeof n==='number'? n : 0);
+  // header-only total online count
+  const v=(typeof n==='number'? n : 0); S._onlineVal=v;
   const o=$('online'); if(o) o.textContent=v.toLocaleString('en-US');
+}
+// the stage pill shows how many players are STILL riding the current round
+function setInRound(n){
   const sp=$('stagePlayers'); if(!sp) return;
-  const prev=S._online==null? v : S._online; S._online=v;
+  const v=Math.max(0,(typeof n==='number'? n : 0));
+  const prev=S._riders==null? v : S._riders; S._riders=v;
   sp.textContent='👥 '+v.toLocaleString('en-US');
   if(v!==prev){                                    // pulse + up/down tint, Aviator-style, whenever it changes
     sp.classList.remove('bump','up','down'); void sp.offsetWidth;
     sp.classList.add('bump', v>prev?'up':'down');
-    clearTimeout(S._onlineTmr); S._onlineTmr=setTimeout(()=>sp.classList.remove('up','down'), 600);
+    clearTimeout(S._ridersTmr); S._ridersTmr=setTimeout(()=>sp.classList.remove('up','down'), 600);
   }
 }
 
@@ -1197,6 +1222,7 @@ function bindNet(sock){
   });
   sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
+  sock.on('round:players',d=>{ setInRound(d.count); });
   sock.on('welcome',d=>{ setOnline(d.online); S.selfPid=d.pid||null; });
   sock.on('profile',d=>{ applyProfile(d); });
   // social: live activity feed, leaderboard, public profiles
