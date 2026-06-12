@@ -173,7 +173,7 @@ const T = k => (I18N[S.lang]||I18N.en)[k] || I18N.en[k];
    SOUND (WebAudio, no assets)
    ============================================================ */
 let actx;
-function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }catch(e){ return null; } }
+function ac(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state!=='running' && actx.resume) actx.resume(); return actx; }catch(e){ return null; } }
 // Three mix buses so the player can balance the sound from Settings:
 //   voice = the spoken/radio countdown  ·  music = the continuous flight bed
 //   (thrust alarm + engine rumble)  ·  fx ("Soundeffects") = the punchy
@@ -1180,13 +1180,13 @@ const betDisp = v => v%1===0 ? v.toLocaleString('en-US') : v.toFixed(2);
 function setBet(i, v){ const s=S.slots[i]; const cap=Math.max(0.10, S.balance);
   s.bet=Math.max(0.10, Math.min(Math.round(v*100)/100, cap));   // €0.10 min, 2-decimal precision
   const el=$('betVal'+i); if(el && document.activeElement!==el) el.value = betDisp(s.bet);   // don't fight the user mid-typing
-  renderAction(i); }
+  renderAction(i); schedulePersist(); }
 // live parse while the user types a custom amount (don't rewrite the field here)
 function onBetType(i){ const el=$('betVal'+i); if(!el) return; const s=S.slots[i];
   const raw=parseFloat(String(el.value).replace(/[^0-9.]/g,''));
   if(!isNaN(raw)){ const cap=Math.max(0.10,S.balance); s.bet=Math.max(0.10, Math.min(Math.round(raw*100)/100, cap)); }
-  renderAction(i); }
-function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000); const el=$('autoVal'+i); if(el) el.textContent = s.auto===0? 'OFF' : s.auto.toFixed(2)+'x'; }
+  renderAction(i); schedulePersist(); }
+function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000); const el=$('autoVal'+i); if(el) el.textContent = s.auto===0? 'OFF' : s.auto.toFixed(2)+'x'; schedulePersist(); }
 
 // click the amount to type your own stake
 [0,1].forEach(i=>{ const el=$('betVal'+i); if(!el) return;
@@ -1250,15 +1250,22 @@ function loadAudioPrefs(){
     if(j){ if(typeof j.sound==='boolean') S.sound=j.sound; if(j.vol) S.vol=Object.assign(S.vol, j.vol); }
   }catch(e){}
 }
-// unlock WebAudio + speech on the first touch (required by iOS Safari)
-function unlockAudio(){ try{ ac(); const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }catch(e){} }
-window.addEventListener('pointerdown', unlockAudio, { once:true });
-window.addEventListener('touchend', unlockAudio, { once:true });
+// unlock WebAudio + speech on the first touch (required by iOS Safari). This stays
+// PERSISTENT (not once) because iOS suspends/interrupts the AudioContext when the page
+// is backgrounded, and it can only be resumed from a user gesture — so every tap
+// re-arms the audio. Without this you'd have to refresh to get sound back.
+let _spoke=false;
+function unlockAudio(){ try{
+  const a=ac(); if(a && a.state!=='running' && a.resume) a.resume();   // resume on each tap if iOS parked it
+  if(!_spoke){ _spoke=true; const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }
+}catch(e){} }
+window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('touchend', unlockAudio);
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
 // RESUME a half-played countdown when you come back (esp. during a long round).
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ stopCountdownAudio(); stopEngine(); stopThrust(); stopMusic(); try{ if(actx) actx.suspend(); }catch(e){} }
-  else { try{ if(actx) actx.resume(); }catch(e){} }
+  else { try{ if(actx && actx.state!=='running' && actx.resume) actx.resume(); }catch(e){} }   // next tap re-arms it too
 });
 
 // settings opens from the dropdown menu (see menu-item wiring)
@@ -1581,8 +1588,11 @@ async function authInit(){
    ============================================================ */
 function getPid(){ try{ let p=localStorage.getItem('rr_pid'); if(!p){ p=randSeed(); localStorage.setItem('rr_pid',p); } return p; }catch(e){ return randSeed(); } }
 function persist(){
-  try{ localStorage.setItem('rr_save', JSON.stringify({ v:1, balance:S.balance, myBets:S.myBets.slice(0,100), stats:S.stats })); }catch(e){}
+  try{ localStorage.setItem('rr_save', JSON.stringify({ v:1, balance:S.balance, myBets:S.myBets.slice(0,100), stats:S.stats,
+    bets:S.slots.map(s=>({bet:s.bet, auto:s.auto})) })); }catch(e){}   // remember the chosen stake/auto too
 }
+let _persistTmr=null;
+function schedulePersist(){ clearTimeout(_persistTmr); _persistTmr=setTimeout(persist, 350); }   // debounced (steppers fire fast)
 function loadSave(){
   try{
     const j=JSON.parse(localStorage.getItem('rr_save')||'null');
@@ -1590,6 +1600,7 @@ function loadSave(){
       if(Array.isArray(j.myBets)) S.myBets=j.myBets;
       if(j.stats) S.stats=Object.assign(S.stats, j.stats);
       if(typeof j.balance==='number') S.balance=j.balance;  // local mode; net welcome overrides
+      if(Array.isArray(j.bets)) j.bets.forEach((b,i)=>{ if(S.slots[i]&&b){ if(typeof b.bet==='number') S.slots[i].bet=b.bet; if(typeof b.auto==='number') S.slots[i].auto=b.auto; } });
     }
   }catch(e){}
 }
@@ -1681,7 +1692,7 @@ function boot(){
   sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
   syncSound(); syncVolUI();
   updateBalance();
-  setBet(0,1); setBet(1,1); setAuto(0,0); setAuto(1,0);
+  setBet(0,S.slots[0].bet); setBet(1,S.slots[1].bet); setAuto(0,S.slots[0].auto); setAuto(1,S.slots[1].auto);   // restore saved stake/auto (defaults €1 / OFF)
   authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
 }
 boot();
