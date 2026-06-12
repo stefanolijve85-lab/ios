@@ -14,18 +14,9 @@ export default function Page() {
     <div className="app">
       {/* ===================== INTRO / SPLASH (first open → tap LET'S GO) ===================== */}
       <div className="intro" id="intro">
-        <div className="intro-inner">
-          <img className="intro-logo" src="/liftoffx.png" alt="Liftoff X" />
-          <h1 className="intro-h1">BUCKLE UP.<br /><span className="g">MULTIPLY HIGH.</span><br />CASH OUT BIG.</h1>
-          <p className="intro-sub">Bet. Watch. Multiply. Don&apos;t get left behind.</p>
-          <img className="intro-hero" src="/intro-hero.png" alt="" />
-          <div className="intro-cards">
-            <div className="intro-card"><span className="ic">🚀</span><b>MULTIPLY</b><small>Watch your bet take off</small></div>
-            <div className="intro-card"><span className="ic">💵</span><b>CASH OUT</b><small>Lock in your winnings</small></div>
-            <div className="intro-card"><span className="ic">⚡</span><b>FAST &amp; FAIR</b><small>Provably fair. Real-time action.</small></div>
-          </div>
-          <button className="intro-go" id="introGo">LET&apos;S GO</button>
-          <div className="intro-dots"><i className="on" /><i /><i /></div>
+        <div className="intro-shot">
+          <img src="/intro-full.png" alt="Liftoff X — Buckle up. Multiply high. Cash out big." />
+          <button className="intro-go" id="introGo" aria-label="Let's go" />
         </div>
       </div>
 
