@@ -13,8 +13,13 @@ first tap (iOS unlocks audio on a user gesture).
 | `liftoff.mp3` | the moment the rocket launches | ~0.6–1.5 s (a clear English "Liftoff!") |
 | `engine.mp3` | loops continuously during flight | 1–3 s, **seamless loop** |
 | `thrust.mp3` | thrust-alarm bed, loops every flight (Music slider) | 1–4 s, **seamless loop** |
+| `music.mp3` | looping background music during flight (Music slider) | 20–40 s, **seamless loop** |
+| `jackpot.mp3` | big-win celebration, wins > €100k (Soundeffects slider) | ~3–4 s, one-shot |
 | `3.mp3`, `2.mp3`, `1.mp3` | the countdown, one per number | ~0.4–0.6 s each (English "three / two / one") |
 | `cashout.mp3` | you cash out a win | ~0.3–0.8 s |
+
+> 🎙️ **Ready-to-paste generation prompts** (ElevenLabs + Suno) for every sound are in
+> [`SOUND-PROMPTS.md`](./SOUND-PROMPTS.md).
 
 You don't need all of them — provide any subset. For example, just add
 `explosion.mp3` + `3.mp3` `2.mp3` `1.mp3` `liftoff.mp3` for a real voice and a

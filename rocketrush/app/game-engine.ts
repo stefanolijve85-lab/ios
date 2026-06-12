@@ -217,6 +217,8 @@ function noiseBuffer(a, dur, shape){
    automatically; otherwise we fall back to synth + speech (see public/sounds/README). ---- */
 const SND = { explosion:'/sounds/explosion.mp3', engine:'/sounds/engine.mp3',
   thrust:'/sounds/thrust.mp3',                 // thrust-alarm bed, plays every flight
+  music:'/sounds/music.mp3',                   // optional looping background music (Music bus)
+  jackpot:'/sounds/jackpot.mp3',               // optional big-win celebration clip (> €100k)
   countdown:'/sounds/countdown.mp3',           // one clip: "3, 2, 1, liftoff"
   '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3',   // OR per-number clips
   liftoff:'/sounds/liftoff.mp3', cash:'/sounds/cashout.mp3' };
@@ -343,6 +345,24 @@ function stopThrust(){
   try{ const {src,g,a}=thrustNodes; g.gain.setTargetAtTime(0,a.currentTime,0.06); setTimeout(()=>{ try{src.stop();}catch(e){} },260); }catch(e){}
   thrustNodes=null;
 }
+// optional looping background music (drop /sounds/music.mp3) — plays through the flight
+// on the Music bus, stopped at crash.
+let musicNodes=null;
+function startMusic(){
+  if(!S.sound || !hasSnd('music')) return; stopMusic();
+  try{
+    const a=ac(), b=_buf['music']; if(!a||!b) return;
+    const src=a.createBufferSource(); src.buffer=b; src.loop=true;
+    const g=a.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(0.6, a.currentTime, 0.1);
+    src.connect(g); g.connect(busFor('music')||a.destination); src.start();
+    musicNodes={src,g,a};
+  }catch(e){}
+}
+function stopMusic(){
+  if(!musicNodes) return;
+  try{ const {src,g,a}=musicNodes; g.gain.setTargetAtTime(0,a.currentTime,0.08); setTimeout(()=>{ try{src.stop();}catch(e){} },320); }catch(e){}
+  musicNodes=null;
+}
 // spoken countdown ("3, 2, 1, Liftoff!")
 function say(text){
   if(!S.sound) return;
@@ -360,7 +380,7 @@ const sfx = {
   launch:()=>{
     if(hasSnd('liftoff')) playSnd('liftoff');                          // separate liftoff clip
     else if(!hasSnd('countdown')) { beep(140,.6,'sawtooth',.09); say('Liftoff!'); }  // combined clip already says it
-    startEngine(); startThrust();
+    startEngine(); startThrust(); startMusic();
   },
   count: (n)=>{
     if(hasSnd('countdown')){ if(n===3) playSnd('countdown'); return; }  // one combined clip, fired at "3"
@@ -373,6 +393,7 @@ const sfx = {
 // noise bed, a short two-tone siren sweep, and a spoken cheer. Routed to the FX bus.
 function jackpotSound(){
   if(!S.sound) return;
+  if(hasSnd('jackpot')){ playSnd('jackpot',{cat:'fx',vol:0.9}); return; }   // prefer a real clip if provided
   try{
     const a=ac(); if(!a) return; const t=a.currentTime, dest=busFor('fx')||a.destination;
     // 1) triumphant ascending arpeggio (C E G C')
@@ -873,7 +894,7 @@ function crash(){
   { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
   $('mult').classList.add('crashed-tag');
   $('status').textContent='ROCKET BLEW UP 💥';
-  sfx.crash(); stopEngine(); stopThrust(); stopCountdownAudio();
+  sfx.crash(); stopEngine(); stopThrust(); stopMusic(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
 
   // bust any active un-cashed bets
@@ -1211,7 +1232,7 @@ function syncSound(){
   const sw=$('swSound'); if(sw) sw.classList.toggle('on',S.sound);
   const msw=$('menuSoundSw'); if(msw) msw.classList.toggle('on',S.sound);
   applyVolumes();
-  if(!S.sound){ stopEngine(); stopThrust(); }
+  if(!S.sound){ stopEngine(); stopThrust(); stopMusic(); }
   const row=$('volRows'); if(row) row.style.opacity=S.sound?'1':'.4';
   saveAudioPrefs();
 }
@@ -1230,7 +1251,7 @@ window.addEventListener('touchend', unlockAudio, { once:true });
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
 // RESUME a half-played countdown when you come back (esp. during a long round).
 document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden){ stopCountdownAudio(); stopEngine(); stopThrust(); try{ if(actx) actx.suspend(); }catch(e){} }
+  if(document.hidden){ stopCountdownAudio(); stopEngine(); stopThrust(); stopMusic(); try{ if(actx) actx.suspend(); }catch(e){} }
   else { try{ if(actx) actx.resume(); }catch(e){} }
 });
 
@@ -1374,7 +1395,7 @@ function netCrash(d){
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('mult').classList.add('crashed-tag');
   { const cm=$('centerMain'); cm.style.transform=''; cm.style.filter=''; }   // reset the dodge/warp
-  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopThrust(); stopCountdownAudio();
+  $('status').textContent='ROCKET BLEW UP 💥'; sfx.crash(); stopEngine(); stopThrust(); stopMusic(); stopCountdownAudio();
   S.crashTs=performance.now(); { const cp=rocketPos(S.crashTime); spawnDebris(cp.x, cp.y); }
   let lost=0; S.slots.forEach(s=>{ if(s.placed && !s.cashedOut){ s.placed=false; lost+=s.amount; } s.curBet=null; });
   if(lost>0) flashWon('−€'+fmt(lost), false);
