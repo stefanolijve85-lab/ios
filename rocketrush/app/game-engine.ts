@@ -248,7 +248,7 @@ function playCountdownRadio(){
   if(!S.sound) return null;
   try{
     const a=ac(), b=_buf['countdown']; if(!a||!b) return playSnd('countdown',{vol:VOL.countdown});
-    const t=a.currentTime, dur=Math.min(b.duration, 4.2);
+    const t=a.currentTime, dur=Math.min(b.duration, 6.0);
     const out=a.createGain(); out.gain.value=VOL.countdown; out.connect(busFor('voice')||a.destination);
     // voice: mostly clear (dry) + a parallel radio-EQ'd, slightly gritty copy
     const src=a.createBufferSource(); src.buffer=b;
@@ -267,8 +267,9 @@ function playCountdownRadio(){
     ng.gain.setValueAtTime(0.045, t+dur-0.35); ng.gain.linearRampToValueAtTime(0.0001, t+dur);
     noise.connect(nbp); nbp.connect(ng); ng.connect(busFor('voice')||a.destination); noise.start();
     // Quindar beeps: one to "open the channel" at the start, one just before liftoff
+    // (placed relative to the clip length so it works for both the 3-2-1 and 5-4-3-2-1 clips)
     _quindar(a, t+0.02, 0.10);
-    _quindar(a, t+3.05, 0.10);
+    _quindar(a, t+Math.max(0.5, dur-1.15), 0.10);
     return { src, g: out, a };
   }catch(e){ return playSnd('countdown',{vol:VOL.countdown}); }
 }
@@ -796,6 +797,11 @@ function showCountdown(ms, onDone){
   // timings so they match exactly. Tuned to the current countdown.mp3 (NASA voice):
   // 3→0.1s, 2→1.12s, 1→2.08s, LIFTOFF→3.28s (so liftoff lands at launch).
   const voiced = hasSnd('countdown') && ms>=3600;
+  const cdur = (_buf['countdown'] && _buf['countdown'].duration) || 0;   // clip length (s)
+  // A "full window" clip counts the whole way down (e.g. "5,4,3,2,1, we have liftoff").
+  // We fire it at the start and let the numbers follow the clock, so they stay in sync.
+  const fullCount = voiced && cdur >= 4.4;
+  const fireAt = fullCount ? Math.min(ms, Math.round(cdur*1000)) : 3280;   // ms remaining when the clip starts → its end lands at launch
   // Announce the countdown audio ONLY ONCE per round — never again on a reconnect /
   // snapshot of the same round (that was causing the voice to replay mid-game).
   const announce = (S.voicedNonce !== S.nonce); if(announce) S.voicedNonce=S.nonce;
@@ -807,8 +813,10 @@ function showCountdown(ms, onDone){
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=3280 && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }  // fire so LIFTOFF (3.28s) lands at launch
-      const n = left>3180 ? Math.max(0,Math.ceil(left/1000)) : (left>2160?3:left>1200?2:1);
+      if(left<=fireAt && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }
+      // full-window clip: numbers follow the clock (5,4,3,2,1). Short 3-2-1 clip: keep the tuned remap.
+      const n = fullCount ? Math.max(0,Math.ceil(left/1000))
+                          : (left>3180 ? Math.max(0,Math.ceil(left/1000)) : (left>2160?3:left>1200?2:1));
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
       const sec=Math.max(0,Math.ceil(left/1000));
