@@ -806,7 +806,7 @@ function showCountdown(ms, onDone){
   // snapshot of the same round (that was causing the voice to replay mid-game).
   const announce = (S.voicedNonce !== S.nonce); if(announce) S.voicedNonce=S.nonce;
   let clipFired=false;
-  $('countNum').textContent=Math.max(0,Math.ceil(left/1000));
+  $('countNum').textContent = fullCount ? Math.max(0,Math.min(5,Math.ceil(left/(total/5)))) : Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
@@ -814,8 +814,10 @@ function showCountdown(ms, onDone){
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
       if(left<=fireAt && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }
-      // full-window clip: numbers follow the clock (5,4,3,2,1). Short 3-2-1 clip: keep the tuned remap.
-      const n = fullCount ? Math.max(0,Math.ceil(left/1000))
+      // full-window clip ("5,4,3,2,1, liftoff"): spread the 5 numbers EVENLY across the
+      // whole window so each shows ~window/5 (≈1.4s) and matches the slower spoken pacing.
+      // Short 3-2-1 clip: keep the tuned remap.
+      const n = fullCount ? Math.max(0, Math.min(5, Math.ceil(left/(total/5))))
                           : (left>3180 ? Math.max(0,Math.ceil(left/1000)) : (left>2160?3:left>1200?2:1));
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
