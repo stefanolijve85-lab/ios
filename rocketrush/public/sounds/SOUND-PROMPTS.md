@@ -84,17 +84,18 @@
 > voice). Keep the same voice across these so it's consistent.
 
 ### 7. `countdown.mp3` — the launch countdown (combined clip)
-- **Length:** ~3.5–4 s. The game times the on-screen numbers to this clip (3→~0.1 s,
-  2→~1.1 s, 1→~2.1 s, "Liftoff" lands at ~3.3 s), so keep the pacing roughly **one number
-  per second** ending on "Liftoff!".
-- **Plays:** on the **Voice** bus during the countdown (the game adds a NASA-radio filter).
+- **The on-screen countdown runs from 5**, so record the **full** count.
+- **Length:** ~5–5.5 s. Pace it **one number per second** so each spoken number lands
+  while the screen shows it, and "liftoff" lands at the launch (end of the 5 s window):
+  5 → ~0 s, 4 → ~1 s, 3 → ~2 s, 2 → ~3 s, 1 → ~4 s, "we have liftoff" → ~5 s.
+- **Plays:** on the **Voice** bus during the countdown (the game adds a NASA-radio filter
+  and auto-times itself to the clip length).
 - **Say exactly:**
-  > Three… Two… One… Liftoff!
-- **Voice direction:** calm, confident mission-control announcer; clear gaps between
-  numbers; punch the word "Liftoff!".
-- *(Alternative: generate separate `3.mp3`, `2.mp3`, `1.mp3`, `liftoff.mp3` — each ~0.4–0.6 s
-  saying "Three" / "Two" / "One" / "Liftoff!". The game uses these if `countdown.mp3` is
-  absent.)*
+  > Five… Four… Three… Two… One… We have liftoff!
+- **Voice direction:** calm, confident mission-control announcer; clear ~1-second gaps
+  between numbers; punch the final "We have liftoff!".
+- *(The game auto-detects a full-length clip like this and syncs the numbers to it. A
+  short "Three, Two, One, Liftoff!" clip still works too if you prefer.)*
 
 ### 8. "Big win!" cheer — *only if you keep `jackpot.mp3` purely musical*
 - The game already speaks "Big win!" via the device voice as a fallback. If you want a
