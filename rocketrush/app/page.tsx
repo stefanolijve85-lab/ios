@@ -294,6 +294,7 @@ export default function Page() {
           <div className="verify-row"><span className="k">Computed crash point</span><span className="x" id="fComputed">—</span></div>
           <div className="verify-row"><span className="k">Actual crash point</span><span className="x" id="fActual">—</span></div>
           <div className="verify-row"><span className="k">Result</span><span className="x" id="fMatch">—</span></div>
+          <div className="verify-row" id="fMaxWinRow" style={{ display: 'none' }}><span className="k">Max win (operator cap)</span><span className="x" id="fMaxWin">—</span></div>
 
           <button className="closebtn" data-close>Close</button>
         </div>

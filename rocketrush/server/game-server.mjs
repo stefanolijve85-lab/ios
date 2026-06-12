@@ -18,6 +18,9 @@ const RATE = 0.16;       // growth rate — MUST match the client (multAt: e^(RA
 const BET_MS = 6500;     // betting window — launch lands on the clip's "liftoff" (~6.3s)
 const PAUSE_MS = 3200;   // pause after crash
 const MIN_BET = 0.10;    // minimum stake (matches the client + the €0.10 marketing claim)
+// Operator-configurable max-win cap (multiplier). 0 = uncapped. e.g. MAX_MULT=5000 caps
+// every round at 5000x. Applied provably-fair (after the HMAC value), so it still verifies.
+const MAX_MULT = Number(process.env.MAX_MULT) || 0;
 const r2 = n => Math.round(n * 100) / 100;
 
 const NAMES = ['Nova','Orbit','Zenith','Comet','Vega','Astra','Pulsar','Quasar','Lyra','Titan','Apollo','Luna','Helio','Cosmo','Stellar','Falcon','Drift','Echo','Onyx','Mika','Rin','Kai','Juno','Atlas','Sol','Iris','Nyx','Rex','Zara','Milo'];
@@ -94,7 +97,7 @@ export async function attachGame(io) {
     game.serverSeed = randomBytes(16).toString('hex');
     game.serverSeedHash = sha256(game.serverSeed);
     game.nonce += 1;
-    game.crash = crashPoint(game.serverSeed, CLIENT_SEED, game.nonce);
+    game.crash = crashPoint(game.serverSeed, CLIENT_SEED, game.nonce, MAX_MULT);
     game.bettingEndsAt = Date.now() + BET_MS;
     for (const p of players.values()) p.bets = [null, null];
     // bigger per-round jump so the live player count moves with each new round
@@ -136,7 +139,7 @@ export async function attachGame(io) {
     const round = { nonce: game.nonce, crash: game.crash, serverSeed: game.serverSeed, clientSeed: CLIENT_SEED, hmac: game.prevHmac };
     game.recentRounds.unshift(round);
     if (game.recentRounds.length > 40) game.recentRounds.pop();
-    io.emit('round:crash', { nonce: round.nonce, crashPoint: round.crash, serverSeed: round.serverSeed, clientSeed: round.clientSeed, hmac: round.hmac });
+    io.emit('round:crash', { nonce: round.nonce, crashPoint: round.crash, serverSeed: round.serverSeed, clientSeed: round.clientSeed, hmac: round.hmac, maxMult: MAX_MULT });
     for (const [id, p] of players) {
       const s = io.sockets.sockets.get(id);
       let changed = false;
@@ -212,7 +215,7 @@ export async function attachGame(io) {
     players.set(sock.id, p);
 
     upsertProfile(p.key, { name: publicName, color: p.color, joinDate: auth.account && auth.account.joinDate ? auth.account.joinDate : Date.now() });
-    sock.emit('welcome', { name: p.name, online: popCount(), pid: p.key });
+    sock.emit('welcome', { name: p.name, online: popCount(), pid: p.key, maxMult: MAX_MULT });
     pushProfile(sock, p);
     sock.emit('history', { rounds: game.recentRounds.slice(0, 20) });
     sock.emit('leaderboard', leaderboard());

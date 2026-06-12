@@ -14,18 +14,21 @@ export function hmacHex(serverSeed, clientSeed, nonce) {
   return createHmac('sha256', serverSeed).update(`${clientSeed}:${nonce}`).digest('hex');
 }
 
-export function crashFromHmac(hex) {
+export function crashFromHmac(hex, cap = 0) {
   // Instant-crash slice implements the house edge.
   const hInt = parseInt(hex.slice(0, 8), 16);
   if (hInt % Math.round(1 / HOUSE_EDGE) === 0) return 1.0;
   const h = parseInt(hex.slice(0, 13), 16);
   const e = Math.pow(2, 52);
-  const result = Math.floor((100 * e - h) / (e - h)) / 100;
-  return Math.max(1.0, result);
+  let result = Math.max(1.0, Math.floor((100 * e - h) / (e - h)) / 100);
+  // Operator-configurable max-win cap, applied transparently AFTER the provably-fair
+  // value so it still verifies (computed = min(raw, cap)). cap = 0 → uncapped.
+  if (cap && cap > 1 && result > cap) result = cap;
+  return result;
 }
 
-export function crashPoint(serverSeed, clientSeed, nonce) {
-  return crashFromHmac(hmacHex(serverSeed, clientSeed, nonce));
+export function crashPoint(serverSeed, clientSeed, nonce, cap = 0) {
+  return crashFromHmac(hmacHex(serverSeed, clientSeed, nonce), cap);
 }
 
 export const sha256 = s => createHash('sha256').update(s).digest('hex');
