@@ -1215,6 +1215,7 @@ function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000);
 });
 
 document.querySelectorAll('[data-bet]').forEach(b=>{
+  b.style.touchAction='manipulation';   // no 300ms tap delay / no scroll hijack
   const doStep=()=>{ const i=+(b.dataset.slot||0), s=S.slots[i], up=b.dataset.bet==='+';
     // step scales with the amount so big stakes are quick to dial in (up to €1M+)
     const step = s.bet<=1?0.10 : s.bet<=10?1 : s.bet<100?10 : s.bet<500?50 : s.bet<5000?500 : s.bet<50000?5000 : s.bet<500000?50000 : 100000;
@@ -1223,14 +1224,18 @@ document.querySelectorAll('[data-bet]').forEach(b=>{
     const nc = up ? Math.floor(cur/st)*st + st : Math.ceil(cur/st)*st - st;
     setBet(i, nc/100);
   };
-  // tap = one step; press-and-hold = auto-repeat that ACCELERATES (220ms → 45ms)
-  let to=null, iv=null, spd=220;
-  const stop=()=>{ clearTimeout(to); clearTimeout(iv); to=iv=null; spd=220; };
-  const repeat=()=>{ doStep(); spd=Math.max(45, spd*0.8); iv=setTimeout(repeat, spd); };
+  // tap = one instant step; press-and-hold = auto-repeat that ACCELERATES (260ms → 40ms).
+  // Pointer capture keeps the hold alive even if the finger drifts off the button, so it
+  // never feels like it "drops" — and we react on pointerdown for zero-delay feedback.
+  let to=null, iv=null, spd=260, held=false;
+  const stop=()=>{ clearTimeout(to); clearTimeout(iv); to=iv=null; held=false; b.classList.remove('pressing'); };
+  const repeat=()=>{ doStep(); spd=Math.max(40, spd*0.78); iv=setTimeout(repeat, spd); };
   b.addEventListener('pointerdown', e=>{ e.preventDefault();
+    try{ b.setPointerCapture(e.pointerId); }catch(_){}
     const ae=document.activeElement; if(ae && ae.classList && ae.classList.contains('bet-input')) ae.blur();   // commit any typed value first
-    doStep(); stop(); spd=220; to=setTimeout(repeat, 340); });
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev, stop));
+    if(held) return; held=true; b.classList.add('pressing'); doStep(); spd=260; clearTimeout(to); to=setTimeout(repeat, 320); });
+  const end=e=>{ try{ b.releasePointerCapture(e.pointerId); }catch(_){} stop(); };
+  ['pointerup','pointercancel'].forEach(ev=>b.addEventListener(ev, end));
 });
 document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{
   const i=+(b.dataset.slot||0), s=S.slots[i], up=b.dataset.auto==='+';
