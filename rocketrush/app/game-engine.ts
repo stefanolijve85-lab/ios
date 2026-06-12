@@ -780,7 +780,7 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
   S._riderBase=Math.floor((S._onlineVal||2800)*(0.4+Math.random()*0.22));
   setInRound(S._riderBase);
 
-  showCountdown(5000, startRunning);
+  showCountdown(7000, startRunning);   // matches the server BET_MS + the full countdown voice clip
   renderAction();
 }
 
