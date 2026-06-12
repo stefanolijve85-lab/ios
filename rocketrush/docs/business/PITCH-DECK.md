@@ -79,10 +79,22 @@
 - Responsible-gaming hooks, audit logs, reporting, multi-currency, HA/low-latency.
 
 ## Slide 11 — The ask
-- What you're raising/seeking and what it unlocks:
-  - Capital for **licensing + certification** (the long pole), or
-  - A **partnership/JV** with an already-licensed studio to shortcut it.
-- Be explicit: amount, use of funds, milestones it buys.
+*Two routes — be explicit about which one you're pitching. Full detail + cost ranges
+in [`FUNDING.md`](./FUNDING.md). Figures are estimates, not quotes.*
+
+- **Route B — JV / "Powered By" (capital-light):** partner with an already-licensed
+  studio that brings the licence, certification and aggregator connections.
+  - **Ask:** a partnership, not cash. Cost to you = a share of revenue, ~€0 upfront.
+- **Route A — Own studio (the real raise):** fund licensing + certification (the long
+  pole) and a production-ready RGS.
+  - **Ask:** **€150k–400k** over **6–18 months**.
+  - **Use of funds:** RNG certification (GLI-19/iTech, ~€15k–50k/market) · B2B
+    supplier licence (~€10k–60k) · RGS hardening + wallet API (~€30k–100k) · legal/
+    compliance + buffer (~€20k–50k).
+  - **What it buys:** a certified, licensed, integration-ready game listed on 2–3
+    aggregators → reach to thousands of operators.
+- **Timing note:** raise *after* 2–3 operator/aggregator LOIs — validation lifts the
+  valuation and cuts dilution.
 
 ## Slide 12 — Team & contact
 - Founders/experience, advisors (esp. anyone with iGaming/compliance background).
