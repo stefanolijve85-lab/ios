@@ -68,7 +68,8 @@
 *(All steps detailed in `RGS-ARCHITECTURE.md` §7.)*
 
 ## Phase 4 — The big decision ⬜
-*Made on the evidence from Phase 2 — not on assumptions.*
+*Made on the evidence from Phase 2 — not on assumptions. Funding & per-route cost
+ranges are in [`FUNDING.md`](./FUNDING.md) — raise outside money only after validation.*
 - [ ] Decide the route:
   - [ ] **A — Own studio:** get your own B2B supplier licence + certification
         (slow, capital-heavy, full control), **or**
