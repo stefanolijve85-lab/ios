@@ -338,7 +338,8 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-h1 { margin: 0; flex: none; color: #fff; font-weight: 900; line-height: 1.06; letter-spacing: -1px; font-size: clamp(27px, 8.4vw, 40px); }
 .intro-h1 .g { font-style: italic; background: linear-gradient(110deg, var(--success), #7CF0A8); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .intro-sub { margin: 0; flex: none; color: var(--muted); font-size: 14.5px; line-height: 1.42; }
-.intro-hero { width: 100%; max-width: 420px; max-height: 38vh; min-height: 0; flex: 0 1 auto; object-fit: contain; }
+/* bleed edge-to-edge past the inner padding so the scene reads full-width like the mockup */
+.intro-hero { width: calc(100% + 44px); max-width: none; margin: 2px -22px; max-height: 40vh; min-height: 0; flex: 0 1 auto; object-fit: contain; }
 .intro-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; flex: none; }
 .intro-card { background: var(--panel); border: 1px solid var(--line); border-radius: 15px; padding: 13px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .intro-card .ic { font-size: 21px; }
@@ -346,9 +347,6 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-card small { font-size: 10px; color: var(--muted); line-height: 1.28; }
 .intro-gobtn { width: 100%; max-width: 380px; flex: none; padding: 16px; border-radius: 15px; font-size: 16.5px; font-weight: 900; letter-spacing: .5px; color: #04210f;
   background: linear-gradient(135deg, var(--success), #16a048); box-shadow: 0 14px 32px rgba(34,197,94,.42); }
-.intro-dots { display: flex; gap: 7px; justify-content: center; flex: none; }
-.intro-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); display: block; }
-.intro-dots i.on { background: var(--primary); width: 20px; border-radius: 999px; }
 /* the WHOLE splash is the tap target so a tap anywhere proceeds — no misses */
 .intro-go { position: fixed; inset: 0; width: 100%; height: 100%; background: transparent; transition: transform .1s; }
 .intro-go:active { transform: scale(.997); }

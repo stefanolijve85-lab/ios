@@ -25,7 +25,6 @@ export default function Page() {
             <div className="intro-card"><span className="ic">⚡</span><b>FAST &amp; FAIR</b><small>Provably fair, real-time</small></div>
           </div>
           <div className="intro-gobtn">LET&apos;S GO</div>
-          <div className="intro-dots"><i className="on" /><i /><i /></div>
         </div>
         <button className="intro-go" id="introGo" aria-label="Let's go" />
       </div>
