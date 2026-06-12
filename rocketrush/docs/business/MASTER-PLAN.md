@@ -42,8 +42,9 @@
 
 ## Phase 2 — Validate the market (THE CURRENT STEP) 🔄
 *Goal: turn 5–10 conversations into real answers. Costs time, not capital.*
-- [ ] Pick your **first 8–10 targets** from the tiered list in `OUTREACH-PACK.md`
-      (distribution programs → aggregators → direct operators)
+- [ ] Run the **[`OUTREACH-PLAYBOOK.md`](./OUTREACH-PLAYBOOK.md)** end-to-end (14-day
+      plan, first-8 targets, message sequence, call script, tracker)
+- [ ] Pick your **first 8–10 targets** (distribution programs → aggregators → direct operators)
 - [ ] Find the right contact per target (LinkedIn / "become a partner" form)
 - [ ] Send outreach (email + LinkedIn) using the templates
 - [ ] Hold **5–10 calls**; log each in the capture sheet (`OPERATOR-CALL-QUESTIONS.md`)
