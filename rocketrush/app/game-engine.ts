@@ -150,6 +150,7 @@ const S = {
   lastRound: null,      // {nonce, serverSeed, clientSeed, hmac, crash}
   history: [],
   sound: true,
+  entered: false,       // gate: no game audio until the user taps LET'S GO at a fresh round boundary
   vol: { music:0.7, fx:0.85, voice:0.95 },   // per-bus mix (Music / FX / Sounds sliders)
   voicedNonce: -1,      // last round whose countdown audio we played (no replays on reconnect)
   cdAudio: null,        // current countdown clip node (so we can stop it)
@@ -198,7 +199,7 @@ function applyVolumes(){
   }catch(e){}
 }
 function beep(freq, dur, type='sine', vol=.08, cat='fx'){
-  if(!S.sound) return;
+  if(!S.sound||!S.entered) return;
   try{
     const a=ac(); if(!a) return;
     const o = a.createOscillator(), g = a.createGain();
@@ -235,7 +236,7 @@ async function loadSounds(){
 }
 function hasSnd(k){ return !!_buf[k]; }
 function playSnd(k, opt){
-  if(!S.sound) return null; opt=opt||{};
+  if(!S.sound||!S.entered) return null; opt=opt||{};
   try{ const a=ac(), b=_buf[k]; if(!a||!b) return null; const src=a.createBufferSource(); src.buffer=b; src.loop=!!opt.loop; const g=a.createGain(); g.gain.value=opt.vol==null?1:opt.vol; src.connect(g); g.connect(busFor(opt.cat||'fx')||a.destination); src.start(); return {src,g,a}; }catch(e){ return null; }
 }
 // NASA mission-control radio treatment over the spoken countdown: a Quindar intro
@@ -245,7 +246,7 @@ function playSnd(k, opt){
 function _radioCurve(){ const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*2.4); } return c; }
 function _quindar(a, when, vol){ const o=a.createOscillator(), g=a.createGain(); o.type='sine'; o.frequency.value=2525; g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vol, when+0.012); g.gain.setValueAtTime(vol, when+0.15); g.gain.exponentialRampToValueAtTime(0.0001, when+0.20); o.connect(g); g.connect(busFor('voice')||a.destination); o.start(when); o.stop(when+0.22); }
 function playCountdownRadio(){
-  if(!S.sound) return null;
+  if(!S.sound||!S.entered) return null;
   try{
     const a=ac(), b=_buf['countdown']; if(!a||!b) return playSnd('countdown',{vol:VOL.countdown});
     const t=a.currentTime, dur=Math.min(b.duration, 6.0);
@@ -279,7 +280,7 @@ function pickVoice(){ try{ const vs=(window.speechSynthesis&&window.speechSynthe
 try{ if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 // realistic "blew up" boom: sharp transient + filtered noise tail + sub-bass drop
 function explosion(){
-  if(!S.sound) return;
+  if(!S.sound||!S.entered) return;
   if(hasSnd('explosion')){ playSnd('explosion',{vol:VOL.explosion,cat:'fx'}); return; }   // prefer real audio if provided
   try{
     const a=ac(); if(!a) return; const t=a.currentTime; const dest=busFor('fx')||a.destination;
@@ -301,7 +302,7 @@ function explosion(){
 // looping rocket-engine rumble while in flight
 let engineNodes=null;
 function startEngine(){
-  if(!S.sound) return; stopEngine();
+  if(!S.sound||!S.entered) return; stopEngine();
   // quiet + STATIC: loop only the steady tail of the engine clip (skip the
   // build-up) so the sound never changes during a round and can't leak timing.
   if(hasSnd('engine')){
@@ -333,7 +334,7 @@ function stopEngine(){
 // rumble); the Soundeffects bus is the punchy one-shots (crash/cash-out/bet).
 let thrustNodes=null;
 function startThrust(){
-  if(!S.sound || !hasSnd('thrust')) return; stopThrust();
+  if(!S.sound||!S.entered || !hasSnd('thrust')) return; stopThrust();
   try{
     const a=ac(), b=_buf['thrust']; if(!a||!b) return;
     const src=a.createBufferSource(); src.buffer=b; src.loop=true;
@@ -351,7 +352,7 @@ function stopThrust(){
 // on the Music bus, stopped at crash.
 let musicNodes=null;
 function startMusic(){
-  if(!S.sound || !hasSnd('music')) return; stopMusic();
+  if(!S.sound||!S.entered || !hasSnd('music')) return; stopMusic();
   try{
     const a=ac(), b=_buf['music']; if(!a||!b) return;
     const src=a.createBufferSource(); src.buffer=b; src.loop=true;
@@ -367,7 +368,7 @@ function stopMusic(){
 }
 // spoken countdown ("3, 2, 1, Liftoff!")
 function say(text){
-  if(!S.sound) return;
+  if(!S.sound||!S.entered) return;
   try{
     const sy=window.speechSynthesis; if(!sy) return;
     const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; if(enVoice) u.voice=enVoice; u.rate=1.0; u.pitch=1; u.volume=Math.max(0,Math.min(1,(S.vol&&S.vol.voice!=null)?S.vol.voice:0.95));
@@ -394,7 +395,7 @@ const sfx = {
 // big-win celebration sound (synth): an ascending fanfare chord, an applause/cheer
 // noise bed, a short two-tone siren sweep, and a spoken cheer. Routed to the FX bus.
 function jackpotSound(){
-  if(!S.sound) return;
+  if(!S.sound||!S.entered) return;
   // celebration sting (real clip preferred, else synth fanfare + applause + siren)
   if(hasSnd('jackpot')){ playSnd('jackpot',{cat:'fx',vol:0.9}); }
   else try{
@@ -1278,12 +1279,14 @@ window.addEventListener('touchend', unlockAudio);
 // INTRO / SPLASH: the game runs behind it; tapping LET'S GO is the user gesture that
 // unlocks audio, then we reveal the game on the NEXT countdown so sound + numbers start
 // together (no more "visuals first, sound only after a tap" mismatch).
-function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); S.introWait=false; }
+function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); S.introWait=false; S.entered=true; }
+// Reveal exactly when a FRESH betting phase starts, so the countdown numbers, the voice
+// and the rocket all begin together — and audio (gated by S.entered) turns on at that
+// same instant, never leaking a previous round.
 function maybeRevealOnBetting(){ if(S.introWait) revealGame(); }
 { const gb=$('introGo'); if(gb) gb.onclick=()=>{
-    unlockAudio();
-    if(S.phase==='betting' && (S.cdEndTs-performance.now())>1800) revealGame();   // already early in a countdown → go now
-    else S.introWait=true;                                                         // otherwise reveal at the next countdown
+    unlockAudio();          // gesture unlocks the AudioContext (iOS); S.entered stays false…
+    S.introWait=true;       // …until the next countdown starts → reveal + enable sound together
   };
 }
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
