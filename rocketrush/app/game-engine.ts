@@ -125,8 +125,8 @@ function crashFromHmac(hex){
 const S = {
   balance: 1000.00,
   slots: [   // two independent bets per round (Aviator-style)
-    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
-    { bet:100, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
+    { bet:1, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
+    { bet:1, auto:0, placed:false, amount:0, cashedOut:false, won:0, queued:false, curBet:null },
   ],
   mode: 'local',        // 'local' (simulation) | 'net' (authoritative server)
   rounds: [],           // recent completed rounds {nonce,crash,serverSeed,clientSeed,hmac}
@@ -1060,21 +1060,42 @@ function sysChat(t){ addChat('Liftoff X', t, true); }
 /* ============================================================
    CONTROLS WIRING
    ============================================================ */
+const betDisp = v => v%1===0 ? v.toLocaleString('en-US') : v.toFixed(2);
 function setBet(i, v){ const s=S.slots[i]; const cap=Math.max(0.10, S.balance);
   s.bet=Math.max(0.10, Math.min(Math.round(v*100)/100, cap));   // €0.10 min, 2-decimal precision
-  const el=$('betVal'+i); if(el) el.textContent = s.bet%1===0 ? s.bet.toLocaleString('en-US') : s.bet.toFixed(2);
+  const el=$('betVal'+i); if(el && document.activeElement!==el) el.value = betDisp(s.bet);   // don't fight the user mid-typing
+  renderAction(i); }
+// live parse while the user types a custom amount (don't rewrite the field here)
+function onBetType(i){ const el=$('betVal'+i); if(!el) return; const s=S.slots[i];
+  const raw=parseFloat(String(el.value).replace(/[^0-9.]/g,''));
+  if(!isNaN(raw)){ const cap=Math.max(0.10,S.balance); s.bet=Math.max(0.10, Math.min(Math.round(raw*100)/100, cap)); }
   renderAction(i); }
 function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000); const el=$('autoVal'+i); if(el) el.textContent = s.auto===0? 'OFF' : s.auto.toFixed(2)+'x'; }
 
+// click the amount to type your own stake
+[0,1].forEach(i=>{ const el=$('betVal'+i); if(!el) return;
+  el.addEventListener('focus', ()=>{ try{ el.select(); }catch(e){} });
+  el.addEventListener('input', ()=>onBetType(i));
+  el.addEventListener('blur',  ()=>setBet(i, S.slots[i].bet));        // normalise display on exit
+  el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+});
+
 document.querySelectorAll('[data-bet]').forEach(b=>{
-  const doStep=()=>{ const i=+(b.dataset.slot||0), s=S.slots[i];
+  const doStep=()=>{ const i=+(b.dataset.slot||0), s=S.slots[i], up=b.dataset.bet==='+';
     // step scales with the amount so big stakes are quick to dial in (up to €1M+)
     const step = s.bet<=1?0.10 : s.bet<=10?1 : s.bet<100?10 : s.bet<500?50 : s.bet<5000?500 : s.bet<50000?5000 : s.bet<500000?50000 : 100000;
-    setBet(i, s.bet + (b.dataset.bet==='+'?step:-step));
+    // snap onto the round grid of `step` so held repeats always land on clean amounts
+    const st=Math.round(step*100), cur=Math.round(s.bet*100);
+    const nc = up ? Math.floor(cur/st)*st + st : Math.ceil(cur/st)*st - st;
+    setBet(i, nc/100);
   };
-  // tap = one step; press-and-hold = rapid auto-repeat (ramps up via the scaling step)
-  let to=null, iv=null; const stop=()=>{ clearTimeout(to); clearInterval(iv); to=iv=null; };
-  b.addEventListener('pointerdown', e=>{ e.preventDefault(); doStep(); stop(); to=setTimeout(()=>{ iv=setInterval(doStep, 80); }, 350); });
+  // tap = one step; press-and-hold = auto-repeat that ACCELERATES (220ms → 45ms)
+  let to=null, iv=null, spd=220;
+  const stop=()=>{ clearTimeout(to); clearTimeout(iv); to=iv=null; spd=220; };
+  const repeat=()=>{ doStep(); spd=Math.max(45, spd*0.8); iv=setTimeout(repeat, spd); };
+  b.addEventListener('pointerdown', e=>{ e.preventDefault();
+    const ae=document.activeElement; if(ae && ae.classList && ae.classList.contains('bet-input')) ae.blur();   // commit any typed value first
+    doStep(); stop(); spd=220; to=setTimeout(repeat, 340); });
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev, stop));
 });
 document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{
@@ -1544,7 +1565,7 @@ function boot(){
   sysChat('Welcome to Liftoff X 🚀  Place a bet, cash out before the crash.');
   syncSound(); syncVolUI();
   updateBalance();
-  setBet(0,100); setBet(1,100); setAuto(0,0); setAuto(1,0);
+  setBet(0,1); setBet(1,1); setAuto(0,0); setAuto(1,0);
   authInit();   // restore Supabase session (if any) → connect to server (or local fallback)
 }
 boot();

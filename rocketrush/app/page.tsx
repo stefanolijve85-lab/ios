@@ -67,7 +67,7 @@ export default function Page() {
             <div className="bp-label">Bet {i + 1}</div>
             <div className="stepper sm">
               <button data-bet="-" data-slot={i}>−</button>
-              <div className="val tnum">€<span id={`betVal${i}`}>100</span></div>
+              <div className="val tnum">€<input id={`betVal${i}`} className="bet-input" type="text" inputMode="decimal" defaultValue="1" aria-label={`Bet ${i + 1} amount`} /></div>
               <button data-bet="+" data-slot={i}>+</button>
             </div>
             <div className="bp-auto">
