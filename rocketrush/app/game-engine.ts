@@ -517,11 +517,22 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     let dx=a1.x-a2.x, dy=a1.y-a2.y, ang;
     if(Math.hypot(dx,dy) < 0.3){ ang = (S.lastAng!=null? S.lastAng : 0); }
     else { ang = Math.atan2(dy,dx) + Math.PI/2; S.lastAng = ang; }   // nose follows the curve (starts vertical, tips right)
+    // As the flight goes long the gravity-turn tangent flattens out and the nose ends
+    // up pointing sideways. Bias it back UP toward the moon — gently early, more as the
+    // multiplier climbs — so the nose keeps aiming at the moon (top-right).
+    if(S.phase==='running'){
+      const moonX=0.87*W, moonY=0.12*H;
+      const angMoon = Math.atan2(moonY-ry, moonX-p.x) + Math.PI/2;
+      const wM = Math.min(0.6, Math.max(0,(S.mult-1.5)/22));   // ~0 below 1.5x → up to 0.6 at high mult
+      let d = angMoon - ang; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+      ang = ang + d*wM; S.lastAng = ang;
+    }
     if(S.phase==='running'){
       if(!S.lowBw){
-        const n = Math.random()<.85?2:1;
-        for(let k=0;k<n;k++) particles.push({x:p.x+rnd(-2,2),y:ry+rnd(0,3), vx:rnd(-.8,.8)-1.2, vy:rnd(-.4,.6)+1.7,
-          life:1, fade:rnd(.05,.085), r:rnd(1.3,3.0), glow:true,
+        const boosting = S.mult>=1.66;                 // extra thrusters → denser exhaust
+        const n = (Math.random()<.85?2:1) + (boosting?2:0);
+        for(let k=0;k<n;k++) particles.push({x:p.x+rnd(-2,2),y:ry+rnd(0,3), vx:rnd(-.8,.8)-1.2, vy:rnd(-.4,.6)+(boosting?2.2:1.7),
+          life:1, fade:rnd(.05,.085), r:rnd(1.3,boosting?3.6:3.0), glow:true,
           c: Math.random()<.45?'#FFE08A':(Math.random()<.6?'#FF8A00':'#FF5A2A')});
       }
       drawRocket(p.x, ry, ang);
@@ -558,8 +569,12 @@ function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
   const flick = Math.sin(performance.now()/28)*4;
-  const f = (heat==null) ? (14+flick) : (1.5 + heat*20 + flick*Math.max(.2,heat));
-  const gi = (heat==null?1:heat);   // glow intensity (warming up on the pad → full in flight)
+  // EXTRA THRUSTERS: at ~1.66x (where the music kicks in) the engines fire harder —
+  // a longer, brighter main plume + two angled side-thruster jets. Eases in 1.66→2.2x.
+  const boost = (heat==null && S.phase==='running') ? Math.max(0, Math.min(1, (S.mult-1.66)/0.54)) : 0;
+  let f = (heat==null) ? (14+flick) : (1.5 + heat*20 + flick*Math.max(.2,heat));
+  f *= 1 + 0.55*boost;
+  const gi = (heat==null?1:heat) * (1 + 0.5*boost);   // glow intensity (warming up on the pad → full in flight)
 
   // ENGINE GLOW + FLAME — additive bloom. A PROPER exhaust: WIDE & bright right at
   // the nozzle, then tapering smoothly to a transparent tip (the tail). Anchored to
@@ -575,6 +590,17 @@ function drawRocket(x,y,ang,heat){
   let fc = ctx.createLinearGradient(0,ny-1,0,ny+f*0.62);   // inner white-hot core
   fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
   ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.1,ny); ctx.quadraticCurveTo(0,ny+f*0.62,2.1,ny); ctx.closePath(); ctx.fill();
+  // side-thruster jets — two short angled plumes from the base corners when boosting
+  if(boost>0){
+    const sl = (5 + flick*0.4) * boost;   // side-jet length
+    for(const sx of [-1,1]){
+      ctx.save(); ctx.translate(sx*3.4, ny-2.5); ctx.rotate(sx*0.42);   // splay outward
+      let sg = ctx.createLinearGradient(0,0,0,sl+1.5);
+      sg.addColorStop(0,`rgba(255,245,200,${.9*boost})`); sg.addColorStop(.55,`rgba(255,150,45,${.6*boost})`); sg.addColorStop(1,'rgba(255,80,50,0)');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.moveTo(-1.7,0); ctx.quadraticCurveTo(0,sl+1.5,1.7,0); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
   ctx.globalCompositeOperation='source-over';
 
   // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
