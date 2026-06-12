@@ -17,6 +17,7 @@ import { upsertProfile, recordPlay, getProfile, leaderboard, pushActivity, recen
 const RATE = 0.16;       // growth rate — MUST match the client (multAt: e^(RATE*t))
 const BET_MS = 5000;     // betting window
 const PAUSE_MS = 3200;   // pause after crash
+const MIN_BET = 0.10;    // minimum stake (matches the client + the €0.10 marketing claim)
 const r2 = n => Math.round(n * 100) / 100;
 
 const NAMES = ['Nova','Orbit','Zenith','Comet','Vega','Astra','Pulsar','Quasar','Lyra','Titan','Apollo','Luna','Helio','Cosmo','Stellar','Falcon','Drift','Echo','Onyx','Mika','Rin','Kai','Juno','Atlas','Sol','Iris','Nyx','Rex','Zara','Milo'];
@@ -227,7 +228,9 @@ export async function attachGame(io) {
       slot = slot === 1 ? 1 : 0; amount = Number(amount);
       if (game.phase !== 'betting') return sock.emit('bet:rejected', { slot, reason: 'PHASE_CLOSED' });
       if (p.bets[slot]) return sock.emit('bet:rejected', { slot, reason: 'ALREADY_BET' });
-      if (!(amount > 0) || amount > p.rec.balance) return sock.emit('bet:rejected', { slot, reason: 'INSUFFICIENT_BALANCE' });
+      if (!(amount >= MIN_BET)) return sock.emit('bet:rejected', { slot, reason: 'BELOW_MIN' });
+      if (amount > p.rec.balance) return sock.emit('bet:rejected', { slot, reason: 'INSUFFICIENT_BALANCE' });
+      amount = r2(amount);
       p.rec.balance = r2(p.rec.balance - amount);
       p.bets[slot] = { amount, auto: Number(auto) || 0, cashedOut: false, nonce: game.nonce };
       addTx(p, 'bet', -amount);

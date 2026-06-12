@@ -1060,13 +1060,16 @@ function sysChat(t){ addChat('Liftoff X', t, true); }
 /* ============================================================
    CONTROLS WIRING
    ============================================================ */
-function setBet(i, v){ const s=S.slots[i]; s.bet=Math.max(10,Math.min(Math.round(v), Math.max(10,Math.floor(S.balance)))); const el=$('betVal'+i); if(el) el.textContent=s.bet.toLocaleString('en-US'); renderAction(i); }
+function setBet(i, v){ const s=S.slots[i]; const cap=Math.max(0.10, S.balance);
+  s.bet=Math.max(0.10, Math.min(Math.round(v*100)/100, cap));   // €0.10 min, 2-decimal precision
+  const el=$('betVal'+i); if(el) el.textContent = s.bet%1===0 ? s.bet.toLocaleString('en-US') : s.bet.toFixed(2);
+  renderAction(i); }
 function setAuto(i, v){ const s=S.slots[i]; s.auto = v<=1? 0 : Math.min(v,1000); const el=$('autoVal'+i); if(el) el.textContent = s.auto===0? 'OFF' : s.auto.toFixed(2)+'x'; }
 
 document.querySelectorAll('[data-bet]').forEach(b=>{
   const doStep=()=>{ const i=+(b.dataset.slot||0), s=S.slots[i];
     // step scales with the amount so big stakes are quick to dial in (up to €1M+)
-    const step = s.bet<100?10 : s.bet<500?50 : s.bet<5000?500 : s.bet<50000?5000 : s.bet<500000?50000 : 100000;
+    const step = s.bet<=1?0.10 : s.bet<10?1 : s.bet<100?10 : s.bet<500?50 : s.bet<5000?500 : s.bet<50000?5000 : s.bet<500000?50000 : 100000;
     setBet(i, s.bet + (b.dataset.bet==='+'?step:-step));
   };
   // tap = one step; press-and-hold = rapid auto-repeat (ramps up via the scaling step)
