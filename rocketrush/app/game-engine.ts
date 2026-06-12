@@ -219,6 +219,7 @@ const SND = { explosion:'/sounds/explosion.mp3', engine:'/sounds/engine.mp3',
   thrust:'/sounds/thrust.mp3',                 // thrust-alarm bed, plays every flight
   music:'/sounds/music.mp3',                   // optional looping background music (Music bus)
   jackpot:'/sounds/jackpot.mp3',               // optional big-win celebration clip (> €100k)
+  bigwin:'/sounds/bigwin.mp3',                  // optional spoken "Master Multiplier" cheer
   countdown:'/sounds/countdown.mp3',           // one clip: "3, 2, 1, liftoff"
   '3':'/sounds/3.mp3', '2':'/sounds/2.mp3', '1':'/sounds/1.mp3',   // OR per-number clips
   liftoff:'/sounds/liftoff.mp3', cash:'/sounds/cashout.mp3' };
@@ -393,29 +394,33 @@ const sfx = {
 // noise bed, a short two-tone siren sweep, and a spoken cheer. Routed to the FX bus.
 function jackpotSound(){
   if(!S.sound) return;
-  if(hasSnd('jackpot')){ playSnd('jackpot',{cat:'fx',vol:0.9}); return; }   // prefer a real clip if provided
-  try{
-    const a=ac(); if(!a) return; const t=a.currentTime, dest=busFor('fx')||a.destination;
-    // 1) triumphant ascending arpeggio (C E G C')
-    [523.25,659.25,783.99,1046.5].forEach((fr,i)=>{
-      const o=a.createOscillator(), g=a.createGain(); o.type='triangle'; o.frequency.value=fr;
-      const ts=t+i*0.10; g.gain.setValueAtTime(0.0001,ts); g.gain.exponentialRampToValueAtTime(0.18,ts+0.03); g.gain.exponentialRampToValueAtTime(0.0001,ts+0.55);
-      o.connect(g); g.connect(dest); o.start(ts); o.stop(ts+0.6);
-    });
-    // 2) applause / cheer bed — filtered noise with a few swelling bumps
-    const noise=a.createBufferSource(); noise.buffer=noiseBuffer(a,1.8,x=>1);
-    const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.6;
-    const ng=a.createGain(); ng.gain.setValueAtTime(0.0001,t);
-    for(let k=0;k<6;k++){ const tk=t+0.15+k*0.26; ng.gain.linearRampToValueAtTime(0.05+Math.random()*0.03,tk); ng.gain.linearRampToValueAtTime(0.025,tk+0.13); }
-    ng.gain.linearRampToValueAtTime(0.0001,t+1.8);
-    noise.connect(bp); bp.connect(ng); ng.connect(dest); noise.start();
-    // 3) short two-tone celebration siren
-    const so=a.createOscillator(), sg=a.createGain(); so.type='sine';
-    so.frequency.setValueAtTime(740,t); so.frequency.setValueAtTime(980,t+0.18); so.frequency.setValueAtTime(740,t+0.36); so.frequency.setValueAtTime(980,t+0.54);
-    sg.gain.setValueAtTime(0.0001,t); sg.gain.exponentialRampToValueAtTime(0.07,t+0.05); sg.gain.setValueAtTime(0.07,t+0.66); sg.gain.exponentialRampToValueAtTime(0.0001,t+0.85);
-    so.connect(sg); sg.connect(dest); so.start(t); so.stop(t+0.9);
-    say('Big win!');   // spoken cheer (voice volume)
+  // celebration sting (real clip preferred, else synth fanfare + applause + siren)
+  if(hasSnd('jackpot')){ playSnd('jackpot',{cat:'fx',vol:0.9}); }
+  else try{
+    const a=ac(); if(a){ const t=a.currentTime, dest=busFor('fx')||a.destination;
+      // 1) triumphant ascending arpeggio (C E G C')
+      [523.25,659.25,783.99,1046.5].forEach((fr,i)=>{
+        const o=a.createOscillator(), g=a.createGain(); o.type='triangle'; o.frequency.value=fr;
+        const ts=t+i*0.10; g.gain.setValueAtTime(0.0001,ts); g.gain.exponentialRampToValueAtTime(0.18,ts+0.03); g.gain.exponentialRampToValueAtTime(0.0001,ts+0.55);
+        o.connect(g); g.connect(dest); o.start(ts); o.stop(ts+0.6);
+      });
+      // 2) applause / cheer bed — filtered noise with a few swelling bumps
+      const noise=a.createBufferSource(); noise.buffer=noiseBuffer(a,1.8,x=>1);
+      const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.6;
+      const ng=a.createGain(); ng.gain.setValueAtTime(0.0001,t);
+      for(let k=0;k<6;k++){ const tk=t+0.15+k*0.26; ng.gain.linearRampToValueAtTime(0.05+Math.random()*0.03,tk); ng.gain.linearRampToValueAtTime(0.025,tk+0.13); }
+      ng.gain.linearRampToValueAtTime(0.0001,t+1.8);
+      noise.connect(bp); bp.connect(ng); ng.connect(dest); noise.start();
+      // 3) short two-tone celebration siren
+      const so=a.createOscillator(), sg=a.createGain(); so.type='sine';
+      so.frequency.setValueAtTime(740,t); so.frequency.setValueAtTime(980,t+0.18); so.frequency.setValueAtTime(740,t+0.36); so.frequency.setValueAtTime(980,t+0.54);
+      sg.gain.setValueAtTime(0.0001,t); sg.gain.exponentialRampToValueAtTime(0.07,t+0.05); sg.gain.setValueAtTime(0.07,t+0.66); sg.gain.exponentialRampToValueAtTime(0.0001,t+0.85);
+      so.connect(sg); sg.connect(dest); so.start(t); so.stop(t+0.9);
+    }
   }catch(e){}
+  // spoken "Master Multiplier" cheer (real clip preferred, else TTS)
+  if(hasSnd('bigwin')) playSnd('bigwin',{cat:'voice',vol:0.95});
+  else say('Master Multiplier!');
 }
 
 /* ============================================================
@@ -997,6 +1002,7 @@ function showRoundWin(amount){
   }
   const jackpot = amount>=100000;                     // BIG win → bigger box, confetti, cheer
   el.classList.toggle('jackpot', jackpot);
+  const tt=$('wpTitle'); if(tt) tt.textContent = jackpot ? 'MASTER MULTIPLIER' : 'YOUR TOTAL WIN';
   const cm=$('centerMain'); if(cm) cm.style.display='none';   // hide the crash number so the pop-up stands alone
   el.classList.add('show');
   if(jackpot){ fireConfetti(); sfx.jackpot(); }
