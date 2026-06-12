@@ -1279,18 +1279,14 @@ function unlockAudio(){ try{
 }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('touchend', unlockAudio);
-// INTRO / SPLASH: the game runs behind it; tapping LET'S GO is the user gesture that
-// unlocks audio, then we reveal the game on the NEXT countdown so sound + numbers start
-// together (no more "visuals first, sound only after a tap" mismatch).
-function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); S.introWait=false; S.entered=true; }
-// Reveal exactly when a FRESH betting phase starts, so the countdown numbers, the voice
-// and the rocket all begin together — and audio (gated by S.entered) turns on at that
-// same instant, never leaking a previous round.
-function maybeRevealOnBetting(){ if(S.introWait) revealGame(); }
-{ const gb=$('introGo'); if(gb) gb.onclick=()=>{
-    unlockAudio();          // gesture unlocks the AudioContext (iOS); S.entered stays false…
-    S.introWait=true;       // …until the next countdown starts → reveal + enable sound together
-  };
+// INTRO / SPLASH: the game runs behind it. Tapping LET'S GO hides the splash IMMEDIATELY
+// (instant feedback) and is the gesture that unlocks audio; sound itself stays gated
+// (S.entered=false) until the next fresh countdown, so it never leaks a previous round and
+// the first countdown you hear is perfectly in sync.
+function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
+function maybeRevealOnBetting(){ if(S.armAudio){ S.armAudio=false; S.entered=true; } }
+{ const gb=$('introGo'); if(gb){ const go=()=>{ unlockAudio(); revealGame(); S.armAudio=true; };
+    gb.addEventListener('click', go); gb.addEventListener('touchend', e=>{ e.preventDefault(); go(); }, {passive:false}); }
 }
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
 // RESUME a half-played countdown when you come back (esp. during a long round).
