@@ -15,7 +15,7 @@ import { makeStores, START_BALANCE } from './store.mjs';
 import { upsertProfile, recordPlay, getProfile, leaderboard, pushActivity, recentActivity, seedBots } from './social.mjs';
 
 const RATE = 0.16;       // growth rate — MUST match the client (multAt: e^(RATE*t))
-const BET_MS = 7000;     // betting window (fits the full 5-4-3-2-1 countdown voice clip)
+const BET_MS = 6500;     // betting window — launch lands on the clip's "liftoff" (~6.3s)
 const PAUSE_MS = 3200;   // pause after crash
 const MIN_BET = 0.10;    // minimum stake (matches the client + the €0.10 marketing claim)
 const r2 = n => Math.round(n * 100) / 100;
