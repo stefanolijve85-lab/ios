@@ -33,7 +33,6 @@ export default function Page() {
 
       {/* ===================== STAGE ===================== */}
       <div className="stage">
-        <div className="planet p1" />
         <div className="planet p2" />
         <div className="planet p3" />
         <canvas id="sky" />

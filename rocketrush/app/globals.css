@@ -78,9 +78,6 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
     radial-gradient(120% 100% at 50% 0%, var(--stage-1), var(--stage-2) 70%);
 }
 .planet { position: absolute; border-radius: 50%; filter: blur(.3px); opacity: .9; pointer-events: none; }
-.p1 { width: 120px; height: 120px; left: -38px; top: -30px; opacity: .6;
-      background: radial-gradient(circle at 35% 30%, #C49DFF, #6D3BE0 55%, #2E1660 100%);
-      box-shadow: 0 0 26px rgba(155,92,246,.16), inset -10px -10px 26px rgba(18,8,46,.55); }
 /* the moon — the rocket's destination, upper-right (detailed art, glow baked in) */
 .p2 { width: 54px; height: 54px; right: 13px; top: 13px; filter: none; opacity: 1;
       background: center/contain no-repeat url('/moon.png');
