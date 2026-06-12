@@ -780,7 +780,8 @@ async function startBetting(){ if(!ENGINE_ALIVE) return;
   S._riderBase=Math.floor((S._onlineVal||2800)*(0.4+Math.random()*0.22));
   setInRound(S._riderBase);
 
-  showCountdown(7000, startRunning);   // matches the server BET_MS + the full countdown voice clip
+  showCountdown(6500, startRunning);   // matches the server BET_MS + the full countdown voice clip
+  maybeRevealOnBetting();
   renderAction();
 }
 
@@ -801,23 +802,26 @@ function showCountdown(ms, onDone){
   // A "full window" clip counts the whole way down (e.g. "5,4,3,2,1, we have liftoff").
   // We fire it at the start and let the numbers follow the clock, so they stay in sync.
   const fullCount = voiced && cdur >= 4.4;
-  const fireAt = fullCount ? Math.min(ms, Math.round(cdur*1000)) : 3280;   // ms remaining when the clip starts → its end lands at launch
+  const fireAt = fullCount ? ms : 3280;   // full clip fires at the window start; short clip fires so liftoff lands at launch
+  // Measured spoken-number onsets in countdown.mp3 (seconds from clip start):
+  // 5→0.06, 4→1.16, 3→2.18, 2→3.18, 1→4.14, "liftoff"→~6.28. Drive the on-screen
+  // number from these so each matches the voice exactly.
+  const CD_NUMS=[[0.06,5],[1.16,4],[2.18,3],[3.18,2],[4.14,1]];
   // Announce the countdown audio ONLY ONCE per round — never again on a reconnect /
   // snapshot of the same round (that was causing the voice to replay mid-game).
   const announce = (S.voicedNonce !== S.nonce); if(announce) S.voicedNonce=S.nonce;
-  let clipFired=false;
-  $('countNum').textContent = fullCount ? Math.max(0,Math.min(5,Math.ceil(left/(total/5)))) : Math.max(0,Math.ceil(left/1000));
+  let clipFired=false, fireLeft=ms;
+  const fullNum=()=>{ const el=(fireLeft-left)/1000; let n=5; for(const [tt,nn] of CD_NUMS){ if(el>=tt) n=nn; } return n; };
+  $('countNum').textContent = fullCount ? 5 : Math.max(0,Math.ceil(left/1000));
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
     left-=100;
     $('countBar').style.transform='scaleX('+Math.max(0,left/total)+')';
     if(voiced){
-      if(left<=fireAt && !clipFired){ clipFired=true; if(announce) S.cdAudio=playCountdownRadio(); }
-      // full-window clip ("5,4,3,2,1, liftoff"): spread the 5 numbers EVENLY across the
-      // whole window so each shows ~window/5 (≈1.4s) and matches the slower spoken pacing.
-      // Short 3-2-1 clip: keep the tuned remap.
-      const n = fullCount ? Math.max(0, Math.min(5, Math.ceil(left/(total/5))))
+      if(left<=fireAt && !clipFired){ clipFired=true; fireLeft=left; if(announce) S.cdAudio=playCountdownRadio(); }
+      // full clip: numbers follow the measured voice onsets; short 3-2-1 clip: tuned remap.
+      const n = fullCount ? fullNum()
                           : (left>3180 ? Math.max(0,Math.ceil(left/1000)) : (left>2160?3:left>1200?2:1));
       if(String(n)!==$('countNum').textContent) $('countNum').textContent=String(n);
     } else {
@@ -1271,6 +1275,17 @@ function unlockAudio(){ try{
 }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('touchend', unlockAudio);
+// INTRO / SPLASH: the game runs behind it; tapping LET'S GO is the user gesture that
+// unlocks audio, then we reveal the game on the NEXT countdown so sound + numbers start
+// together (no more "visuals first, sound only after a tap" mismatch).
+function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); S.introWait=false; }
+function maybeRevealOnBetting(){ if(S.introWait) revealGame(); }
+{ const gb=$('introGo'); if(gb) gb.onclick=()=>{
+    unlockAudio();
+    if(S.phase==='betting' && (S.cdEndTs-performance.now())>1800) revealGame();   // already early in a countdown → go now
+    else S.introWait=true;                                                         // otherwise reveal at the next countdown
+  };
+}
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
 // RESUME a half-played countdown when you come back (esp. during a long round).
 document.addEventListener('visibilitychange', ()=>{
@@ -1404,6 +1419,7 @@ function netBetting(d){
   $('fNonce').textContent=S.nonce;
   S.slots.forEach((s,i)=>{ if(s.queued && S.balance>=s.bet){ s.queued=false; placeBet(i,true); } });
   showCountdown(d.startsInMs, null);   // the server triggers round:start
+  maybeRevealOnBetting();
   renderAction();
 }
 function netStart(){
