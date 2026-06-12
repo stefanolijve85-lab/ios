@@ -367,7 +367,35 @@ const sfx = {
     if(hasSnd(String(n))){ playSnd(String(n),{cat:'voice'}); return; }   // per-number clips
     beep(520+(3-n)*120,.16,'square',.07,'voice'); say(String(n));       // synth + English TTS
   },
+  jackpot: ()=>jackpotSound(),   // big-win celebration: triumphant chord + cheer + siren
 };
+// big-win celebration sound (synth): an ascending fanfare chord, an applause/cheer
+// noise bed, a short two-tone siren sweep, and a spoken cheer. Routed to the FX bus.
+function jackpotSound(){
+  if(!S.sound) return;
+  try{
+    const a=ac(); if(!a) return; const t=a.currentTime, dest=busFor('fx')||a.destination;
+    // 1) triumphant ascending arpeggio (C E G C')
+    [523.25,659.25,783.99,1046.5].forEach((fr,i)=>{
+      const o=a.createOscillator(), g=a.createGain(); o.type='triangle'; o.frequency.value=fr;
+      const ts=t+i*0.10; g.gain.setValueAtTime(0.0001,ts); g.gain.exponentialRampToValueAtTime(0.18,ts+0.03); g.gain.exponentialRampToValueAtTime(0.0001,ts+0.55);
+      o.connect(g); g.connect(dest); o.start(ts); o.stop(ts+0.6);
+    });
+    // 2) applause / cheer bed — filtered noise with a few swelling bumps
+    const noise=a.createBufferSource(); noise.buffer=noiseBuffer(a,1.8,x=>1);
+    const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.6;
+    const ng=a.createGain(); ng.gain.setValueAtTime(0.0001,t);
+    for(let k=0;k<6;k++){ const tk=t+0.15+k*0.26; ng.gain.linearRampToValueAtTime(0.05+Math.random()*0.03,tk); ng.gain.linearRampToValueAtTime(0.025,tk+0.13); }
+    ng.gain.linearRampToValueAtTime(0.0001,t+1.8);
+    noise.connect(bp); bp.connect(ng); ng.connect(dest); noise.start();
+    // 3) short two-tone celebration siren
+    const so=a.createOscillator(), sg=a.createGain(); so.type='sine';
+    so.frequency.setValueAtTime(740,t); so.frequency.setValueAtTime(980,t+0.18); so.frequency.setValueAtTime(740,t+0.36); so.frequency.setValueAtTime(980,t+0.54);
+    sg.gain.setValueAtTime(0.0001,t); sg.gain.exponentialRampToValueAtTime(0.07,t+0.05); sg.gain.setValueAtTime(0.07,t+0.66); sg.gain.exponentialRampToValueAtTime(0.0001,t+0.85);
+    so.connect(sg); sg.connect(dest); so.start(t); so.stop(t+0.9);
+    say('Big win!');   // spoken cheer (voice volume)
+  }catch(e){}
+}
 
 /* ============================================================
    SIMULATED MULTIPLAYER (bots) — no backend needed for demo
@@ -941,10 +969,45 @@ function roundWon(){ return S.slots.reduce((t,s)=> t + (s.cashedOut ? slotProfit
 // ONE clear centered pop-up with the round's winnings, shown when the round ends.
 function showRoundWin(amount){
   const el=$('winPop'); if(!el){ flashWon('+€'+fmt(amount), true); return; }
-  const a=$('wpAmt'); if(a) a.textContent='+€'+fmt(amount);
+  const a=$('wpAmt'); const s='+€'+fmt(amount);
+  if(a){ a.textContent=s;
+    // auto-fit: shrink the number so even huge wins fit the box
+    a.style.fontSize = (s.length<=10?42 : s.length<=13?36 : s.length<=16?29 : s.length<=19?24 : 20)+'px';
+  }
+  const jackpot = amount>=100000;                     // BIG win → bigger box, confetti, cheer
+  el.classList.toggle('jackpot', jackpot);
   const cm=$('centerMain'); if(cm) cm.style.display='none';   // hide the crash number so the pop-up stands alone
   el.classList.add('show');
-  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), 2800);
+  if(jackpot){ fireConfetti(); sfx.jackpot(); }
+  clearTimeout(S.wpTimer); S.wpTimer=setTimeout(()=>el.classList.remove('show'), jackpot?4200:2800);
+}
+// confetti burst that pops up and rains down over the screen (DOM, on top of everything)
+function fireConfetti(){
+  try{
+    const layer=document.createElement('div'); layer.className='confetti-layer';
+    document.body.appendChild(layer);
+    const colors=['#FF8A00','#22C55E','#9B5CF6','#38BDF8','#F43F5E','#EAB308','#FFFFFF'];
+    const Wn=window.innerWidth, Hn=window.innerHeight, cx=Wn/2, cy=Hn*0.42;
+    const N=S.lowBw?44:130, pieces=[];
+    for(let i=0;i<N;i++){
+      const d=document.createElement('i'), w=(rnd(5,10)|0), h=(rnd(8,15)|0);
+      d.style.width=w+'px'; d.style.height=h+'px'; d.style.background=colors[i%colors.length];
+      layer.appendChild(d);
+      pieces.push({el:d, x:cx, y:cy, vx:rnd(-11,11), vy:-rnd(7,17), rot:rnd(0,360), vr:rnd(-16,16)});
+    }
+    const start=performance.now(); let last=start;
+    function step(now){
+      const dt=Math.min(2.2,(now-last)/16.7); last=now; let alive=false;
+      for(const p of pieces){
+        p.vy+=0.34*dt; p.vx*=Math.pow(0.99,dt);
+        p.x+=p.vx*dt; p.y+=p.vy*dt; p.rot+=p.vr*dt;
+        p.el.style.transform='translate('+p.x.toFixed(1)+'px,'+p.y.toFixed(1)+'px) rotate('+p.rot.toFixed(0)+'deg)';
+        if(p.y<Hn+50) alive=true;
+      }
+      if(alive && now-start<4500) requestAnimationFrame(step); else layer.remove();
+    }
+    requestAnimationFrame(step);
+  }catch(e){}
 }
 // Live Activity feed (wins, big multipliers, joins). Rows are clickable → profile.
 function addActivity(ev){

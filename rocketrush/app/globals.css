@@ -119,6 +119,18 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .win-pop .wp-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; opacity: .82; }
 .win-pop .wp-amt { margin-top: 4px; font-size: 42px; font-weight: 900; line-height: 1; }
 .win-pop .wp-x { position: absolute; top: 8px; right: 10px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.18); color: #042210; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+/* JACKPOT — big wins (> €100k): larger box, glow, a celebratory pop */
+.win-pop.jackpot { width: min(92%, 400px); padding: 22px 26px 24px;
+  box-shadow: 0 22px 64px rgba(34,197,94,.68), 0 0 0 2px rgba(255,255,255,.28), 0 0 80px rgba(34,197,94,.5); }
+.win-pop.jackpot.show { animation: jackpotPop .55s cubic-bezier(.2,1.5,.4,1) 1; }
+.win-pop.jackpot .wp-title::before { content: '🎉 '; }
+.win-pop.jackpot .wp-title::after { content: ' 🎉'; }
+@keyframes jackpotPop {
+  0% { transform: translate(-50%,-50%) scale(.6); }
+  55% { transform: translate(-50%,-50%) scale(1.1); }
+  100% { transform: translate(-50%,-50%) scale(1); } }
+.confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
+.confetti-layer i { position: absolute; top: 0; left: 0; display: block; border-radius: 1px; will-change: transform; }
 
 /* ===================== HISTORY PILLS ===================== */
 .history { display: flex; gap: 6px; overflow-x: auto; flex: none; padding: 1px; }
