@@ -14,7 +14,8 @@ prove the economics → talk to the market → only then make the big licensing 
 | 3 | **[OPERATOR-ECONOMICS.md](./OPERATOR-ECONOMICS.md)** | The GGR model: adjustable assumptions, 3 rev-share scenarios, "better for operator" comparison, scaling. | Commercial / deal-making |
 | 3b | **[MATH-RTP-VOLATILITY.md](./MATH-RTP-VOLATILITY.md)** | Game math sheet: RTP options, house edge, volatility, multiplier distribution, provably-fair, session metrics — all measured from the engine. | Technical due diligence |
 | 4 | **[RGS-ARCHITECTURE.md](./RGS-ARCHITECTURE.md)** | How to refactor the MVP into an RGS + seamless wallet API. Tech direction to lock before building. | Engineering / integration |
-| 5 | **[OUTREACH-PACK.md](./OUTREACH-PACK.md)** | Step 4 in a box: target list, email/LinkedIn templates, demo-call script + objection handling. | You, doing outreach |
+| 5 | **[OUTREACH-PLAYBOOK.md](./OUTREACH-PLAYBOOK.md)** | ⭐ **Run-this-end-to-end** outreach: 14-day plan, targets, full message sequence, call script, objection handling + tracker. | You, doing outreach |
+| 5b | **[OUTREACH-PACK.md](./OUTREACH-PACK.md)** | Earlier reference version of the outreach material (superseded by the playbook). | Reference |
 | 6 | **[FUNDING.md](./FUNDING.md)** | When to raise outside money and how much each route (bootstrap / JV / own studio) costs. | You, planning capital |
 | + | **[OPERATOR-CALL-QUESTIONS.md](./OPERATOR-CALL-QUESTIONS.md)** | Question list + capture sheet for the market-validation calls (step 4). | You, going into calls |
 
