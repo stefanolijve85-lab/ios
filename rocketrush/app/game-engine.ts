@@ -108,15 +108,17 @@ function randSeed(){
   return [...a].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 // Deterministic crash point from an HMAC hex digest.
-function crashFromHmac(hex){
+function crashFromHmac(hex, cap){
   // Instant-crash slice => the house edge.
   const hInt = parseInt(hex.slice(0,8),16);
   if (hInt % Math.round(1/HOUSE_EDGE) === 0) return 1.00;
   // Uniform 52-bit float in [0,1)
   const h = parseInt(hex.slice(0,13),16);
   const e = Math.pow(2,52);
-  const result = Math.floor((100*e - h) / (e - h)) / 100;
-  return Math.max(1.00, result);
+  let result = Math.max(1.00, Math.floor((100*e - h) / (e - h)) / 100);
+  const c = cap==null ? (S.maxMult||0) : cap;        // operator max-win cap (0 = uncapped)
+  if(c && c>1 && result>c) result = c;               // applied AFTER the fair value → still verifies
+  return result;
 }
 
 /* ============================================================
@@ -150,6 +152,7 @@ const S = {
   lastRound: null,      // {nonce, serverSeed, clientSeed, hmac, crash}
   history: [],
   sound: true,
+  maxMult: 0,           // operator max-win cap (0 = uncapped); server sends the active value
   entered: false,       // gate: no game audio until the user taps LET'S GO at a fresh round boundary
   vol: { music:0.7, fx:0.85, voice:0.95 },   // per-bus mix (Music / FX / Sounds sliders)
   voicedNonce: -1,      // last round whose countdown audio we played (no replays on reconnect)
@@ -1371,6 +1374,8 @@ async function openFair(){
     const ok=Math.abs(computed-r.crash)<0.001;
     $('fMatch').innerHTML=ok?'<span style="color:#22C55E">✓ VERIFIED</span>':'<span style="color:#F43F5E">✗ MISMATCH</span>';
   }
+  { const row=$('fMaxWinRow'), v=$('fMaxWin');   // show the operator cap when one is configured
+    if(row && v){ if(S.maxMult && S.maxMult>1){ v.textContent=Math.round(S.maxMult).toLocaleString('en-US')+'x'; row.style.display=''; } else { row.style.display='none'; } } }
   $('fairModal').classList.add('show');
 }
 $('fClientSeed').addEventListener('change',e=>{ const v=e.target.value.trim(); if(v) S.clientSeed=v; });
@@ -1433,6 +1438,7 @@ function netStart(){
   sfx.launch(); setTimeout(killCdClip, 2700); renderAction(); tickRun();
 }
 function netCrash(d){
+  if(d.maxMult!=null) S.maxMult=d.maxMult;
   S.phase='crashed'; shakeT=240; S.crashAt=d.crashPoint; S.mult=d.crashPoint;
   S.crashTime=(performance.now()-S.startTs)/1000;
   $('mult').textContent=d.crashPoint.toFixed(2)+'x'; $('mult').style.color=''; $('mult').style.textShadow=''; $('mult').classList.add('crashed-tag');
@@ -1464,7 +1470,7 @@ function bindNet(sock){
   sock.on('chat',   d=>{ addChat(d.user, d.text, false, d.pid); });
   sock.on('players',d=>{ setOnline(d.count); });
   sock.on('round:players',d=>{ setInRound(d.count); });
-  sock.on('welcome',d=>{ setOnline(d.online); S.selfPid=d.pid||null; });
+  sock.on('welcome',d=>{ setOnline(d.online); S.selfPid=d.pid||null; if(d.maxMult!=null) S.maxMult=d.maxMult; });
   sock.on('profile',d=>{ applyProfile(d); });
   // social: live activity feed, leaderboard, public profiles
   sock.on('activity', ev=>{ addActivity(ev); });

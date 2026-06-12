@@ -13,6 +13,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Operator max-win cap (multiplier). 0/unset = uncapped. e.g. set 5000 to cap every
+      # round at 5000x. Provably-fair: the cap is applied AFTER the HMAC value, so rounds
+      # still verify. Set this in the dashboard to demonstrate the cap to an operator.
+      # - key: MAX_MULT
+      #   value: "5000"
       # --- Optional: enable Supabase accounts (set values in the dashboard). ---
       # NEXT_PUBLIC_* are inlined at BUILD time, so set them before the build runs.
       # - key: NEXT_PUBLIC_SUPABASE_URL
