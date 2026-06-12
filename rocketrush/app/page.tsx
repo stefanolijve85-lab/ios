@@ -47,7 +47,6 @@ export default function Page() {
         <div className="you-won" id="youWon" />
         {/* one clear centered pop-up with the round's winnings, shown when the round ends */}
         <div className="win-pop" id="winPop">
-          <button className="wp-x" id="wpClose">✕</button>
           <div className="wp-title" id="wpTitle">YOUR TOTAL WIN</div>
           <div className="wp-amt" id="wpAmt">+€0.00</div>
         </div>

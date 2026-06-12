@@ -115,20 +115,25 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
   border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: 18px 22px 20px; color: #042210; text-align: center;
   box-shadow: 0 20px 52px rgba(34,197,94,.5); opacity: 0; pointer-events: none; z-index: 8;
   transition: opacity .3s ease, transform .3s ease; }
-.win-pop.show { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+/* zoom-bounce in: the tile pops forward, overshoots a touch, then settles */
+.win-pop.show { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto;
+  animation: winPop .42s cubic-bezier(.2,1.45,.35,1) both; }
+@keyframes winPop {
+  0%   { transform: translate(-50%,-50%) scale(.62); opacity: 0; }
+  60%  { transform: translate(-50%,-50%) scale(1.07); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
 .win-pop .wp-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; opacity: .82; }
 .win-pop .wp-amt { margin-top: 4px; font-size: 42px; font-weight: 900; line-height: 1; }
-.win-pop .wp-x { position: absolute; top: 8px; right: 10px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.18); color: #042210; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
-/* JACKPOT — big wins (> €100k): larger box, glow, a celebratory pop */
+/* JACKPOT — big wins (> €100k): larger box, glow, a bigger celebratory pop */
 .win-pop.jackpot { width: min(92%, 400px); padding: 22px 26px 24px;
   box-shadow: 0 22px 64px rgba(34,197,94,.68), 0 0 0 2px rgba(255,255,255,.28), 0 0 80px rgba(34,197,94,.5); }
-.win-pop.jackpot.show { animation: jackpotPop .55s cubic-bezier(.2,1.5,.4,1) 1; }
+.win-pop.jackpot.show { animation: jackpotPop .58s cubic-bezier(.2,1.6,.35,1) both; }
 .win-pop.jackpot .wp-title::before { content: '🎉 '; }
 .win-pop.jackpot .wp-title::after { content: ' 🎉'; }
 @keyframes jackpotPop {
-  0% { transform: translate(-50%,-50%) scale(.6); }
-  55% { transform: translate(-50%,-50%) scale(1.1); }
-  100% { transform: translate(-50%,-50%) scale(1); } }
+  0%   { transform: translate(-50%,-50%) scale(.5);  opacity: 0; }
+  55%  { transform: translate(-50%,-50%) scale(1.13); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
 .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
 .confetti-layer i { position: absolute; top: 0; left: 0; display: block; border-radius: 1px; will-change: transform; }
 
