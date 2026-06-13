@@ -519,17 +519,24 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
   ctx.globalCompositeOperation='source-over';
   ctx.globalAlpha=1;
 
-  // BETTING: the rocket sits on the pad at bottom-left, engine warming up,
-  // smoke building — so during the countdown you watch it start up before it flies.
+  // BETTING: the rocket sits on the pad at bottom-left, engine warming up, smoke + embers
+  // building and the whole thing rumbling harder as the count nears zero — so during the
+  // countdown you watch it spool up before it blasts off.
   if(S.phase==='betting'){
     const pad = rocketPos(0);
     const heat = S.cdMs ? Math.min(1, Math.max(0, 1-(S.cdEndTs-performance.now())/S.cdMs)) : 0;
-    // launch smoke building under the rocket (thicker as the count nears zero)
-    if(!S.lowBw && Math.random() < 0.25 + heat*0.6){
-      particles.push({ x:pad.x+rnd(-7,7), y:pad.y+rnd(8,16), vx:rnd(-.7,.7), vy:rnd(.1,1.1)-heat*0.4,
-        life:1, c:'rgba(150,150,160,1)', r:(3+heat*5), grav:-0.02, fade:0.02, smoke:true });
+    // launch smoke billowing under the rocket (thicker + wider as the count nears zero)
+    if(!S.lowBw && Math.random() < 0.3 + heat*0.7){
+      particles.push({ x:pad.x+rnd(-8,8), y:pad.y+rnd(8,18), vx:rnd(-.9,.9), vy:rnd(.1,1.1)-heat*0.5,
+        life:1, c:'rgba(150,150,160,1)', r:(3+heat*6), grav:-0.02, fade:0.02, smoke:true });
     }
-    const vib = heat*rnd(-1.6,1.6);   // the launch-pad shudder as thrust builds
+    // fire embers spitting down as the engine lights up (builds in the last seconds)
+    if(!S.lowBw && heat>0.3 && Math.random() < heat*0.85){
+      particles.push({ x:pad.x+rnd(-5,5), y:pad.y+rnd(5,12), vx:rnd(-1.1,1.1), vy:rnd(1,3.2)*heat,
+        life:1, fade:rnd(.06,.1), r:rnd(1,2.6), glow:true,
+        c: Math.random()<.5?'#FFD27A':(Math.random()<.6?'#FF8A2A':'#FF5A2A') });
+    }
+    const vib = heat*heat*rnd(-2.6,2.6);   // the launch-pad rumble — grows hard toward lift-off
     drawRocket(pad.x+vib, pad.y - heat*2, 0, heat);
   }
 
@@ -638,15 +645,31 @@ function loadArt(){
 function drawCurvedFlame(tt, boost){
   const SCt = rocketScale();
   const flick = 0.92 + 0.16*Math.sin(performance.now()/26);   // subtle live length flicker
-  const target = (24 + 10*boost) * SCt * flick;                // flame length in px
+  // length GROWS as the rocket climbs — short & intense at lift-off, stretching ever longer
+  const target = (16 + Math.min(tt*2.6, 24) + 10*boost) * SCt * flick;
+  // walk back along the path accumulating ~4px steps (dt adapts to the rocket's speed, so
+  // the flame follows the real curve whether the rocket is racing or crawling)
   const pts=[rocketPos(tt)], dist=[0];
-  let prev=pts[0], acc=0, bt=tt; const dt=Math.max(0.012, tt*0.01);
-  while(bt>0 && acc<target && pts.length<64){
-    bt=Math.max(0, bt-dt); const q=rocketPos(bt);
-    acc += Math.hypot(q.x-prev.x, q.y-prev.y); pts.push(q); dist.push(acc); prev=q;
+  let prev=pts[0], acc=0, bt=tt, ddt=Math.max(0.01, Math.min(0.05, tt*0.01));
+  while(bt>0 && acc<target && pts.length<90){
+    bt=Math.max(0, bt-ddt); const q=rocketPos(bt);
+    const d=Math.hypot(q.x-prev.x, q.y-prev.y);
+    acc += d; pts.push(q); dist.push(acc); prev=q;
+    if(d>0.001) ddt=Math.min(Math.max(ddt*4/d, 0.01), 0.6);   // aim ~4px per step
     if(bt<=0) break;
   }
   if(pts.length<2) return;
+  // Right at lift-off the trail barely exists, so the flame would otherwise vanish. Extend it
+  // STRAIGHT on (in the last exhaust direction, or straight down off the pad) to the full
+  // length — a big intense blast the instant the rocket leaves the pad.
+  if(acc < target){
+    const a=pts[pts.length-2], b=pts[pts.length-1];
+    let dx=b.x-a.x, dy=b.y-a.y; const m=Math.hypot(dx,dy);
+    if(m<0.5){ dx=0; dy=1; } else { dx/=m; dy/=m; }   // barely moved → blast straight down
+    const extra=target-acc, steps=6;
+    for(let i=1;i<=steps;i++){ const d=extra*i/steps; pts.push({x:b.x+dx*d, y:b.y+dy*d}); dist.push(acc+d); }
+    acc=target;
+  }
   const L=acc||1, baseHW=(5.0 + 1.6*boost) * SCt;
   const ribbon=(wmul, style)=>{
     ctx.beginPath();
