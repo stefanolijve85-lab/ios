@@ -20,6 +20,7 @@ export default function Page() {
             <h1 className="intro-h1">BUCKLE UP<br /><span className="g">MULTIPLY HIGH</span><br />CASH OUT BIG</h1>
             <p className="intro-sub">Bet. Watch. Multiply.<br />To the moon!</p>
           </div>
+          <img className="intro-hero" src="/intro-hero.png" alt="" />
           <div className="intro-bottom">
             <div className="intro-cards">
               <div className="intro-card">
