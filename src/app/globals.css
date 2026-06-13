@@ -181,11 +181,10 @@ input { font-family: inherit; }
 .vault.danger { filter: drop-shadow(0 0 26px rgba(255,40,40,0.45)); }
 
 /* the full vault scene render fills the area */
-.vault-scene { position: absolute; inset: 0; z-index: 1; }
+.vault-scene { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; }
 .vault-scene img {
-  width: 100%; height: 100%;
-  object-fit: cover;            /* fill the area — the vault reads BIG */
-  object-position: center 42%;  /* opening is centered (image re-cropped) */
+  height: 100%; width: auto; max-width: 100%;
+  object-fit: contain;          /* show the WHOLE scene — money + bags + crowbar */
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
@@ -271,8 +270,8 @@ input { font-family: inherit; }
 /* ----------------------------------------------------------- stash btn */
 .stash-btn {
   width: 100%;
-  border-radius: 18px;
-  padding: 20px 12px;
+  border-radius: 16px;
+  padding: 13px 12px;
   font-weight: 900;
   letter-spacing: 1px;
   position: relative;
@@ -285,8 +284,8 @@ input { font-family: inherit; }
   animation: stashPulse 1.8s ease-in-out infinite;
 }
 .stash-btn:active { transform: scale(0.975); }
-.stash-btn .big { font-size: 30px; line-height: 1; display: block; }
-.stash-btn .sub { font-size: 11px; letter-spacing: 2px; opacity: .8; display: block; margin-top: 4px; }
+.stash-btn .big { font-size: 25px; line-height: 1; display: block; }
+.stash-btn .sub { font-size: 10px; letter-spacing: 2px; opacity: .8; display: block; margin-top: 3px; }
 @keyframes stashPulse {
   0%,100% { box-shadow: 0 10px 30px rgba(37,255,122,0.35), inset 0 1px 0 rgba(255,255,255,0.4); }
   50% { box-shadow: 0 10px 44px rgba(37,255,122,0.7), inset 0 1px 0 rgba(255,255,255,0.5); }
@@ -325,17 +324,17 @@ input { font-family: inherit; }
   color: var(--muted); margin-bottom: 4px;
 }
 .bet-amt {
-  display: grid; grid-template-columns: 46px 1fr 46px; gap: 8px;
+  display: grid; grid-template-columns: 40px 1fr 40px; gap: 8px;
   align-items: center; margin-bottom: 6px;
 }
 .bet-amt .step {
-  height: 40px; border-radius: 11px; font-size: 22px; font-weight: 900;
+  height: 36px; border-radius: 10px; font-size: 19px; font-weight: 900;
   background: linear-gradient(180deg, #211f17, #131209);
   border: 1px solid var(--panel-line); color: var(--gold-hi);
 }
 .bet-amt .val {
-  height: 40px; display: grid; place-items: center;
-  border-radius: 11px; font-weight: 900; font-size: 18px;
+  height: 36px; display: grid; place-items: center;
+  border-radius: 10px; font-weight: 900; font-size: 17px;
   background: #0d0c08; border: 1px solid var(--panel-line);
   font-variant-numeric: tabular-nums;
 }
