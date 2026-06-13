@@ -1363,7 +1363,8 @@ function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
 function startReadyBadge(){
   const cta=$('introCta'); if(!cta) return;
   cta.classList.add('cta-ready');
-  cta.innerHTML='Get ready <span class="rdy-ring"></span>';
+  cta.innerHTML='<span class="rdy-main">Get ready <span class="rdy-ring"></span></span>'
+               +'<span class="rdy-sub">for the next available round …</span>';
 }
 function stopReadyBadge(){
   const cta=$('introCta'); if(cta){ cta.classList.remove('cta-ready'); cta.textContent="LET'S GO"; }
