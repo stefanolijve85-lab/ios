@@ -251,28 +251,37 @@ input { font-family: inherit; }
 }
 .vault-ladder .rung.top { color: var(--danger); }
 
-/* thief countdown — overlaid over the bottom of the vault */
+/* countdown — overlaid over the bottom of the vault, on a readable pill */
 .vault-countdown {
-  position: absolute; left: 0; right: 0; bottom: 4%;
+  position: absolute; left: 0; right: 0; bottom: 3%;
   z-index: 5;
   text-align: center;
   pointer-events: none;
 }
-.vault-countdown .lbl { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-shadow: 0 1px 3px #000; }
-.vault-countdown .time {
-  font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums;
-  color: var(--gold-hi);
-  text-shadow: 0 0 10px rgba(0,0,0,0.9), 0 2px 4px #000;
-  transition: color .2s;
+.cd-pill {
+  display: inline-block; text-align: center;
+  background: rgba(6,8,10,0.68);
+  border: 1px solid rgba(230,184,77,0.4);
+  border-radius: 12px;
+  padding: 4px 18px;
+  backdrop-filter: blur(3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.55);
 }
-.vault-countdown.warn .time { color: var(--danger); text-shadow: 0 0 14px rgba(255,59,59,0.8); animation: blink .5s infinite; }
+.cd-pill .lbl { display: block; font-size: 9px; letter-spacing: 2px; color: #ffe1a8; }
+.cd-pill .time {
+  display: block; font-size: 23px; font-weight: 900; font-variant-numeric: tabular-nums;
+  color: var(--gold-hi); line-height: 1.1;
+}
+.vault-countdown.warn .cd-pill { border-color: rgba(255,59,59,0.65); background: rgba(30,6,6,0.7); }
+.vault-countdown.warn .cd-pill .lbl { color: #ffb3b3; }
+.vault-countdown.warn .cd-pill .time { color: var(--danger); text-shadow: 0 0 12px rgba(255,59,59,0.8); animation: blink .5s infinite; }
 @keyframes blink { 50% { opacity: .4; } }
 
 /* ----------------------------------------------------------- stash btn */
 .stash-btn {
   width: 100%;
-  border-radius: 16px;
-  padding: 9px 12px;
+  border-radius: 22px;
+  padding: 11px 12px;
   font-weight: 900;
   letter-spacing: 1px;
   position: relative;
@@ -280,7 +289,7 @@ input { font-family: inherit; }
   transition: transform .08s, filter .2s;
   background: linear-gradient(180deg, #5fe589, #28c75a 48%, #119a3f);
   color: #04240d;
-  box-shadow: 0 8px 24px rgba(37,209,90,0.35), inset 0 1px 0 rgba(255,255,255,0.45);
+  box-shadow: 0 8px 26px rgba(37,209,90,0.45), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 0 22px rgba(180,255,200,0.25);
   text-shadow: 0 1px 0 rgba(255,255,255,0.25);
   animation: stashPulse 2s ease-in-out infinite;
 }
@@ -288,8 +297,8 @@ input { font-family: inherit; }
 .stash-btn .big { font-size: 18px; line-height: 1; display: block; }
 .stash-btn .sub { font-size: 9px; letter-spacing: 2px; opacity: .75; display: block; margin-top: 2px; }
 @keyframes stashPulse {
-  0%,100% { box-shadow: 0 8px 24px rgba(37,209,90,0.35), inset 0 1px 0 rgba(255,255,255,0.45); }
-  50% { box-shadow: 0 8px 38px rgba(37,209,90,0.6), inset 0 1px 0 rgba(255,255,255,0.5); }
+  0%,100% { box-shadow: 0 8px 26px rgba(37,209,90,0.45), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 0 22px rgba(180,255,200,0.25); }
+  50% { box-shadow: 0 8px 40px rgba(37,209,90,0.7), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 0 26px rgba(180,255,200,0.35); }
 }
 /* primary CTA is always the same green (place bet = stash = bet next) */
 .stash-btn.place {
@@ -339,15 +348,17 @@ input { font-family: inherit; }
   background: #0d0c08; border: 1px solid var(--panel-line);
   font-variant-numeric: tabular-nums;
 }
-.chips { display: flex; gap: 6px; }
+.chips { display: flex; gap: 8px; }
 .chips button {
-  flex: 1; padding: 8px 0; border-radius: 10px; font-weight: 800; font-size: 13px;
-  background: linear-gradient(180deg, #1b1a13, #100f0a);
-  border: 1px solid var(--panel-line); color: var(--text);
+  flex: 1; padding: 9px 0; border-radius: 999px; font-weight: 800; font-size: 13px;
+  background: linear-gradient(180deg, #1f1d15, #100f0a);
+  border: 1px solid var(--panel-line); color: var(--gold-hi);
+  transition: all .12s;
 }
 .chips button.on {
-  border-color: var(--green); color: var(--green-hi);
-  box-shadow: 0 0 12px rgba(47,209,74,0.3) inset;
+  background: linear-gradient(180deg, #5fe589, #28c75a 55%, #119a3f);
+  border-color: var(--green-hi); color: #fff;
+  box-shadow: 0 0 14px rgba(37,209,90,0.45);
 }
 
 .lbl-mini { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-align: center; margin: 8px 0 4px; }

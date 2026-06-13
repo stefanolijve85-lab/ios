@@ -100,10 +100,12 @@ export default function Vault() {
         ))}
       </div>
 
-      {/* thief countdown, overlaid over the bottom of the vault */}
+      {/* countdown, overlaid over the bottom of the vault (readable pill) */}
       <div className={`vault-countdown${warn ? ' warn' : ''}`}>
-        <div className="lbl">🚨 {cdLabel}</div>
-        <div className="time" ref={timeRef}>00:00</div>
+        <div className="cd-pill">
+          <span className="lbl">🚨 {cdLabel}</span>
+          <span className="time" ref={timeRef}>00:00</span>
+        </div>
       </div>
 
       {phase === 'crashed' && (
