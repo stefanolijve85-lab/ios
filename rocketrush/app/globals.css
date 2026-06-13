@@ -128,11 +128,24 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .win-pop.jackpot { width: min(92%, 400px); padding: 22px 26px 24px;
   box-shadow: 0 22px 64px rgba(34,197,94,.68), 0 0 0 2px rgba(255,255,255,.28), 0 0 80px rgba(34,197,94,.5); }
 .win-pop.jackpot.show { animation: jackpotPop .85s cubic-bezier(.16,.84,.3,1) both; }
-.win-pop.jackpot .wp-title::before { content: '🎉 '; }
-.win-pop.jackpot .wp-title::after { content: ' 🎉'; }
+/* title + amount spring in with overshoot, then keep a gentle pulse so they grab the eye */
+.win-pop.jackpot .wp-title { font-size: 16px; opacity: 1;
+  animation: jpTitle .8s cubic-bezier(.2,1.2,.3,1.2) both, jpPulse 1.1s ease-in-out .8s infinite; }
+.win-pop.jackpot .wp-amt {
+  animation: jpAmt .8s cubic-bezier(.2,1.3,.3,1.25) .12s both, jpPulse 1.2s ease-in-out 1s infinite; }
+/* the two party-poppers — left one mirrored so the pair faces inward — gently wiggle */
+.win-pop.jackpot .wp-title::before { content: '🎉'; display: inline-block; margin-right: 7px;
+  transform-origin: bottom center; animation: jpPopL 1s ease-in-out infinite; }
+.win-pop.jackpot .wp-title::after  { content: '🎉'; display: inline-block; margin-left: 7px;
+  transform-origin: bottom center; animation: jpPopR 1s ease-in-out infinite; }
 @keyframes jackpotPop {
   0%   { transform: translate(-50%,-50%) scale(.72); opacity: 0; }
   100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+@keyframes jpTitle { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes jpAmt { 0% { transform: scale(.3) translateY(10px); opacity: 0; } 55% { transform: scale(1.2) translateY(0); opacity: 1; } 78% { transform: scale(.95); } 100% { transform: scale(1); } }
+@keyframes jpPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes jpPopL { 0%,100% { transform: scaleX(-1) rotate(0); } 50% { transform: scaleX(-1) rotate(-16deg); } }
+@keyframes jpPopR { 0%,100% { transform: rotate(0); } 50% { transform: rotate(16deg); } }
 .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
 .confetti-layer i { position: absolute; top: 0; left: 0; display: block; border-radius: 1px; will-change: transform; }
 
