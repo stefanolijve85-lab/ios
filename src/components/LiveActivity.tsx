@@ -17,7 +17,7 @@ export default function LiveActivity() {
       <div className="act-list">
         {activity.map((a, i) => (
           <div key={`${a.ts}-${i}`} className={`act ${a.kind === 'stash' ? 'win' : 'lose'}`}>
-            <div className="ava">{a.name[0]}</div>
+            <div className="ava">{a.kind === 'stash' ? '▲' : '▼'}</div>
             <div className="body">
               <div>
                 <span className="nm">{a.name}</span>{' '}
