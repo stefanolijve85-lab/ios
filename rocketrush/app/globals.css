@@ -334,7 +334,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-inner { height: 100dvh; max-width: 440px; margin: 0 auto;
   padding: calc(var(--safe-top) + 14px) 22px calc(var(--safe-bottom) + 14px);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; text-align: center; }
-.intro-logo { height: 23px; width: auto; flex: none; }
+.intro-logo { height: 32px; width: auto; flex: none; }
 .intro-h1 { margin: 0; flex: none; color: #fff; font-weight: 900; line-height: 1.06; letter-spacing: -1px; font-size: clamp(27px, 8.4vw, 40px); }
 .intro-h1 .g { font-style: italic; background: linear-gradient(110deg, var(--success), #7CF0A8); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .intro-sub { margin: 0; flex: none; color: var(--muted); font-size: 14.5px; line-height: 1.42; }
@@ -342,7 +342,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-hero { width: calc(100% + 44px); max-width: none; margin: 2px -22px; max-height: 40vh; min-height: 0; flex: 0 1 auto; object-fit: contain; }
 .intro-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; flex: none; }
 .intro-card { background: var(--panel); border: 1px solid var(--line); border-radius: 15px; padding: 13px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.intro-card .ic { font-size: 21px; }
+.intro-card .ic { width: 25px; height: 25px; display: block; }
 .intro-card b { font-size: 11.5px; font-weight: 800; color: #fff; }
 .intro-card small { font-size: 10px; color: var(--muted); line-height: 1.28; }
 .intro-gobtn { width: 100%; max-width: 380px; flex: none; padding: 16px; border-radius: 15px; font-size: 16.5px; font-weight: 900; letter-spacing: .5px; color: #04210f;
