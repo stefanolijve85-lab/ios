@@ -579,19 +579,22 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // As the flight goes long the gravity-turn tangent flattens out and the nose ends
     // up pointing sideways. Bias it back UP toward the moon — gently early, more as the
     // multiplier climbs — so the nose keeps aiming at the moon (top-right).
-    // The flame must keep trailing straight out the BACK of the rocket — along the path it
-    // actually flew — even after we bias the nose up toward the moon. Otherwise the thick
-    // plume swings with the body and stops sitting over the tail. Remember the travel
-    // direction, then bend the flame back onto it by exactly however far we rotate the nose.
+    // The thick flame must come straight out along the ACTUAL trail, so the tail always
+    // emerges from the middle of the plume. Take the exhaust direction from the trail's
+    // local tangent at the rocket (the same short step the trail line is drawn with) — this
+    // is independent of how far we bias the nose up toward the moon.
     let flameBend = 0;
     if(S.phase==='running'){
-      const angTravel = ang;
-      const moonX=0.87*W, moonY=0.12*H;
+      const segs = S.lowBw?22:36;
+      const pPrev = rocketPos(tt*(segs-1)/segs);
+      const edx=p.x-pPrev.x, edy=p.y-pPrev.y;
+      const exhaustAng = (Math.hypot(edx,edy)>0.01) ? Math.atan2(edy,edx)+Math.PI/2 : ang;
+      const moonX=0.87*W, moonY=0.12*H;                            // bias the NOSE up toward the moon (visual only)
       const angMoon = Math.atan2(moonY-ry, moonX-p.x) + Math.PI/2;
       const wM = Math.min(0.8, Math.max(0,(S.mult-1.3)/15));   // ~0 below 1.3x → up to 0.8, aims harder at the moon
       let d = angMoon - ang; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
       ang = ang + d*wM; S.lastAng = ang;
-      flameBend = angTravel - ang;   // counter-rotate the flame back onto the real trail
+      flameBend = exhaustAng - ang;   // rotate the plume off the body axis onto the real trail
     }
     if(S.phase==='running'){
       if(!S.lowBw){
@@ -647,13 +650,13 @@ function drawRocket(x,y,ang,heat,flameBend){
   // the nozzle (lower for the artwork rocket, higher for the vector one).
   const ny = rocketReady ? 14.5 : 8;
   ctx.globalCompositeOperation='lighter';
+  // Pivot the WHOLE exhaust around the rocket CENTRE (not the nozzle) so its base sits
+  // exactly on the trail line and the plume streams straight back down the path — the tail
+  // always emerges from the middle of the thick flame, whatever the nose is doing.
+  ctx.save(); ctx.rotate(flameBend||0);
   let eg = ctx.createRadialGradient(0,ny,0, 0,ny, 10*gi+3);
   eg.addColorStop(0,`rgba(255,230,150,${.95*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,ny,10*gi+3,0,7); ctx.fill();
-  // Bend the whole plume around the nozzle so it trails along the real flight path (the
-  // tail), not the biased body axis — the rocket's nose can aim at the moon while the fire
-  // still streams out the back. The engine glow above is symmetric so it stays put.
-  ctx.save(); ctx.translate(0,ny); ctx.rotate(flameBend||0); ctx.translate(0,-ny);
   let fl = ctx.createLinearGradient(0,ny-1,0,ny+1+f);   // outer plume: wide at nozzle → point
   fl.addColorStop(0,'rgba(255,242,185,.95)'); fl.addColorStop(.3,'rgba(255,175,55,.92)'); fl.addColorStop(.65,'rgba(255,110,40,.55)'); fl.addColorStop(1,'rgba(255,70,60,0)');
   ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-4.4,ny); ctx.quadraticCurveTo(0,ny+1+f,4.4,ny); ctx.closePath(); ctx.fill();
