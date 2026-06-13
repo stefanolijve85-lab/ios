@@ -96,7 +96,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   const controlsDisabled = holding;
 
   return (
-    <div>
+    <div className="betpanel">
       <button className={cls} onClick={onClick} disabled={disabled}>
         <span className="big">
           {big}
@@ -108,6 +108,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       </button>
 
       <div className="bet" style={{ opacity: controlsDisabled ? 0.45 : 1 }}>
+        {hero && <div className="bet-amt-label">BET AMOUNT</div>}
         <div className="bet-amt">
           <button className="step" onClick={() => step(-1)} disabled={controlsDisabled}>−</button>
           <div className="val">{euro(amount)}</div>

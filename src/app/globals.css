@@ -43,14 +43,27 @@ input { font-family: inherit; }
 .app {
   max-width: 520px;
   margin: 0 auto;
-  min-height: 100dvh;
-  padding: 0 12px calc(78px + env(safe-area-inset-bottom)) 12px;
-  padding-top: env(safe-area-inset-top);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: env(safe-area-inset-top) 10px 0;
   position: relative;
+  overflow: hidden;            /* single screen — no scroll */
   background:
-    radial-gradient(85% 42% at 50% 32%, rgba(47, 209, 74, 0.05), transparent 60%),
+    radial-gradient(85% 42% at 50% 30%, rgba(47, 209, 74, 0.05), transparent 60%),
     radial-gradient(120% 50% at 50% 115%, rgba(230, 184, 77, 0.045), transparent 55%),
     linear-gradient(180deg, #050506, #020203 55%, #050506);
+}
+
+/* fixed sections never shrink; only the vault zone flexes */
+.header, .statusrow, .thief, .betpanel, .cols, .timeline, .bottomnav { flex: 0 0 auto; }
+.vault-zone {
+  flex: 1 1 auto;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ----------------------------------------------------------------- header */
@@ -162,12 +175,14 @@ input { font-family: inherit; }
   grid-template-columns: 1fr 50px;
   gap: 6px;
   align-items: center;
-  margin: 2px 0 4px;
+  width: 100%;
+  height: 100%;
+  margin: 0;
 }
 .vault {
   position: relative;
   width: 100%;
-  height: 340px;
+  height: 100%;
   margin: 0 auto;
   background: transparent;          /* full vault floats on the dark page */
   display: flex; align-items: center; justify-content: center;
@@ -304,26 +319,30 @@ input { font-family: inherit; }
 
 /* betting controls */
 .bet {
-  margin-top: 6px;
+  margin-top: 5px;
+}
+.bet-amt-label {
+  text-align: center; font-size: 9px; letter-spacing: 2px;
+  color: var(--muted); margin-bottom: 4px;
 }
 .bet-amt {
-  display: grid; grid-template-columns: 48px 1fr 48px; gap: 8px;
-  align-items: center; margin-bottom: 8px;
+  display: grid; grid-template-columns: 46px 1fr 46px; gap: 8px;
+  align-items: center; margin-bottom: 6px;
 }
 .bet-amt .step {
-  height: 44px; border-radius: 12px; font-size: 22px; font-weight: 900;
+  height: 40px; border-radius: 11px; font-size: 22px; font-weight: 900;
   background: linear-gradient(180deg, #211f17, #131209);
   border: 1px solid var(--panel-line); color: var(--gold-hi);
 }
 .bet-amt .val {
-  height: 44px; display: grid; place-items: center;
-  border-radius: 12px; font-weight: 900; font-size: 18px;
+  height: 40px; display: grid; place-items: center;
+  border-radius: 11px; font-weight: 900; font-size: 18px;
   background: #0d0c08; border: 1px solid var(--panel-line);
   font-variant-numeric: tabular-nums;
 }
 .chips { display: flex; gap: 6px; }
 .chips button {
-  flex: 1; padding: 9px 0; border-radius: 10px; font-weight: 800; font-size: 13px;
+  flex: 1; padding: 8px 0; border-radius: 10px; font-weight: 800; font-size: 13px;
   background: linear-gradient(180deg, #1b1a13, #100f0a);
   border: 1px solid var(--panel-line); color: var(--text);
 }
@@ -341,22 +360,24 @@ input { font-family: inherit; }
 }
 
 /* ----------------------------------------------------- two columns */
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 3px; }
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-radius: var(--r);
-  padding: 10px;
+  border-radius: 12px;
+  padding: 8px;
   backdrop-filter: blur(6px);
+  display: flex; flex-direction: column;
+  min-height: 0;
 }
 .panel h3 {
-  margin: 0 0 8px; font-size: 12px; letter-spacing: 1px;
+  margin: 0 0 6px; font-size: 11px; letter-spacing: 1px;
   color: var(--gold-hi); display: flex; align-items: center; justify-content: space-between;
 }
 .panel h3 .count { color: var(--muted); font-weight: 700; }
 
 .chat-list, .act-list {
-  height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;
+  height: 12vh; min-height: 76px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
   -webkit-overflow-scrolling: touch;
 }
 .chat-list::-webkit-scrollbar, .act-list::-webkit-scrollbar { width: 0; }
@@ -380,10 +401,10 @@ input { font-family: inherit; }
 .act .body .sub { color: var(--muted); font-size: 10px; }
 
 .chat-input {
-  display: flex; gap: 6px; margin-top: 8px;
+  display: flex; gap: 6px; margin-top: 6px;
 }
 .chat-input input {
-  flex: 1; height: 38px; border-radius: 10px; padding: 0 10px;
+  flex: 1; height: 34px; border-radius: 10px; padding: 0 10px;
   background: #0d0c08; border: 1px solid var(--panel-line); color: var(--text); font-size: 13px;
   outline: none;
 }
@@ -394,11 +415,11 @@ input { font-family: inherit; }
 
 /* ----------------------------------------------- players remaining */
 .timeline {
-  margin-top: 12px;
-  background: var(--panel); border: 1px solid var(--panel-line); border-radius: var(--r);
-  padding: 10px 12px;
+  margin-top: 3px;
+  background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px;
+  padding: 6px 10px;
 }
-.timeline .head { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+.timeline .head { font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
 .timeline .track {
   display: flex; align-items: center; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
   font-variant-numeric: tabular-nums;
@@ -416,11 +437,11 @@ input { font-family: inherit; }
 
 /* --------------------------------------------------------- bottom nav */
 .bottomnav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  max-width: 520px; margin: 0 auto;
+  position: relative;
+  margin: 3px -10px 0;        /* span full app width, sit in the flow */
   display: grid; grid-template-columns: 1fr 1fr 70px 1fr 1fr;
   align-items: center;
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, rgba(10,10,12,0.6), #060607 60%);
   border-top: 1px solid var(--panel-line);
   backdrop-filter: blur(10px);
@@ -429,13 +450,13 @@ input { font-family: inherit; }
 .bottomnav .nav {
   display: grid; place-items: center; gap: 2px;
   font-size: 9px; letter-spacing: 1px; color: var(--muted);
-  padding: 6px 0;
+  padding: 4px 0;
 }
-.bottomnav .nav span { font-size: 18px; }
+.bottomnav .nav span { font-size: 17px; }
 .bottomnav .nav.active { color: var(--gold-hi); }
 .bottomnav .center {
-  width: 62px; height: 62px; border-radius: 50%;
-  margin: -22px auto 0;
+  width: 56px; height: 56px; border-radius: 50%;
+  margin: -20px auto 0;
   display: grid; place-items: center;
   background: conic-gradient(from 210deg, #4a3a1c, #d8ad57, #8a6a22, #f2cf7e, #4a3a1c);
   box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 20px rgba(230,184,77,0.3);

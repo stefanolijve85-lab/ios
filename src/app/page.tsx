@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import Header from '@/components/Header';
 import StatusRow from '@/components/StatusRow';
@@ -14,7 +13,6 @@ import FlashBanner from '@/components/FlashBanner';
 
 export default function Page() {
   const { connected } = useGame();
-  const [secondPanel, setSecondPanel] = useState(false);
 
   return (
     <main className="app">
@@ -22,21 +20,13 @@ export default function Page() {
 
       <Header />
       <StatusRow />
-      <Vault />
+
+      <div className="vault-zone">
+        <Vault />
+      </div>
+
       <ThiefTimer />
-
       <BetPanel slot={0} hero />
-
-      {secondPanel ? (
-        <>
-          <div className="lbl-mini">SECOND BET</div>
-          <BetPanel slot={1} />
-        </>
-      ) : (
-        <button className="add-second" onClick={() => setSecondPanel(true)}>
-          + Add a second bet
-        </button>
-      )}
 
       <div className="cols">
         <LiveChat />

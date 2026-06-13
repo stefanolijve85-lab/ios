@@ -8,6 +8,7 @@ export default function StatusRow() {
   const { state } = useGame();
   const [soundOn, setSoundOn] = useState(false);
 
+  const online = state?.online ?? 12483;
   const holders = state?.holders ?? 0;
   const phase = state?.phase ?? 'betting';
 
@@ -35,23 +36,20 @@ export default function StatusRow() {
     if (on && phase === 'running') getAudio().startMotif();
   };
 
-  // Center phase label keeps the row balanced and adds tension context.
-  const phaseLabel =
-    phase === 'running' ? { txt: 'ROUND LIVE', cls: 'live' }
-    : phase === 'crashed' ? { txt: 'STOLEN!', cls: 'crashed' }
-    : { txt: 'VAULT OPEN', cls: 'open' };
-
   return (
     <div className="statusrow">
-      {/* Top-left: players still in this round (decreases live). */}
-      <div className="holding left">
+      {/* left: total online */}
+      <div className="chip-stat">
+        👥 <b>{num(online)}</b> ONLINE
+      </div>
+
+      {/* center: players still in this round (decreases live) */}
+      <div className="holding">
         <span className="dot" />
         <div>
           <b>{num(holders)}</b> <small>STILL HOLDING</small>
         </div>
       </div>
-
-      <div className={`phase-tag ${phaseLabel.cls}`}>{phaseLabel.txt}</div>
 
       <button
         className={`alarm ${danger ? 'live' : ''}`}
