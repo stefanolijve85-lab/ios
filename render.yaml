@@ -9,7 +9,9 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm install && npm run build
+    # --include=dev forces TypeScript + @types to install even though Render
+    # builds with NODE_ENV=production (next build needs them).
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
