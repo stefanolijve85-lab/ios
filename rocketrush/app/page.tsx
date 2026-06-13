@@ -15,9 +15,10 @@ export default function Page() {
       {/* ===================== INTRO / SPLASH (first open → tap LET'S GO) ===================== */}
       <div className="intro" id="intro">
         <div className="intro-shot">
-          <img src="/intro-full.png" alt="Liftoff X — Buckle up. Multiply high. Cash out big." />
-          <button className="intro-go" id="introGo" aria-label="Let's go" />
+          <img src="/intro-full.png" alt="Liftoff X — Buckle up. To the moon. Cash out big." />
         </div>
+        <div className="intro-cta">LET&apos;S GO</div>
+        <button className="intro-go" id="introGo" aria-label="Let's go" />
       </div>
 
       {/* ===================== HEADER ===================== */}
