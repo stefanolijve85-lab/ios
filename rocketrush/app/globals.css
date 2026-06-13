@@ -334,12 +334,15 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-inner { height: 100dvh; max-width: 440px; margin: 0 auto;
   padding: calc(var(--safe-top) + 14px) 22px calc(var(--safe-bottom) + 14px);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; text-align: center; }
-.intro-logo { height: 32px; width: auto; flex: none; }
+.intro-logo { height: 42px; width: auto; flex: none; }
 .intro-h1 { margin: 0; flex: none; color: #fff; font-weight: 900; line-height: 1.06; letter-spacing: -1px; font-size: clamp(27px, 8.4vw, 40px); }
 .intro-h1 .g { font-style: italic; background: linear-gradient(110deg, var(--success), #7CF0A8); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .intro-sub { margin: 0; flex: none; color: var(--muted); font-size: 14.5px; line-height: 1.42; }
-/* bleed edge-to-edge past the inner padding so the scene reads full-width like the mockup */
-.intro-hero { width: calc(100% + 44px); max-width: none; margin: 2px -22px; max-height: 40vh; min-height: 0; flex: 0 1 auto; object-fit: contain; }
+/* bleed edge-to-edge and fade the top/bottom edges so the scene flows into the dark
+   background instead of showing a hard rectangular seam (the "cut" look). */
+.intro-hero { width: calc(100% + 44px); max-width: none; margin: -2px -22px; max-height: 45vh; min-height: 0; flex: 0 1 auto; object-fit: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 13%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 13%, #000 86%, transparent 100%); }
 .intro-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; flex: none; }
 .intro-card { background: var(--panel); border: 1px solid var(--line); border-radius: 15px; padding: 13px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .intro-card .ic { width: 25px; height: 25px; display: block; }
