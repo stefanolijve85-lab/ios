@@ -337,11 +337,12 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 .intro-h1 { margin: 0; color: #fff; font-weight: 900; line-height: 1.05; letter-spacing: -1px; font-size: clamp(28px, 8.6vw, 42px); text-shadow: 0 2px 16px rgba(0,0,0,.6); }
 .intro-h1 .g { font-style: italic; background: linear-gradient(110deg, var(--success), #7CF0A8); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .intro-sub { margin: 0; color: rgba(255,255,255,.72); font-size: 15px; line-height: 1.42; text-shadow: 0 2px 10px rgba(0,0,0,.6); }
-/* rocket scene sits in the middle gap — above the cards, never overlapping. Edges
-   faded so it blends into the starfield background. */
-.intro-hero { width: calc(100% + 44px); max-width: none; margin: 0 -22px; max-height: 42vh; min-height: 0; flex: 0 1 auto; object-fit: contain;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%); }
+/* rocket scene sits in the middle gap — above the cards, never overlapping. Full width
+   (no off-screen bleed so the fins aren't clipped) and a gentle top/bottom fade that
+   clears the nose, so it blends into the starfield background. */
+.intro-hero { width: 100%; max-width: 440px; height: auto; max-height: 44vh; min-height: 0; flex: 0 1 auto; object-fit: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 4%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 4%, #000 90%, transparent 100%); }
 .intro-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
 .intro-card { background: rgba(10,14,24,.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 15px; padding: 13px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .intro-card .ic { width: 25px; height: 25px; display: block; }
