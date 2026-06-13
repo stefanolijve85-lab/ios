@@ -829,7 +829,6 @@ function showCountdown(ms, onDone){
   let clipFired=false, fireLeft=ms;
   const fullNum=()=>{ const el=(fireLeft-left)/1000; let n=5; for(const [tt,nn] of CD_NUMS){ if(el>=tt) n=nn; } return n; };
   $('countNum').textContent = fullCount ? 5 : Math.max(0,Math.ceil(left/1000));
-  if(S.cdToButton) setReadyBtn('GET READY… '+$('countNum').textContent);   // splash button mirrors the count
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
@@ -845,13 +844,11 @@ function showCountdown(ms, onDone){
       const sec=Math.max(0,Math.ceil(left/1000));
       if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1 && announce) sfx.count(sec); }
     }
-    if(S.cdToButton) setReadyBtn('GET READY… '+$('countNum').textContent);   // keep the splash button in sync
     if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
 }
 
 function startRunning(){
-  revealOnLaunch();   // local mode: drop the splash at lift-off too
   S.phase='running';
   S.startTs=performance.now();
   $('countWrap').style.display='none';
@@ -1311,23 +1308,35 @@ window.addEventListener('touchend', unlockAudio);
 // with the spoken audio, so you can see exactly how long until launch — then at lift-off we
 // drop you straight into the game.
 function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
-function setReadyBtn(txt){ const cta=$('introCta'); if(cta) cta.textContent=txt; }
-function revealOnLaunch(){
-  // fired at lift-off (netStart / startRunning): if we were holding on the splash for a
-  // clean countdown, drop the splash now so the rocket launch is the first thing you see.
-  if(S.waitBet){ S.waitBet=false; S.cdToButton=false; revealGame(); setReadyBtn("LET'S GO"); }
+// While we wait on the splash for the next fresh round, the button just shows a quiet
+// "Get ready …" with a little spinning ring + a countdown number — NO game audio and NO
+// big number here. The real countdown (5 … we have liftoff) and the betting happen in the
+// GAME, the moment we reveal it, so the player can place a bet on that round.
+function startReadyBadge(){
+  const cta=$('introCta'); if(!cta) return;
+  cta.classList.add('cta-ready');
+  cta.innerHTML='Get ready <span class="rdy-ring"><span class="rdy-num">5</span></span>';
+  let n=5; clearInterval(S.rdyTimer);
+  S.rdyTimer=_int(()=>{
+    n--; const el=cta.querySelector('.rdy-num');
+    if(n>=1){ if(el) el.textContent=String(n); }
+    else { if(el) el.textContent=''; clearInterval(S.rdyTimer); }   // ring keeps spinning until the round starts
+  },1000);
+}
+function stopReadyBadge(){
+  clearInterval(S.rdyTimer);
+  const cta=$('introCta'); if(cta){ cta.classList.remove('cta-ready'); cta.textContent="LET'S GO"; }
 }
 function maybeRevealOnBetting(){
-  // called at the very start of each betting phase, right after showCountdown() armed the
-  // clock+clip. If we're waiting, keep the splash but light up the button countdown and let
-  // the audio play — both now start cleanly from 5.
-  if(S.waitBet){ S.entered=true; S.cdToButton=true; setReadyBtn('GET READY… 5'); }
+  // first betting phase after LET'S GO: drop the splash NOW so the in-game countdown
+  // (5 … "we have liftoff") plays in the game and the player can place a bet on this round.
+  if(S.waitBet){ S.waitBet=false; S.entered=true; stopReadyBadge(); revealGame(); }
 }
 { const gb=$('introGo'); if(gb){ const go=()=>{
       unlockAudio();                 // unlock WebAudio inside the user gesture so sound is ready
       if(S.waitBet) return;          // already armed — ignore extra taps
-      S.waitBet=true;                // hold here until the next fresh betting phase (a clean 5)
-      setReadyBtn('GET READY…');
+      S.waitBet=true;                // hold on the splash until the next fresh betting phase
+      startReadyBadge();
     };
     gb.addEventListener('click', go); gb.addEventListener('touchend', e=>{ e.preventDefault(); go(); }, {passive:false}); }
 }
@@ -1470,7 +1479,6 @@ function netBetting(d){
   renderAction();
 }
 function netStart(){
-  revealOnLaunch();   // first launch after LET'S GO: drop the splash now, on lift-off
   S.phase='running'; S.startTs=performance.now();
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='';
