@@ -14,32 +14,10 @@ export default function Page() {
     <div className="app">
       {/* ===================== INTRO / SPLASH (first open → tap LET'S GO) ===================== */}
       <div className="intro" id="intro">
-        <div className="intro-inner">
-          <div className="intro-top">
-            <img className="intro-logo" src="/liftoffx.png" alt="Liftoff X" />
-            <h1 className="intro-h1">BUCKLE UP<br /><span className="g">MULTIPLY HIGH</span><br />CASH OUT BIG</h1>
-            <p className="intro-sub">Bet. Watch. Multiply.<br />To the moon!</p>
-          </div>
-          <img className="intro-hero" src="/intro-hero.png" alt="" />
-          <div className="intro-bottom">
-            <div className="intro-cards">
-              <div className="intro-card">
-                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></svg>
-                <b>MULTIPLY</b><small>Watch your bet take off</small>
-              </div>
-              <div className="intro-card">
-                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></svg>
-                <b>CASH OUT</b><small>Lock in your winnings</small>
-              </div>
-              <div className="intro-card">
-                <svg className="ic" viewBox="0 0 24 24" fill="#22C55E" stroke="#22C55E" strokeWidth="1" strokeLinejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z" /></svg>
-                <b>FAST &amp; FAIR</b><small>Provably fair, real-time</small>
-              </div>
-            </div>
-            <div className="intro-gobtn">LET&apos;S GO</div>
-          </div>
+        <div className="intro-shot">
+          <img src="/intro-full.png" alt="Liftoff X — Buckle up. Multiply high. Cash out big." />
+          <button className="intro-go" id="introGo" aria-label="Let's go" />
         </div>
-        <button className="intro-go" id="introGo" aria-label="Let's go" />
       </div>
 
       {/* ===================== HEADER ===================== */}
