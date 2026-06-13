@@ -1279,18 +1279,23 @@ function loadAudioPrefs(){
 // re-arms the audio. Without this you'd have to refresh to get sound back.
 let _spoke=false;
 function unlockAudio(){ try{
-  const a=ac(); if(a && a.state!=='running' && a.resume) a.resume();   // resume on each tap if iOS parked it
+  const a=ac(); if(a){
+    if(a.state!=='running' && a.resume) a.resume();   // resume on each tap if iOS parked it
+    // iOS WebAudio only truly unlocks when a buffer is STARTED inside a user gesture
+    const b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0);
+  }
   if(!_spoke){ _spoke=true; const sy=window.speechSynthesis; if(sy){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; sy.speak(u); } }
 }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('touchend', unlockAudio);
-// INTRO / SPLASH: the game runs behind it. Tapping LET'S GO hides the splash IMMEDIATELY
-// (instant feedback) and is the gesture that unlocks audio; sound itself stays gated
-// (S.entered=false) until the next fresh countdown, so it never leaks a previous round and
-// the first countdown you hear is perfectly in sync.
+// INTRO / SPLASH: tapping LET'S GO hides the splash AND enables sound right away, so you
+// hear audio from the very first round (the next countdown, or the live flight you land on).
 function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
 function maybeRevealOnBetting(){ if(S.armAudio){ S.armAudio=false; S.entered=true; } }
-{ const gb=$('introGo'); if(gb){ const go=()=>{ unlockAudio(); revealGame(); S.armAudio=true; };
+{ const gb=$('introGo'); if(gb){ const go=()=>{
+      unlockAudio(); S.entered=true; S.armAudio=false; revealGame();
+      if(S.phase==='running'){ startEngine(); startThrust(); startMusic(); }   // landed mid-flight → start its loops
+    };
     gb.addEventListener('click', go); gb.addEventListener('touchend', e=>{ e.preventDefault(); go(); }, {passive:false}); }
 }
 // When the app is backgrounded / screen locks, stop & suspend audio so iOS can't
