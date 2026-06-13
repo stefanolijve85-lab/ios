@@ -58,7 +58,7 @@ input { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 2px 6px;
+  padding: 6px 2px 4px;
 }
 .icon-btn {
   width: 40px; height: 40px;
@@ -101,7 +101,7 @@ input { font-family: inherit; }
 /* --------------------------------------------------------- status row */
 .statusrow {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; margin: 4px 2px 8px;
+  gap: 8px; margin: 2px 2px 4px;
 }
 .chip-stat {
   display: flex; align-items: center; gap: 6px;
@@ -159,71 +159,46 @@ input { font-family: inherit; }
 .vault-wrap {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 54px;
-  gap: 8px;
+  grid-template-columns: 1fr 50px;
+  gap: 6px;
   align-items: center;
-  margin: 4px 0 10px;
+  margin: 2px 0 4px;
 }
 .vault {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  max-width: 360px;
+  height: 340px;
   margin: 0 auto;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #000;
-  /* thin metallic bezel + cinematic drop + green floor glow */
-  box-shadow:
-    0 22px 60px rgba(0,0,0,0.8),
-    0 0 0 2px rgba(0,0,0,0.7),
-    0 0 0 4px rgba(120,90,40,0.35),
-    0 0 40px rgba(37,255,122,0.18),
-    inset 0 0 30px rgba(0,0,0,0.9);
-  transition: box-shadow .25s;
+  background: transparent;          /* full vault floats on the dark page */
+  display: flex; align-items: center; justify-content: center;
+  transition: filter .25s;
 }
-.vault.danger {
-  box-shadow:
-    0 22px 60px rgba(0,0,0,0.8),
-    0 0 0 2px rgba(0,0,0,0.7),
-    0 0 0 4px rgba(150,40,40,0.5),
-    0 0 50px rgba(255,40,40,0.55),
-    inset 0 0 30px rgba(0,0,0,0.9);
-}
+.vault.danger { filter: drop-shadow(0 0 26px rgba(255,40,40,0.45)); }
 
-/* the supplied premium vault render, framed to the door */
-.vault-photo { position: absolute; inset: 0; z-index: 1; }
+/* the FULL supplied vault render — shown complete, not cropped to a circle */
+.vault-photo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
 .vault-photo img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: 50% 22%;
+  height: 100%; width: auto; max-width: 100%;
+  object-fit: contain;
   display: block;
+  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.75));
   user-select: none; -webkit-user-drag: none;
 }
 
-/* dark curtain over the lower chamber that retracts upward as cash fills */
-.vault-fill {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  height: 58%;
-  z-index: 2; pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(2,4,2,0.55) 35%, rgba(1,3,1,0.92));
-  transition: height .12s linear;
-}
-
-/* neon money glow that intensifies with the multiplier */
+/* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(circle at 50% 52%, rgba(37,255,122,0.6), transparent 52%);
+  background: radial-gradient(circle at 50% 33%, rgba(37,255,122,0.55), transparent 34%);
   mix-blend-mode: screen;
   opacity: 0.3;
 }
 .vault.danger .vault-glow {
-  background: radial-gradient(circle at 50% 52%, rgba(255,46,46,0.6), transparent 52%);
+  background: radial-gradient(circle at 50% 33%, rgba(255,46,46,0.6), transparent 36%);
 }
 
 .vault-readout {
   position: absolute;
-  left: 0; right: 0; top: 26%;
+  left: 0; right: 0; top: 23%;
   z-index: 4;
   text-align: center;
   text-shadow: 0 2px 12px rgba(0,0,0,0.95);
@@ -269,7 +244,7 @@ input { font-family: inherit; }
 /* thief timer */
 .thief {
   text-align: center;
-  margin: 2px 0 10px;
+  margin: 0 0 6px;
 }
 .thief .lbl { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
 .thief .time {
@@ -283,8 +258,8 @@ input { font-family: inherit; }
 /* ----------------------------------------------------------- stash btn */
 .stash-btn {
   width: 100%;
-  border-radius: 18px;
-  padding: 18px 12px;
+  border-radius: 16px;
+  padding: 14px 12px;
   font-weight: 900;
   letter-spacing: 1px;
   position: relative;
@@ -297,8 +272,8 @@ input { font-family: inherit; }
   animation: stashPulse 1.8s ease-in-out infinite;
 }
 .stash-btn:active { transform: scale(0.975); }
-.stash-btn .big { font-size: 30px; line-height: 1; display: block; }
-.stash-btn .sub { font-size: 11px; letter-spacing: 2px; opacity: .8; display: block; margin-top: 4px; }
+.stash-btn .big { font-size: 27px; line-height: 1; display: block; }
+.stash-btn .sub { font-size: 11px; letter-spacing: 2px; opacity: .8; display: block; margin-top: 3px; }
 @keyframes stashPulse {
   0%,100% { box-shadow: 0 10px 30px rgba(37,255,122,0.35), inset 0 1px 0 rgba(255,255,255,0.4); }
   50% { box-shadow: 0 10px 44px rgba(37,255,122,0.7), inset 0 1px 0 rgba(255,255,255,0.5); }
@@ -329,7 +304,7 @@ input { font-family: inherit; }
 
 /* betting controls */
 .bet {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .bet-amt {
   display: grid; grid-template-columns: 48px 1fr 48px; gap: 8px;
@@ -366,7 +341,7 @@ input { font-family: inherit; }
 }
 
 /* ----------------------------------------------------- two columns */
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-line);
@@ -381,7 +356,7 @@ input { font-family: inherit; }
 .panel h3 .count { color: var(--muted); font-weight: 700; }
 
 .chat-list, .act-list {
-  height: 168px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;
+  height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;
   -webkit-overflow-scrolling: touch;
 }
 .chat-list::-webkit-scrollbar, .act-list::-webkit-scrollbar { width: 0; }
@@ -487,9 +462,9 @@ input { font-family: inherit; }
 }
 
 .heist {
-  position: absolute; inset: 0; z-index: 6; border-radius: 50%; overflow: hidden;
+  position: absolute; inset: 0; z-index: 6; overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255,30,30,0.35), rgba(0,0,0,0.85) 70%);
+  background: radial-gradient(circle at 50% 33%, rgba(255,30,30,0.4), rgba(0,0,0,0.82) 65%);
   display: grid; place-items: center;
   animation: heistIn .25s ease;
 }

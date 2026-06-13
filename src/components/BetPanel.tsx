@@ -7,12 +7,23 @@ import { euro } from '@/lib/format';
 export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: boolean }) {
   const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier } = useGame();
   const [amount, setAmount] = useState(10);
+  const [pending, setPending] = useState(false); // queued bet for the next round
   const valueRef = useRef<HTMLSpanElement>(null);
 
   const phase = state?.phase ?? 'betting';
   const bet = bets[slot];
   const holding = !!bet && !bet.cashedOut && !bet.lost;
   const cashed = !!bet && bet.cashedOut;
+
+  // Auto-place a queued bet the moment the next vault opens.
+  const amountRef = useRef(amount);
+  amountRef.current = amount;
+  useEffect(() => {
+    if (phase === 'betting' && pending && !bet) {
+      placeBet(slot, amountRef.current);
+      setPending(false);
+    }
+  }, [phase, pending, bet, slot, placeBet]);
 
   // Live potential payout on the STASH button while a round runs.
   useEffect(() => {
@@ -45,48 +56,44 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       onClick = () => cancelBet(slot);
     } else {
       cls += ' place';
-      big = `PLACE BET`;
+      big = 'PLACE BET';
       sub = `${euro(amount)} · VAULT OPEN`;
       onClick = () => placeBet(slot, amount);
       if (amount > balance) disabled = true;
     }
-  } else if (phase === 'running') {
-    if (holding) {
-      big = 'STASH';
-      sub = 'LOCK YOUR WINNINGS';
-      onClick = () => stash(slot);
-    } else if (cashed) {
-      cls += ' done';
-      big = `✓ STASHED ${bet!.cashedAt?.toFixed(2)}x`;
-      sub = `+${euro(bet!.payout)}`;
-      disabled = true;
-    } else {
-      cls += ' waiting';
-      big = 'WAITING…';
-      sub = 'NEXT VAULT OPENS SOON';
-      disabled = true;
-    }
-  } else {
-    // crashed
-    if (cashed) {
-      cls += ' done';
-      big = `✓ STASHED ${bet!.cashedAt?.toFixed(2)}x`;
-      sub = `+${euro(bet!.payout)}`;
-    } else if (bet) {
-      cls += ' placed';
-      big = 'TOO LATE — STOLEN';
-      sub = `−${euro(bet.amount)}`;
-    } else {
-      cls += ' waiting';
-      big = 'NEXT ROUND…';
-      sub = 'GET READY';
-    }
+  } else if (phase === 'running' && holding) {
+    big = 'STASH';
+    sub = 'LOCK YOUR WINNINGS';
+    onClick = () => stash(slot);
+  } else if (cashed) {
+    cls += ' done';
+    big = `✓ STASHED ${bet!.cashedAt?.toFixed(2)}x`;
+    sub = `+${euro(bet!.payout)}`;
     disabled = true;
+  } else if (phase === 'crashed' && bet && !cashed) {
+    cls += ' placed';
+    big = 'TOO LATE — STOLEN';
+    sub = `−${euro(bet.amount)}`;
+    disabled = true;
+  } else if (pending) {
+    // queued for the next round
+    cls += ' placed';
+    big = '✓ QUEUED';
+    sub = `NEXT ROUND · ${euro(amount)} · TAP TO CANCEL`;
+    onClick = () => setPending(false);
+  } else {
+    // round running/crashed, no bet → let the player pre-bet the next round
+    cls += ' place';
+    big = 'BET NEXT ROUND';
+    sub = `${euro(amount)} · GET READY`;
+    onClick = () => setPending(true);
+    if (amount > balance) disabled = true;
   }
 
   if (!hero) cls += ' compact';
 
-  const controlsDisabled = phase !== 'betting' || holding;
+  // Amount editing is locked only while a live bet is in play.
+  const controlsDisabled = holding;
 
   return (
     <div>

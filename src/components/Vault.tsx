@@ -10,7 +10,6 @@ export default function Vault() {
   const multRef = useRef<HTMLDivElement>(null);
   const vaultRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
-  const fillRef = useRef<HTMLDivElement>(null);
 
   const [rung, setRung] = useState(1);
   const [phase, setPhase] = useState('betting');
@@ -36,21 +35,13 @@ export default function Vault() {
       if (amountRef.current) amountRef.current.textContent = euro(amount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
 
-      // fill + glow grow with time so the vault visibly "fills" with cash
-      let fill = 0;
       let danger = false;
       if (s && s.phase === 'running' && s.startTime) {
-        const elapsed = serverNow() - s.startTime;
-        fill = Math.min(1, elapsed / MAX_RUN_MS);
-        danger = elapsed > 9000;
-      } else if (s && s.phase === 'crashed') {
-        fill = 1;
+        danger = serverNow() - s.startTime > 9000;
       }
 
-      // dark curtain retracts from the bottom as the pile grows
-      if (fillRef.current) fillRef.current.style.height = `${Math.round((1 - fill) * 58)}%`;
       // neon money glow intensifies with the multiplier
-      if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.65, (m - 1) * 0.12));
+      if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
       // active ladder rung = highest rung the multiplier has reached
       let active = LADDER[LADDER.length - 1];
@@ -77,14 +68,12 @@ export default function Vault() {
   return (
     <div className="vault-wrap">
       <div className="vault" ref={vaultRef}>
-        {/* premium vault render (the supplied reference art) */}
+        {/* the full supplied vault render, shown complete on the dark background */}
         <div className="vault-photo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/vault.webp" alt="Vault" draggable={false} />
         </div>
-        {/* dark curtain that retracts upward → the cash pile "fills" */}
-        <div className="vault-fill" ref={fillRef} />
-        {/* neon green money glow that intensifies with the multiplier */}
+        {/* neon green money glow over the cash, intensifies with the multiplier */}
         <div className="vault-glow" ref={glowRef} />
 
         <div className="vault-readout">
