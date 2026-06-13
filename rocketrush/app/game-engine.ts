@@ -1311,23 +1311,17 @@ window.addEventListener('touchend', unlockAudio);
 // with the spoken audio, so you can see exactly how long until launch — then at lift-off we
 // drop you straight into the game.
 function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
-// While we wait on the splash for the next fresh round, the button just shows a quiet
-// "Get ready …" with a little spinning ring + a countdown number — NO game audio and NO
-// big number here. The real countdown (5 … we have liftoff) and the betting happen in the
-// GAME, the moment we reveal it, so the player can place a bet on that round.
+// While we wait on the splash for the next fresh round, the button shows a quiet
+// "Get ready …" with just a spinning ring — NO numbers, because the wait until the next
+// round can be a few seconds and a frozen number looks stuck. The spinner simply tells
+// people they're waiting. The real countdown (5 … we have liftoff) and betting happen in
+// the GAME the moment we reveal it, so the player can place a bet on that round.
 function startReadyBadge(){
   const cta=$('introCta'); if(!cta) return;
   cta.classList.add('cta-ready');
-  cta.innerHTML='Get ready <span class="rdy-ring"><span class="rdy-num">5</span></span>';
-  let n=5; clearInterval(S.rdyTimer);
-  S.rdyTimer=_int(()=>{
-    n--; const el=cta.querySelector('.rdy-num');
-    if(n>=1){ if(el) el.textContent=String(n); }
-    else { if(el) el.textContent=''; clearInterval(S.rdyTimer); }   // ring keeps spinning until the round starts
-  },1000);
+  cta.innerHTML='Get ready <span class="rdy-ring"></span>';
 }
 function stopReadyBadge(){
-  clearInterval(S.rdyTimer);
   const cta=$('introCta'); if(cta){ cta.classList.remove('cta-ready'); cta.textContent="LET'S GO"; }
 }
 function maybeRevealOnBetting(){
