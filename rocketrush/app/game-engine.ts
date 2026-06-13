@@ -1288,13 +1288,23 @@ function unlockAudio(){ try{
 }catch(e){} }
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('touchend', unlockAudio);
-// INTRO / SPLASH: tapping LET'S GO hides the splash AND enables sound right away, so you
-// hear audio from the very first round (the next countdown, or the live flight you land on).
+// INTRO / SPLASH: tapping LET'S GO must ALWAYS drop you into a FRESH countdown that
+// starts at 5 — both the number and the spoken audio in sync. Net rounds run
+// continuously, so instead of revealing on whatever phase we happen to be in (mid-flight,
+// or a countdown already half-elapsed), we arm and wait for the NEXT betting phase, which
+// the server always begins at the top of the countdown. The button shows "GET READY…" so
+// the tap feels instant even though the reveal lands a moment later, on the 5.
 function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
-function maybeRevealOnBetting(){ if(S.armAudio){ S.armAudio=false; S.entered=true; } }
+function maybeRevealOnBetting(){
+  // called at the very start of each betting phase, right after showCountdown() armed the
+  // clock+clip — flipping entered=true here lets the first countdown tick play audio from 5.
+  if(S.waitBet){ S.waitBet=false; S.entered=true; revealGame(); }
+}
 { const gb=$('introGo'); if(gb){ const go=()=>{
-      unlockAudio(); S.entered=true; S.armAudio=false; revealGame();
-      if(S.phase==='running'){ startEngine(); startThrust(); startMusic(); }   // landed mid-flight → start its loops
+      unlockAudio();                 // unlock WebAudio inside the user gesture so sound is ready
+      if(S.waitBet) return;          // already armed — ignore extra taps
+      S.waitBet=true;                // reveal on the next fresh betting phase (always a clean 5)
+      const cta=$('introCta'); if(cta) cta.textContent='GET READY…';
     };
     gb.addEventListener('click', go); gb.addEventListener('touchend', e=>{ e.preventDefault(); go(); }, {passive:false}); }
 }
