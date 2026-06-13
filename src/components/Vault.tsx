@@ -1,18 +1,17 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
-import { LADDER, MAX_RUN_MS, MAX_MULTIPLIER } from '@/lib/constants';
+import { LADDER, MAX_RUN_MS } from '@/lib/constants';
 import { euro } from '@/lib/format';
-
-const MAX_BRICKS = 44;
 
 export default function Vault() {
   const { stateRef, liveMultiplier, serverNow, bets } = useGame();
   const amountRef = useRef<HTMLDivElement>(null);
   const multRef = useRef<HTMLDivElement>(null);
   const vaultRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
 
-  const [bricks, setBricks] = useState(0);
   const [rung, setRung] = useState(1);
   const [phase, setPhase] = useState('betting');
   const [crashPoint, setCrashPoint] = useState(0);
@@ -26,7 +25,6 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastBricks = -1;
     let lastRung = -1;
     let lastPhase = '';
     const loop = () => {
@@ -38,7 +36,7 @@ export default function Vault() {
       if (amountRef.current) amountRef.current.textContent = euro(amount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
 
-      // fill the pile by elapsed time so it grows steadily and satisfyingly
+      // fill + glow grow with time so the vault visibly "fills" with cash
       let fill = 0;
       let danger = false;
       if (s && s.phase === 'running' && s.startTime) {
@@ -46,12 +44,15 @@ export default function Vault() {
         fill = Math.min(1, elapsed / MAX_RUN_MS);
         danger = elapsed > 9000;
       } else if (s && s.phase === 'crashed') {
-        fill = 0;
+        fill = 1;
       }
-      const b = Math.round(fill * MAX_BRICKS);
-      if (b !== lastBricks) { setBricks(b); lastBricks = b; }
 
-      // active ladder rung = lowest rung the multiplier has reached
+      // dark curtain retracts from the bottom as the pile grows
+      if (fillRef.current) fillRef.current.style.height = `${Math.round((1 - fill) * 58)}%`;
+      // neon money glow intensifies with the multiplier
+      if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.65, (m - 1) * 0.12));
+
+      // active ladder rung = highest rung the multiplier has reached
       let active = LADDER[LADDER.length - 1];
       for (let i = LADDER.length - 1; i >= 0; i--) {
         if (m >= LADDER[i]) active = LADDER[i];
@@ -76,29 +77,30 @@ export default function Vault() {
   return (
     <div className="vault-wrap">
       <div className="vault" ref={vaultRef}>
-        <div className="vault-inner">
-          {/* money pile */}
-          <div className="pile">
-            {Array.from({ length: bricks }).map((_, i) => (
-              <div key={i} className={`brick${i % 6 === 5 ? ' bar' : ''}`} />
-            ))}
-          </div>
-
-          <div className="vault-readout">
-            <div className="label">CURRENT AMOUNT</div>
-            <div className="amount" ref={amountRef}>€0.00</div>
-            <div className="mult" ref={multRef}>1.00x</div>
-          </div>
-
-          {phase === 'crashed' && (
-            <div className="heist">
-              <div>
-                <div className="silhouette">🦹‍♂️💨</div>
-                <div className="thiefword">THIEVES BROKE IN<br />@ {crashPoint.toFixed(2)}x</div>
-              </div>
-            </div>
-          )}
+        {/* premium vault render (the supplied reference art) */}
+        <div className="vault-photo">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/vault.webp" alt="Vault" draggable={false} />
         </div>
+        {/* dark curtain that retracts upward → the cash pile "fills" */}
+        <div className="vault-fill" ref={fillRef} />
+        {/* neon green money glow that intensifies with the multiplier */}
+        <div className="vault-glow" ref={glowRef} />
+
+        <div className="vault-readout">
+          <div className="label">CURRENT AMOUNT</div>
+          <div className="amount" ref={amountRef}>€0.00</div>
+          <div className="mult" ref={multRef}>1.00x</div>
+        </div>
+
+        {phase === 'crashed' && (
+          <div className="heist">
+            <div>
+              <div className="silhouette">🦹‍♂️💨</div>
+              <div className="thiefword">THIEVES BROKE IN<br />@ {crashPoint.toFixed(2)}x</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* multiplier ladder */}

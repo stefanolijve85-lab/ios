@@ -48,9 +48,9 @@ input { font-family: inherit; }
   padding-top: env(safe-area-inset-top);
   position: relative;
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(47, 209, 74, 0.05), transparent 60%),
-    radial-gradient(140% 80% at 50% 110%, rgba(230, 184, 77, 0.06), transparent 60%),
-    linear-gradient(180deg, #0a0a0c, #060607);
+    radial-gradient(85% 42% at 50% 32%, rgba(47, 209, 74, 0.05), transparent 60%),
+    radial-gradient(120% 50% at 50% 115%, rgba(230, 184, 77, 0.045), transparent 55%),
+    linear-gradient(180deg, #050506, #020203 55%, #050506);
 }
 
 /* ----------------------------------------------------------------- header */
@@ -158,111 +158,78 @@ input { font-family: inherit; }
   max-width: 360px;
   margin: 0 auto;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  /* brass ring */
-  background:
-    conic-gradient(from 210deg,
-      #4a3a1c, #d8ad57, #8a6a22, #f2cf7e, #6e5320, #d8ad57, #3a2d14, #c79a48, #4a3a1c);
-  padding: 16px;
+  overflow: hidden;
+  background: #000;
+  /* thin metallic bezel + cinematic drop + green floor glow */
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.7),
-    0 0 0 2px rgba(0,0,0,0.5),
-    inset 0 0 24px rgba(0,0,0,0.6);
+    0 22px 60px rgba(0,0,0,0.8),
+    0 0 0 2px rgba(0,0,0,0.7),
+    0 0 0 4px rgba(120,90,40,0.35),
+    0 0 40px rgba(37,255,122,0.18),
+    inset 0 0 30px rgba(0,0,0,0.9);
   transition: box-shadow .25s;
-}
-.vault::before {
-  /* bolt ring */
-  content: '';
-  position: absolute; inset: 8px;
-  border-radius: 50%;
-  background:
-    repeating-conic-gradient(from 0deg,
-      transparent 0deg 12deg,
-      rgba(0,0,0,0.35) 12deg 13deg,
-      transparent 13deg 15deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 86%, #000 86% 94%, transparent 94%);
-  mask: radial-gradient(circle, transparent 0 86%, #000 86% 94%, transparent 94%);
-  pointer-events: none;
 }
 .vault.danger {
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.7),
-    0 0 36px rgba(255,59,59,0.55),
-    inset 0 0 24px rgba(0,0,0,0.6);
+    0 22px 60px rgba(0,0,0,0.8),
+    0 0 0 2px rgba(0,0,0,0.7),
+    0 0 0 4px rgba(150,40,40,0.5),
+    0 0 50px rgba(255,40,40,0.55),
+    inset 0 0 30px rgba(0,0,0,0.9);
 }
-.vault-inner {
-  position: relative;
+
+/* the supplied premium vault render, framed to the door */
+.vault-photo { position: absolute; inset: 0; z-index: 1; }
+.vault-photo img {
   width: 100%; height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 120%, rgba(37,255,122,0.35), transparent 55%),
-    radial-gradient(circle at 50% 40%, #11210f, #060a06 70%);
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.9), inset 0 0 60px rgba(37,255,122,0.12);
-  display: grid; place-items: center;
+  object-fit: cover;
+  object-position: 50% 22%;
+  display: block;
+  user-select: none; -webkit-user-drag: none;
 }
-.vault-inner::after {
-  /* gold reflection sweep */
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 30% 15%, rgba(255,227,154,0.18), transparent 40%);
-  pointer-events: none;
+
+/* dark curtain over the lower chamber that retracts upward as cash fills */
+.vault-fill {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 58%;
+  z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(2,4,2,0.55) 35%, rgba(1,3,1,0.92));
+  transition: height .12s linear;
+}
+
+/* neon money glow that intensifies with the multiplier */
+.vault-glow {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(circle at 50% 52%, rgba(37,255,122,0.6), transparent 52%);
+  mix-blend-mode: screen;
+  opacity: 0.3;
+}
+.vault.danger .vault-glow {
+  background: radial-gradient(circle at 50% 52%, rgba(255,46,46,0.6), transparent 52%);
 }
 
 .vault-readout {
-  position: relative;
-  z-index: 3;
+  position: absolute;
+  left: 0; right: 0; top: 26%;
+  z-index: 4;
   text-align: center;
-  transform: translateY(-14%);
-  text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.95);
 }
-.vault-readout .label { font-size: 10px; letter-spacing: 2px; color: var(--green-hi); opacity: .85; }
+.vault-readout .label { font-size: 10px; letter-spacing: 2px; color: var(--green-hi); opacity: .9; }
 .vault-readout .amount {
-  font-size: clamp(26px, 9vw, 40px);
+  font-size: clamp(28px, 9vw, 42px);
   font-weight: 900;
-  color: var(--green-hi);
-  text-shadow: 0 0 18px rgba(37,255,122,0.7);
+  color: #eafff0;
+  text-shadow: 0 0 22px rgba(37,255,122,0.85), 0 2px 6px rgba(0,0,0,0.9);
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
 }
 .vault-readout .mult {
-  font-size: 16px; font-weight: 800; color: var(--gold-hi);
-  text-shadow: 0 0 10px rgba(230,184,77,0.5);
+  font-size: 17px; font-weight: 800; color: var(--gold-hi);
+  text-shadow: 0 0 12px rgba(230,184,77,0.6), 0 2px 4px rgba(0,0,0,0.9);
   font-variant-numeric: tabular-nums;
 }
-.vault.danger .vault-readout .amount { color: #ffd9d9; text-shadow: 0 0 18px rgba(255,59,59,0.8); }
-
-/* money pile */
-.pile {
-  position: absolute;
-  left: 8%; right: 8%; bottom: 4%;
-  z-index: 2;
-  display: flex; flex-wrap: wrap-reverse;
-  gap: 3px; justify-content: center;
-  align-content: flex-start;
-  height: 46%;
-  overflow: hidden;
-  filter: drop-shadow(0 0 10px rgba(37,255,122,0.35));
-  transition: opacity .2s;
-}
-.brick {
-  width: 26px; height: 11px; border-radius: 2px;
-  background: linear-gradient(180deg, #6cc274, #2f7a3a);
-  border: 1px solid rgba(0,0,0,0.35);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
-  position: relative;
-}
-.brick::after {
-  content:''; position:absolute; inset: 3px 4px;
-  border-radius:1px;
-  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 4px);
-}
-.brick.bar {
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold), var(--gold-deep));
-  height: 9px; width: 20px;
-}
-.brick.bar::after { display: none; }
+.vault.danger .vault-readout .amount { color: #ffe2e2; text-shadow: 0 0 22px rgba(255,59,59,0.9); }
 
 /* multiplier ladder */
 .ladder {
