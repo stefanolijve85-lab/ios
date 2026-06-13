@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
-import { LADDER, MAX_RUN_MS } from '@/lib/constants';
+import { LADDER } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
 export default function Vault() {
@@ -36,17 +36,14 @@ export default function Vault() {
       if (amountRef.current) amountRef.current.textContent = euro(amount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
 
-      // countdown + danger
-      let danger = false, text = '00:00', w = false, lbl = 'THIEVES ARRIVING IN';
-      if (s?.phase === 'running' && s.startTime) {
-        const remaining = MAX_RUN_MS - (serverNow() - s.startTime);
-        text = clock(remaining);
-        w = remaining <= 5000;
-        danger = remaining <= 6000;
-      } else if (s?.phase === 'crashed') {
-        text = 'STOLEN'; w = true; lbl = 'THE VAULT WAS';
+      // betting countdown (legit) + tension glow (driven by stake size, not time)
+      let danger = false, text = '00:00', w = false, lbl = 'VAULT CLOSES IN';
+      if (s?.phase === 'running') {
+        danger = m >= 5; // bigger stash = redder, hotter — no timing hint
       } else if (s?.phase === 'betting') {
-        text = clock((s.phaseEndsAt ?? 0) - serverNow()); lbl = 'VAULT CLOSES IN';
+        const remaining = (s.phaseEndsAt ?? 0) - serverNow();
+        text = clock(remaining);
+        w = remaining <= 2500;
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }
@@ -100,13 +97,15 @@ export default function Vault() {
         ))}
       </div>
 
-      {/* countdown, overlaid over the bottom of the vault (readable pill) */}
-      <div className={`vault-countdown${warn ? ' warn' : ''}`}>
-        <div className="cd-pill">
-          <span className="lbl">🚨 {cdLabel}</span>
-          <span className="time" ref={timeRef}>00:00</span>
+      {/* countdown only while betting — during a round the crash is unpredictable */}
+      {phase === 'betting' && (
+        <div className={`vault-countdown${warn ? ' warn' : ''}`}>
+          <div className="cd-pill">
+            <span className="lbl">🔒 {cdLabel}</span>
+            <span className="time" ref={timeRef}>00:00</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {phase === 'crashed' && (
         <div className="heist">
