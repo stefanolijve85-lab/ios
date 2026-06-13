@@ -3,7 +3,6 @@ import { useGame } from '@/hooks/useGame';
 import Header from '@/components/Header';
 import StatusRow from '@/components/StatusRow';
 import Vault from '@/components/Vault';
-import ThiefTimer from '@/components/ThiefTimer';
 import BetPanel from '@/components/BetPanel';
 import LiveChat from '@/components/LiveChat';
 import LiveActivity from '@/components/LiveActivity';
@@ -25,7 +24,6 @@ export default function Page() {
         <Vault />
       </div>
 
-      <ThiefTimer />
       <BetPanel slot={0} hero />
 
       <div className="cols">

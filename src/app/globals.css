@@ -168,106 +168,102 @@ input { font-family: inherit; }
 }
 @keyframes alarmBlink { 0%,100%{filter:brightness(1);} 50%{filter:brightness(1.8);} }
 
-/* ------------------------------------------------------------- vault */
-.vault-wrap {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 50px;
-  gap: 6px;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
+/* ----------------------------------- vault game area (full-bleed hero) */
 .vault {
   position: relative;
   width: 100%;
   height: 100%;
   margin: 0 auto;
-  background: transparent;          /* full vault floats on the dark page */
-  display: flex; align-items: center; justify-content: center;
   transition: filter .25s;
 }
 .vault.danger { filter: drop-shadow(0 0 26px rgba(255,40,40,0.45)); }
 
-/* the FULL supplied vault render — shown complete, not cropped to a circle */
-.vault-photo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
-.vault-photo img {
-  height: 100%; width: auto; max-width: 100%;
+/* the full vault scene render fills the area */
+.vault-scene { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.vault-scene img {
+  width: 100%; height: 100%;
   object-fit: contain;
+  object-position: center 42%;
   display: block;
-  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.75));
   user-select: none; -webkit-user-drag: none;
 }
 
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(circle at 50% 33%, rgba(37,255,122,0.55), transparent 34%);
+  background: radial-gradient(circle at 50% 36%, rgba(37,255,122,0.5), transparent 34%);
   mix-blend-mode: screen;
   opacity: 0.3;
 }
 .vault.danger .vault-glow {
-  background: radial-gradient(circle at 50% 33%, rgba(255,46,46,0.6), transparent 36%);
+  background: radial-gradient(circle at 50% 36%, rgba(255,46,46,0.55), transparent 36%);
 }
 
 .vault-readout {
   position: absolute;
-  left: 0; right: 0; top: 23%;
+  left: 0; right: 0; top: 30%;
   z-index: 4;
   text-align: center;
   text-shadow: 0 2px 12px rgba(0,0,0,0.95);
+  pointer-events: none;
 }
 .vault-readout .label { font-size: 10px; letter-spacing: 2px; color: var(--green-hi); opacity: .9; }
 .vault-readout .amount {
-  font-size: clamp(28px, 9vw, 42px);
+  font-size: clamp(26px, 8.5vw, 40px);
   font-weight: 900;
   color: #eafff0;
-  text-shadow: 0 0 22px rgba(37,255,122,0.85), 0 2px 6px rgba(0,0,0,0.9);
+  text-shadow: 0 0 22px rgba(37,255,122,0.9), 0 2px 6px rgba(0,0,0,0.95);
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
 }
 .vault-readout .mult {
   font-size: 17px; font-weight: 800; color: var(--gold-hi);
-  text-shadow: 0 0 12px rgba(230,184,77,0.6), 0 2px 4px rgba(0,0,0,0.9);
+  text-shadow: 0 0 12px rgba(230,184,77,0.7), 0 2px 4px rgba(0,0,0,0.95);
   font-variant-numeric: tabular-nums;
 }
 .vault.danger .vault-readout .amount { color: #ffe2e2; text-shadow: 0 0 22px rgba(255,59,59,0.9); }
 
-/* multiplier ladder */
-.ladder {
+/* multiplier ladder — overlaid on the right edge of the vault */
+.vault-ladder {
+  position: absolute; right: 0; top: 8%; bottom: 16%;
+  z-index: 4;
   display: flex; flex-direction: column; justify-content: space-between;
-  height: 86%;
   font-size: 11px; font-weight: 800;
   font-variant-numeric: tabular-nums;
+  padding-left: 8px;
+  background: linear-gradient(270deg, rgba(0,0,0,0.45), transparent);
 }
-.ladder .rung {
+.vault-ladder .rung {
   color: var(--muted);
   text-align: right;
-  padding: 2px 4px;
+  padding: 1px 4px 1px 0;
   border-right: 2px solid transparent;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   transition: all .15s;
 }
-.ladder .rung.hot { color: var(--gold-hi); }
-.ladder .rung.active {
+.vault-ladder .rung.hot { color: var(--gold-hi); }
+.vault-ladder .rung.active {
   color: #fff;
   border-right-color: var(--green);
   text-shadow: 0 0 8px var(--green-glow);
 }
-.ladder .rung.top { color: var(--danger); }
+.vault-ladder .rung.top { color: var(--danger); }
 
-/* thief timer */
-.thief {
+/* thief countdown — overlaid over the bottom of the vault */
+.vault-countdown {
+  position: absolute; left: 0; right: 0; bottom: 4%;
+  z-index: 5;
   text-align: center;
-  margin: 0 0 6px;
+  pointer-events: none;
 }
-.thief .lbl { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
-.thief .time {
-  font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums;
+.vault-countdown .lbl { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-shadow: 0 1px 3px #000; }
+.vault-countdown .time {
+  font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums;
   color: var(--gold-hi);
+  text-shadow: 0 0 10px rgba(0,0,0,0.9), 0 2px 4px #000;
   transition: color .2s;
 }
-.thief.warn .time { color: var(--danger); text-shadow: 0 0 14px rgba(255,59,59,0.7); animation: blink .5s infinite; }
+.vault-countdown.warn .time { color: var(--danger); text-shadow: 0 0 14px rgba(255,59,59,0.8); animation: blink .5s infinite; }
 @keyframes blink { 50% { opacity: .4; } }
 
 /* ----------------------------------------------------------- stash btn */
