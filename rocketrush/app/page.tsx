@@ -32,7 +32,7 @@ export default function Page() {
               <b>FAST &amp; FAIR</b><small>Provably fair, real-time</small>
             </div>
           </div>
-          <div className="intro-cta">LET&apos;S GO</div>
+          <div className="intro-cta" id="introCta">LET&apos;S GO</div>
         </div>
         <button className="intro-go" id="introGo" aria-label="Let's go" />
       </div>
