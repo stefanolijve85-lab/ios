@@ -113,11 +113,10 @@ input { font-family: inherit; }
 
 /* --------------------------------------------------------- status row */
 .statusrow {
-  position: relative;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: space-between;
   gap: 8px; margin: 2px 2px 4px;
 }
-.statusrow .alarm { position: absolute; right: 2px; }
+.icon-btn.on { color: var(--green-hi); border-color: rgba(47,209,74,0.4); }
 .chip-stat {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 700; color: var(--muted);
