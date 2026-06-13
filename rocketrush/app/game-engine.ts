@@ -579,22 +579,14 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // As the flight goes long the gravity-turn tangent flattens out and the nose ends
     // up pointing sideways. Bias it back UP toward the moon — gently early, more as the
     // multiplier climbs — so the nose keeps aiming at the moon (top-right).
-    // The thick flame must come straight out along the ACTUAL trail, so the tail always
-    // emerges from the middle of the plume. Take the exhaust direction from the trail's
-    // local tangent at the rocket (the same short step the trail line is drawn with) — this
-    // is independent of how far we bias the nose up toward the moon.
-    let flameBend = 0;
+    // bias the NOSE up toward the moon (purely visual — the flame follows the real trail,
+    // drawn separately in drawCurvedFlame, so it no longer matters how far the nose turns).
     if(S.phase==='running'){
-      const segs = S.lowBw?22:36;
-      const pPrev = rocketPos(tt*(segs-1)/segs);
-      const edx=p.x-pPrev.x, edy=p.y-pPrev.y;
-      const exhaustAng = (Math.hypot(edx,edy)>0.01) ? Math.atan2(edy,edx)+Math.PI/2 : ang;
-      const moonX=0.87*W, moonY=0.12*H;                            // bias the NOSE up toward the moon (visual only)
+      const moonX=0.87*W, moonY=0.12*H;
       const angMoon = Math.atan2(moonY-ry, moonX-p.x) + Math.PI/2;
       const wM = Math.min(0.8, Math.max(0,(S.mult-1.3)/15));   // ~0 below 1.3x → up to 0.8, aims harder at the moon
       let d = angMoon - ang; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
       ang = ang + d*wM; S.lastAng = ang;
-      flameBend = exhaustAng - ang;   // rotate the plume off the body axis onto the real trail
     }
     if(S.phase==='running'){
       if(!S.lowBw){
@@ -604,7 +596,9 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
           life:1, fade:rnd(.05,.085), r:rnd(1.3,boosting?3.6:3.0), glow:true,
           c: Math.random()<.45?'#FFE08A':(Math.random()<.6?'#FF8A00':'#FF5A2A')});
       }
-      drawRocket(p.x, ry, ang, null, flameBend);
+      const boost = Math.max(0, Math.min(1, (S.mult-1.66)/0.54));
+      if(!crashed) drawCurvedFlame(tt, boost);   // thick flame that hugs the trail curve, UNDER the body
+      drawRocket(p.x, ry, ang);
     } else {
       drawBoom(p.x, p.y);
     }
@@ -633,8 +627,53 @@ function loadArt(){
   try{ const im=new Image(); im.onload=()=>{ if(im.naturalWidth>0){ ROCKET_IMG=im; rocketReady=true; } }; im.onerror=()=>{}; im.src='/rocket.png'; }catch(e){}
 }
 
+// THICK FLAME — a tapered bright plume that follows the ACTUAL trail curve right behind the
+// rocket, so the thin tail always runs straight down its middle at EVERY multiplier. A
+// straight plume can't track the path early in the flight, when it bends hard behind the
+// rocket; sampling the real curve fixes that.
+function drawCurvedFlame(tt, boost){
+  const SCt = rocketScale();
+  const flick = 0.92 + 0.16*Math.sin(performance.now()/26);   // subtle live length flicker
+  const target = (20 + 9*boost) * SCt * flick;                // flame length in px
+  const pts=[rocketPos(tt)], dist=[0];
+  let prev=pts[0], acc=0, bt=tt; const dt=Math.max(0.012, tt*0.01);
+  while(bt>0 && acc<target && pts.length<64){
+    bt=Math.max(0, bt-dt); const q=rocketPos(bt);
+    acc += Math.hypot(q.x-prev.x, q.y-prev.y); pts.push(q); dist.push(acc); prev=q;
+    if(bt<=0) break;
+  }
+  if(pts.length<2) return;
+  const L=acc||1, baseHW=(4.6 + 1.5*boost) * SCt;
+  const ribbon=(wmul, style)=>{
+    ctx.beginPath();
+    const edge=(sgn)=>{
+      for(let i=0;i<pts.length;i++){
+        const u=Math.min(1, dist[i]/L), hw=baseHW*wmul*Math.pow(1-u, 0.75);
+        const a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)];
+        let dx=b.x-a.x, dy=b.y-a.y; const m=Math.hypot(dx,dy)||1; dx/=m; dy/=m;   // tangent
+        const x=pts[i].x - dy*hw*sgn, yy=pts[i].y + dx*hw*sgn;                     // perpendicular offset
+        if(i===0 && sgn>0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+      }
+    };
+    edge(1);                                  // one side, nozzle → tail
+    for(let i=pts.length-1;i>=0;i--){         // other side, tail → nozzle
+      const u=Math.min(1, dist[i]/L), hw=baseHW*wmul*Math.pow(1-u, 0.75);
+      const a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)];
+      let dx=b.x-a.x, dy=b.y-a.y; const m=Math.hypot(dx,dy)||1; dx/=m; dy/=m;
+      ctx.lineTo(pts[i].x + dy*hw, pts[i].y - dx*hw);
+    }
+    ctx.closePath(); ctx.fillStyle=style; ctx.fill();
+  };
+  const grad=(...st)=>{ const g=ctx.createLinearGradient(pts[0].x,pts[0].y, pts[pts.length-1].x,pts[pts.length-1].y); st.forEach(s=>g.addColorStop(s[0],s[1])); return g; };
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineJoin='round';
+  ribbon(1.00, grad([0,'rgba(255,150,40,.5)'],[.5,'rgba(255,125,35,.3)'],[1,'rgba(255,80,40,0)']));    // soft outer bloom
+  ribbon(0.60, grad([0,'rgba(255,205,105,.95)'],[.45,'rgba(255,160,55,.78)'],[1,'rgba(255,90,40,0)'])); // mid orange body
+  ribbon(0.26, grad([0,'rgba(255,255,235,1)'],[.5,'rgba(255,234,150,.85)'],[1,'rgba(255,170,70,0)']));  // white-hot core
+  ctx.restore(); ctx.globalCompositeOperation='source-over';
+}
+
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
-function drawRocket(x,y,ang,heat,flameBend){
+function drawRocket(x,y,ang,heat){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
   const flick = Math.sin(performance.now()/28)*4;
@@ -650,19 +689,21 @@ function drawRocket(x,y,ang,heat,flameBend){
   // the nozzle (lower for the artwork rocket, higher for the vector one).
   const ny = rocketReady ? 14.5 : 8;
   ctx.globalCompositeOperation='lighter';
-  // Pivot the WHOLE exhaust around the rocket CENTRE (not the nozzle) so its base sits
-  // exactly on the trail line and the plume streams straight back down the path — the tail
-  // always emerges from the middle of the thick flame, whatever the nose is doing.
-  ctx.save(); ctx.rotate(flameBend||0);
+  // nozzle bloom — the bright burst right at the engine (always)
   let eg = ctx.createRadialGradient(0,ny,0, 0,ny, 10*gi+3);
   eg.addColorStop(0,`rgba(255,230,150,${.95*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,ny,10*gi+3,0,7); ctx.fill();
-  let fl = ctx.createLinearGradient(0,ny-1,0,ny+1+f);   // outer plume: wide at nozzle → point
-  fl.addColorStop(0,'rgba(255,242,185,.95)'); fl.addColorStop(.3,'rgba(255,175,55,.92)'); fl.addColorStop(.65,'rgba(255,110,40,.55)'); fl.addColorStop(1,'rgba(255,70,60,0)');
-  ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-4.4,ny); ctx.quadraticCurveTo(0,ny+1+f,4.4,ny); ctx.closePath(); ctx.fill();
-  let fc = ctx.createLinearGradient(0,ny-1,0,ny+f*0.62);   // inner white-hot core
-  fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
-  ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.1,ny); ctx.quadraticCurveTo(0,ny+f*0.62,2.1,ny); ctx.closePath(); ctx.fill();
+  // On the PAD the rocket stands vertical, so a simple straight plume is correct. In FLIGHT
+  // the thick flame is drawn by drawCurvedFlame() so it follows the curved trail (the tail
+  // always runs down its middle); here we only keep the nozzle bloom + side-thruster jets.
+  if(heat!=null){
+    let fl = ctx.createLinearGradient(0,ny-1,0,ny+1+f);   // outer plume: wide at nozzle → point
+    fl.addColorStop(0,'rgba(255,242,185,.95)'); fl.addColorStop(.3,'rgba(255,175,55,.92)'); fl.addColorStop(.65,'rgba(255,110,40,.55)'); fl.addColorStop(1,'rgba(255,70,60,0)');
+    ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-4.4,ny); ctx.quadraticCurveTo(0,ny+1+f,4.4,ny); ctx.closePath(); ctx.fill();
+    let fc = ctx.createLinearGradient(0,ny-1,0,ny+f*0.62);   // inner white-hot core
+    fc.addColorStop(0,'rgba(255,255,255,.95)'); fc.addColorStop(.5,'rgba(255,235,170,.8)'); fc.addColorStop(1,'rgba(255,180,80,0)');
+    ctx.fillStyle=fc; ctx.beginPath(); ctx.moveTo(-2.1,ny); ctx.quadraticCurveTo(0,ny+f*0.62,2.1,ny); ctx.closePath(); ctx.fill();
+  }
   // side-thruster jets — two short angled plumes from the base corners when boosting
   if(boost>0){
     const sl = (5 + flick*0.4) * boost;   // side-jet length
@@ -674,7 +715,6 @@ function drawRocket(x,y,ang,heat,flameBend){
       ctx.restore();
     }
   }
-  ctx.restore();
   ctx.globalCompositeOperation='source-over';
 
   // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
