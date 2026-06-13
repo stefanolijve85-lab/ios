@@ -110,6 +110,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
       setFlash({ kind: 'win', text: `STASHED ${multiplier.toFixed(2)}x  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
+      audio.playStash();
     };
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);

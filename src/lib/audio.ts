@@ -1,17 +1,37 @@
 'use client';
 
-// Adaptive tension engine (Web Audio API — no asset files, no music, no vocals).
-// A single repeating electronic motif whose pitch + tempo climb with the
-// multiplier, mirroring the emotional climb. Glitch + half-second silence on crash.
+// Adaptive audio engine using the supplied ElevenLabs clips + Suno bed.
+//
+// - Two looping tension motifs (calm "low" + nervous "high") are cross-faded by
+//   the round's intensity, and BOTH speed up / pitch up slightly as the
+//   multiplier climbs — so the same motif "rises higher and faster", exactly per
+//   the design brief. Glitch one-shot + silence on crash.
+// - The Suno track plays as a quiet looping atmosphere bed (streamed, ducked
+//   during the tense final stretch). All audio is gated behind the sound toggle
+//   (a user gesture — required to unlock audio on iOS Safari).
+
+type Buffers = {
+  low?: AudioBuffer;
+  high?: AudioBuffer;
+  stash?: AudioBuffer;
+  crash?: AudioBuffer;
+};
 
 class TensionAudio {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private seqTimer: number | null = null;
-  private intensity = 0; // 0..1
-  private running = false;
-  private step = 0;
+  private buffers: Buffers = {};
+  private lowSrc: AudioBufferSourceNode | null = null;
+  private highSrc: AudioBufferSourceNode | null = null;
+  private lowGain: GainNode | null = null;
+  private highGain: GainNode | null = null;
+  private lobby: HTMLAudioElement | null = null;
+
   enabled = false;
+  private loaded = false;
+  private loading = false;
+  private running = false;
+  private intensity = 0;
 
   private ensure() {
     if (this.ctx) return;
@@ -20,89 +40,135 @@ class TensionAudio {
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.0001;
     this.master.connect(this.ctx.destination);
+    // Streamed atmosphere bed (don't fetch until first play).
+    this.lobby = new Audio('/audio/lobby.mp3');
+    this.lobby.loop = true;
+    this.lobby.preload = 'none';
+    this.lobby.volume = 0.12;
   }
 
-  // Must be called from a user gesture (iOS Safari unlock).
+  private async load() {
+    if (this.loaded || this.loading || !this.ctx) return;
+    this.loading = true;
+    const get = async (url: string) => {
+      const res = await fetch(url);
+      const ab = await res.arrayBuffer();
+      return await this.ctx!.decodeAudioData(ab);
+    };
+    try {
+      const [low, high, stash, crash] = await Promise.all([
+        get('/audio/motif-low.mp3'),
+        get('/audio/motif-high.mp3'),
+        get('/audio/stash.mp3'),
+        get('/audio/crash.mp3'),
+      ]);
+      this.buffers = { low, high, stash, crash };
+      this.loaded = true;
+    } catch {
+      /* leave unloaded; engine degrades to silence */
+    }
+    this.loading = false;
+  }
+
+  // Called from the sound toggle (user gesture → unlocks iOS audio).
   async toggle(): Promise<boolean> {
     this.ensure();
     if (!this.ctx) return false;
     if (this.ctx.state === 'suspended') await this.ctx.resume();
     this.enabled = !this.enabled;
-    if (this.master) {
-      this.master.gain.cancelScheduledValues(this.ctx.currentTime);
-      this.master.gain.linearRampToValueAtTime(this.enabled ? 0.5 : 0.0001, this.ctx.currentTime + 0.2);
+    const t = this.ctx.currentTime;
+    this.master!.gain.cancelScheduledValues(t);
+    this.master!.gain.linearRampToValueAtTime(this.enabled ? 0.6 : 0.0001, t + 0.2);
+
+    if (this.enabled) {
+      // Kick the streamed bed inside the gesture, then load buffers.
+      if (this.lobby) {
+        this.lobby.volume = 0.12;
+        this.lobby.play().catch(() => {});
+      }
+      this.load().then(() => {
+        if (this.enabled && this.running) this.startMotif();
+      });
+    } else {
+      this.stopSources();
+      this.lobby?.pause();
     }
     return this.enabled;
   }
 
   setIntensity(v: number) {
     this.intensity = Math.max(0, Math.min(1, v));
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    // Cross-fade calm → nervous.
+    this.lowGain?.gain.setTargetAtTime(1 - this.intensity * 0.85, t, 0.25);
+    this.highGain?.gain.setTargetAtTime(this.intensity, t, 0.25);
+    // Same motif rises in pitch + tempo.
+    const rate = 1 + this.intensity * 0.25;
+    this.lowSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
+    this.highSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
+    // Duck the atmosphere bed as tension peaks.
+    if (this.lobby && this.enabled) {
+      this.lobby.volume = Math.max(0.04, 0.12 * (1 - this.intensity));
+    }
   }
 
   startMotif() {
-    if (!this.enabled) return;
-    this.ensure();
-    if (this.running) return;
     this.running = true;
-    this.step = 0;
-    const tick = () => {
-      if (!this.running) return;
-      this.blip();
-      // Tempo accelerates with intensity: 320ms calm -> 90ms frantic.
-      const interval = 320 - this.intensity * 230;
-      this.seqTimer = window.setTimeout(tick, interval);
+    if (!this.enabled || !this.ctx || !this.loaded) return;
+    this.stopSources();
+    const mk = (buf: AudioBuffer, g0: number) => {
+      const src = this.ctx!.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      const g = this.ctx!.createGain();
+      g.gain.value = g0;
+      src.connect(g);
+      g.connect(this.master!);
+      src.start();
+      return { src, g };
     };
-    tick();
+    const lo = mk(this.buffers.low!, 1);
+    const hi = mk(this.buffers.high!, 0);
+    this.lowSrc = lo.src; this.lowGain = lo.g;
+    this.highSrc = hi.src; this.highGain = hi.g;
+    this.setIntensity(this.intensity);
+  }
+
+  private stopSources() {
+    [this.lowSrc, this.highSrc].forEach((s) => { try { s?.stop(); } catch { /* already stopped */ } });
+    this.lowSrc = this.highSrc = null;
+    this.lowGain = this.highGain = null;
   }
 
   stopMotif() {
     this.running = false;
-    if (this.seqTimer) {
-      clearTimeout(this.seqTimer);
-      this.seqTimer = null;
-    }
+    this.intensity = 0;
+    this.stopSources();
+    if (this.lobby && this.enabled) this.lobby.volume = 0.12; // restore bed between rounds
   }
 
-  private blip() {
-    if (!this.ctx || !this.master || !this.enabled) return;
-    const t = this.ctx.currentTime;
-    // Pitch climbs ~220Hz -> ~880Hz as intensity rises, with a small arp.
-    const base = 220 + this.intensity * 660;
-    const arp = [0, 7, 12, 7][this.step % 4];
-    const freq = base * Math.pow(2, arp / 12);
-    this.step++;
-
-    const osc = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.value = freq;
-    const vol = 0.12 + this.intensity * 0.18;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
-    osc.connect(g);
-    g.connect(this.master);
-    osc.start(t);
-    osc.stop(t + 0.16);
+  // The STASH reward sound.
+  playStash() {
+    this.oneShot(this.buffers.stash, 0.9);
   }
 
+  // Glitch on crash → natural silence during the crashed phase → reset next round.
   crash() {
-    this.stopMotif();
-    if (!this.ctx || !this.master || !this.enabled) return;
-    const t = this.ctx.currentTime;
-    // Digital glitch burst.
-    const osc = this.ctx.createOscillator();
+    this.running = false;
+    this.stopSources();
+    this.oneShot(this.buffers.crash, 1.0);
+  }
+
+  private oneShot(buf: AudioBuffer | undefined, vol: number) {
+    if (!this.enabled || !this.ctx || !buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
     const g = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(900, t);
-    osc.frequency.exponentialRampToValueAtTime(60, t + 0.18);
-    g.gain.setValueAtTime(0.4, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-    osc.connect(g);
-    g.connect(this.master);
-    osc.start(t);
-    osc.stop(t + 0.22);
-    // Then half-second silence — handled naturally; motif restarts next round.
+    g.gain.value = vol;
+    src.connect(g);
+    g.connect(this.master!);
+    src.start();
   }
 }
 
