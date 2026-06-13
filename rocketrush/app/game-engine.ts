@@ -596,7 +596,11 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
           life:1, fade:rnd(.05,.085), r:rnd(1.3,boosting?3.6:3.0), glow:true,
           c: Math.random()<.45?'#FFE08A':(Math.random()<.6?'#FF8A00':'#FF5A2A')});
       }
-      const boost = Math.max(0, Math.min(1, (S.mult-1.66)/0.54));
+      // Fire the thrusters hard right at LIFT-OFF (a launch kick that fades over the first
+      // ~1.8s) and again when the music boost hits at 1.66x — so a big thruster flame is
+      // already streaming out the moment the rocket leaves the pad.
+      const launchKick = Math.max(0, 1 - tt/1.8);
+      const boost = Math.max(0, Math.min(1, Math.max(launchKick, (S.mult-1.66)/0.54)));
       if(!crashed) drawCurvedFlame(tt, boost);   // thick flame that hugs the trail curve, UNDER the body
       drawRocket(p.x, ry, ang);
     } else {
@@ -634,7 +638,7 @@ function loadArt(){
 function drawCurvedFlame(tt, boost){
   const SCt = rocketScale();
   const flick = 0.92 + 0.16*Math.sin(performance.now()/26);   // subtle live length flicker
-  const target = (20 + 9*boost) * SCt * flick;                // flame length in px
+  const target = (24 + 10*boost) * SCt * flick;                // flame length in px
   const pts=[rocketPos(tt)], dist=[0];
   let prev=pts[0], acc=0, bt=tt; const dt=Math.max(0.012, tt*0.01);
   while(bt>0 && acc<target && pts.length<64){
@@ -643,7 +647,7 @@ function drawCurvedFlame(tt, boost){
     if(bt<=0) break;
   }
   if(pts.length<2) return;
-  const L=acc||1, baseHW=(4.6 + 1.5*boost) * SCt;
+  const L=acc||1, baseHW=(5.0 + 1.6*boost) * SCt;
   const ribbon=(wmul, style)=>{
     ctx.beginPath();
     const edge=(sgn)=>{
