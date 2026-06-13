@@ -424,7 +424,7 @@ function jackpotSound(){
     }
   }catch(e){}
   // spoken "Master Multiplier" cheer (real clip preferred, else TTS)
-  if(hasSnd('bigwin')) playSnd('bigwin',{cat:'voice',vol:0.95});
+  if(hasSnd('bigwin')) playSnd('bigwin',{cat:'voice',vol:1.35});   // louder — match the countdown clip on the same (voice) slider
   else say('Master Multiplier!');
 }
 
