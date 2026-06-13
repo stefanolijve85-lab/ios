@@ -6,7 +6,6 @@ import Vault from '@/components/Vault';
 import BetPanel from '@/components/BetPanel';
 import LiveChat from '@/components/LiveChat';
 import LiveActivity from '@/components/LiveActivity';
-import BottomNav from '@/components/BottomNav';
 import FlashBanner from '@/components/FlashBanner';
 
 export default function Page() {
@@ -31,7 +30,6 @@ export default function Page() {
       </div>
 
       <FlashBanner />
-      <BottomNav />
     </main>
   );
 }

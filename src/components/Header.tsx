@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { getAudio } from '@/lib/audio';
+import Menu from './Menu';
 
 export default function Header() {
   const { state } = useGame();
@@ -16,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="header">
-      <button className="icon-btn" aria-label="Menu">☰</button>
+      <Menu />
       <div className="logo">STASH</div>
       <button
         className={`icon-btn ${soundOn ? 'on' : ''}`}

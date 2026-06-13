@@ -14,3 +14,4 @@ export function multiplierAt(elapsedMs: number): number {
 export const LADDER = [23, 20, 15, 10, 5, 3, 2, 1.5, 1];
 
 export const QUICK_CHIPS = [1, 5, 10, 50, 100];
+export const QUICK_CHIPS_BIG = [500, 1000, 5000, 10000];
