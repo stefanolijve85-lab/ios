@@ -26,6 +26,7 @@ class TensionAudio {
   private lowGain: GainNode | null = null;
   private highGain: GainNode | null = null;
   private lobby: HTMLAudioElement | null = null;
+  private lobbyTimer: ReturnType<typeof setInterval> | undefined;
 
   enabled = false;
   private loaded = false;
@@ -100,17 +101,28 @@ class TensionAudio {
     this.intensity = Math.max(0, Math.min(1, v));
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    // Cross-fade calm → nervous.
-    this.lowGain?.gain.setTargetAtTime(1 - this.intensity * 0.85, t, 0.25);
-    this.highGain?.gain.setTargetAtTime(this.intensity, t, 0.25);
+    // Cross-fade calm → nervous (lower max on the nervous layer to avoid mud).
+    this.lowGain?.gain.setTargetAtTime(1 - this.intensity * 0.75, t, 0.25);
+    this.highGain?.gain.setTargetAtTime(this.intensity * 0.85, t, 0.25);
     // Same motif rises in pitch + tempo.
     const rate = 1 + this.intensity * 0.25;
     this.lowSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
     this.highSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
-    // Duck the atmosphere bed as tension peaks.
-    if (this.lobby && this.enabled) {
-      this.lobby.volume = Math.max(0.04, 0.12 * (1 - this.intensity));
-    }
+  }
+
+  // Smoothly fade the streamed atmosphere bed (HTMLAudio has no AudioParam).
+  private fadeLobby(target: number, ms = 500) {
+    if (!this.lobby) return;
+    if (this.lobbyTimer) clearInterval(this.lobbyTimer);
+    const start = this.lobby.volume;
+    const steps = Math.max(1, Math.round(ms / 40));
+    let i = 0;
+    this.lobbyTimer = setInterval(() => {
+      i++;
+      const v = start + (target - start) * (i / steps);
+      if (this.lobby) this.lobby.volume = Math.max(0, Math.min(1, v));
+      if (i >= steps) { clearInterval(this.lobbyTimer); this.lobbyTimer = undefined; }
+    }, 40);
   }
 
   startMotif() {
@@ -133,6 +145,8 @@ class TensionAudio {
     this.lowSrc = lo.src; this.lowGain = lo.g;
     this.highSrc = hi.src; this.highGain = hi.g;
     this.setIntensity(this.intensity);
+    // Music steps aside during the round so only the tension FX play (clean mix).
+    this.fadeLobby(0.02, 700);
   }
 
   private stopSources() {
@@ -145,7 +159,7 @@ class TensionAudio {
     this.running = false;
     this.intensity = 0;
     this.stopSources();
-    if (this.lobby && this.enabled) this.lobby.volume = 0.12; // restore bed between rounds
+    if (this.enabled) this.fadeLobby(0.12, 900); // bring the music back between rounds
   }
 
   // The STASH reward sound.
