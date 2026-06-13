@@ -1,9 +1,0 @@
-node_modules
-.next
-.git
-server/.data
-screens
-*.log
-.env
-.env.local
-.env.*.local
