@@ -1,0 +1,22 @@
+# Render Blueprint — single web service serving both the Next.js app and the
+# Socket.io realtime layer from one origin / one port.
+#
+# Deploy: push to GitHub, then in Render → "New +" → "Blueprint" → pick this repo.
+# Set the Root Directory to "stash" if this lives in a monorepo subfolder.
+services:
+  - type: web
+    name: stash-crash-game
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    # rootDir: stash   # uncomment if deploying from a monorepo subfolder
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"

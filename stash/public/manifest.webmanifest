@@ -1,0 +1,10 @@
+{
+  "name": "STASH",
+  "short_name": "STASH",
+  "description": "Fill the vault. Lock your winnings. Or lose it all when the thieves break in.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08080a",
+  "theme_color": "#08080a",
+  "orientation": "portrait"
+}
