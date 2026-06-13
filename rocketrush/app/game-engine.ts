@@ -579,12 +579,19 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     // As the flight goes long the gravity-turn tangent flattens out and the nose ends
     // up pointing sideways. Bias it back UP toward the moon — gently early, more as the
     // multiplier climbs — so the nose keeps aiming at the moon (top-right).
+    // The flame must keep trailing straight out the BACK of the rocket — along the path it
+    // actually flew — even after we bias the nose up toward the moon. Otherwise the thick
+    // plume swings with the body and stops sitting over the tail. Remember the travel
+    // direction, then bend the flame back onto it by exactly however far we rotate the nose.
+    let flameBend = 0;
     if(S.phase==='running'){
+      const angTravel = ang;
       const moonX=0.87*W, moonY=0.12*H;
       const angMoon = Math.atan2(moonY-ry, moonX-p.x) + Math.PI/2;
       const wM = Math.min(0.8, Math.max(0,(S.mult-1.3)/15));   // ~0 below 1.3x → up to 0.8, aims harder at the moon
       let d = angMoon - ang; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
       ang = ang + d*wM; S.lastAng = ang;
+      flameBend = angTravel - ang;   // counter-rotate the flame back onto the real trail
     }
     if(S.phase==='running'){
       if(!S.lowBw){
@@ -594,7 +601,7 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
           life:1, fade:rnd(.05,.085), r:rnd(1.3,boosting?3.6:3.0), glow:true,
           c: Math.random()<.45?'#FFE08A':(Math.random()<.6?'#FF8A00':'#FF5A2A')});
       }
-      drawRocket(p.x, ry, ang);
+      drawRocket(p.x, ry, ang, null, flameBend);
     } else {
       drawBoom(p.x, p.y);
     }
@@ -624,7 +631,7 @@ function loadArt(){
 }
 
 function rocketScale(){ return Math.max(1.7, Math.min(W/175, 3.0)); }
-function drawRocket(x,y,ang,heat){
+function drawRocket(x,y,ang,heat,flameBend){
   const SC = rocketScale();
   ctx.save(); ctx.translate(x,y); ctx.scale(SC,SC); ctx.rotate(ang!=null?ang:Math.PI/4); // nose points along travel (toward the moon)
   const flick = Math.sin(performance.now()/28)*4;
@@ -643,6 +650,10 @@ function drawRocket(x,y,ang,heat){
   let eg = ctx.createRadialGradient(0,ny,0, 0,ny, 10*gi+3);
   eg.addColorStop(0,`rgba(255,230,150,${.95*gi})`); eg.addColorStop(.4,`rgba(255,140,40,${.55*gi})`); eg.addColorStop(1,'rgba(255,80,40,0)');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,ny,10*gi+3,0,7); ctx.fill();
+  // Bend the whole plume around the nozzle so it trails along the real flight path (the
+  // tail), not the biased body axis — the rocket's nose can aim at the moon while the fire
+  // still streams out the back. The engine glow above is symmetric so it stays put.
+  ctx.save(); ctx.translate(0,ny); ctx.rotate(flameBend||0); ctx.translate(0,-ny);
   let fl = ctx.createLinearGradient(0,ny-1,0,ny+1+f);   // outer plume: wide at nozzle → point
   fl.addColorStop(0,'rgba(255,242,185,.95)'); fl.addColorStop(.3,'rgba(255,175,55,.92)'); fl.addColorStop(.65,'rgba(255,110,40,.55)'); fl.addColorStop(1,'rgba(255,70,60,0)');
   ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(-4.4,ny); ctx.quadraticCurveTo(0,ny+1+f,4.4,ny); ctx.closePath(); ctx.fill();
@@ -660,6 +671,7 @@ function drawRocket(x,y,ang,heat){
       ctx.restore();
     }
   }
+  ctx.restore();
   ctx.globalCompositeOperation='source-over';
 
   // Use the artwork PNG if provided — pixel-perfect to the reference; the animated
@@ -817,6 +829,7 @@ function showCountdown(ms, onDone){
   let clipFired=false, fireLeft=ms;
   const fullNum=()=>{ const el=(fireLeft-left)/1000; let n=5; for(const [tt,nn] of CD_NUMS){ if(el>=tt) n=nn; } return n; };
   $('countNum').textContent = fullCount ? 5 : Math.max(0,Math.ceil(left/1000));
+  if(S.cdToButton) setReadyBtn('GET READY… '+$('countNum').textContent);   // splash button mirrors the count
   $('countBar').style.transform='scaleX(1)';
   clearInterval(S.cdTimer);
   S.cdTimer=_int(()=>{
@@ -832,11 +845,13 @@ function showCountdown(ms, onDone){
       const sec=Math.max(0,Math.ceil(left/1000));
       if(sec!==+$('countNum').textContent && left>0){ $('countNum').textContent=sec; if(sec<=3 && sec>=1 && announce) sfx.count(sec); }
     }
+    if(S.cdToButton) setReadyBtn('GET READY… '+$('countNum').textContent);   // keep the splash button in sync
     if(left<=0){ clearInterval(S.cdTimer); if(onDone) onDone(); }
   },100);
 }
 
 function startRunning(){
+  revealOnLaunch();   // local mode: drop the splash at lift-off too
   S.phase='running';
   S.startTs=performance.now();
   $('countWrap').style.display='none';
@@ -1289,22 +1304,30 @@ function unlockAudio(){ try{
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('touchend', unlockAudio);
 // INTRO / SPLASH: tapping LET'S GO must ALWAYS drop you into a FRESH countdown that
-// starts at 5 — both the number and the spoken audio in sync. Net rounds run
-// continuously, so instead of revealing on whatever phase we happen to be in (mid-flight,
-// or a countdown already half-elapsed), we arm and wait for the NEXT betting phase, which
-// the server always begins at the top of the countdown. The button shows "GET READY…" so
-// the tap feels instant even though the reveal lands a moment later, on the 5.
+// starts at 5. Net rounds run continuously, so instead of revealing on whatever phase is
+// live (mid-flight, or a countdown already half-elapsed), we arm and wait for the NEXT
+// betting phase, which the server always begins at the top of the countdown. While we wait
+// the splash STAYS UP and the button counts down "GET READY… 5 / 4 / 3 / 2 / 1" in sync
+// with the spoken audio, so you can see exactly how long until launch — then at lift-off we
+// drop you straight into the game.
 function revealGame(){ const el=$('intro'); if(el) el.classList.add('gone'); }
+function setReadyBtn(txt){ const cta=$('introCta'); if(cta) cta.textContent=txt; }
+function revealOnLaunch(){
+  // fired at lift-off (netStart / startRunning): if we were holding on the splash for a
+  // clean countdown, drop the splash now so the rocket launch is the first thing you see.
+  if(S.waitBet){ S.waitBet=false; S.cdToButton=false; revealGame(); setReadyBtn("LET'S GO"); }
+}
 function maybeRevealOnBetting(){
   // called at the very start of each betting phase, right after showCountdown() armed the
-  // clock+clip — flipping entered=true here lets the first countdown tick play audio from 5.
-  if(S.waitBet){ S.waitBet=false; S.entered=true; revealGame(); }
+  // clock+clip. If we're waiting, keep the splash but light up the button countdown and let
+  // the audio play — both now start cleanly from 5.
+  if(S.waitBet){ S.entered=true; S.cdToButton=true; setReadyBtn('GET READY… 5'); }
 }
 { const gb=$('introGo'); if(gb){ const go=()=>{
       unlockAudio();                 // unlock WebAudio inside the user gesture so sound is ready
       if(S.waitBet) return;          // already armed — ignore extra taps
-      S.waitBet=true;                // reveal on the next fresh betting phase (always a clean 5)
-      const cta=$('introCta'); if(cta) cta.textContent='GET READY…';
+      S.waitBet=true;                // hold here until the next fresh betting phase (a clean 5)
+      setReadyBtn('GET READY…');
     };
     gb.addEventListener('click', go); gb.addEventListener('touchend', e=>{ e.preventDefault(); go(); }, {passive:false}); }
 }
@@ -1447,6 +1470,7 @@ function netBetting(d){
   renderAction();
 }
 function netStart(){
+  revealOnLaunch();   // first launch after LET'S GO: drop the splash now, on lift-off
   S.phase='running'; S.startTs=performance.now();
   $('countWrap').style.display='none'; $('centerMain').style.display='block';
   $('status').textContent='';
