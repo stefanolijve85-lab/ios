@@ -582,7 +582,7 @@ function draw(ts){ if(!ENGINE_ALIVE) return;
     if(S.phase==='running'){
       const moonX=0.87*W, moonY=0.12*H;
       const angMoon = Math.atan2(moonY-ry, moonX-p.x) + Math.PI/2;
-      const wM = Math.min(0.6, Math.max(0,(S.mult-1.5)/22));   // ~0 below 1.5x → up to 0.6 at high mult
+      const wM = Math.min(0.8, Math.max(0,(S.mult-1.3)/15));   // ~0 below 1.3x → up to 0.8, aims harder at the moon
       let d = angMoon - ang; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
       ang = ang + d*wM; S.lastAng = ang;
     }
