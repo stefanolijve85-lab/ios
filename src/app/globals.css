@@ -370,7 +370,7 @@ input { font-family: inherit; }
 
 /* ----------------------------------------------------- two columns */
 .cols {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 3px;
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; margin-top: 3px;
   height: 132px; align-items: stretch;
 }
 .panel {
@@ -381,7 +381,9 @@ input { font-family: inherit; }
   backdrop-filter: blur(6px);
   display: flex; flex-direction: column;
   height: 100%;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 .panel h3 {
   margin: 0 0 6px; font-size: 11px; letter-spacing: 1px;
@@ -508,8 +510,9 @@ input { font-family: inherit; }
 }
 
 .heist {
-  position: absolute; left: 0; right: 0; top: 8%; z-index: 6;
+  position: absolute; inset: 0; z-index: 6;
   pointer-events: none; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   animation: heistIn .25s ease;
 }
 @keyframes heistIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
