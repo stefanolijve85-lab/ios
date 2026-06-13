@@ -71,31 +71,35 @@ export default function Vault() {
 
   return (
     <div className="vault" ref={vaultRef}>
-      {/* full vault scene render */}
+      {/* full vault scene render — swaps to the heist shot when robbed */}
       <div className="vault-scene">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/vault.webp" alt="Vault" draggable={false} />
+        <img src={phase === 'crashed' ? '/heist.webp' : '/vault.webp'} alt="Vault" draggable={false} />
       </div>
       <div className="vault-glow" ref={glowRef} />
 
-      {/* center readout */}
-      <div className="vault-readout">
-        <div className="label">CURRENT AMOUNT</div>
-        <div className="amount" ref={amountRef}>€0.00</div>
-        <div className="mult" ref={multRef}>1.00x</div>
-      </div>
+      {/* center readout (hidden during the robbery) */}
+      {phase !== 'crashed' && (
+        <div className="vault-readout">
+          <div className="label">CURRENT AMOUNT</div>
+          <div className="amount" ref={amountRef}>€0.00</div>
+          <div className="mult" ref={multRef}>1.00x</div>
+        </div>
+      )}
 
-      {/* multiplier ladder, overlaid on the right */}
-      <div className="vault-ladder">
-        {LADDER.map((r) => (
-          <div
-            key={r}
-            className={`rung${r === rung ? ' active' : ''}${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}
-          >
-            {r.toFixed(2)}x
-          </div>
-        ))}
-      </div>
+      {/* multiplier ladder, overlaid on the right (hidden during the robbery) */}
+      {phase !== 'crashed' && (
+        <div className="vault-ladder">
+          {LADDER.map((r) => (
+            <div
+              key={r}
+              className={`rung${r === rung ? ' active' : ''}${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}
+            >
+              {r.toFixed(2)}x
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* countdown only while betting — during a round the crash is unpredictable */}
       {phase === 'betting' && (
@@ -109,10 +113,8 @@ export default function Vault() {
 
       {phase === 'crashed' && (
         <div className="heist">
-          <div>
-            <div className="silhouette">🦹‍♂️💨</div>
-            <div className="thiefword">THIEVES BROKE IN<br />@ {crashPoint.toFixed(2)}x</div>
-          </div>
+          <div className="thiefword">THIEVES STOLE IT</div>
+          <div className="thiefat">@ {crashPoint.toFixed(2)}x</div>
         </div>
       )}
     </div>
