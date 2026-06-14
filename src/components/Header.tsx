@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { getAudio } from '@/lib/audio';
 import Menu from './Menu';
@@ -8,6 +8,9 @@ export default function Header() {
   const { state } = useGame();
   const [soundOn, setSoundOn] = useState(false);
   const phase = state?.phase ?? 'betting';
+
+  // reflect the audio that was unlocked on the PLAY screen (sound on by default)
+  useEffect(() => { setSoundOn(getAudio().enabled); }, []);
 
   const toggleSound = async () => {
     const on = await getAudio().toggle();

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { getAudio } from '@/lib/audio';
 
 export default function Landing({ onPlay }: { onPlay: () => void }) {
   const { state } = useGame();
@@ -13,6 +14,8 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   }, [clicked, phase, onPlay]);
 
   const handlePlay = () => {
+    const a = getAudio();
+    if (a && !a.enabled) a.toggle();     // sound on by default (this tap unlocks iOS audio)
     if (phase === 'betting') onPlay();   // can bet right now → go straight in
     else setClicked(true);               // a round is running → wait for the next
   };
