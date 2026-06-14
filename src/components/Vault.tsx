@@ -94,8 +94,6 @@ export default function Vault() {
 
   return (
     <div className="vault" ref={vaultRef}>
-      {/* blurred, zoomed heist copy fills the area behind the sharp shot on crash */}
-      {phase === 'crashed' && <div className="heist-blur" />}
       {/* full vault scene render — swaps to the heist shot when robbed */}
       <div className="vault-scene">
         {/* eslint-disable-next-line @next/next/no-img-element */}
