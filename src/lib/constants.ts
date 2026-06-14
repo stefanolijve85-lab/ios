@@ -45,20 +45,3 @@ export function ladderRungs(top: number): number[] {
 
 export const QUICK_CHIPS = [1, 5, 10, 50, 100];
 export const QUICK_CHIPS_BIG = [500, 1000, 5000, 10000];
-
-// Spoken lines shown in the speech balloon, paired by index with the
-// voice-crash-N.mp3 / voice-win-N.mp3 clips.
-export const VOICE_CRASH_LINES = [
-  'They got away!',
-  'They cleaned us out!',
-  "The vault's empty!",
-  'They grabbed it all!',
-  'Thieves got the loot!',
-];
-export const VOICE_WIN_LINES = [
-  'Nice grab!',
-  'You made it out!',
-  'Clean getaway!',
-  'Loot secured!',
-  'Out with the cash!',
-];

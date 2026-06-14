@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
 import Menu from './Menu';
 
 export default function Header() {
   const { state } = useGame();
+  const theme = useTheme();
   const [soundOn, setSoundOn] = useState(false);
   const phase = state?.phase ?? 'betting';
 
@@ -23,7 +25,7 @@ export default function Header() {
       <Menu />
       <div className="logo">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.webp" alt="BANKHEIST X" />
+        <img src={theme.assets.logo} alt={theme.name} />
       </div>
       <button
         className={`icon-btn ${soundOn ? 'on' : ''}`}

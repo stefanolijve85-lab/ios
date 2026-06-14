@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { useTheme } from '@/hooks/useTheme';
 import { QUICK_CHIPS, QUICK_CHIPS_BIG } from '@/lib/constants';
 import { euro } from '@/lib/format';
 
 export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: boolean }) {
   const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier, setWaiting } = useGame();
+  const theme = useTheme();
   const [amount, setAmount] = useState(10);
   const [pending, setPending] = useState(false); // queued bet for the next round
   const [repeat, setRepeat] = useState(false);    // AUTO BET: re-bet last stake each round (opt-in)
@@ -92,8 +94,8 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   let cls = 'stash-btn';
   let onClick: (() => void) | undefined;
   let disabled = false;
-  let big = 'SECURE';
-  let sub: string | null = 'LOCK YOUR WINNINGS';
+  let big = theme.copy.cashOut;
+  let sub: string | null = theme.copy.cashOutSub;
 
   if (phase === 'betting') {
     if (holding) {
@@ -110,13 +112,13 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       onClick = () => { placeBet(slot, amount); };
     }
   } else if (phase === 'running' && holding) {
-    big = 'SECURE'; sub = 'LOCK YOUR WINNINGS';
+    big = theme.copy.cashOut; sub = theme.copy.cashOutSub;
     onClick = () => stash(slot);
   } else if (cashed) {
-    cls += ' done'; big = `BAG SECURED ${euro(bet!.payout)}`;
+    cls += ' done'; big = theme.copy.bagSecured(euro(bet!.payout));
     sub = null; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
-    cls += ' placed'; big = 'TOO LATE — STOLEN';
+    cls += ' placed'; big = theme.copy.crashedTile;
     sub = `−${euro(bet.amount)}`; disabled = true;
   } else if (pending) {
     cls += ' placed'; big = '✓ QUEUED';

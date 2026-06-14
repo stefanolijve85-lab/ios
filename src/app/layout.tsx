@@ -1,13 +1,19 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import './globals.css';
 import { GameProvider } from '@/hooks/useGame';
+import { ThemeProvider } from '@/hooks/useTheme';
+import { getTheme, themeKeyForHost } from '@/themes';
 
-export const metadata: Metadata = {
-  title: 'BANKHEIST X — Secure the vault before the thieves',
-  description: 'BANKHEIST X: a mobile-first multiplayer crash game. Fill the vault, secure your winnings, or lose it all when the thieves break in.',
-  manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'BANKHEIST X' },
-};
+export function generateMetadata(): Metadata {
+  const t = getTheme(themeKeyForHost(headers().get('host')));
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    manifest: '/manifest.webmanifest',
+    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: t.name },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#0a0a0c',
@@ -30,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <GameProvider>{children}</GameProvider>
+        <ThemeProvider>
+          <GameProvider>{children}</GameProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

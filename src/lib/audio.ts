@@ -18,6 +18,9 @@ type Buffers = {
   tick?: AudioBuffer;
 };
 
+import { getTheme, DEFAULT_THEME_KEY } from '@/themes';
+import type { ThemeAudio } from '@/themes/types';
+
 type Levels = { music: number; sfx: number; voice: number };
 const LS_KEY = 'stash.audio.levels';
 
@@ -44,6 +47,13 @@ class TensionAudio {
   private voiceBusyUntil = 0; // ctx time the current voice line finishes
 
   private levels: Levels = { music: 0.5, sfx: 0.9, voice: 1.0 };
+  // clip paths for the active game (set by the ThemeProvider); defaults keep
+  // audio working even before configure() runs.
+  private paths: ThemeAudio = getTheme(DEFAULT_THEME_KEY).audio;
+
+  // Point the engine at a specific game's clips. Safe to call before load();
+  // the actual fetch/decode happens lazily on the first sound-on gesture.
+  configure(paths: ThemeAudio) { this.paths = paths; }
 
   constructor() {
     try {
@@ -120,27 +130,28 @@ class TensionAudio {
         this.buffers[key] = await this.ctx!.decodeAudioData(ab);
       } catch { /* skip this one */ }
     };
+    const p = this.paths;
     await Promise.allSettled([
-      set('low', '/audio/motif-low.mp3'),
-      set('high', '/audio/motif-high.mp3'),
-      set('stash', '/audio/stash.mp3'),
-      set('crash', '/audio/crash.mp3'),
-      set('lobby', '/audio/lobby.mp3'),
-      set('tick', '/audio/tick.mp3'),
+      set('low', p.motifLow),
+      set('high', p.motifHigh),
+      set('stash', p.stash),
+      set('crash', p.crash),
+      set('lobby', p.lobby),
+      set('tick', p.tick),
     ]);
     // crash + win voice lines (random pick) — load independently
-    const loadVoices = (prefix: string, into: AudioBuffer[]) =>
-      Promise.allSettled([1, 2, 3, 4, 5].map(async (n) => {
+    const loadVoices = (urls: string[], into: AudioBuffer[]) =>
+      Promise.allSettled(urls.map(async (url) => {
         try {
-          const res = await fetch(`/audio/${prefix}-${n}.mp3`);
+          const res = await fetch(url);
           if (!res.ok) return;
           const ab = await res.arrayBuffer();
           into.push(await this.ctx!.decodeAudioData(ab));
         } catch { /* skip */ }
       }));
     await Promise.allSettled([
-      loadVoices('voice-crash', this.voiceCrash),
-      loadVoices('voice-win', this.voiceWin),
+      loadVoices(p.voiceCrash, this.voiceCrash),
+      loadVoices(p.voiceWin, this.voiceWin),
     ]);
     this.loaded = true;
     this.loading = false;

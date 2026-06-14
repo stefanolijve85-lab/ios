@@ -1,10 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
 
 export default function Landing({ onPlay }: { onPlay: () => void }) {
   const { state } = useGame();
+  const theme = useTheme();
   const [clicked, setClicked] = useState(false);
   const phase = state?.phase ?? 'betting';
 
@@ -24,7 +26,7 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
     <div className="landing">
       <div className="landing-img-wrap">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="landing-img" src="/landing.webp" alt="BANKHEIST X — Lock it in. Cash out big." />
+        <img className="landing-img" src={theme.assets.landing} alt={theme.copy.landingAlt} />
 
         {!clicked ? (
           <button className="landing-play-hit" onClick={handlePlay} aria-label="Play">

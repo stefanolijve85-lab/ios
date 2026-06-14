@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import { getAudio } from '@/lib/audio';
-import { multiplierAt, MAX_MULTIPLIER, VOICE_CRASH_LINES, VOICE_WIN_LINES } from '@/lib/constants';
+import { multiplierAt, MAX_MULTIPLIER } from '@/lib/constants';
+import { useTheme } from '@/hooks/useTheme';
 import type { GameState, ChatMessage, ActivityItem, BetState } from '@/lib/types';
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
@@ -47,6 +48,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const phaseRef = useRef<string>('');
   const betsRef = useRef<Bets>({ 0: null, 1: null });
   betsRef.current = bets;
+
+  // theme drives the flash copy + how many voice clips to pick from; keep it in
+  // a ref so the (mount-only) socket handlers always see the active theme.
+  const theme = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   const serverNow = useCallback(() => Date.now() + offsetRef.current, []);
 
@@ -100,9 +107,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         (!!betsRef.current[1] && !betsRef.current[1]!.cashedOut);
       // always stops the motif; alarm/voice + balloon only if YOU lost
       if (stillHolding) {
-        const i = Math.floor(Math.random() * VOICE_CRASH_LINES.length);
+        const i = Math.floor(Math.random() * themeRef.current.audio.voiceCrash.length);
         audio.crash(true, i);
-        setFlash({ kind: 'lose', text: 'THEY GOT AWAY!', key: Date.now() });
+        setFlash({ kind: 'lose', text: themeRef.current.copy.loseFlash, key: Date.now() });
       } else {
         audio.crash(false);
       }
@@ -117,8 +124,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const b = p[slot];
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
-      const i = Math.floor(Math.random() * VOICE_WIN_LINES.length);
-      setFlash({ kind: 'win', text: 'YOU GOT OUT!', key: Date.now() });
+      const i = Math.floor(Math.random() * themeRef.current.audio.voiceWin.length);
+      setFlash({ kind: 'win', text: themeRef.current.copy.winFlash, key: Date.now() });
       setLastWin(payout);
       audio.playStash(i);
     };

@@ -2,17 +2,18 @@
 import { useEffect, useState } from 'react';
 import { getAudio } from '@/lib/audio';
 import { useGame } from '@/hooks/useGame';
-
-const NAV = [
-  { img: '/icons/wallet.webp', label: 'HOME' },
-  { img: '/icons/trophy.webp', label: 'HISTORY' },
-  { img: '/icons/vault.webp', label: 'VAULT' },
-  { img: '/icons/leaderboard.webp', label: 'LEADERBOARD' },
-  { img: '/icons/chat.webp', label: 'CHAT' },
-];
+import { useTheme } from '@/hooks/useTheme';
 
 export default function Menu() {
   const { addCredits } = useGame();
+  const theme = useTheme();
+  const NAV = [
+    { img: theme.assets.icons.home, label: 'HOME' },
+    { img: theme.assets.icons.history, label: 'HISTORY' },
+    { img: theme.assets.icons.vault, label: 'VAULT' },
+    { img: theme.assets.icons.leaderboard, label: 'LEADERBOARD' },
+    { img: theme.assets.icons.chat, label: 'CHAT' },
+  ];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('HOME');
   const [levels, setLevels] = useState({ music: 0.5, sfx: 0.9, voice: 1.0 });
@@ -38,7 +39,7 @@ export default function Menu() {
       <aside className={`drawer${open ? ' open' : ''}`} aria-hidden={!open}>
         <div className="drawer-head">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="drawer-logo" src="/logo.webp" alt="BANKHEIST X" />
+          <img className="drawer-logo" src={theme.assets.logo} alt={theme.name} />
           <button className="icon-btn" aria-label="Close" onClick={() => setOpen(false)}>✕</button>
         </div>
 

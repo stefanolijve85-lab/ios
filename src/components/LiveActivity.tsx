@@ -1,5 +1,6 @@
 'use client';
 import { useGame } from '@/hooks/useGame';
+import { useTheme } from '@/hooks/useTheme';
 import { euro } from '@/lib/format';
 
 function ago(ts: number): string {
@@ -11,6 +12,7 @@ function ago(ts: number): string {
 
 export default function LiveActivity() {
   const { activity } = useGame();
+  const theme = useTheme();
   return (
     <div className="panel">
       <h3>LIVE ACTIVITY ⚡</h3>
@@ -22,7 +24,7 @@ export default function LiveActivity() {
               <div>
                 <span className="nm">{a.name}</span>{' '}
                 {a.kind === 'stash' ? (
-                  <>secured <span className="amt">{euro(a.amount)}</span></>
+                  <>{theme.copy.securedVerb} <span className="amt">{euro(a.amount)}</span></>
                 ) : (
                   <>lost <span className="amt">{euro(a.amount)}</span></>
                 )}

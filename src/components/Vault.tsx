@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
 import { ladderTopFor, ladderRungs } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
 export default function Vault() {
   const { stateRef, liveMultiplier, serverNow, bets } = useGame();
+  const theme = useTheme();
   const amountRef = useRef<HTMLDivElement>(null);
   const multRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
@@ -17,7 +19,6 @@ export default function Vault() {
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
-  const [cdLabel, setCdLabel] = useState('THIEVES ARRIVING IN');
 
   // Dynamic ladder: rescales upward as the multiplier climbs past the top rung
   // (so the game can show far more than 23x). topRef holds the live ceiling.
@@ -43,7 +44,7 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastPhase = '', lastWarn = false, lastLabel = '', tickFired = false;
+    let lastPhase = '', lastWarn = false, tickFired = false;
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
@@ -68,7 +69,7 @@ export default function Vault() {
       }
 
       // betting countdown (legit) + tension glow (driven by stake size, not time)
-      let danger = false, text = '00:00', w = false, lbl = 'VAULT CLOSES IN';
+      let danger = false, text = '00:00', w = false;
       if (s?.phase === 'running') {
         danger = m >= 5; // bigger stash = redder, hotter — no timing hint
       } else if (s?.phase === 'betting') {
@@ -85,7 +86,6 @@ export default function Vault() {
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }
-      if (lbl !== lastLabel) { setCdLabel(lbl); lastLabel = lbl; }
 
       if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
@@ -123,8 +123,8 @@ export default function Vault() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className={isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : ''}
-          src={isSecured ? '/caught.webp' : phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
-          alt="Vault"
+          src={isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle}
+          alt={theme.name}
           draggable={false}
         />
       </div>
@@ -135,7 +135,7 @@ export default function Vault() {
           amount + what you're missing while the round finishes */}
       {phase !== 'crashed' && (
         <div className="vault-readout">
-          <div className="label">{isSecured ? 'WOULD BE WORTH' : 'CURRENT AMOUNT'}</div>
+          <div className="label">{isSecured ? theme.copy.wouldBeWorth : theme.copy.currentAmount}</div>
           <div className="amount" ref={amountRef}>€0.00</div>
           <div className="missed" ref={missedRef} style={{ display: 'none' }} />
         </div>
@@ -157,7 +157,7 @@ export default function Vault() {
       {phase === 'betting' && (
         <div className={`vault-countdown${warn ? ' warn' : ''}`}>
           <div className="cd-pill">
-            <span className="lbl">🔒 {cdLabel}</span>
+            <span className="lbl">🔒 {theme.copy.countdownLabel}</span>
             <span className="time" ref={timeRef}>00:00</span>
           </div>
         </div>
