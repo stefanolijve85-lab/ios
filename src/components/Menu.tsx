@@ -4,9 +4,9 @@ import { getAudio } from '@/lib/audio';
 import { useGame } from '@/hooks/useGame';
 
 const NAV = [
-  { icon: '💰', label: 'STASH' },
+  { icon: '🏠', label: 'HOME' },
   { icon: '🕘', label: 'HISTORY' },
-  { icon: '🏦', label: 'SAFE' },
+  { icon: '🏦', label: 'VAULT' },
   { icon: '🏆', label: 'LEADERBOARD' },
   { icon: '💬', label: 'CHAT' },
 ];
@@ -14,7 +14,7 @@ const NAV = [
 export default function Menu() {
   const { addCredits } = useGame();
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState('STASH');
+  const [active, setActive] = useState('HOME');
   const [levels, setLevels] = useState({ music: 0.5, sfx: 0.9, voice: 1.0 });
 
   useEffect(() => {

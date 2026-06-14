@@ -22,7 +22,7 @@ export default function LiveActivity() {
               <div>
                 <span className="nm">{a.name}</span>{' '}
                 {a.kind === 'stash' ? (
-                  <>stashed <span className="amt">{euro(a.amount)}</span></>
+                  <>secured <span className="amt">{euro(a.amount)}</span></>
                 ) : (
                   <>lost <span className="amt">{euro(a.amount)}</span></>
                 )}

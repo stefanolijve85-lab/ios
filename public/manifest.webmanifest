@@ -1,7 +1,7 @@
 {
-  "name": "STASH",
-  "short_name": "STASH",
-  "description": "Fill the vault. Lock your winnings. Or lose it all when the thieves break in.",
+  "name": "BANKHEIST X",
+  "short_name": "BANKHEIST X",
+  "description": "Fill the vault. Secure your winnings. Or lose it all when the thieves break in.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#08080a",

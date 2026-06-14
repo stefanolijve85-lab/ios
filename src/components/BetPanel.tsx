@@ -82,7 +82,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   let cls = 'stash-btn';
   let onClick: (() => void) | undefined;
   let disabled = false;
-  let big = 'STASH';
+  let big = 'SECURE';
   let sub: string | null = 'LOCK YOUR WINNINGS';
 
   if (phase === 'betting') {
@@ -100,10 +100,10 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       onClick = () => placeBet(slot, amount);
     }
   } else if (phase === 'running' && holding) {
-    big = 'STASH'; sub = 'LOCK YOUR WINNINGS';
+    big = 'SECURE'; sub = 'LOCK YOUR WINNINGS';
     onClick = () => stash(slot);
   } else if (cashed) {
-    cls += ' done'; big = `✓ STASHED ${bet!.cashedAt?.toFixed(2)}x`;
+    cls += ' done'; big = `✓ SECURED ${bet!.cashedAt?.toFixed(2)}x`;
     sub = 'LOCKED IN'; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
     cls += ' placed'; big = 'TOO LATE — STOLEN';

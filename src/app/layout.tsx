@@ -3,10 +3,10 @@ import './globals.css';
 import { GameProvider } from '@/hooks/useGame';
 
 export const metadata: Metadata = {
-  title: 'STASH — Secure the vault before the thieves',
-  description: 'STASH: a mobile-first multiplayer crash game. Fill the vault, lock your winnings, or lose it all when the thieves break in.',
+  title: 'BANKHEIST X — Secure the vault before the thieves',
+  description: 'BANKHEIST X: a mobile-first multiplayer crash game. Fill the vault, secure your winnings, or lose it all when the thieves break in.',
   manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'STASH' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'BANKHEIST X' },
 };
 
 export const viewport: Viewport = {
