@@ -556,21 +556,22 @@ input { font-family: inherit; }
   margin-top: 5px;
 }
 .bet-head {
-  display: flex; align-items: center; justify-content: flex-end;
-  gap: 8px; margin-bottom: 4px; min-height: 18px;
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 4px; margin-bottom: 6px;
 }
 .bet-amt-label {
-  font-size: 9px; letter-spacing: 2px; color: var(--muted);
-  margin-right: auto;            /* push the AUTO toggle to the right */
+  text-align: center; font-size: 9px; letter-spacing: 2px; color: var(--muted);
 }
-/* AUTO BET toggle — opt-in; off by default */
+/* AUTO BET toggle — opt-in; off by default. Full width (matches the stepper
+   below) and centered. */
 .auto-toggle {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 9px; font-weight: 800; letter-spacing: 1.5px;
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
   color: var(--muted);
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--panel-line);
-  border-radius: 999px; padding: 3px 9px 3px 7px;
+  border-radius: 999px; padding: 6px 12px;
   transition: color .15s, border-color .15s, background .15s;
 }
 .auto-toggle .ind {
