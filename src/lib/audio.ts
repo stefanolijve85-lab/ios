@@ -16,7 +16,6 @@ type Buffers = {
   crash?: AudioBuffer;
   lobby?: AudioBuffer;
   tick?: AudioBuffer;
-  voiceCrash?: AudioBuffer;
 };
 
 type Levels = { music: number; sfx: number; voice: number };
@@ -30,6 +29,7 @@ class TensionAudio {
   private musicGain: GainNode | null = null;
   private musicSource: AudioBufferSourceNode | null = null;
   private buffers: Buffers = {};
+  private voiceCrash: AudioBuffer[] = []; // random "They got away!" lines
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
   private tickSrc: AudioBufferSourceNode | null = null;
@@ -126,8 +126,16 @@ class TensionAudio {
       set('crash', '/audio/crash.mp3'),
       set('lobby', '/audio/lobby.mp3'),
       set('tick', '/audio/tick.mp3'),
-      set('voiceCrash', '/audio/voice-crash.mp3'), // optional "They got away!" voice
     ]);
+    // crash voice lines (random pick) — load independently
+    await Promise.allSettled([1, 2, 3, 4, 5].map(async (n) => {
+      try {
+        const res = await fetch(`/audio/voice-crash-${n}.mp3`);
+        if (!res.ok) return;
+        const ab = await res.arrayBuffer();
+        this.voiceCrash.push(await this.ctx!.decodeAudioData(ab));
+      } catch { /* skip */ }
+    }));
     this.loaded = true;
     this.loading = false;
   }
@@ -248,8 +256,11 @@ class TensionAudio {
     this.running = false;
     this.stopSources();
     this.oneShot(this.buffers.crash, 1.0);
-    // voice line ("They got away!") on its own bus, slightly after the alarm
-    if (this.buffers.voiceCrash) this.oneShot(this.buffers.voiceCrash, 1.0, this.voiceGain, 0.25);
+    // random voice line ("They got away!") on its own bus, just after the alarm
+    if (this.voiceCrash.length) {
+      const v = this.voiceCrash[Math.floor(Math.random() * this.voiceCrash.length)];
+      this.oneShot(v, 1.0, this.voiceGain, 0.35);
+    }
   }
 
   private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0) {
