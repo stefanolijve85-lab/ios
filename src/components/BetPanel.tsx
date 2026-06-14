@@ -90,11 +90,14 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       cls += ' placed'; big = '✓ BET PLACED';
       sub = `TAP TO CANCEL · ${euro(bet!.amount)}`;
       onClick = () => cancelBet(slot);
+    } else if (amount > balance) {
+      cls += ' lowbal'; big = 'INSUFFICIENT BALANCE';
+      sub = `Need ${euro(amount)} · You have ${euro(balance)}`;
+      disabled = true;
     } else {
       cls += ' place'; big = 'PLACE BET';
       sub = `${euro(amount)} · VAULT OPEN`;
       onClick = () => placeBet(slot, amount);
-      if (amount > balance) disabled = true;
     }
   } else if (phase === 'running' && holding) {
     big = 'STASH'; sub = 'LOCK YOUR WINNINGS';
@@ -109,11 +112,14 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     cls += ' placed'; big = '✓ QUEUED';
     sub = `NEXT ROUND · ${euro(amount)} · TAP TO CANCEL`;
     onClick = () => setPending(false);
+  } else if (amount > balance) {
+    cls += ' lowbal'; big = 'INSUFFICIENT BALANCE';
+    sub = `Need ${euro(amount)} · You have ${euro(balance)}`;
+    disabled = true;
   } else {
     cls += ' place'; big = 'BET NEXT ROUND';
     sub = `${euro(amount)} · GET READY`;
     onClick = () => setPending(true);
-    if (amount > balance) disabled = true;
   }
   if (!hero) cls += ' compact';
 

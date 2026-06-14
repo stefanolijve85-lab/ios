@@ -23,6 +23,7 @@ interface GameContextValue {
   cancelBet: (slot: 0 | 1) => void;
   stash: (slot: 0 | 1) => void;
   sendChat: (text: string) => void;
+  addCredits: (amount: number) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -115,6 +116,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);
     const onActivity = (a: ActivityItem) => setActivity((x) => [a, ...x.slice(0, 24)]);
+    const onErrorMsg = (msg: string) =>
+      setFlash({ kind: 'lose', text: typeof msg === 'string' ? msg.toUpperCase() : 'ERROR', key: Date.now() });
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -129,6 +132,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     socket.on('stashed', onStashed);
     socket.on('chat', onChat);
     socket.on('activity', onActivity);
+    socket.on('error_msg', onErrorMsg);
 
     return () => {
       socket.off('connect', onConnect);
@@ -144,6 +148,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       socket.off('stashed', onStashed);
       socket.off('chat', onChat);
       socket.off('activity', onActivity);
+      socket.off('error_msg', onErrorMsg);
     };
   }, []);
 
@@ -159,11 +164,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const sendChat = useCallback((text: string) => {
     getSocket().emit('chat', { text });
   }, []);
+  const addCredits = useCallback((amount: number) => {
+    getSocket().emit('add_credits', { amount });
+  }, []);
 
   const value: GameContextValue = {
     connected, state, balance, bets, chat, activity, flash,
     stateRef, offsetRef, liveMultiplier, serverNow,
-    placeBet, cancelBet, stash, sendChat,
+    placeBet, cancelBet, stash, sendChat, addCredits,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

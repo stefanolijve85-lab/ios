@@ -76,6 +76,15 @@ class Game {
     this.players.delete(socketId);
   }
 
+  // Test helper: top up credits.
+  addCredits(socket, amount) {
+    const p = this.players.get(socket.id);
+    if (!p) return;
+    const add = Math.max(0, Math.min(1_000_000, Number(amount) || 0));
+    p.balance = Math.round((p.balance + add) * 100) / 100;
+    socket.emit('balance', p.balance);
+  }
+
   // --- player actions ------------------------------------------------------
   placeBet(socket, slot, amount) {
     const p = this.players.get(socket.id);

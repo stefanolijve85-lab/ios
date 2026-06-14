@@ -8,12 +8,10 @@ export default function StatusRow() {
 
   return (
     <div className="statusrow">
-      {/* live players still in this round */}
+      {/* live players still in this round (number only) */}
       <div className="holding">
         <span className="dot" />
-        <div>
-          <b>{num(holders)}</b> <small>STILL HOLDING</small>
-        </div>
+        <b>{num(holders)}</b>
       </div>
 
       {/* balance */}

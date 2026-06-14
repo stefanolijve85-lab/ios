@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getAudio } from '@/lib/audio';
+import { useGame } from '@/hooks/useGame';
 
 const NAV = [
   { icon: '💰', label: 'STASH' },
@@ -11,6 +12,7 @@ const NAV = [
 ];
 
 export default function Menu() {
+  const { addCredits } = useGame();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('STASH');
   const [levels, setLevels] = useState({ music: 0.5, sfx: 0.9, voice: 1.0 });
@@ -50,6 +52,10 @@ export default function Menu() {
             </button>
           ))}
         </nav>
+
+        <button className="drawer-test" onClick={() => addCredits(1_000_000)}>
+          🧪 TEST: +€1,000,000 CREDITS
+        </button>
 
         <div className="drawer-audio">
           <div className="drawer-title">AUDIO</div>
