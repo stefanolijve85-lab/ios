@@ -307,13 +307,13 @@ input { font-family: inherit; }
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
-/* full scenes (crash/secure): show the whole picture, fading top & bottom into the UI */
+/* full scenes (crash/secure) fill the whole area, fading top & bottom into the UI */
 .vault-scene img.is-heist,
 .vault-scene img.is-caught {
-  object-fit: contain;
-  object-position: center center;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  object-fit: cover;
+  object-position: center 40%;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%);
 }
 
 /* neon money glow over the cash, intensifies with the multiplier */
