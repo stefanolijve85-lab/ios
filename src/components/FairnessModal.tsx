@@ -14,7 +14,7 @@ export default function FairnessModal({ onClose }: { onClose: () => void }) {
     if (!last) return;
     setBusy(true);
     try {
-      setResult(await verifyRound(last.serverSeed, last.serverSeedHash, last.roundId, last.crashPoint));
+      setResult(await verifyRound(last.serverSeed, last.serverSeedHash, last.roundId, last.crashPoint, fair.maxMultiplier));
     } finally {
       setBusy(false);
     }

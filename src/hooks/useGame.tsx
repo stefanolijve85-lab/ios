@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import { getAudio } from '@/lib/audio';
-import { multiplierAt, MAX_MULTIPLIER } from '@/lib/constants';
+import { multiplierAt, MAX_MULTIPLIER, GROWTH_K, HOUSE_EDGE } from '@/lib/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { GameState, ChatMessage, ActivityItem, BetState } from '@/lib/types';
 
@@ -35,8 +35,10 @@ interface GameContextValue {
   addCredits: (amount: number) => void;
   waiting: boolean;
   setWaiting: (b: boolean) => void;
-  fair: { commitment?: string; last: FairRound | null };
+  fair: { commitment?: string; last: FairRound | null; maxMultiplier: number };
 }
+
+interface GameCfg { GROWTH_K: number; MAX_MULTIPLIER: number; MAX_RUN_MS: number; HOUSE_EDGE: number }
 
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -51,6 +53,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [lastWin, setLastWin] = useState(0);
   const [waiting, setWaiting] = useState(false);
   const [lastFair, setLastFair] = useState<FairRound | null>(null);
+  // per-game tuning from the server's welcome (the "feel"); defaults until it arrives
+  const [maxMult, setMaxMult] = useState(MAX_MULTIPLIER);
+  const cfgRef = useRef<GameCfg>({ GROWTH_K, MAX_MULTIPLIER, MAX_RUN_MS: 22000, HOUSE_EDGE });
 
   const stateRef = useRef<GameState | null>(null);
   const offsetRef = useRef<number>(0);
@@ -72,7 +77,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (s.phase === 'crashed') return s.crashPoint ?? s.multiplier;
     if (s.phase !== 'running' || !s.startTime) return 1.0;
     const elapsed = serverNow() - s.startTime;
-    return Math.min(multiplierAt(elapsed), MAX_MULTIPLIER);
+    return Math.min(multiplierAt(elapsed, cfgRef.current.GROWTH_K), cfgRef.current.MAX_MULTIPLIER);
   }, [serverNow]);
 
   useEffect(() => {
@@ -82,7 +87,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
 
-    const onWelcome = (d: { balance: number }) => setBalance(d.balance);
+    const onWelcome = (d: { balance: number; config?: Partial<GameCfg> }) => {
+      setBalance(d.balance);
+      if (d.config) {
+        cfgRef.current = { ...cfgRef.current, ...d.config };
+        if (d.config.MAX_MULTIPLIER != null) setMaxMult(d.config.MAX_MULTIPLIER);
+      }
+    };
     const onBalance = (b: number) => setBalance(b);
 
     const onState = (s: GameState) => {
@@ -208,7 +219,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
     waiting, setWaiting,
-    fair: { commitment: state?.serverSeedHash, last: lastFair },
+    fair: { commitment: state?.serverSeedHash, last: lastFair, maxMultiplier: maxMult },
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

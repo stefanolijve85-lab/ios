@@ -10,9 +10,10 @@ export const RTP = 1 - HOUSE_EDGE;
 
 // The same pure multiplier function the server uses, so the UI animates the
 // vault at 60fps from the shared startTime without streaming every frame.
-export function multiplierAt(elapsedMs: number): number {
+// `k` (curve speed) is per-game; defaults to the base value.
+export function multiplierAt(elapsedMs: number, k: number = GROWTH_K): number {
   if (elapsedMs <= 0) return 1.0;
-  return Math.exp(GROWTH_K * (elapsedMs / 1000));
+  return Math.exp(k * (elapsedMs / 1000));
 }
 
 // Dynamic multiplier ladder shown down the right edge of the vault.

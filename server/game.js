@@ -1,24 +1,27 @@
-const C = require('./config');
 const { Bots } = require('./bots');
 const { generateServerSeed, commitment, crashPointFromSeed } = require('./fairness');
 
 // ---------------------------------------------------------------------------
 // Multiplier math (server authoritative). The same pure function lives on the
 // client so the UI can animate at 60fps from a shared startTime without the
-// server needing to stream every frame.
+// server needing to stream every frame. GROWTH_K is per-game (the "feel").
 // ---------------------------------------------------------------------------
-function multiplierAt(elapsedMs) {
+function multiplierAt(elapsedMs, k) {
   if (elapsedMs <= 0) return 1.0;
-  return Math.exp(C.GROWTH_K * (elapsedMs / 1000));
+  return Math.exp(k * (elapsedMs / 1000));
 }
-function elapsedForMultiplier(m) {
+function elapsedForMultiplier(m, k) {
   if (m <= 1) return 0;
-  return (Math.log(m) / C.GROWTH_K) * 1000;
+  return (Math.log(m) / k) * 1000;
 }
 
 class Game {
-  constructor(io) {
+  // `cfg` is the merged config for THIS game (configFor(key)); each game runs
+  // its own independent round loop and broadcasts only to its own room.
+  constructor(io, cfg) {
     this.io = io;
+    this.C = cfg;
+    this.key = cfg.key;
     this.bots = new Bots();
     this.roundId = 0;
     this.phase = 'betting';
@@ -36,27 +39,30 @@ class Game {
 
   start() {
     this._enterBetting();
-    this.loop = setInterval(() => this._tick(), C.TICK_MS);
+    this.loop = setInterval(() => this._tick(), this.C.TICK_MS);
     // Independent ambient chatter / activity cadence.
     this.chatLoop = setInterval(() => this._ambient(), 1800);
   }
 
   online() {
-    const wobble = Math.round((Math.sin(Date.now() / 9000) * 0.5 + 0.5) * C.ONLINE_JITTER);
-    return C.BASE_ONLINE + this.players.size + wobble;
+    const wobble = Math.round((Math.sin(Date.now() / 9000) * 0.5 + 0.5) * this.C.ONLINE_JITTER);
+    return this.C.BASE_ONLINE + this.players.size + wobble;
   }
 
   addPlayer(socket) {
+    socket.join(this.key); // only receive this game's broadcasts
     this.players.set(socket.id, {
-      balance: C.START_BALANCE,
+      balance: this.C.START_BALANCE,
       bets: { 0: null, 1: null }, // each: { amount, cashedOut, payout }
     });
     socket.emit('welcome', {
-      balance: C.START_BALANCE,
+      balance: this.C.START_BALANCE,
+      game: this.key,
       config: {
-        GROWTH_K: C.GROWTH_K,
-        MAX_RUN_MS: C.MAX_RUN_MS,
-        MAX_MULTIPLIER: C.MAX_MULTIPLIER,
+        GROWTH_K: this.C.GROWTH_K,
+        MAX_RUN_MS: this.C.MAX_RUN_MS,
+        MAX_MULTIPLIER: this.C.MAX_MULTIPLIER,
+        HOUSE_EDGE: this.C.HOUSE_EDGE,
       },
     });
     this._sendState(socket);
@@ -121,7 +127,7 @@ class Game {
     socket.emit('balance', p.balance);
     socket.emit('stashed', { slot, multiplier: Math.round(m * 100) / 100, payout });
     // Real player cash-outs feed the live activity feed.
-    this.io.emit('activity', {
+    this.io.to(this.key).emit('activity', {
       kind: 'stash',
       name: 'You',
       amount: payout,
@@ -139,9 +145,9 @@ class Game {
     // to it so it can't change after the fact, then reveal the seed on crash.
     this.serverSeed = generateServerSeed();
     this.serverSeedHash = commitment(this.serverSeed);
-    this.crashPoint = crashPointFromSeed(this.serverSeed, this.roundId, C);
-    this.phaseEndsAt = Date.now() + C.BETTING_MS;
-    this.startHolders = C.MIN_HOLDERS + Math.floor(Math.random() * (C.MAX_HOLDERS - C.MIN_HOLDERS));
+    this.crashPoint = crashPointFromSeed(this.serverSeed, this.roundId, this.C);
+    this.phaseEndsAt = Date.now() + this.C.BETTING_MS;
+    this.startHolders = this.C.MIN_HOLDERS + Math.floor(Math.random() * (this.C.MAX_HOLDERS - this.C.MIN_HOLDERS));
     this.holders = this.startHolders;
     this.holdersTimeline = [];
     // Clear previous round bets.
@@ -152,14 +158,14 @@ class Game {
   _enterRunning() {
     this.phase = 'running';
     this.startTime = Date.now();
-    const dur = Math.min(elapsedForMultiplier(this.crashPoint), C.MAX_RUN_MS);
+    const dur = Math.min(elapsedForMultiplier(this.crashPoint, this.C.GROWTH_K), this.C.MAX_RUN_MS);
     this.crashAt = this.startTime + dur;
     this._broadcast('round_start');
   }
 
   _enterCrashed() {
     this.phase = 'crashed';
-    this.phaseEndsAt = Date.now() + C.CRASHED_MS;
+    this.phaseEndsAt = Date.now() + this.C.CRASHED_MS;
     // Settle losers (real players who never stashed).
     for (const [id, p] of this.players.entries()) {
       for (const slot of [0, 1]) {
@@ -175,7 +181,7 @@ class Game {
 
   _currentMultiplier() {
     if (this.phase !== 'running') return this.phase === 'crashed' ? this.crashPoint : 1.0;
-    const m = multiplierAt(Date.now() - this.startTime);
+    const m = multiplierAt(Date.now() - this.startTime, this.C.GROWTH_K);
     return Math.min(m, this.crashPoint);
   }
 
@@ -228,16 +234,16 @@ class Game {
 
   _broadcast(event) {
     const payload = this._statePayload();
-    this.io.emit('state', payload);
-    if (event) this.io.emit(event, payload);
+    this.io.to(this.key).emit('state', payload);
+    if (event) this.io.to(this.key).emit(event, payload);
   }
 
   // Ambient bot chat + activity so the room always feels alive.
   _ambient() {
     const msg = this.bots.chat(this.phase, this._currentMultiplier());
-    if (msg) this.io.emit('chat', msg);
+    if (msg) this.io.to(this.key).emit('chat', msg);
     const act = this.bots.activity(this.phase, this._currentMultiplier());
-    if (act) this.io.emit('activity', act);
+    if (act) this.io.to(this.key).emit('activity', act);
   }
 }
 
