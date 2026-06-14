@@ -99,7 +99,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (stillHolding) {
         const i = Math.floor(Math.random() * VOICE_CRASH_LINES.length);
         audio.crash(true, i);
-        setFlash({ kind: 'lose', text: VOICE_CRASH_LINES[i], key: Date.now() });
+        setFlash({ kind: 'lose', text: 'THEY GOT AWAY!', key: Date.now() });
       } else {
         audio.crash(false);
       }
@@ -115,7 +115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
       const i = Math.floor(Math.random() * VOICE_WIN_LINES.length);
-      setFlash({ kind: 'win', text: VOICE_WIN_LINES[i], key: Date.now() });
+      setFlash({ kind: 'win', text: 'YOU GOT OUT!', key: Date.now() });
       setLastWin(payout);
       audio.playStash(i);
     };
