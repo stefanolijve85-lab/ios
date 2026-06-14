@@ -48,8 +48,8 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   // ---- amount stepping: whole numbers, snap to round values on big jumps ----
   // surface "queued, waiting for next round" so the vault can show the spinner
   useEffect(() => {
-    if (hero) setWaiting(pending);
-  }, [pending, hero, setWaiting]);
+    if (slot === 0) setWaiting(pending);
+  }, [pending, slot, setWaiting]);
 
   const step = (d: number) =>
     setAmount((a) => {

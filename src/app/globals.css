@@ -636,10 +636,17 @@ input { font-family: inherit; }
 .lbl-mini { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-align: center; margin: 8px 0 4px; }
 
 .add-second {
-  width: 100%; margin-top: 8px; padding: 10px; border-radius: 12px;
+  width: 100%; margin-top: 5px; padding: 6px; border-radius: 10px;
   background: transparent; border: 1px dashed var(--panel-line); color: var(--muted);
-  font-weight: 700; font-size: 13px;
+  font-weight: 700; font-size: 11px; letter-spacing: 1px;
+  flex: 0 0 auto;
 }
+/* two bet tiles side by side (Aviator-style) */
+.bet-duo {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  flex: 0 0 auto;
+}
+.bet-duo .betpanel { min-width: 0; }
 
 /* ----------------------------------------------------- two columns */
 .cols {

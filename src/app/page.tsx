@@ -13,6 +13,7 @@ import Landing from '@/components/Landing';
 export default function Page() {
   const { connected } = useGame();
   const [started, setStarted] = useState(false);
+  const [twoBets, setTwoBets] = useState(false);
 
   if (!started) return <Landing onPlay={() => setStarted(true)} />;
 
@@ -27,7 +28,20 @@ export default function Page() {
         <Vault />
       </div>
 
-      <BetPanel slot={0} hero />
+      {twoBets ? (
+        <>
+          <div className="bet-duo">
+            <BetPanel slot={0} />
+            <BetPanel slot={1} />
+          </div>
+          <button className="add-second" onClick={() => setTwoBets(false)}>− ONE BET</button>
+        </>
+      ) : (
+        <>
+          <BetPanel slot={0} hero />
+          <button className="add-second" onClick={() => setTwoBets(true)}>+ ADD SECOND BET</button>
+        </>
+      )}
 
       <div className="cols">
         <LiveChat />
