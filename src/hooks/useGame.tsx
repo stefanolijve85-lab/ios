@@ -112,7 +112,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const b = p[slot];
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
-      setFlash({ kind: 'win', text: `SECURED ${multiplier.toFixed(2)}x  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
+      setFlash({ kind: 'win', text: `SECURED  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
       setLastWin(payout);
       audio.playStash();
     };

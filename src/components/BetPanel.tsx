@@ -8,6 +8,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier } = useGame();
   const [amount, setAmount] = useState(10);
   const [pending, setPending] = useState(false); // queued bet for the next round
+  const [repeat, setRepeat] = useState(false);    // auto re-bet last stake each round
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const valueRef = useRef<HTMLSpanElement>(null);
@@ -18,15 +19,19 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   const cashed = !!bet && bet.cashedOut;
   const controlsDisabled = holding; // amount locked only while a live bet runs
 
-  // Auto-place a queued bet the moment the next vault opens.
+  // Auto-place when the next vault opens: a queued bet OR the repeat-last-bet.
+  // Guarded to fire at most once per betting phase.
   const amountRef = useRef(amount);
   amountRef.current = amount;
+  const autoDoneRef = useRef(false);
   useEffect(() => {
-    if (phase === 'betting' && pending && !bet) {
-      placeBet(slot, amountRef.current);
+    if (phase !== 'betting') { autoDoneRef.current = false; return; }
+    if (!bet && !autoDoneRef.current && (pending || repeat)) {
+      autoDoneRef.current = true;
+      if (amountRef.current <= balance) { placeBet(slot, amountRef.current); setRepeat(true); }
       setPending(false);
     }
-  }, [phase, pending, bet, slot, placeBet]);
+  }, [phase, pending, repeat, bet, slot, placeBet, balance]);
 
   // Live potential payout on the STASH button while a round runs.
   useEffect(() => {
@@ -89,7 +94,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     if (holding) {
       cls += ' placed'; big = '✓ BET PLACED';
       sub = `TAP TO CANCEL · ${euro(bet!.amount)}`;
-      onClick = () => cancelBet(slot);
+      onClick = () => { cancelBet(slot); setRepeat(false); };
     } else if (amount > balance) {
       cls += ' lowbal'; big = 'INSUFFICIENT BALANCE';
       sub = `Need ${euro(amount)} · You have ${euro(balance)}`;
@@ -97,13 +102,13 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     } else {
       cls += ' place'; big = 'PLACE BET';
       sub = `${euro(amount)} · VAULT OPEN`;
-      onClick = () => placeBet(slot, amount);
+      onClick = () => { placeBet(slot, amount); setRepeat(true); };
     }
   } else if (phase === 'running' && holding) {
     big = 'SECURE'; sub = 'LOCK YOUR WINNINGS';
     onClick = () => stash(slot);
   } else if (cashed) {
-    cls += ' done'; big = `✓ SECURED ${bet!.cashedAt?.toFixed(2)}x`;
+    cls += ' done'; big = `✓ SECURED ${euro(bet!.payout)}`;
     sub = 'LOCKED IN'; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
     cls += ' placed'; big = 'TOO LATE — STOLEN';
