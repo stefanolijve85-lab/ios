@@ -435,10 +435,10 @@ input { font-family: inherit; }
   overflow: hidden;
   text-align: center;
   transition: transform .1s ease, box-shadow .2s ease;
-  background: linear-gradient(180deg, #5BAE2A 0%, #36901A 50%, #155808 100%);
+  background: linear-gradient(180deg, rgba(11,42,17,0.96), rgba(6,24,10,0.96));
   color: #ffffff;
-  border: 1px solid rgba(90,170,45,0.4);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(170,225,120,0.28), inset 0 -8px 14px rgba(8,45,4,0.5);
+  border: 1.5px solid rgba(89,230,42,0.65);
+  box-shadow: 0 0 20px rgba(89,230,42,0.32), 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
   text-shadow: 0 1px 2px rgba(8,45,2,0.6);
   animation: stashPulse 2.8s ease-in-out infinite;
 }
@@ -446,14 +446,14 @@ input { font-family: inherit; }
 .stash-btn .big { font-size: 17px; line-height: 1; display: block; }
 .stash-btn .sub { font-size: 9px; letter-spacing: 2px; opacity: .85; display: block; margin-top: 3px; }
 @keyframes stashPulse {
-  0%,100% { box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 6px rgba(70,150,30,0.18), inset 0 1px 0 rgba(170,225,120,0.28), inset 0 -8px 14px rgba(8,45,4,0.5); }
-  50% { box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 12px rgba(70,150,30,0.3), inset 0 1px 0 rgba(170,225,120,0.3), inset 0 -8px 14px rgba(8,45,4,0.5); }
+  0%,100% { box-shadow: 0 0 16px rgba(89,230,42,0.28), 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
+  50% { box-shadow: 0 0 26px rgba(89,230,42,0.5), 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
 }
 /* primary CTA is always the same green (place bet = stash = bet next) */
 .stash-btn.place {
-  background: linear-gradient(180deg, #5BAE2A 0%, #36901A 50%, #155808 100%);
+  background: linear-gradient(180deg, rgba(11,42,17,0.96), rgba(6,24,10,0.96));
   color: #ffffff;
-  border-color: rgba(90,170,45,0.4);
+  border-color: rgba(89,230,42,0.65);
 }
 .stash-btn.placed {
   background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
