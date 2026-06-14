@@ -104,7 +104,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     onClick = () => stash(slot);
   } else if (cashed) {
     cls += ' done'; big = `✓ STASHED ${bet!.cashedAt?.toFixed(2)}x`;
-    sub = `+${euro(bet!.payout)}`; disabled = true;
+    sub = 'LOCKED IN'; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
     cls += ' placed'; big = 'TOO LATE — STOLEN';
     sub = `−${euro(bet.amount)}`; disabled = true;

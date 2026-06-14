@@ -263,13 +263,17 @@ input { font-family: inherit; }
 
 .vault-readout {
   position: absolute;
-  left: 0; right: 0; top: 27%;
+  left: 50%; top: 25%; transform: translateX(-50%);
   z-index: 4;
   text-align: center;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.95);
   pointer-events: none;
+  padding: 6px 22px;
+  border-radius: 16px;
+  background: rgba(3,6,4,0.46);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
 }
-.vault-readout .label { font-size: 10px; letter-spacing: 2px; color: var(--green-hi); opacity: .9; }
+.vault-readout .label { font-size: 10px; letter-spacing: 2px; color: #d8ffe6; opacity: .95; text-shadow: 0 1px 3px #000; }
 .vault-readout .amount {
   font-size: clamp(26px, 8.5vw, 40px);
   font-weight: 900;
