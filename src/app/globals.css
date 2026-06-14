@@ -652,7 +652,7 @@ input { font-family: inherit; }
 /* ----------------------------------------------------- two columns */
 .cols {
   display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; margin-top: 3px;
-  height: 118px; align-items: stretch;
+  height: 98px; align-items: stretch;
 }
 .panel {
   background: var(--panel);
