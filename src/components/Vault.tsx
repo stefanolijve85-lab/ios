@@ -15,7 +15,6 @@ export default function Vault() {
   const markerRef = useRef<HTMLDivElement>(null);
 
   const [phase, setPhase] = useState('betting');
-  const [crashPoint, setCrashPoint] = useState(0);
   const [warn, setWarn] = useState(false);
   const [cdLabel, setCdLabel] = useState('THIEVES ARRIVING IN');
 
@@ -94,7 +93,6 @@ export default function Vault() {
       const ph = s?.phase ?? 'betting';
       if (ph !== lastPhase) {
         setPhase(ph);
-        if (ph === 'crashed') setCrashPoint(s?.crashPoint ?? m);
         lastPhase = ph;
       }
       raf = requestAnimationFrame(loop);
@@ -148,12 +146,6 @@ export default function Vault() {
         </div>
       )}
 
-      {phase === 'crashed' && (
-        <div className="heist">
-          <div className="thiefword">THIEVES STOLE IT</div>
-          <div className="thiefat">@ {crashPoint.toFixed(2)}x</div>
-        </div>
-      )}
     </div>
   );
 }

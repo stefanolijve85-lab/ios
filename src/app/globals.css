@@ -679,12 +679,22 @@ input { font-family: inherit; }
   position: fixed; inset: 0; z-index: 50; pointer-events: none;
   display: grid; place-items: center;
 }
+/* speech balloon showing the spoken line */
 .flash .card {
-  padding: 18px 26px; border-radius: 16px; font-weight: 900; font-size: 22px;
+  position: relative;
+  padding: 14px 22px; border-radius: 18px; font-weight: 900; font-size: 22px;
+  font-family: 'Montserrat', system-ui, sans-serif;
   text-align: center; animation: flashPop 1.6s ease forwards;
+  backdrop-filter: blur(3px);
 }
-.flash.win .card { background: rgba(12,40,20,0.92); color: var(--green-hi); border: 1px solid rgba(89,230,42,.5); box-shadow: 0 0 40px rgba(89,230,42,.5); }
-.flash.lose .card { background: rgba(40,12,12,0.92); color: #ffd9d9; border: 1px solid rgba(255,59,59,.5); box-shadow: 0 0 40px rgba(255,59,59,.5); }
+/* balloon tail */
+.flash .card::after {
+  content: ''; position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
+  border-left: 10px solid transparent; border-right: 10px solid transparent;
+  border-top: 10px solid currentColor; opacity: 0.92;
+}
+.flash.win .card { background: rgba(10,38,18,0.95); color: var(--green-hi); border: 1.5px solid rgba(89,230,42,.6); box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 24px rgba(89,230,42,.35); }
+.flash.lose .card { background: rgba(40,12,12,0.95); color: #ff8a8a; border: 1.5px solid rgba(255,59,59,.6); box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 24px rgba(255,59,59,.35); }
 @keyframes flashPop {
   0% { transform: scale(0.7); opacity: 0; }
   15% { transform: scale(1.05); opacity: 1; }

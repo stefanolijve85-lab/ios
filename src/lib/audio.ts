@@ -256,25 +256,24 @@ class TensionAudio {
     if (this.enabled) this.fadeMusic(this.musicIdle(), 900); // music back between rounds
   }
 
-  playStash(_multiplier = 0) {
+  playStash(idx = -1) {
     this.oneShot(this.buffers.stash, 1.0);
-    // a triumphant voice line on every secure
     if (this.voiceWin.length) {
-      const v = this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
+      const v = this.voiceWin[idx] ?? this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
       this.oneShot(v, 1.0, this.voiceGain, 0.2);
     }
   }
 
   // Always stops the round motif; only plays the alarm + voice if the player
   // actually lost (was still holding). If you already secured, you're safe → quiet.
-  crash(lost = true) {
+  crash(lost = true, idx = -1) {
     this.running = false;
     this.stopSources();
     if (!lost) return;
     this.oneShot(this.buffers.crash, 1.0);
-    // random voice line ("They got away!") on its own bus, just after the alarm
+    // voice line on its own bus, just after the alarm
     if (this.voiceCrash.length) {
-      const v = this.voiceCrash[Math.floor(Math.random() * this.voiceCrash.length)];
+      const v = this.voiceCrash[idx] ?? this.voiceCrash[Math.floor(Math.random() * this.voiceCrash.length)];
       this.oneShot(v, 1.0, this.voiceGain, 0.35);
     }
   }

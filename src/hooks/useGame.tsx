@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import { getAudio } from '@/lib/audio';
-import { multiplierAt, MAX_MULTIPLIER } from '@/lib/constants';
+import { multiplierAt, MAX_MULTIPLIER, VOICE_CRASH_LINES, VOICE_WIN_LINES } from '@/lib/constants';
 import type { GameState, ChatMessage, ActivityItem, BetState } from '@/lib/types';
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
@@ -88,28 +88,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       audio.stopTick();
       audio.startMotif();
     };
-    const onCrash = (s: GameState) => {
+    const onCrash = () => {
       phaseRef.current = 'crashed';
       // Only play the loss audio (alarm + "they got away") if YOU were still
       // holding — if you already secured, you're safe, so stay quiet.
       const stillHolding =
         (!!betsRef.current[0] && !betsRef.current[0]!.cashedOut) ||
         (!!betsRef.current[1] && !betsRef.current[1]!.cashedOut);
-      audio.crash(stillHolding); // always stops the motif; alarm/voice only if you lost
-      // Resolve the player's own bets for the flash banner.
-      setBets((prev) => {
-        let won = 0;
-        let lost = 0;
-        ([0, 1] as const).forEach((slot) => {
-          const b = prev[slot];
-          if (b && !b.cashedOut) lost += b.amount;
-          if (b && b.cashedOut) won += b.payout;
-        });
-        if (lost > 0) {
-          setFlash({ kind: 'lose', text: 'THIEVES TOOK IT ALL', key: Date.now() });
-        }
-        return prev;
-      });
+      // always stops the motif; alarm/voice + balloon only if YOU lost
+      if (stillHolding) {
+        const i = Math.floor(Math.random() * VOICE_CRASH_LINES.length);
+        audio.crash(true, i);
+        setFlash({ kind: 'lose', text: VOICE_CRASH_LINES[i], key: Date.now() });
+      } else {
+        audio.crash(false);
+      }
     };
 
     const onBetAck = ({ slot, amount }: { slot: 0 | 1; amount: number }) =>
@@ -121,9 +114,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const b = p[slot];
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
-      setFlash({ kind: 'win', text: `SECURED  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
+      const i = Math.floor(Math.random() * VOICE_WIN_LINES.length);
+      setFlash({ kind: 'win', text: VOICE_WIN_LINES[i], key: Date.now() });
       setLastWin(payout);
-      audio.playStash(multiplier);
+      audio.playStash(i);
     };
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);
