@@ -131,7 +131,7 @@ export default function Vault() {
       {waiting && !isSecured && phase !== 'betting' && (
         <div className="vault-waiting">
           <div className="vw-wheel" />
-          <div className="vw-text">READY…</div>
+          <div className="vw-text">WAIT FOR NEXT VAULT</div>
         </div>
       )}
 
