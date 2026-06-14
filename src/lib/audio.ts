@@ -15,6 +15,7 @@ type Buffers = {
   stash?: AudioBuffer;
   crash?: AudioBuffer;
   lobby?: AudioBuffer;
+  tick?: AudioBuffer;
 };
 
 type Levels = { music: number; sfx: number; voice: number };
@@ -30,6 +31,7 @@ class TensionAudio {
   private buffers: Buffers = {};
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
+  private tickSrc: AudioBufferSourceNode | null = null;
   private lowGain: GainNode | null = null;
   private highGain: GainNode | null = null;
   enabled = false;
@@ -121,6 +123,7 @@ class TensionAudio {
       set('stash', '/audio/stash.mp3'),
       set('crash', '/audio/crash.mp3'),
       set('lobby', '/audio/lobby.mp3'),
+      set('tick', '/audio/tick.mp3'),
     ]);
     this.loaded = true;
     this.loading = false;
@@ -176,6 +179,8 @@ class TensionAudio {
     const rate = 1 + this.intensity * 0.25;
     this.lowSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
     this.highSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
+    // The clock ticks faster as tension rises.
+    this.tickSrc?.playbackRate.setTargetAtTime(1 + this.intensity * 0.9, t, 0.25);
   }
 
   startMotif() {
@@ -197,13 +202,18 @@ class TensionAudio {
     const hi = mk(this.buffers.high!, 0);
     this.lowSrc = lo.src; this.lowGain = lo.g;
     this.highSrc = hi.src; this.highGain = hi.g;
+    // Ticking clock layer (steady, speeds up via playbackRate in setIntensity).
+    if (this.buffers.tick) {
+      const t = mk(this.buffers.tick, 0.5);
+      this.tickSrc = t.src;
+    }
     this.setIntensity(this.intensity);
     this.fadeMusic(this.musicDuck(), 700); // music steps aside during the round
   }
 
   private stopSources() {
-    [this.lowSrc, this.highSrc].forEach((s) => { try { s?.stop(); } catch { /* already stopped */ } });
-    this.lowSrc = this.highSrc = null;
+    [this.lowSrc, this.highSrc, this.tickSrc].forEach((s) => { try { s?.stop(); } catch { /* already stopped */ } });
+    this.lowSrc = this.highSrc = this.tickSrc = null;
     this.lowGain = this.highGain = null;
   }
 
