@@ -118,16 +118,6 @@ export default function Vault() {
       </div>
       <div className="vault-glow" ref={glowRef} />
 
-      {/* THIEF CAUGHT panel after you secure */}
-      {isSecured && (
-        <div className="caught-panel">
-          <div className="ct-title">✓ THIEF CAUGHT!</div>
-          <div className="ct-sub">YOU LOCKED IN YOUR WINNINGS</div>
-          <div className="ct-amt">{euro(cashedPayout)}</div>
-          <div className="ct-secured">SECURED</div>
-        </div>
-      )}
-
       {/* center readout (only while playing, not secured / robbed) */}
       {!isSecured && phase !== 'crashed' && (
         <div className="vault-readout">
