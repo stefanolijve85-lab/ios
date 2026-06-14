@@ -1,6 +1,6 @@
-const crypto = require('crypto');
 const C = require('./config');
 const { Bots } = require('./bots');
+const { generateServerSeed, commitment, crashPointFromSeed } = require('./fairness');
 
 // ---------------------------------------------------------------------------
 // Multiplier math (server authoritative). The same pure function lives on the
@@ -16,18 +16,6 @@ function elapsedForMultiplier(m) {
   return (Math.log(m) / C.GROWTH_K) * 1000;
 }
 
-// Provably-fair-style crash point. A simple, transparent variant:
-//  - HOUSE_EDGE chance of an instant bust (1.00x)
-//  - otherwise a heavy-tailed distribution, capped to fit the round window.
-function generateCrashPoint() {
-  const seed = crypto.randomBytes(4).readUInt32BE(0) / 0xffffffff; // [0,1)
-  if (seed < C.HOUSE_EDGE) return 1.0;
-  const r = crypto.randomBytes(4).readUInt32BE(0) / 0x100000000; // [0,1)
-  let cp = (1 - C.HOUSE_EDGE) / (1 - r);
-  cp = Math.max(1.01, Math.min(cp, C.MAX_MULTIPLIER));
-  return Math.floor(cp * 100) / 100;
-}
-
 class Game {
   constructor(io) {
     this.io = io;
@@ -37,6 +25,8 @@ class Game {
     this.startTime = 0; // when running started
     this.crashPoint = 0;
     this.crashAt = 0; // wall-clock ms when this round busts
+    this.serverSeed = '';     // secret until the round busts
+    this.serverSeedHash = ''; // commitment, published before bets
     this.phaseEndsAt = 0;
     this.players = new Map(); // socketId -> { balance, bets: {0,1} }
     this.holders = 0;
@@ -145,7 +135,11 @@ class Game {
     this.roundId += 1;
     this.phase = 'betting';
     this.startTime = 0;
-    this.crashPoint = generateCrashPoint();
+    // provably fair: commit to a fresh seed BEFORE bets; bind the crash point
+    // to it so it can't change after the fact, then reveal the seed on crash.
+    this.serverSeed = generateServerSeed();
+    this.serverSeedHash = commitment(this.serverSeed);
+    this.crashPoint = crashPointFromSeed(this.serverSeed, this.roundId, C);
     this.phaseEndsAt = Date.now() + C.BETTING_MS;
     this.startHolders = C.MIN_HOLDERS + Math.floor(Math.random() * (C.MAX_HOLDERS - C.MIN_HOLDERS));
     this.holders = this.startHolders;
@@ -216,6 +210,10 @@ class Game {
       startTime: this.startTime,
       phaseEndsAt: this.phaseEndsAt,
       crashPoint: this.phase === 'crashed' ? this.crashPoint : undefined,
+      // provably fair: the commitment is public every phase; the seed is only
+      // revealed once the round has busted.
+      serverSeedHash: this.serverSeedHash,
+      serverSeed: this.phase === 'crashed' ? this.serverSeed : undefined,
       multiplier: Math.round(this._currentMultiplier() * 100) / 100,
       holders: this.holders,
       startHolders: this.startHolders,

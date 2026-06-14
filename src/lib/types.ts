@@ -7,6 +7,8 @@ export interface GameState {
   startTime: number; // server clock when running began (0 otherwise)
   phaseEndsAt: number;
   crashPoint?: number; // present only when phase === 'crashed'
+  serverSeedHash?: string; // provably-fair commitment (every phase)
+  serverSeed?: string;     // revealed only when phase === 'crashed'
   multiplier: number;
   holders: number;
   startHolders: number;

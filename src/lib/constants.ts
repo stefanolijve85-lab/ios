@@ -3,6 +3,11 @@ export const GROWTH_K = 0.21;
 export const MAX_RUN_MS = 22000;
 export const MAX_MULTIPLIER = 100.0;
 
+// The single, transparent house edge for EVERY Olive Games title (RTP 97%).
+// Must match server/config.js HOUSE_EDGE — used by the in-browser verifier.
+export const HOUSE_EDGE = 0.03;
+export const RTP = 1 - HOUSE_EDGE;
+
 // The same pure multiplier function the server uses, so the UI animates the
 // vault at 60fps from the shared startTime without streaming every frame.
 export function multiplierAt(elapsedMs: number): number {

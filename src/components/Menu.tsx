@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { getAudio } from '@/lib/audio';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
+import FairnessModal from './FairnessModal';
 
 export default function Menu() {
   const { addCredits } = useGame();
   const theme = useTheme();
+  const [fairOpen, setFairOpen] = useState(false);
   const NAV = [
     { img: theme.assets.icons.home, label: 'HOME' },
     { img: theme.assets.icons.history, label: 'HISTORY' },
@@ -60,6 +62,10 @@ export default function Menu() {
           🧪 TEST: +€1,000,000 CREDITS
         </button>
 
+        <button className="drawer-fair" onClick={() => { setFairOpen(true); setOpen(false); }}>
+          🔒 PROVABLY FAIR
+        </button>
+
         <div className="drawer-audio">
           <div className="drawer-title">AUDIO</div>
           {([
@@ -79,6 +85,8 @@ export default function Menu() {
           ))}
         </div>
       </aside>
+
+      {fairOpen && <FairnessModal onClose={() => setFairOpen(false)} />}
     </>
   );
 }

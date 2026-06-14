@@ -8,6 +8,13 @@ import type { GameState, ChatMessage, ActivityItem, BetState } from '@/lib/types
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
 
+export interface FairRound {
+  roundId: number;
+  serverSeed: string;
+  serverSeedHash: string;
+  crashPoint: number;
+}
+
 interface GameContextValue {
   connected: boolean;
   state: GameState | null;
@@ -28,6 +35,7 @@ interface GameContextValue {
   addCredits: (amount: number) => void;
   waiting: boolean;
   setWaiting: (b: boolean) => void;
+  fair: { commitment?: string; last: FairRound | null };
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -42,6 +50,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [flash, setFlash] = useState<{ kind: 'win' | 'lose'; text: string; key: number } | null>(null);
   const [lastWin, setLastWin] = useState(0);
   const [waiting, setWaiting] = useState(false);
+  const [lastFair, setLastFair] = useState<FairRound | null>(null);
 
   const stateRef = useRef<GameState | null>(null);
   const offsetRef = useRef<number>(0);
@@ -98,8 +107,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       audio.stopTick();
       audio.startMotif();
     };
-    const onCrash = () => {
+    const onCrash = (s?: GameState) => {
       phaseRef.current = 'crashed';
+      // capture the revealed seed so the player can verify this round
+      const cs = s ?? stateRef.current;
+      if (cs?.serverSeed && cs.serverSeedHash && cs.crashPoint != null) {
+        setLastFair({
+          roundId: cs.roundId,
+          serverSeed: cs.serverSeed,
+          serverSeedHash: cs.serverSeedHash,
+          crashPoint: cs.crashPoint,
+        });
+      }
       // Only play the loss audio (alarm + "they got away") if YOU were still
       // holding — if you already secured, you're safe, so stay quiet.
       const stillHolding =
@@ -189,6 +208,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
     waiting, setWaiting,
+    fair: { commitment: state?.serverSeedHash, last: lastFair },
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
