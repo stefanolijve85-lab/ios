@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { getAudio } from '@/lib/audio';
 import { LADDER } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
@@ -37,7 +38,7 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastPhase = '', lastWarn = false, lastLabel = '';
+    let lastPhase = '', lastWarn = false, lastLabel = '', lastTickSec = -1;
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
@@ -69,6 +70,14 @@ export default function Vault() {
         const remaining = (s.phaseEndsAt ?? 0) - serverNow();
         text = clock(remaining);
         w = remaining <= 2500;
+        // one clock tick per second, in sync with the displayed number
+        const sec = Math.max(0, Math.ceil(remaining / 1000));
+        if (sec !== lastTickSec) {
+          if (lastTickSec !== -1 && sec > 0) getAudio().tick();
+          lastTickSec = sec;
+        }
+      } else {
+        lastTickSec = -1;
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }

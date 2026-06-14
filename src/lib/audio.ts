@@ -33,7 +33,6 @@ class TensionAudio {
   private voiceWin: AudioBuffer[] = [];   // random "Nice grab!" lines (big secures)
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
-  private tickSrc: AudioBufferSourceNode | null = null;
   private lowGain: GainNode | null = null;
   private highGain: GainNode | null = null;
   enabled = false;
@@ -224,23 +223,12 @@ class TensionAudio {
   }
 
   // Ticking clock during the betting countdown (VAULT CLOSES IN).
-  startTick() {
-    this.ticking = true;
-    if (!this.enabled || !this.ctx || !this.buffers.tick || this.tickSrc) return;
-    const src = this.ctx.createBufferSource();
-    src.buffer = this.buffers.tick;
-    src.loop = true;
-    const g = this.ctx.createGain();
-    g.gain.value = 0.6;
-    src.connect(g);
-    g.connect(this.sfxGain!);
-    src.start();
-    this.tickSrc = src;
-  }
-  stopTick() {
-    this.ticking = false;
-    try { this.tickSrc?.stop(); } catch { /* already stopped */ }
-    this.tickSrc = null;
+  // One tick per second, fired in sync with the on-screen numbers.
+  startTick() { this.ticking = true; }
+  stopTick() { this.ticking = false; }
+  tick() {
+    if (!this.enabled || !this.ticking) return;
+    this.oneShot(this.buffers.tick, 0.6);
   }
 
   private stopSources() {
