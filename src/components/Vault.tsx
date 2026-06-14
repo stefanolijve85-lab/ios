@@ -116,13 +116,22 @@ export default function Vault() {
     <div className="vault" ref={vaultRef}>
       {/* scene render: caught (you secured) / heist (robbed) / vault (normal) */}
       <div className="vault-scene">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : ''}
-          src={isSecured ? '/caught.webp' : phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
-          alt="Vault"
-          draggable={false}
-        />
+        {(() => {
+          const sceneSrc = isSecured ? '/caught.webp' : phase === 'crashed' ? '/heist.webp' : '/vault.webp';
+          const sceneCls = isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : '';
+          const full = isSecured || phase === 'crashed';
+          return (
+            <>
+              {/* blurred fill behind so the full scene (contain) has no black bars */}
+              {full && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="scene-blur" src={sceneSrc} alt="" aria-hidden="true" draggable={false} />
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className={sceneCls} src={sceneSrc} alt="Vault" draggable={false} />
+            </>
+          );
+        })()}
       </div>
       <div className="vault-glow" ref={glowRef} />
 
