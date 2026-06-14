@@ -23,9 +23,6 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="landing-img" src="/landing.webp" alt="BANKHEIST X — Lock it in. Cash out big." />
 
-        {/* helicopter searchlight sweeps from the moment the page opens */}
-        <div className="searchlight" />
-
         {!clicked ? (
           <button className="landing-play-hit" onClick={handlePlay} aria-label="Play">
             <span className="sr-only">PLAY</span>
