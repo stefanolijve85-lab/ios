@@ -129,8 +129,7 @@ export default function Vault() {
       {/* queued: spinning vault door so the player knows to wait for next round */}
       {waiting && !isSecured && phase !== 'betting' && (
         <div className="vault-waiting">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="vw-door" src="/vault-door.webp" alt="" />
+          <div className="vw-spinner" />
           <div className="vw-text">WAIT FOR NEXT VAULT</div>
         </div>
       )}
