@@ -302,7 +302,6 @@ input { font-family: inherit; }
   color: #ffd0d0;
   text-shadow: 0 0 4px #000, 0 2px 4px #000, 0 0 12px rgba(255,59,59,0.7);
   font-variant-numeric: tabular-nums;
-  animation: blink 1s infinite;
 }
 .vault.danger .vault-readout .amount { color: #ffe2e2; text-shadow: 0 0 22px rgba(255,59,59,0.9); }
 
