@@ -312,6 +312,11 @@ input { font-family: inherit; }
   object-fit: cover;
   object-position: center center;
 }
+/* the secure (THIEF CAUGHT) shot shows the full arrest scene */
+.vault-scene img.is-caught {
+  object-fit: contain;
+  object-position: center center;
+}
 
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {

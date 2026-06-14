@@ -118,7 +118,7 @@ export default function Vault() {
       <div className="vault-scene">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          className={isSecured || phase === 'crashed' ? 'is-heist' : ''}
+          className={isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : ''}
           src={isSecured ? '/caught.webp' : phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
           alt="Vault"
           draggable={false}
