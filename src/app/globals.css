@@ -488,7 +488,7 @@ input { font-family: inherit; }
 /* ----------------------------------------------------------- stash btn */
 .stash-btn {
   width: 100%;
-  min-height: 60px;                /* fixed so the layout never jumps between states */
+  height: 60px;                    /* fixed (not min) so the tile never changes height between states/pages */
   border-radius: 14px;
   padding: 8px 12px;
   font-weight: 900;
@@ -546,8 +546,10 @@ input { font-family: inherit; }
 }
 
 /* compact (second panel) */
-.stash-btn.compact { padding: 12px; border-radius: 14px; }
-.stash-btn.compact .big { font-size: 18px; }
+.stash-btn.compact { padding: 8px 10px; border-radius: 14px; }
+/* slightly smaller so a 2-line label (e.g. "TOO LATE — STOLEN") fits inside the
+   fixed-height tile instead of growing it and shifting the layout */
+.stash-btn.compact .big { font-size: 15px; line-height: 1.08; }
 
 /* betting controls */
 .bet {
