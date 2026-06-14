@@ -281,6 +281,12 @@ input { font-family: inherit; }
   object-fit: contain;
   object-position: center center;
 }
+/* blurred zoomed copy fills the area behind the sharp crash shot */
+.heist-blur {
+  position: absolute; inset: 0; z-index: 0;
+  background: url('/heist.webp') center center / cover no-repeat;
+  filter: blur(20px) brightness(0.55) saturate(1.05);
+}
 
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {
