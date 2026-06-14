@@ -272,7 +272,7 @@ input { font-family: inherit; }
 .vault-scene img {
   width: 100%; height: 100%;
   object-fit: cover;            /* fill the whole zone — the vault reads BIG */
-  object-position: center 6%;   /* show the top: siren + door arch above the cash */
+  object-position: center top;  /* anchor to the top so the vault's top is never cut */
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
