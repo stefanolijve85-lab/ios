@@ -122,7 +122,6 @@ export default function Vault() {
         <div className="vault-readout">
           <div className="label">CURRENT AMOUNT</div>
           <div className="amount" ref={amountRef}>€0.00</div>
-          <div className="mult" ref={multRef}>1.00x</div>
           <div className="missed" ref={missedRef} style={{ display: 'none' }} />
         </div>
       )}

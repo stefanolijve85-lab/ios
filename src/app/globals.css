@@ -200,8 +200,11 @@ input { font-family: inherit; }
 }
 .icon-btn.on { color: var(--green-hi); border-color: rgba(89,230,42,0.4); }
 .lastwin {
-  display: flex; flex-direction: column; align-items: center; line-height: 1.05;
-  min-width: 0; flex: 1; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: 1.05; min-width: 0; max-width: 44%; overflow: hidden;
+  padding: 5px 12px; border-radius: 999px;
+  background: linear-gradient(180deg, #211f17, #131209);
+  border: 1px solid var(--panel-line);
 }
 .lastwin small { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); }
 .lastwin b { font-size: 13px; color: var(--green-hi); font-variant-numeric: tabular-nums; white-space: nowrap; }
