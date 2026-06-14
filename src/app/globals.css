@@ -177,7 +177,7 @@ input { font-family: inherit; }
 }
 .landing-bg {
   position: absolute; inset: 0;
-  background: url('/heist.webp') center 32% / cover no-repeat;
+  background: url('/heist.webp') center 40% / contain no-repeat;
 }
 .landing-scrim {
   position: absolute; inset: 0;
@@ -226,17 +226,24 @@ input { font-family: inherit; }
   width: 100%; max-width: 440px; padding: 18px;
   border-radius: 16px;
   font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900;
-  font-size: clamp(24px, 7vw, 30px); letter-spacing: 4px; color: #2a1d04;
-  background: linear-gradient(180deg, #ffe39a, var(--gold) 45%, var(--gold-deep));
-  border: 1.5px solid rgba(47,209,74,0.6);
+  font-size: clamp(26px, 7.5vw, 34px); letter-spacing: 6px;
+  color: #fff4d6;
+  background: linear-gradient(180deg, #f7d886 0%, #d6a23c 48%, #9a6f24 100%);
+  border: 2px solid #f6d98a;
   box-shadow:
-    0 0 22px rgba(230,184,77,0.45),
-    0 0 26px rgba(47,209,74,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.55);
-  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-  animation: stashPulse 2.4s ease-in-out infinite;
+    0 0 26px rgba(47,209,74,0.55),
+    0 0 10px rgba(47,209,74,0.5),
+    0 6px 18px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    inset 0 -10px 22px rgba(90,60,10,0.5);
+  text-shadow: 0 2px 3px rgba(70,45,5,0.9), 0 0 2px rgba(70,45,5,0.9);
+  animation: playPulse 2.4s ease-in-out infinite;
 }
 .landing-play:active { transform: scale(0.98); }
+@keyframes playPulse {
+  0%,100% { box-shadow: 0 0 26px rgba(47,209,74,0.55), 0 0 10px rgba(47,209,74,0.5), 0 6px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -10px 22px rgba(90,60,10,0.5); }
+  50% { box-shadow: 0 0 40px rgba(47,209,74,0.85), 0 0 16px rgba(47,209,74,0.7), 0 6px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -10px 22px rgba(90,60,10,0.5); }
+}
 .statusrow {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; margin: 2px 2px 4px;
