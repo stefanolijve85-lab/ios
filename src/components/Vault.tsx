@@ -126,17 +126,18 @@ export default function Vault() {
       </div>
       <div className="vault-glow" ref={glowRef} />
 
-      {/* center readout (only while playing, not secured / robbed) */}
-      {!isSecured && phase !== 'crashed' && (
+      {/* center readout — also shown after you secure, so you see the climbing
+          amount + what you're missing while the round finishes */}
+      {phase !== 'crashed' && (
         <div className="vault-readout">
-          <div className="label">CURRENT AMOUNT</div>
+          <div className="label">{isSecured ? 'WOULD BE WORTH' : 'CURRENT AMOUNT'}</div>
           <div className="amount" ref={amountRef}>€0.00</div>
           <div className="missed" ref={missedRef} style={{ display: 'none' }} />
         </div>
       )}
 
-      {/* multiplier ladder (hidden when secured or robbed) */}
-      {!isSecured && phase !== 'crashed' && (
+      {/* multiplier ladder (hidden only during the robbery) */}
+      {phase !== 'crashed' && (
         <div className="vault-ladder">
           {LADDER.map((r) => (
             <div key={r} className={`rung${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}>
