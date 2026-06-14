@@ -32,6 +32,9 @@ export default function Vault() {
   const stakeRef = useRef({ active: activeStake, cashed: cashedStake, payout: cashedPayout });
   stakeRef.current = { active: activeStake, cashed: cashedStake, payout: cashedPayout };
 
+  // You secured this round → show the "thief caught" result.
+  const isSecured = cashedPayout > 0;
+
   useEffect(() => {
     let raf = 0;
     let lastPhase = '', lastWarn = false, lastLabel = '';
@@ -103,20 +106,30 @@ export default function Vault() {
 
   return (
     <div className="vault" ref={vaultRef}>
-      {/* full vault scene render — swaps to the heist shot when robbed */}
+      {/* scene render: caught (you secured) / heist (robbed) / vault (normal) */}
       <div className="vault-scene">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          className={phase === 'crashed' ? 'is-heist' : ''}
-          src={phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
+          className={isSecured || phase === 'crashed' ? 'is-heist' : ''}
+          src={isSecured ? '/caught.webp' : phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
           alt="Vault"
           draggable={false}
         />
       </div>
       <div className="vault-glow" ref={glowRef} />
 
-      {/* center readout (hidden during the robbery) */}
-      {phase !== 'crashed' && (
+      {/* THIEF CAUGHT panel after you secure */}
+      {isSecured && (
+        <div className="caught-panel">
+          <div className="ct-title">✓ THIEF CAUGHT!</div>
+          <div className="ct-sub">YOU LOCKED IN YOUR WINNINGS</div>
+          <div className="ct-amt">{euro(cashedPayout)}</div>
+          <div className="ct-secured">SECURED</div>
+        </div>
+      )}
+
+      {/* center readout (only while playing, not secured / robbed) */}
+      {!isSecured && phase !== 'crashed' && (
         <div className="vault-readout">
           <div className="label">CURRENT AMOUNT</div>
           <div className="amount" ref={amountRef}>€0.00</div>
@@ -124,8 +137,8 @@ export default function Vault() {
         </div>
       )}
 
-      {/* multiplier ladder, overlaid on the right (hidden during the robbery) */}
-      {phase !== 'crashed' && (
+      {/* multiplier ladder (hidden when secured or robbed) */}
+      {!isSecured && phase !== 'crashed' && (
         <div className="vault-ladder">
           {LADDER.map((r) => (
             <div key={r} className={`rung${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}>
