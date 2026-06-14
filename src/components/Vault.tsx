@@ -12,8 +12,8 @@ export default function Vault() {
   const missedRef = useRef<HTMLDivElement>(null);
   const vaultRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<HTMLDivElement>(null);
 
-  const [rung, setRung] = useState(1);
   const [phase, setPhase] = useState('betting');
   const [crashPoint, setCrashPoint] = useState(0);
   const [warn, setWarn] = useState(false);
@@ -35,7 +35,7 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastRung = -1, lastPhase = '', lastWarn = false, lastLabel = '';
+    let lastPhase = '', lastWarn = false, lastLabel = '';
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
@@ -74,9 +74,20 @@ export default function Vault() {
 
       if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
-      let active = LADDER[LADDER.length - 1];
-      for (let i = LADDER.length - 1; i >= 0; i--) if (m >= LADDER[i]) active = LADDER[i];
-      if (active !== lastRung) { setRung(active); lastRung = active; }
+      // smooth ladder indicator: continuous vertical position between rungs
+      if (markerRef.current) {
+        const L = LADDER; // descending values, evenly spaced visually
+        let pos: number;
+        if (m >= L[0]) pos = 0;
+        else if (m <= L[L.length - 1]) pos = 1;
+        else {
+          pos = 1;
+          for (let i = 0; i < L.length - 1; i++) {
+            if (m <= L[i] && m >= L[i + 1]) { pos = (i + (L[i] - m) / (L[i] - L[i + 1])) / (L.length - 1); break; }
+          }
+        }
+        markerRef.current.style.top = (pos * 100) + '%';
+      }
 
       if (vaultRef.current) vaultRef.current.classList.toggle('danger', danger);
 
@@ -120,13 +131,11 @@ export default function Vault() {
       {phase !== 'crashed' && (
         <div className="vault-ladder">
           {LADDER.map((r) => (
-            <div
-              key={r}
-              className={`rung${r === rung ? ' active' : ''}${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}
-            >
+            <div key={r} className={`rung${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}>
               {r.toFixed(2)}x
             </div>
           ))}
+          <div className="ladder-marker" ref={markerRef} style={{ top: '100%' }} />
         </div>
       )}
 

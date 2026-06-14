@@ -335,29 +335,41 @@ input { font-family: inherit; }
 
 /* multiplier ladder — overlaid on the right edge of the vault */
 .vault-ladder {
-  position: absolute; right: 0; top: 8%; bottom: 16%;
+  position: absolute; right: 4px; top: 7%; bottom: 13%;
   z-index: 4;
   display: flex; flex-direction: column; justify-content: space-between;
   font-size: 11px; font-weight: 800;
   font-variant-numeric: tabular-nums;
-  padding-left: 8px;
-  background: linear-gradient(270deg, rgba(0,0,0,0.45), transparent);
+  padding: 6px 8px 6px 10px;
+  /* transparent tile around the scale */
+  background: rgba(8, 10, 8, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(3px);
 }
 .vault-ladder .rung {
   color: var(--muted);
   text-align: right;
-  padding: 1px 4px 1px 0;
-  border-right: 2px solid transparent;
+  padding: 1px 2px;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-  transition: all .15s;
 }
 .vault-ladder .rung.hot { color: var(--gold-hi); }
-.vault-ladder .rung.active {
-  color: #fff;
-  border-right-color: var(--green);
-  text-shadow: 0 0 8px var(--green-glow);
-}
 .vault-ladder .rung.top { color: var(--danger); }
+/* smooth flowing indicator that glides up/down with the multiplier */
+.ladder-marker {
+  position: absolute; left: 2px; right: 2px;
+  height: 0; transform: translateY(-50%);
+  border-top: 2px solid var(--green-hi);
+  box-shadow: 0 0 8px var(--green-glow);
+  border-radius: 2px;
+  transition: top .12s linear;
+  pointer-events: none;
+}
+.ladder-marker::after {
+  content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green-hi); box-shadow: 0 0 8px var(--green-glow);
+}
 
 /* countdown — overlaid over the bottom of the vault, on a readable pill */
 .vault-countdown {
