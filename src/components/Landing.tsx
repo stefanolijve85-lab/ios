@@ -28,10 +28,13 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
             <span className="sr-only">PLAY</span>
           </button>
         ) : (
-          <div className="landing-wait">
-            <div className="vw-wheel" />
-            <div className="vw-text">WAIT FOR NEXT VAULT</div>
-          </div>
+          <>
+            <div className="searchlight" />
+            <div className="landing-wait">
+              <div className="vw-wheel" />
+              <div className="vw-text">WAIT FOR NEXT VAULT</div>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -190,6 +190,18 @@ input { font-family: inherit; }
   border-radius: 16px;
 }
 .landing-play-hit:active { background: rgba(255,255,255,0.06); }
+/* sweeping helicopter searchlight while waiting */
+.searchlight {
+  position: absolute; top: 12%; left: 56%; width: 46%; height: 70%;
+  transform-origin: 50% 0%;
+  background: linear-gradient(to bottom, rgba(255,247,200,0.4), rgba(255,247,200,0.08) 55%, transparent 85%);
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  pointer-events: none; z-index: 1;
+  animation: sweep 3.4s ease-in-out infinite alternate;
+}
+@keyframes sweep { from { transform: rotate(-20deg); } to { transform: rotate(16deg); } }
 /* PLAY -> waiting state (a round is running, wait for the next) */
 .landing-wait {
   position: absolute; left: 6%; right: 6%; top: 85%; height: 11%;
