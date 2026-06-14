@@ -11,6 +11,7 @@ interface GameContextValue {
   connected: boolean;
   state: GameState | null;
   balance: number;
+  lastWin: number;
   bets: Bets;
   chat: ChatMessage[];
   activity: ActivityItem[];
@@ -36,6 +37,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [flash, setFlash] = useState<{ kind: 'win' | 'lose'; text: string; key: number } | null>(null);
+  const [lastWin, setLastWin] = useState(0);
 
   const stateRef = useRef<GameState | null>(null);
   const offsetRef = useRef<number>(0);
@@ -111,6 +113,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return { ...p, [slot]: b ? { ...b, cashedOut: true, payout, cashedAt: multiplier } : b };
       });
       setFlash({ kind: 'win', text: `STASHED ${multiplier.toFixed(2)}x  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
+      setLastWin(payout);
       audio.playStash();
     };
 
@@ -169,7 +172,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value: GameContextValue = {
-    connected, state, balance, bets, chat, activity, flash,
+    connected, state, balance, lastWin, bets, chat, activity, flash,
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
   };

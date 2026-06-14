@@ -9,6 +9,7 @@ export default function Vault() {
   const amountRef = useRef<HTMLDivElement>(null);
   const multRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
+  const missedRef = useRef<HTMLDivElement>(null);
   const vaultRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
 
@@ -18,11 +19,19 @@ export default function Vault() {
   const [warn, setWarn] = useState(false);
   const [cdLabel, setCdLabel] = useState('THIEVES ARRIVING IN');
 
+  // Track active (still holding) vs cashed bets so the counter can keep running
+  // after a stash and show what you "missed".
   const activeStake =
     (bets[0] && !bets[0]!.cashedOut ? bets[0]!.amount : 0) +
     (bets[1] && !bets[1]!.cashedOut ? bets[1]!.amount : 0);
-  const stakeRef = useRef(activeStake);
-  stakeRef.current = activeStake;
+  const cashedStake =
+    (bets[0]?.cashedOut ? bets[0]!.amount : 0) +
+    (bets[1]?.cashedOut ? bets[1]!.amount : 0);
+  const cashedPayout =
+    (bets[0]?.cashedOut ? bets[0]!.payout : 0) +
+    (bets[1]?.cashedOut ? bets[1]!.payout : 0);
+  const stakeRef = useRef({ active: activeStake, cashed: cashedStake, payout: cashedPayout });
+  stakeRef.current = { active: activeStake, cashed: cashedStake, payout: cashedPayout };
 
   useEffect(() => {
     let raf = 0;
@@ -30,11 +39,25 @@ export default function Vault() {
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
-      const stake = stakeRef.current || 100;
-      const amount = stake * m;
+      const st = stakeRef.current;
+      // Counter keeps running on your bet (even after you stash); falls back to
+      // an illustrative pot when you have no bet.
+      const baseStake = st.active > 0 ? st.active : st.cashed > 0 ? st.cashed : 100;
+      const amount = baseStake * m;
 
       if (amountRef.current) amountRef.current.textContent = euro(amount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
+
+      // "YOU MISSED" — extra you'd have had if you hadn't stashed yet
+      if (missedRef.current) {
+        if (st.active === 0 && st.cashed > 0 && s?.phase === 'running') {
+          const missed = amount - st.payout;
+          missedRef.current.style.display = '';
+          missedRef.current.textContent = `YOU MISSED +${euro(Math.max(0, missed))}`;
+        } else {
+          missedRef.current.style.display = 'none';
+        }
+      }
 
       // betting countdown (legit) + tension glow (driven by stake size, not time)
       let danger = false, text = '00:00', w = false, lbl = 'VAULT CLOSES IN';
@@ -84,6 +107,7 @@ export default function Vault() {
           <div className="label">CURRENT AMOUNT</div>
           <div className="amount" ref={amountRef}>€0.00</div>
           <div className="mult" ref={multRef}>1.00x</div>
+          <div className="missed" ref={missedRef} style={{ display: 'none' }} />
         </div>
       )}
 
