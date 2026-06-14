@@ -555,9 +555,42 @@ input { font-family: inherit; }
 .bet {
   margin-top: 5px;
 }
+.bet-head {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 8px; margin-bottom: 4px; min-height: 18px;
+}
 .bet-amt-label {
-  text-align: center; font-size: 9px; letter-spacing: 2px;
-  color: var(--muted); margin-bottom: 4px;
+  font-size: 9px; letter-spacing: 2px; color: var(--muted);
+  margin-right: auto;            /* push the AUTO toggle to the right */
+}
+/* AUTO BET toggle — opt-in; off by default */
+.auto-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px; padding: 3px 9px 3px 7px;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.auto-toggle .ind {
+  width: 14px; height: 14px; border-radius: 999px;
+  background: #2a2a2a; border: 1px solid rgba(255,255,255,0.18);
+  position: relative; transition: background .15s, border-color .15s;
+}
+.auto-toggle.on {
+  color: var(--green-hi);
+  border-color: rgba(89,230,42,0.6);
+  background: rgba(54,144,26,0.16);
+}
+.auto-toggle.on .ind {
+  background: var(--green-hi); border-color: var(--green-hi);
+  box-shadow: 0 0 8px var(--green-glow);
+}
+.auto-toggle.on .ind::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: #06240a; font-weight: 900;
 }
 .bet-amt {
   display: grid; grid-template-columns: 40px 1fr 40px; gap: 8px;

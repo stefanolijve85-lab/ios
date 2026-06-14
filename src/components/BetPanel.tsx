@@ -8,7 +8,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier, setWaiting } = useGame();
   const [amount, setAmount] = useState(10);
   const [pending, setPending] = useState(false); // queued bet for the next round
-  const [repeat, setRepeat] = useState(false);    // auto re-bet last stake each round
+  const [repeat, setRepeat] = useState(false);    // AUTO BET: re-bet last stake each round (opt-in)
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const valueRef = useRef<HTMLSpanElement>(null);
@@ -28,7 +28,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     if (phase !== 'betting') { autoDoneRef.current = false; return; }
     if (!bet && !autoDoneRef.current && (pending || repeat)) {
       autoDoneRef.current = true;
-      if (amountRef.current <= balance) { placeBet(slot, amountRef.current); setRepeat(true); }
+      if (amountRef.current <= balance) { placeBet(slot, amountRef.current); }
       setPending(false);
     }
   }, [phase, pending, repeat, bet, slot, placeBet, balance]);
@@ -99,7 +99,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     if (holding) {
       cls += ' placed'; big = '✓ BET PLACED';
       sub = `TAP TO CANCEL · ${euro(bet!.amount)}`;
-      onClick = () => { cancelBet(slot); setRepeat(false); };
+      onClick = () => { cancelBet(slot); };
     } else if (amount > balance) {
       cls += ' lowbal'; big = 'INSUFFICIENT BALANCE';
       sub = `Need ${euro(amount)} · You have ${euro(balance)}`;
@@ -107,7 +107,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     } else {
       cls += ' place'; big = 'PLACE BET';
       sub = `${euro(amount)} · VAULT OPEN`;
-      onClick = () => { placeBet(slot, amount); setRepeat(true); };
+      onClick = () => { placeBet(slot, amount); };
     }
   } else if (phase === 'running' && holding) {
     big = 'SECURE'; sub = 'LOCK YOUR WINNINGS';
@@ -146,7 +146,18 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       </button>
 
       <div className="bet" style={{ opacity: controlsDisabled ? 0.45 : 1 }}>
-        {hero && <div className="bet-amt-label">BET AMOUNT</div>}
+        <div className="bet-head">
+          {hero && <span className="bet-amt-label">BET AMOUNT</span>}
+          <button
+            type="button"
+            className={`auto-toggle${repeat ? ' on' : ''}`}
+            onClick={() => setRepeat((v) => !v)}
+            aria-pressed={repeat}
+            title="Automatically re-place this bet every round"
+          >
+            <span className="ind" />AUTO BET
+          </button>
+        </div>
         <div className="bet-amt">
           <button
             className="step"
