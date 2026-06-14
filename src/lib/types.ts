@@ -39,4 +39,12 @@ export interface BetState {
   payout: number;
   cashedAt?: number;
   lost?: boolean;
+  autoCashout?: number | null;
+}
+
+export interface LeaderboardEntry {
+  name: string;
+  amount: number;
+  multiplier: number;
+  ts: number;
 }

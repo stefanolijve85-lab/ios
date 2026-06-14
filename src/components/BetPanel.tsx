@@ -11,9 +11,20 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   const [amount, setAmount] = useState(10);
   const [pending, setPending] = useState(false); // queued bet for the next round
   const [repeat, setRepeat] = useState(false);    // AUTO BET: re-bet last stake each round (opt-in)
+  const [autoCash, setAutoCash] = useState(false); // AUTO CASH OUT at a target x (opt-in)
+  const [autoCashStr, setAutoCashStr] = useState('2.00');
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const valueRef = useRef<HTMLSpanElement>(null);
+
+  // the auto cash-out target sent with a bet (null = off / invalid)
+  const autoTarget = () => {
+    if (!autoCash) return null;
+    const n = parseFloat(autoCashStr.replace(',', '.'));
+    return Number.isFinite(n) && n > 1.01 ? n : null;
+  };
+  const autoTargetRef = useRef(autoTarget());
+  autoTargetRef.current = autoTarget();
 
   const phase = state?.phase ?? 'betting';
   const bet = bets[slot];
@@ -30,7 +41,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     if (phase !== 'betting') { autoDoneRef.current = false; return; }
     if (!bet && !autoDoneRef.current && (pending || repeat)) {
       autoDoneRef.current = true;
-      if (amountRef.current <= balance) { placeBet(slot, amountRef.current); }
+      if (amountRef.current <= balance) { placeBet(slot, amountRef.current, autoTargetRef.current); }
       setPending(false);
     }
   }, [phase, pending, repeat, bet, slot, placeBet, balance]);
@@ -109,7 +120,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     } else {
       cls += ' place'; big = 'PLACE BET';
       sub = `${euro(amount)} · VAULT OPEN`;
-      onClick = () => { placeBet(slot, amount); };
+      onClick = () => { placeBet(slot, amount, autoTarget()); };
     }
   } else if (phase === 'running' && holding) {
     big = theme.copy.cashOut; sub = theme.copy.cashOutSub;
@@ -159,6 +170,32 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
           >
             <span className="ind" />AUTO BET
           </button>
+          <div className="auto-co">
+            <button
+              type="button"
+              className={`auto-toggle${autoCash ? ' on' : ''}`}
+              onClick={() => setAutoCash((v) => !v)}
+              aria-pressed={autoCash}
+              disabled={controlsDisabled}
+              title="Automatically secure at a target multiplier"
+            >
+              <span className="ind" />AUTO CASH OUT
+            </button>
+            <div className={`auto-co-field${autoCash ? ' on' : ''}`}>
+              <input
+                inputMode="decimal"
+                value={autoCashStr}
+                onChange={(e) => setAutoCashStr(e.target.value)}
+                onBlur={() => {
+                  const n = parseFloat(autoCashStr.replace(',', '.'));
+                  setAutoCashStr(Number.isFinite(n) && n > 1.01 ? n.toFixed(2) : '2.00');
+                }}
+                disabled={controlsDisabled}
+                aria-label="Auto cash-out multiplier"
+              />
+              <span>x</span>
+            </div>
+          </div>
         </div>
         <div className="bet-amt">
           <button

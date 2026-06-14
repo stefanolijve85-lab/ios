@@ -5,11 +5,13 @@ import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { creditLine } from '@/brand';
 import FairnessModal from './FairnessModal';
+import Leaderboard from './Leaderboard';
 
 export default function Menu() {
   const { addCredits } = useGame();
   const theme = useTheme();
   const [fairOpen, setFairOpen] = useState(false);
+  const [lbOpen, setLbOpen] = useState(false);
   const NAV = [
     { img: theme.assets.icons.home, label: 'HOME' },
     { img: theme.assets.icons.history, label: 'HISTORY' },
@@ -51,7 +53,11 @@ export default function Menu() {
             <button
               key={n.label}
               className={`drawer-item${active === n.label ? ' active' : ''}`}
-              onClick={() => { setActive(n.label); setOpen(false); }}
+              onClick={() => {
+                setActive(n.label);
+                if (n.label === 'LEADERBOARD') { setLbOpen(true); setOpen(false); }
+                else setOpen(false);
+              }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="ic" src={n.img} alt="" /> {n.label}
@@ -90,6 +96,7 @@ export default function Menu() {
       </aside>
 
       {fairOpen && <FairnessModal onClose={() => setFairOpen(false)} />}
+      {lbOpen && <Leaderboard onClose={() => setLbOpen(false)} />}
     </>
   );
 }

@@ -35,6 +35,7 @@ class Game {
     this.holders = 0;
     this.startHolders = 0;
     this.holdersTimeline = [];
+    this.leaderboard = []; // top wins this server session (shared engine feature)
   }
 
   start() {
@@ -65,6 +66,7 @@ class Game {
         HOUSE_EDGE: this.C.HOUSE_EDGE,
       },
     });
+    socket.emit('leaderboard', this.leaderboard);
     this._sendState(socket);
   }
 
@@ -82,7 +84,7 @@ class Game {
   }
 
   // --- player actions ------------------------------------------------------
-  placeBet(socket, slot, amount) {
+  placeBet(socket, slot, amount, autoCashout) {
     const p = this.players.get(socket.id);
     if (!p) return;
     if (this.phase !== 'betting') return socket.emit('error_msg', 'Betting is closed');
@@ -91,10 +93,13 @@ class Game {
     if (amount <= 0) return;
     if (p.bets[slot]) return; // already bet this slot
     if (p.balance < amount) return socket.emit('error_msg', 'Insufficient balance');
+    // optional auto cash-out target (server-side so it fires even if the UI lags)
+    let auto = Number(autoCashout);
+    auto = Number.isFinite(auto) && auto > 1.01 ? Math.min(auto, this.C.MAX_MULTIPLIER) : null;
     p.balance = Math.round((p.balance - amount) * 100) / 100;
-    p.bets[slot] = { amount, cashedOut: false, payout: 0 };
+    p.bets[slot] = { amount, cashedOut: false, payout: 0, autoCashout: auto };
     socket.emit('balance', p.balance);
-    socket.emit('bet_ack', { slot, amount });
+    socket.emit('bet_ack', { slot, amount, autoCashout: auto });
   }
 
   cancelBet(socket, slot) {
@@ -110,30 +115,33 @@ class Game {
     socket.emit('bet_cancelled', { slot });
   }
 
-  // STASH — lock the winnings for a slot.
+  // STASH — lock the winnings for a slot (manual button → current multiplier).
   stash(socket, slot) {
-    const p = this.players.get(socket.id);
-    if (!p) return;
     if (this.phase !== 'running') return;
     slot = slot === 1 ? 1 : 0;
+    this._cashOut(socket.id, slot, this._currentMultiplier());
+  }
+
+  // Shared cash-out path for manual stash AND server-side auto cash-out.
+  _cashOut(id, slot, m) {
+    const p = this.players.get(id);
+    if (!p) return false;
     const bet = p.bets[slot];
-    if (!bet || bet.cashedOut) return;
-    const m = this._currentMultiplier();
+    if (!bet || bet.cashedOut) return false;
+    const mult = Math.round(m * 100) / 100;
     const payout = Math.round(bet.amount * m * 100) / 100;
     bet.cashedOut = true;
     bet.payout = payout;
     bet.cashedAt = m;
     p.balance = Math.round((p.balance + payout) * 100) / 100;
-    socket.emit('balance', p.balance);
-    socket.emit('stashed', { slot, multiplier: Math.round(m * 100) / 100, payout });
-    // Real player cash-outs feed the live activity feed.
-    this.io.to(this.key).emit('activity', {
-      kind: 'stash',
-      name: 'You',
-      amount: payout,
-      multiplier: Math.round(m * 100) / 100,
-      ts: Date.now(),
-    });
+    const sock = this.io.sockets.sockets.get(id);
+    if (sock) {
+      sock.emit('balance', p.balance);
+      sock.emit('stashed', { slot, multiplier: mult, payout });
+    }
+    this.io.to(this.key).emit('activity', { kind: 'stash', name: 'You', amount: payout, multiplier: mult, ts: Date.now() });
+    this._recordWin('You', payout, mult);
+    return true;
   }
 
   // --- round lifecycle -----------------------------------------------------
@@ -192,6 +200,16 @@ class Game {
     } else if (this.phase === 'running') {
       // Holders melt away as the multiplier climbs (the secondary game).
       const m = this._currentMultiplier();
+      // server-side auto cash-out: fire the moment the target is reached, paid
+      // out exactly at the target (not the overshoot).
+      for (const [id, p] of this.players.entries()) {
+        for (const slot of [0, 1]) {
+          const bet = p.bets[slot];
+          if (bet && !bet.cashedOut && bet.autoCashout && m >= bet.autoCashout) {
+            this._cashOut(id, slot, bet.autoCashout);
+          }
+        }
+      }
       const progress = Math.min(1, (now - this.startTime) / Math.max(1, this.crashAt - this.startTime));
       const decay = Math.pow(1 - progress, 2.2);
       const noise = 0.96 + Math.random() * 0.06;
@@ -243,7 +261,19 @@ class Game {
     const msg = this.bots.chat(this.phase, this._currentMultiplier());
     if (msg) this.io.to(this.key).emit('chat', msg);
     const act = this.bots.activity(this.phase, this._currentMultiplier());
-    if (act) this.io.to(this.key).emit('activity', act);
+    if (act) {
+      this.io.to(this.key).emit('activity', act);
+      if (act.kind === 'stash') this._recordWin(act.name, act.amount, act.multiplier);
+    }
+  }
+
+  // Top wins this server session (in-memory; resets on redeploy). Shared engine
+  // feature — every game gets a leaderboard for free.
+  _recordWin(name, amount, multiplier) {
+    this.leaderboard.push({ name, amount, multiplier: multiplier || 0, ts: Date.now() });
+    this.leaderboard.sort((a, b) => b.amount - a.amount);
+    if (this.leaderboard.length > 20) this.leaderboard.length = 20;
+    this.io.to(this.key).emit('leaderboard', this.leaderboard);
   }
 }
 

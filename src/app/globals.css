@@ -212,6 +212,20 @@ input { font-family: inherit; }
 .fair-result.bad { background: rgba(120,20,20,0.22); border: 1px solid rgba(255,59,59,0.5); color: #ffd6d6; }
 .fair-verdict { font-weight: 900; letter-spacing: 1px; margin-top: 4px; }
 .fair-wait { font-size: 12px; color: var(--muted); }
+
+/* ---------------------------------------------------------- leaderboard */
+.lb-list { display: flex; flex-direction: column; gap: 4px; }
+.lb-row {
+  display: grid; grid-template-columns: 26px 1fr auto auto; gap: 8px; align-items: center;
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--panel-line);
+  font-size: 13px;
+}
+.lb-row.me { border-color: rgba(89,230,42,0.55); background: rgba(54,144,26,0.14); }
+.lb-rank { color: var(--muted); font-weight: 900; text-align: center; }
+.lb-name { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-mult { color: var(--gold-hi); font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb-amt { color: var(--green-hi); font-weight: 900; font-variant-numeric: tabular-nums; }
 .drawer-audio {
   margin-top: auto;
   border-top: 1px solid var(--panel-line); padding-top: 14px;
@@ -662,6 +676,22 @@ input { font-family: inherit; }
   content: '✓'; position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 9px; color: #06240a; font-weight: 900;
+}
+/* AUTO CASH OUT row: toggle + editable target multiplier */
+.auto-co { display: flex; gap: 6px; align-items: stretch; }
+.auto-co .auto-toggle { flex: 1; }
+.auto-co-field {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid var(--panel-line); border-radius: 999px;
+  padding: 0 10px 0 8px; background: rgba(255,255,255,0.04);
+  color: var(--muted); font-size: 11px; font-weight: 800;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.auto-co-field.on { border-color: rgba(89,230,42,0.6); color: var(--green-hi); background: rgba(54,144,26,0.16); }
+.auto-co-field input {
+  width: 42px; background: transparent; border: none; outline: none;
+  color: inherit; font-weight: 800; font-size: 12px; text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .bet-amt {
   display: grid; grid-template-columns: 40px 1fr 40px; gap: 8px;

@@ -45,7 +45,7 @@ app.prepare().then(() => {
     const game = instances[key] || instances[DEFAULT_GAME_KEY];
     game.addPlayer(socket);
 
-    socket.on('place_bet', ({ slot, amount } = {}) => game.placeBet(socket, slot, amount));
+    socket.on('place_bet', ({ slot, amount, autoCashout } = {}) => game.placeBet(socket, slot, amount, autoCashout));
     socket.on('cancel_bet', ({ slot } = {}) => game.cancelBet(socket, slot));
     socket.on('stash', ({ slot } = {}) => game.stash(socket, slot));
     socket.on('add_credits', ({ amount } = {}) => game.addCredits(socket, amount));

@@ -4,7 +4,7 @@ import { getSocket } from '@/lib/socket';
 import { getAudio } from '@/lib/audio';
 import { multiplierAt, MAX_MULTIPLIER, GROWTH_K, HOUSE_EDGE } from '@/lib/constants';
 import { useTheme } from '@/hooks/useTheme';
-import type { GameState, ChatMessage, ActivityItem, BetState } from '@/lib/types';
+import type { GameState, ChatMessage, ActivityItem, BetState, LeaderboardEntry } from '@/lib/types';
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
 
@@ -23,12 +23,13 @@ interface GameContextValue {
   bets: Bets;
   chat: ChatMessage[];
   activity: ActivityItem[];
+  leaderboard: LeaderboardEntry[];
   flash: { kind: 'win' | 'lose'; text: string; key: number } | null;
   stateRef: React.MutableRefObject<GameState | null>;
   offsetRef: React.MutableRefObject<number>;
   liveMultiplier: () => number;
   serverNow: () => number;
-  placeBet: (slot: 0 | 1, amount: number) => void;
+  placeBet: (slot: 0 | 1, amount: number, autoCashout?: number | null) => void;
   cancelBet: (slot: 0 | 1) => void;
   stash: (slot: 0 | 1) => void;
   sendChat: (text: string) => void;
@@ -49,6 +50,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [bets, setBets] = useState<Bets>({ 0: null, 1: null });
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [flash, setFlash] = useState<{ kind: 'win' | 'lose'; text: string; key: number } | null>(null);
   const [lastWin, setLastWin] = useState(0);
   const [waiting, setWaiting] = useState(false);
@@ -145,8 +147,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const onBetAck = ({ slot, amount }: { slot: 0 | 1; amount: number }) =>
-      setBets((p) => ({ ...p, [slot]: { amount, cashedOut: false, payout: 0 } }));
+    const onBetAck = ({ slot, amount, autoCashout }: { slot: 0 | 1; amount: number; autoCashout?: number | null }) =>
+      setBets((p) => ({ ...p, [slot]: { amount, cashedOut: false, payout: 0, autoCashout } }));
     const onBetCancelled = ({ slot }: { slot: 0 | 1 }) =>
       setBets((p) => ({ ...p, [slot]: null }));
     const onStashed = ({ slot, multiplier, payout }: { slot: 0 | 1; multiplier: number; payout: number }) => {
@@ -162,6 +164,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);
     const onActivity = (a: ActivityItem) => setActivity((x) => [a, ...x.slice(0, 24)]);
+    const onLeaderboard = (l: LeaderboardEntry[]) => setLeaderboard(Array.isArray(l) ? l : []);
     const onErrorMsg = (msg: string) =>
       setFlash({ kind: 'lose', text: typeof msg === 'string' ? msg.toUpperCase() : 'ERROR', key: Date.now() });
 
@@ -178,6 +181,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     socket.on('stashed', onStashed);
     socket.on('chat', onChat);
     socket.on('activity', onActivity);
+    socket.on('leaderboard', onLeaderboard);
     socket.on('error_msg', onErrorMsg);
 
     return () => {
@@ -194,12 +198,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       socket.off('stashed', onStashed);
       socket.off('chat', onChat);
       socket.off('activity', onActivity);
+      socket.off('leaderboard', onLeaderboard);
       socket.off('error_msg', onErrorMsg);
     };
   }, []);
 
-  const placeBet = useCallback((slot: 0 | 1, amount: number) => {
-    getSocket().emit('place_bet', { slot, amount });
+  const placeBet = useCallback((slot: 0 | 1, amount: number, autoCashout?: number | null) => {
+    getSocket().emit('place_bet', { slot, amount, autoCashout: autoCashout ?? null });
   }, []);
   const cancelBet = useCallback((slot: 0 | 1) => {
     getSocket().emit('cancel_bet', { slot });
@@ -215,7 +220,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value: GameContextValue = {
-    connected, state, balance, lastWin, bets, chat, activity, flash,
+    connected, state, balance, lastWin, bets, chat, activity, leaderboard, flash,
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
     waiting, setWaiting,
