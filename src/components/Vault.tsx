@@ -124,7 +124,8 @@ export default function Vault() {
           draggable={false}
         />
       </div>
-      <div className="vault-glow" ref={glowRef} />
+      {/* money glow only during the live round — never over the result scenes */}
+      {!isSecured && phase !== 'crashed' && <div className="vault-glow" ref={glowRef} />}
 
       {/* center readout — also shown after you secure, so you see the climbing
           amount + what you're missing while the round finishes */}
