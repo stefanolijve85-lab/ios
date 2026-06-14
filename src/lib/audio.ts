@@ -38,6 +38,7 @@ class TensionAudio {
   private loaded = false;
   private loading = false;
   private running = false;
+  private ticking = false;
   private intensity = 0;
 
   private levels: Levels = { music: 0.5, sfx: 0.9, voice: 1.0 };
@@ -145,9 +146,11 @@ class TensionAudio {
         if (!this.enabled) return;
         this.startMusic();
         if (this.running) this.startMotif();
+        else if (this.ticking) this.startTick();
       });
     } else {
       this.stopSources();
+      this.stopTick();
       this.stopMusic();
     }
     return this.enabled;
@@ -179,8 +182,6 @@ class TensionAudio {
     const rate = 1 + this.intensity * 0.25;
     this.lowSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
     this.highSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
-    // The clock ticks faster as tension rises.
-    this.tickSrc?.playbackRate.setTargetAtTime(1 + this.intensity * 0.9, t, 0.25);
   }
 
   startMotif() {
@@ -202,18 +203,33 @@ class TensionAudio {
     const hi = mk(this.buffers.high!, 0);
     this.lowSrc = lo.src; this.lowGain = lo.g;
     this.highSrc = hi.src; this.highGain = hi.g;
-    // Ticking clock layer (steady, speeds up via playbackRate in setIntensity).
-    if (this.buffers.tick) {
-      const t = mk(this.buffers.tick, 0.5);
-      this.tickSrc = t.src;
-    }
     this.setIntensity(this.intensity);
     this.fadeMusic(this.musicDuck(), 700); // music steps aside during the round
   }
 
+  // Ticking clock during the betting countdown (VAULT CLOSES IN).
+  startTick() {
+    this.ticking = true;
+    if (!this.enabled || !this.ctx || !this.buffers.tick || this.tickSrc) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.buffers.tick;
+    src.loop = true;
+    const g = this.ctx.createGain();
+    g.gain.value = 0.6;
+    src.connect(g);
+    g.connect(this.sfxGain!);
+    src.start();
+    this.tickSrc = src;
+  }
+  stopTick() {
+    this.ticking = false;
+    try { this.tickSrc?.stop(); } catch { /* already stopped */ }
+    this.tickSrc = null;
+  }
+
   private stopSources() {
-    [this.lowSrc, this.highSrc, this.tickSrc].forEach((s) => { try { s?.stop(); } catch { /* already stopped */ } });
-    this.lowSrc = this.highSrc = this.tickSrc = null;
+    [this.lowSrc, this.highSrc].forEach((s) => { try { s?.stop(); } catch { /* already stopped */ } });
+    this.lowSrc = this.highSrc = null;
     this.lowGain = this.highGain = null;
   }
 

@@ -79,9 +79,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setBets({ 0: null, 1: null });
       phaseRef.current = 'betting';
       audio.stopMotif();
+      audio.startTick(); // clock ticks during the "VAULT CLOSES IN" countdown
     };
     const onRoundStart = () => {
       phaseRef.current = 'running';
+      audio.stopTick();
       audio.startMotif();
     };
     const onCrash = (s: GameState) => {
