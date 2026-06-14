@@ -108,8 +108,8 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     big = 'SECURE'; sub = 'LOCK YOUR WINNINGS';
     onClick = () => stash(slot);
   } else if (cashed) {
-    cls += ' done'; big = '✓ THIEF CAUGHT';
-    sub = `YOUR BAG IS SECURED · ${euro(bet!.payout)}`; disabled = true;
+    cls += ' done'; big = `BAG SECURED ${euro(bet!.payout)}`;
+    sub = null; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
     cls += ' placed'; big = 'TOO LATE — STOLEN';
     sub = `−${euro(bet.amount)}`; disabled = true;
