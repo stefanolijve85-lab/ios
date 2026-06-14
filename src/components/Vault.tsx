@@ -70,8 +70,8 @@ export default function Vault() {
         const remaining = (s.phaseEndsAt ?? 0) - serverNow();
         text = clock(remaining);
         w = remaining <= 5000;
-        // play the bomb-clock countdown once, in the final 5 seconds
-        if (!tickFired && remaining <= 5000 && remaining > 0) {
+        // play the 4.6s bomb-clock so it ends right when the vault closes (0s)
+        if (!tickFired && remaining <= 4600 && remaining > 0) {
           getAudio().tick();
           tickFired = true;
         }
