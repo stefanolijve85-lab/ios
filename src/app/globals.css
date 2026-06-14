@@ -307,15 +307,15 @@ input { font-family: inherit; }
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
-/* full scenes (crash/secure) fill the whole area, with a stronger top fade */
+/* full scenes (crash/secure) fill the whole area, with a soft top fade */
 .vault-scene img.is-heist,
 .vault-scene img.is-caught {
   object-fit: cover;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 92%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 92%, transparent 100%);
 }
 .vault-scene img.is-heist { object-position: center 45%; }
-.vault-scene img.is-caught { object-position: center 66%; }  /* show the arrested crook's face above the button */
+.vault-scene img.is-caught { object-position: center 54%; }  /* cops' faces + crook's head just above the button */
 
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {
