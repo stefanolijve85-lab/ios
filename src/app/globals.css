@@ -11,13 +11,13 @@
   --gold-deep: #8a6a22;
   --brass: #b9893f;
 
-  /* STASH green palette */
-  --green: #4CCB2E;        /* deeper casino green — gradient middle */
-  --green-hi: #59E62A;     /* primary neon — CTA / selected / text */
-  --green-lime: #8DFF43;   /* bright lime highlight — button top / glow */
-  --green-glow: #84FF47;   /* neon glow */
-  --green-deep: #1E8F22;   /* dark emerald — gradient bottom */
-  --green-muted: #6FCF45;  /* muted green — labels / secondary */
+  /* STASH green palette (toned down — less neon) */
+  --green: #36901A;        /* casino green — gradient middle */
+  --green-hi: #54B22B;     /* primary — CTA / selected / text */
+  --green-lime: #6FBE2E;   /* highlight */
+  --green-glow: #5BAE2A;   /* glow */
+  --green-deep: #155808;   /* dark emerald — gradient bottom */
+  --green-muted: #5FA13A;  /* muted green — labels / secondary */
 
   --danger: #ff3b3b;
   --danger-glow: #ff5c5c;
@@ -391,25 +391,25 @@ input { font-family: inherit; }
   overflow: hidden;
   text-align: center;
   transition: transform .1s ease, box-shadow .2s ease;
-  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
+  background: linear-gradient(180deg, #5BAE2A 0%, #36901A 50%, #155808 100%);
   color: #ffffff;
-  border: 1px solid rgba(132,255,71,0.3);
-  box-shadow: 0 0 9px rgba(132,255,71,0.22), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.4), inset 0 -8px 14px rgba(10,60,8,0.45);
+  border: 1px solid rgba(90,170,45,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(170,225,120,0.28), inset 0 -8px 14px rgba(8,45,4,0.5);
   text-shadow: 0 1px 2px rgba(8,45,2,0.6);
-  animation: stashPulse 2.6s ease-in-out infinite;
+  animation: stashPulse 2.8s ease-in-out infinite;
 }
 .stash-btn:active { transform: scale(0.975); }
 .stash-btn .big { font-size: 17px; line-height: 1; display: block; }
 .stash-btn .sub { font-size: 9px; letter-spacing: 2px; opacity: .85; display: block; margin-top: 3px; }
 @keyframes stashPulse {
-  0%,100% { box-shadow: 0 0 9px rgba(132,255,71,0.2), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.4), inset 0 -8px 14px rgba(10,60,8,0.45); }
-  50% { box-shadow: 0 0 15px rgba(132,255,71,0.34), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.45), inset 0 -8px 14px rgba(10,60,8,0.45); }
+  0%,100% { box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 6px rgba(70,150,30,0.18), inset 0 1px 0 rgba(170,225,120,0.28), inset 0 -8px 14px rgba(8,45,4,0.5); }
+  50% { box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 12px rgba(70,150,30,0.3), inset 0 1px 0 rgba(170,225,120,0.3), inset 0 -8px 14px rgba(8,45,4,0.5); }
 }
 /* primary CTA is always the same green (place bet = stash = bet next) */
 .stash-btn.place {
-  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
+  background: linear-gradient(180deg, #5BAE2A 0%, #36901A 50%, #155808 100%);
   color: #ffffff;
-  border-color: rgba(132,255,71,0.3);
+  border-color: rgba(90,170,45,0.4);
 }
 .stash-btn.placed {
   background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
@@ -509,12 +509,11 @@ input { font-family: inherit; }
   position: relative; z-index: 2; white-space: nowrap;
 }
 .bet-chip.selected {
-  border-color: rgba(132,255,71,0.45);
-  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
+  border-color: rgba(90,170,45,0.5);
+  background: linear-gradient(180deg, #5BAE2A 0%, #36901A 52%, #155808 100%);
   box-shadow:
-    0 0 8px rgba(132,255,71,0.3),
-    0 4px 12px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+    0 4px 10px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(170,225,120,0.25);
 }
 .bet-chip.selected::before { border-color: rgba(255,255,255,0.35); }
 .bet-chip.selected::after { background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%); }
