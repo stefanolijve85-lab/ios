@@ -11,10 +11,13 @@
   --gold-deep: #8a6a22;
   --brass: #b9893f;
 
-  --green: #2fd14a;
-  --green-hi: #7dff9e;
-  --green-glow: #25ff7a;
-  --green-deep: #0c6b2a;
+  /* STASH green palette */
+  --green: #4CCB2E;        /* deeper casino green — gradient middle */
+  --green-hi: #59E62A;     /* primary neon — CTA / selected / text */
+  --green-lime: #8DFF43;   /* bright lime highlight — button top / glow */
+  --green-glow: #84FF47;   /* neon glow */
+  --green-deep: #1E8F22;   /* dark emerald — gradient bottom */
+  --green-muted: #6FCF45;  /* muted green — labels / secondary */
 
   --danger: #ff3b3b;
   --danger-glow: #ff5c5c;
@@ -51,7 +54,7 @@ input { font-family: inherit; }
   position: relative;
   overflow: hidden;            /* single screen — no scroll */
   background:
-    radial-gradient(85% 42% at 50% 30%, rgba(47, 209, 74, 0.05), transparent 60%),
+    radial-gradient(85% 42% at 50% 30%, rgba(89, 230, 42, 0.05), transparent 60%),
     radial-gradient(120% 50% at 50% 115%, rgba(230, 184, 77, 0.045), transparent 55%),
     linear-gradient(180deg, #050506, #020203 55%, #050506);
 }
@@ -163,7 +166,7 @@ input { font-family: inherit; }
   -webkit-appearance: none; appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
   background: linear-gradient(180deg, var(--green-hi), var(--green));
-  box-shadow: 0 0 8px rgba(37,209,90,0.6); cursor: pointer;
+  box-shadow: 0 0 8px rgba(132,255,71,0.6); cursor: pointer;
 }
 .slider-row input[type=range]::-moz-range-thumb {
   width: 18px; height: 18px; border: none; border-radius: 50%;
@@ -195,7 +198,7 @@ input { font-family: inherit; }
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; margin: 2px 2px 4px;
 }
-.icon-btn.on { color: var(--green-hi); border-color: rgba(47,209,74,0.4); }
+.icon-btn.on { color: var(--green-hi); border-color: rgba(89,230,42,0.4); }
 .lastwin {
   display: flex; flex-direction: column; align-items: center; line-height: 1.05;
   min-width: 0; flex: 1; overflow: hidden;
@@ -210,9 +213,9 @@ input { font-family: inherit; }
 .holding {
   display: flex; align-items: center; gap: 7px;
   padding: 7px 14px; border-radius: 999px;
-  background: rgba(47, 209, 74, 0.10);
-  border: 1px solid rgba(47, 209, 74, 0.40);
-  box-shadow: 0 0 18px rgba(47, 209, 74, 0.22) inset;
+  background: rgba(89, 230, 42, 0.10);
+  border: 1px solid rgba(89, 230, 42, 0.40);
+  box-shadow: 0 0 18px rgba(89, 230, 42, 0.22) inset;
 }
 .holding.left { margin-right: auto; }
 .holding .dot {
@@ -234,7 +237,7 @@ input { font-family: inherit; }
   white-space: nowrap;
 }
 .phase-tag.open { color: var(--gold-hi); border-color: rgba(230,184,77,0.35); }
-.phase-tag.live { color: var(--green-hi); border-color: rgba(47,209,74,0.4); }
+.phase-tag.live { color: var(--green-hi); border-color: rgba(89,230,42,0.4); }
 .phase-tag.crashed { color: #ffb3b3; border-color: rgba(255,59,59,0.5); background: rgba(60,10,10,0.4); }
 
 .alarm {
@@ -388,10 +391,10 @@ input { font-family: inherit; }
   overflow: hidden;
   text-align: center;
   transition: transform .1s ease, box-shadow .2s ease;
-  background: linear-gradient(180deg, #79CE2E 0%, #3E9E16 50%, #176008 100%);
+  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
   color: #ffffff;
-  border: 1.5px solid #8EE34A;
-  box-shadow: 0 0 18px rgba(122,210,40,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(8,50,2,0.5);
+  border: 1.5px solid var(--green-glow);
+  box-shadow: 0 0 18px rgba(132,255,71,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(10,60,8,0.5);
   text-shadow: 0 1px 2px rgba(8,45,2,0.65);
   animation: stashPulse 2.2s ease-in-out infinite;
 }
@@ -399,14 +402,14 @@ input { font-family: inherit; }
 .stash-btn .big { font-size: 20px; line-height: 1; display: block; }
 .stash-btn .sub { font-size: 9px; letter-spacing: 2px; opacity: .85; display: block; margin-top: 3px; }
 @keyframes stashPulse {
-  0%,100% { box-shadow: 0 0 18px rgba(122,210,40,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(8,50,2,0.5); }
-  50% { box-shadow: 0 0 30px rgba(140,227,74,0.75), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.6), inset 0 -8px 16px rgba(8,50,2,0.5); }
+  0%,100% { box-shadow: 0 0 18px rgba(132,255,71,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(10,60,8,0.5); }
+  50% { box-shadow: 0 0 30px rgba(132,255,71,0.8), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.6), inset 0 -8px 16px rgba(10,60,8,0.5); }
 }
 /* primary CTA is always the same green (place bet = stash = bet next) */
 .stash-btn.place {
-  background: linear-gradient(180deg, #79CE2E 0%, #3E9E16 50%, #176008 100%);
+  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
   color: #ffffff;
-  border-color: #8EE34A;
+  border-color: var(--green-glow);
 }
 .stash-btn.placed {
   background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
@@ -419,7 +422,7 @@ input { font-family: inherit; }
 }
 .stash-btn.done {
   background: linear-gradient(180deg, #16361f, #0c2414);
-  color: var(--green-hi); animation: none; border-color: rgba(47,209,74,.4); box-shadow: inset 0 0 0 1px rgba(47,209,74,.4);
+  color: var(--green-hi); animation: none; border-color: rgba(89,230,42,.4); box-shadow: inset 0 0 0 1px rgba(89,230,42,.4);
 }
 .stash-btn.lowbal {
   background: linear-gradient(180deg, #3a1414, #240c0c);
@@ -475,7 +478,7 @@ input { font-family: inherit; }
 .chips button.on {
   background: linear-gradient(180deg, #5fe589, #28c75a 55%, #119a3f);
   border-color: var(--green-hi); color: #fff;
-  box-shadow: 0 0 14px rgba(37,209,90,0.45);
+  box-shadow: 0 0 14px rgba(132,255,71,0.45);
 }
 
 /* bet chips — exact design spec (sizes scaled to fit the row on mobile) */
@@ -506,8 +509,8 @@ input { font-family: inherit; }
   position: relative; z-index: 2; white-space: nowrap;
 }
 .bet-chip.selected {
-  border-color: #B7FF61;
-  background: linear-gradient(180deg, #8DFF43 0%, #4FE43B 50%, #1FAE2F 100%);
+  border-color: var(--green-glow);
+  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
   box-shadow:
     0 0 8px rgba(132,255,71,0.65),
     0 0 20px rgba(132,255,71,0.45),
@@ -581,7 +584,7 @@ input { font-family: inherit; }
   width: 22px; height: 22px; border-radius: 50%; flex: none;
   display: grid; place-items: center; font-weight: 800; font-size: 10px;
 }
-.act.win .ava { background: rgba(47,209,74,0.18); color: var(--green-hi); box-shadow: inset 0 0 0 1px rgba(47,209,74,0.5); }
+.act.win .ava { background: rgba(89,230,42,0.18); color: var(--green-hi); box-shadow: inset 0 0 0 1px rgba(89,230,42,0.5); }
 .act.lose .ava { background: rgba(255,59,59,0.16); color: var(--danger-glow); box-shadow: inset 0 0 0 1px rgba(255,59,59,0.5); }
 .act .body { flex: 1; min-width: 0; line-height: 1.2; }
 .act .body .nm { font-weight: 800; color: var(--text); }
@@ -662,7 +665,7 @@ input { font-family: inherit; }
   padding: 18px 26px; border-radius: 16px; font-weight: 900; font-size: 22px;
   text-align: center; animation: flashPop 1.6s ease forwards;
 }
-.flash.win .card { background: rgba(12,40,20,0.92); color: var(--green-hi); border: 1px solid rgba(47,209,74,.5); box-shadow: 0 0 40px rgba(47,209,74,.5); }
+.flash.win .card { background: rgba(12,40,20,0.92); color: var(--green-hi); border: 1px solid rgba(89,230,42,.5); box-shadow: 0 0 40px rgba(89,230,42,.5); }
 .flash.lose .card { background: rgba(40,12,12,0.92); color: #ffd9d9; border: 1px solid rgba(255,59,59,.5); box-shadow: 0 0 40px rgba(255,59,59,.5); }
 @keyframes flashPop {
   0% { transform: scale(0.7); opacity: 0; }
