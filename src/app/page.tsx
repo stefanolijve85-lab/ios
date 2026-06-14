@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import Header from '@/components/Header';
 import StatusRow from '@/components/StatusRow';
@@ -7,9 +8,13 @@ import BetPanel from '@/components/BetPanel';
 import LiveChat from '@/components/LiveChat';
 import LiveActivity from '@/components/LiveActivity';
 import FlashBanner from '@/components/FlashBanner';
+import Landing from '@/components/Landing';
 
 export default function Page() {
   const { connected } = useGame();
+  const [started, setStarted] = useState(false);
+
+  if (!started) return <Landing onPlay={() => setStarted(true)} />;
 
   return (
     <main className="app">

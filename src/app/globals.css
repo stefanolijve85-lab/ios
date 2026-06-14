@@ -170,7 +170,73 @@ input { font-family: inherit; }
   background: var(--green-hi); cursor: pointer;
 }
 
-/* --------------------------------------------------------- status row */
+/* --------------------------------------------------------- landing page */
+.landing {
+  position: fixed; inset: 0; z-index: 100; overflow: hidden;
+  background: #05060a;
+}
+.landing-bg {
+  position: absolute; inset: 0;
+  background: url('/heist.webp') center 32% / cover no-repeat;
+}
+.landing-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(5,6,10,0.72) 0%, rgba(5,6,10,0.25) 32%,
+    rgba(5,6,10,0.45) 62%, rgba(5,6,10,0.97) 100%);
+}
+.landing-content {
+  position: relative; z-index: 2; height: 100%;
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 520px; margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 20px) 18px calc(env(safe-area-inset-bottom) + 20px);
+}
+.landing-logo { width: 76%; max-width: 320px; height: auto; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.6)); }
+.landing-head { text-align: center; margin-top: 16px; }
+.landing-head .l1 {
+  font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900;
+  font-size: clamp(26px, 8vw, 34px); color: #fff; letter-spacing: 0.5px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+}
+.landing-head .l2 {
+  font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900;
+  font-size: clamp(30px, 9.5vw, 40px); color: var(--green-hi); letter-spacing: 0.5px; line-height: 1.05;
+  text-shadow: 0 0 22px rgba(37,255,122,0.55), 0 2px 12px rgba(0,0,0,0.9);
+}
+.landing-head .l3 {
+  font-weight: 800; font-size: 12px; letter-spacing: 3px; color: #c2c2cc;
+  margin-top: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+}
+.landing-spacer { flex: 1; }
+.landing-features {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%;
+  background: rgba(10,10,14,0.55); border: 1px solid var(--panel-line);
+  border-radius: 14px; padding: 12px 4px; backdrop-filter: blur(8px);
+  margin-bottom: 16px;
+}
+.feat {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+  padding: 0 6px;
+}
+.feat + .feat { border-left: 1px solid var(--panel-line); }
+.feat .fi { font-size: 20px; filter: drop-shadow(0 0 6px rgba(230,184,77,0.4)); }
+.feat b { font-size: 10px; color: #fff; letter-spacing: 0.5px; line-height: 1.1; }
+.feat small { font-size: 8px; color: var(--muted); letter-spacing: 0.5px; line-height: 1.15; }
+.landing-play {
+  width: 100%; max-width: 440px; padding: 18px;
+  border-radius: 16px;
+  font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900;
+  font-size: clamp(24px, 7vw, 30px); letter-spacing: 4px; color: #2a1d04;
+  background: linear-gradient(180deg, #ffe39a, var(--gold) 45%, var(--gold-deep));
+  border: 1.5px solid rgba(47,209,74,0.6);
+  box-shadow:
+    0 0 22px rgba(230,184,77,0.45),
+    0 0 26px rgba(47,209,74,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+  animation: stashPulse 2.4s ease-in-out infinite;
+}
+.landing-play:active { transform: scale(0.98); }
 .statusrow {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; margin: 2px 2px 4px;
