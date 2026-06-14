@@ -30,6 +30,7 @@ class TensionAudio {
   private musicSource: AudioBufferSourceNode | null = null;
   private buffers: Buffers = {};
   private voiceCrash: AudioBuffer[] = []; // random "They got away!" lines
+  private voiceWin: AudioBuffer[] = [];   // random "Nice grab!" lines (big secures)
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
   private tickSrc: AudioBufferSourceNode | null = null;
@@ -127,15 +128,20 @@ class TensionAudio {
       set('lobby', '/audio/lobby.mp3'),
       set('tick', '/audio/tick.mp3'),
     ]);
-    // crash voice lines (random pick) — load independently
-    await Promise.allSettled([1, 2, 3, 4, 5].map(async (n) => {
-      try {
-        const res = await fetch(`/audio/voice-crash-${n}.mp3`);
-        if (!res.ok) return;
-        const ab = await res.arrayBuffer();
-        this.voiceCrash.push(await this.ctx!.decodeAudioData(ab));
-      } catch { /* skip */ }
-    }));
+    // crash + win voice lines (random pick) — load independently
+    const loadVoices = (prefix: string, into: AudioBuffer[]) =>
+      Promise.allSettled([1, 2, 3, 4, 5].map(async (n) => {
+        try {
+          const res = await fetch(`/audio/${prefix}-${n}.mp3`);
+          if (!res.ok) return;
+          const ab = await res.arrayBuffer();
+          into.push(await this.ctx!.decodeAudioData(ab));
+        } catch { /* skip */ }
+      }));
+    await Promise.allSettled([
+      loadVoices('voice-crash', this.voiceCrash),
+      loadVoices('voice-win', this.voiceWin),
+    ]);
     this.loaded = true;
     this.loading = false;
   }
@@ -250,7 +256,14 @@ class TensionAudio {
     if (this.enabled) this.fadeMusic(this.musicIdle(), 900); // music back between rounds
   }
 
-  playStash() { this.oneShot(this.buffers.stash, 0.9); }
+  playStash(multiplier = 0) {
+    this.oneShot(this.buffers.stash, 0.9);
+    // a triumphant voice line on a big grab (>= 3x)
+    if (multiplier >= 3 && this.voiceWin.length) {
+      const v = this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
+      this.oneShot(v, 1.0, this.voiceGain, 0.2);
+    }
+  }
 
   crash() {
     this.running = false;

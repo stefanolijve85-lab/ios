@@ -116,7 +116,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
       setFlash({ kind: 'win', text: `SECURED  +€${payout.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, key: Date.now() });
       setLastWin(payout);
-      audio.playStash();
+      audio.playStash(multiplier);
     };
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);
