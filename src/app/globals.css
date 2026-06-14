@@ -185,7 +185,7 @@ input { font-family: inherit; }
 }
 /* invisible tappable area sitting over the baked-in PLAY button */
 .landing-play-hit {
-  position: absolute; left: 6%; right: 6%; top: 80%; height: 12%;
+  position: absolute; left: 8%; right: 8%; top: 70%; height: 11%;
   background: transparent; border: none; cursor: pointer;
   border-radius: 16px;
 }
