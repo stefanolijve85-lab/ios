@@ -478,6 +478,50 @@ input { font-family: inherit; }
   box-shadow: 0 0 14px rgba(37,209,90,0.45);
 }
 
+/* bet chips — exact design spec (sizes scaled to fit the row on mobile) */
+.bet-chip {
+  flex: 1; min-width: 0;
+  display: flex; justify-content: center; align-items: center;
+  height: 40px; padding: 0 6px;
+  border-radius: 14px; border: 1px solid #3A2A12;
+  background: linear-gradient(180deg, #171512 0%, #0F0F0F 50%, #090909 100%);
+  color: #F2D98A; font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
+  box-shadow: inset 0 1px 0 rgba(255,230,160,0.08), 0 3px 10px rgba(0,0,0,0.45);
+  position: relative; overflow: hidden;
+}
+.bet-chip::before {
+  content: ""; position: absolute; inset: 1px; border-radius: 13px;
+  border: 1px solid rgba(255,214,120,0.12); pointer-events: none;
+}
+.bet-chip::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 25%;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+.bet-chip span {
+  background: linear-gradient(180deg, #FFF0B8 0%, #D9B96A 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative; z-index: 2; white-space: nowrap;
+}
+.bet-chip.selected {
+  border-color: #B7FF61;
+  background: linear-gradient(180deg, #8DFF43 0%, #4FE43B 50%, #1FAE2F 100%);
+  box-shadow:
+    0 0 8px rgba(132,255,71,0.65),
+    0 0 20px rgba(132,255,71,0.45),
+    0 6px 18px rgba(132,255,71,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.bet-chip.selected::before { border-color: rgba(255,255,255,0.35); }
+.bet-chip.selected::after { background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%); }
+.bet-chip.selected span {
+  background: none; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.bet-chip:disabled { opacity: .5; }
+
 .lbl-mini { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-align: center; margin: 8px 0 4px; }
 
 .add-second {

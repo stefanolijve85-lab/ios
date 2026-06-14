@@ -184,15 +184,15 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
           <>
             <div className="chips">
               {QUICK_CHIPS.map((c) => (
-                <button key={c} className={amount === c ? 'on' : ''} onClick={() => setAmount(c)} disabled={controlsDisabled}>
-                  €{c}
+                <button key={c} className={`bet-chip${amount === c ? ' selected' : ''}`} onClick={() => setAmount(c)} disabled={controlsDisabled}>
+                  <span>€{c}</span>
                 </button>
               ))}
             </div>
             <div className="chips">
               {QUICK_CHIPS_BIG.map((c) => (
-                <button key={c} className={amount === c ? 'on' : ''} onClick={() => setAmount(c)} disabled={controlsDisabled}>
-                  €{c.toLocaleString('en-US')}
+                <button key={c} className={`bet-chip${amount === c ? ' selected' : ''}`} onClick={() => setAmount(c)} disabled={controlsDisabled}>
+                  <span>€{c.toLocaleString('en-US')}</span>
                 </button>
               ))}
             </div>
