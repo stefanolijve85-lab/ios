@@ -85,15 +85,13 @@ input { font-family: inherit; }
 .logo {
   flex: 1;
   text-align: center;
-  font-weight: 900;
-  letter-spacing: 4px;
-  font-size: 22px;
-  background: linear-gradient(180deg, var(--gold-hi), var(--gold), var(--gold-deep));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
 }
+.logo img {
+  height: 32px; width: auto; max-width: 100%;
+  object-fit: contain; display: block; margin: 0 auto;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+.drawer-logo { height: 30px; width: auto; object-fit: contain; }
 .balance {
   display: flex; align-items: center; gap: 6px;
   padding: 7px 10px;

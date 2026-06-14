@@ -37,7 +37,8 @@ export default function Menu() {
 
       <aside className={`drawer${open ? ' open' : ''}`} aria-hidden={!open}>
         <div className="drawer-head">
-          <span className="logo">STASH</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="drawer-logo" src="/logo.webp" alt="BANKHEIST X" />
           <button className="icon-btn" aria-label="Close" onClick={() => setOpen(false)}>✕</button>
         </div>
 

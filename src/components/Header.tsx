@@ -18,7 +18,10 @@ export default function Header() {
   return (
     <header className="header">
       <Menu />
-      <div className="logo">STASH</div>
+      <div className="logo">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.webp" alt="BANKHEIST X" />
+      </div>
       <button
         className={`icon-btn ${soundOn ? 'on' : ''}`}
         onClick={toggleSound}
