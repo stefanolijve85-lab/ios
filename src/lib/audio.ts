@@ -256,10 +256,10 @@ class TensionAudio {
     if (this.enabled) this.fadeMusic(this.musicIdle(), 900); // music back between rounds
   }
 
-  playStash(multiplier = 0) {
+  playStash(_multiplier = 0) {
     this.oneShot(this.buffers.stash, 1.0);
-    // a triumphant voice line on a big grab (>= 3x)
-    if (multiplier >= 3 && this.voiceWin.length) {
+    // a triumphant voice line on every secure
+    if (this.voiceWin.length) {
       const v = this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
       this.oneShot(v, 1.0, this.voiceGain, 0.2);
     }
