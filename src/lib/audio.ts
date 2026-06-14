@@ -16,6 +16,7 @@ type Buffers = {
   crash?: AudioBuffer;
   lobby?: AudioBuffer;
   tick?: AudioBuffer;
+  voiceCrash?: AudioBuffer;
 };
 
 type Levels = { music: number; sfx: number; voice: number };
@@ -125,6 +126,7 @@ class TensionAudio {
       set('crash', '/audio/crash.mp3'),
       set('lobby', '/audio/lobby.mp3'),
       set('tick', '/audio/tick.mp3'),
+      set('voiceCrash', '/audio/voice-crash.mp3'), // optional "They got away!" voice
     ]);
     this.loaded = true;
     this.loading = false;
@@ -246,17 +248,19 @@ class TensionAudio {
     this.running = false;
     this.stopSources();
     this.oneShot(this.buffers.crash, 1.0);
+    // voice line ("They got away!") on its own bus, slightly after the alarm
+    if (this.buffers.voiceCrash) this.oneShot(this.buffers.voiceCrash, 1.0, this.voiceGain, 0.25);
   }
 
-  private oneShot(buf: AudioBuffer | undefined, vol: number) {
+  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0) {
     if (!this.enabled || !this.ctx || !buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();
     g.gain.value = vol;
     src.connect(g);
-    g.connect(this.sfxGain!);
-    src.start();
+    g.connect(bus ?? this.sfxGain!);
+    src.start(this.ctx.currentTime + delay);
   }
 }
 
