@@ -14,6 +14,7 @@ type Buffers = {
   high?: AudioBuffer;
   stash?: AudioBuffer;
   crash?: AudioBuffer;
+  lobby?: AudioBuffer;
 };
 
 type Levels = { music: number; sfx: number; voice: number };
@@ -25,14 +26,12 @@ class TensionAudio {
   private sfxGain: GainNode | null = null;
   private voiceGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
-  private musicSrc: MediaElementAudioSourceNode | null = null;
+  private musicSource: AudioBufferSourceNode | null = null;
   private buffers: Buffers = {};
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
   private lowGain: GainNode | null = null;
   private highGain: GainNode | null = null;
-  private lobby: HTMLAudioElement | null = null;
-
   enabled = false;
   private loaded = false;
   private loading = false;
@@ -78,16 +77,22 @@ class TensionAudio {
     this.musicGain = this.ctx.createGain();
     this.musicGain.gain.value = this.musicIdle();
     this.musicGain.connect(this.master);
-    // Streamed atmosphere bed = MUSIC, routed through the graph via a media
-    // source node so its level is controlled by musicGain (works on iOS).
-    this.lobby = new Audio('/audio/lobby.mp3');
-    this.lobby.loop = true;
-    this.lobby.preload = 'none';
-    this.lobby.volume = 1; // real level is the musicGain node
-    try {
-      this.musicSrc = this.ctx.createMediaElementSource(this.lobby);
-      this.musicSrc.connect(this.musicGain);
-    } catch { /* already connected */ }
+  }
+
+  // The ambient bed is a looping AudioBuffer (sample-accurate loop — no click/gap
+  // that an HTMLAudio loop would introduce).
+  private startMusic() {
+    if (!this.enabled || !this.ctx || !this.buffers.lobby || this.musicSource) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.buffers.lobby;
+    src.loop = true;
+    src.connect(this.musicGain!);
+    src.start();
+    this.musicSource = src;
+  }
+  private stopMusic() {
+    try { this.musicSource?.stop(); } catch { /* already stopped */ }
+    this.musicSource = null;
   }
 
   // Smoothly ramp the music bus gain.
@@ -107,13 +112,14 @@ class TensionAudio {
       return await this.ctx!.decodeAudioData(ab);
     };
     try {
-      const [low, high, stash, crash] = await Promise.all([
+      const [low, high, stash, crash, lobby] = await Promise.all([
         get('/audio/motif-low.mp3'),
         get('/audio/motif-high.mp3'),
         get('/audio/stash.mp3'),
         get('/audio/crash.mp3'),
+        get('/audio/lobby.mp3'),
       ]);
-      this.buffers = { low, high, stash, crash };
+      this.buffers = { low, high, stash, crash, lobby };
       this.loaded = true;
     } catch {
       /* leave unloaded; engine degrades to silence */
@@ -133,13 +139,14 @@ class TensionAudio {
 
     if (this.enabled) {
       this.fadeMusic(this.running ? this.musicDuck() : this.musicIdle(), 300);
-      this.lobby?.play().catch(() => {});
       this.load().then(() => {
-        if (this.enabled && this.running) this.startMotif();
+        if (!this.enabled) return;
+        this.startMusic();
+        if (this.running) this.startMotif();
       });
     } else {
       this.stopSources();
-      this.lobby?.pause();
+      this.stopMusic();
     }
     return this.enabled;
   }
