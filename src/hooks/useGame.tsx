@@ -25,6 +25,8 @@ interface GameContextValue {
   stash: (slot: 0 | 1) => void;
   sendChat: (text: string) => void;
   addCredits: (amount: number) => void;
+  waiting: boolean;
+  setWaiting: (b: boolean) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -38,6 +40,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [flash, setFlash] = useState<{ kind: 'win' | 'lose'; text: string; key: number } | null>(null);
   const [lastWin, setLastWin] = useState(0);
+  const [waiting, setWaiting] = useState(false);
 
   const stateRef = useRef<GameState | null>(null);
   const offsetRef = useRef<number>(0);
@@ -178,6 +181,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     connected, state, balance, lastWin, bets, chat, activity, flash,
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
+    waiting, setWaiting,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

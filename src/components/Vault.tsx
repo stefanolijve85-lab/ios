@@ -6,7 +6,7 @@ import { LADDER } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
 export default function Vault() {
-  const { stateRef, liveMultiplier, serverNow, bets } = useGame();
+  const { stateRef, liveMultiplier, serverNow, bets, waiting } = useGame();
   const amountRef = useRef<HTMLDivElement>(null);
   const multRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
@@ -126,6 +126,14 @@ export default function Vault() {
         />
       </div>
       <div className="vault-glow" ref={glowRef} />
+
+      {/* queued: spinning vault door so the player knows to wait for next round */}
+      {waiting && !isSecured && phase !== 'betting' && (
+        <div className="vault-waiting">
+          <div className="vw-wheel" />
+          <div className="vw-text">READY…</div>
+        </div>
+      )}
 
       {/* center readout (only while playing, not secured / robbed) */}
       {!isSecured && phase !== 'crashed' && (

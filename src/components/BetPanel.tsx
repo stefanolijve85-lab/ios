@@ -5,7 +5,7 @@ import { QUICK_CHIPS, QUICK_CHIPS_BIG } from '@/lib/constants';
 import { euro } from '@/lib/format';
 
 export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: boolean }) {
-  const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier } = useGame();
+  const { state, bets, balance, placeBet, cancelBet, stash, liveMultiplier, setWaiting } = useGame();
   const [amount, setAmount] = useState(10);
   const [pending, setPending] = useState(false); // queued bet for the next round
   const [repeat, setRepeat] = useState(false);    // auto re-bet last stake each round
@@ -46,6 +46,11 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
   }, [phase, holding, bet, liveMultiplier]);
 
   // ---- amount stepping: whole numbers, snap to round values on big jumps ----
+  // surface "queued, waiting for next round" so the vault can show the spinner
+  useEffect(() => {
+    if (hero) setWaiting(pending);
+  }, [pending, hero, setWaiting]);
+
   const step = (d: number) =>
     setAmount((a) => {
       const mag = Math.abs(d);
