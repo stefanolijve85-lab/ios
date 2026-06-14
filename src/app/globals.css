@@ -276,6 +276,11 @@ input { font-family: inherit; }
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
+/* the crash (THIEVES STOLE IT) shot shows in full, never cropped */
+.vault-scene img.is-heist {
+  object-fit: contain;
+  object-position: center center;
+}
 
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {

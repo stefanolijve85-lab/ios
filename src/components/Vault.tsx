@@ -97,7 +97,12 @@ export default function Vault() {
       {/* full vault scene render — swaps to the heist shot when robbed */}
       <div className="vault-scene">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={phase === 'crashed' ? '/heist.webp' : '/vault.webp'} alt="Vault" draggable={false} />
+        <img
+          className={phase === 'crashed' ? 'is-heist' : ''}
+          src={phase === 'crashed' ? '/heist.webp' : '/vault.webp'}
+          alt="Vault"
+          draggable={false}
+        />
       </div>
       <div className="vault-glow" ref={glowRef} />
 
