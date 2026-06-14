@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { getAudio } from '@/lib/audio';
-import { LADDER } from '@/lib/constants';
+import { ladderTopFor, ladderRungs } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
 export default function Vault() {
@@ -18,6 +18,11 @@ export default function Vault() {
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
   const [cdLabel, setCdLabel] = useState('THIEVES ARRIVING IN');
+
+  // Dynamic ladder: rescales upward as the multiplier climbs past the top rung
+  // (so the game can show far more than 23x). topRef holds the live ceiling.
+  const [ladder, setLadder] = useState<number[]>(() => ladderRungs(ladderTopFor(1)));
+  const topRef = useRef<number>(ladderTopFor(1));
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -84,18 +89,17 @@ export default function Vault() {
 
       if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
-      // smooth ladder indicator: continuous vertical position between rungs
+      // grow the ladder when the multiplier nears the top rung
+      const desiredTop = ladderTopFor(m);
+      if (desiredTop !== topRef.current) {
+        topRef.current = desiredTop;
+        setLadder(ladderRungs(desiredTop));
+      }
+
+      // smooth ladder indicator: log position so it lines up with the rungs
       if (markerRef.current) {
-        const L = LADDER; // descending values, evenly spaced visually
-        let pos: number;
-        if (m >= L[0]) pos = 0;
-        else if (m <= L[L.length - 1]) pos = 1;
-        else {
-          pos = 1;
-          for (let i = 0; i < L.length - 1; i++) {
-            if (m <= L[i] && m >= L[i + 1]) { pos = (i + (L[i] - m) / (L[i] - L[i + 1])) / (L.length - 1); break; }
-          }
-        }
+        const top = topRef.current;
+        const pos = Math.max(0, Math.min(1, 1 - Math.log(Math.max(1, m)) / Math.log(top)));
         markerRef.current.style.top = (pos * 100) + '%';
       }
 
@@ -140,9 +144,9 @@ export default function Vault() {
       {/* multiplier ladder (hidden only during the robbery) */}
       {phase !== 'crashed' && (
         <div className="vault-ladder">
-          {LADDER.map((r) => (
-            <div key={r} className={`rung${r >= 15 ? ' top' : r >= 5 ? ' hot' : ''}`}>
-              {r.toFixed(2)}x
+          {ladder.map((r, i) => (
+            <div key={`${i}-${r}`} className={`rung${i === 0 ? ' top' : i <= 2 ? ' hot' : ''}`}>
+              {Number.isInteger(r) ? r : r.toFixed(1)}x
             </div>
           ))}
           <div className="ladder-marker" ref={markerRef} style={{ top: '100%' }} />
