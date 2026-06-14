@@ -1,4 +1,5 @@
 import type { Theme } from '../types';
+import { PUBLISHER } from '../../brand';
 
 const A = '/themes/liftoffx';
 
@@ -10,7 +11,7 @@ const A = '/themes/liftoffx';
 export const liftoffx: Theme = {
   key: 'liftoffx',
   name: 'LIFTOFF X',
-  publisher: 'Olive Games',
+  publisher: PUBLISHER,
   meta: {
     title: 'LIFTOFF X — Eject before she blows',
     description:

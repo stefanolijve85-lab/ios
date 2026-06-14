@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { verifyRound, type VerifyResult } from '@/lib/fairness';
 import { RTP, HOUSE_EDGE } from '@/lib/constants';
+import { PUBLISHER } from '@/brand';
 
 export default function FairnessModal({ onClose }: { onClose: () => void }) {
   const { fair } = useGame();
@@ -33,7 +34,7 @@ export default function FairnessModal({ onClose }: { onClose: () => void }) {
           The server publishes a commitment (a hash) up front and reveals the secret
           seed after the round, so you can prove the outcome was never changed.
           House edge <b>{Math.round(HOUSE_EDGE * 100)}%</b> · RTP <b>{Math.round(RTP * 100)}%</b> — the
-          same for every Olive Games title.
+          same for every {PUBLISHER} title.
         </p>
 
         <div className="fair-block">

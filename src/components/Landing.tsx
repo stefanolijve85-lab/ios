@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
+import { creditLine } from '@/brand';
 import { getAudio } from '@/lib/audio';
 
 export default function Landing({ onPlay }: { onPlay: () => void }) {
@@ -38,6 +39,8 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
             <div className="vw-text">WAIT FOR NEXT VAULT</div>
           </div>
         )}
+
+        <div className="landing-credit">{creditLine()}</div>
       </div>
     </div>
   );

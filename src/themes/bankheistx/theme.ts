@@ -1,4 +1,5 @@
 import type { Theme } from '../types';
+import { PUBLISHER } from '../../brand';
 
 const A = '/themes/bankheistx';
 
@@ -7,7 +8,7 @@ const A = '/themes/bankheistx';
 export const bankheistx: Theme = {
   key: 'bankheistx',
   name: 'BANKHEIST X',
-  publisher: 'Olive Games',
+  publisher: PUBLISHER,
   meta: {
     title: 'BANKHEIST X — Secure the vault before the thieves',
     description:

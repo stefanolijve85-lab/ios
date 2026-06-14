@@ -157,6 +157,11 @@ input { font-family: inherit; }
   border: 1px solid rgba(89,230,42,0.5); color: var(--green-hi);
 }
 .drawer-fair:active { filter: brightness(1.15); }
+.drawer-brand {
+  text-align: center; padding-top: 12px; margin-top: 4px;
+  border-top: 1px solid var(--panel-line);
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--muted);
+}
 
 /* ---------------------------------------------------- provably-fair modal */
 .fair-scrim {
@@ -237,6 +242,14 @@ input { font-family: inherit; }
 }
 .landing-img-wrap { position: absolute; inset: 0; }
 .landing-img { display: block; width: 100%; height: 100%; object-fit: fill; }
+/* subtle publisher credit at the very bottom of the landing */
+.landing-credit {
+  position: absolute; left: 0; right: 0; bottom: 1.2%;
+  text-align: center; pointer-events: none;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: rgba(246,239,221,0.55);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
 /* invisible tappable area sitting over the baked-in PLAY button */
 .landing-play-hit {
   position: absolute; left: 5%; right: 5%; top: 87%; height: 11%;

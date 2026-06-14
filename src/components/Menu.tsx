@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getAudio } from '@/lib/audio';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
+import { creditLine } from '@/brand';
 import FairnessModal from './FairnessModal';
 
 export default function Menu() {
@@ -84,6 +85,8 @@ export default function Menu() {
             </label>
           ))}
         </div>
+
+        <div className="drawer-brand">{creditLine()}</div>
       </aside>
 
       {fairOpen && <FairnessModal onClose={() => setFairOpen(false)} />}
