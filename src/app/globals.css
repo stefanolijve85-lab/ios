@@ -192,7 +192,7 @@ input { font-family: inherit; }
 .landing-play-hit:active { background: rgba(255,255,255,0.06); }
 /* sweeping helicopter searchlight while waiting */
 .searchlight {
-  position: absolute; top: 12%; left: 56%; width: 46%; height: 70%;
+  position: absolute; top: 7%; left: 60%; width: 42%; height: 74%;
   transform-origin: 50% 0%;
   background: linear-gradient(to bottom, rgba(255,247,200,0.4), rgba(255,247,200,0.08) 55%, transparent 85%);
   clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
@@ -204,14 +204,13 @@ input { font-family: inherit; }
 @keyframes sweep { from { transform: rotate(-20deg); } to { transform: rotate(16deg); } }
 /* PLAY -> waiting state (a round is running, wait for the next) */
 .landing-wait {
-  position: absolute; left: 6%; right: 6%; top: 85%; height: 11%;
+  position: absolute; left: 5%; right: 5%; top: 79%; height: 14%;
   display: flex; align-items: center; justify-content: center; gap: 12px;
-  background: linear-gradient(180deg, rgba(11,42,17,0.97), rgba(6,24,10,0.97));
-  border: 1.5px solid rgba(89,230,42,0.6); border-radius: 16px;
-  box-shadow: 0 0 22px rgba(89,230,42,0.35), 0 8px 22px rgba(0,0,0,0.5);
+  background: linear-gradient(180deg, rgba(11,42,17,0.98), rgba(6,24,10,0.98));
+  border: 1.5px solid rgba(89,230,42,0.6); border-radius: 18px;
+  box-shadow: 0 0 22px rgba(89,230,42,0.35), 0 8px 22px rgba(0,0,0,0.6);
 }
-.landing-wait .vw-wheel { width: 30px; height: 30px; border-width: 4px; }
-.landing-wait .vw-wheel::before { inset: 6px; border-width: 2px; }
+.landing-wait .vw-door { width: 40px; height: 40px; }
 .landing-wait .vw-text { font-size: 13px; letter-spacing: 2px; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -365,18 +364,11 @@ input { font-family: inherit; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   background: rgba(4,6,4,0.55); backdrop-filter: blur(2px);
 }
-.vw-wheel {
-  width: 84px; height: 84px; border-radius: 50%;
-  border: 6px solid rgba(230,184,77,0.25);
-  border-top-color: var(--gold-hi);
-  border-right-color: var(--gold);
-  box-shadow: 0 0 18px rgba(230,184,77,0.4), inset 0 0 14px rgba(0,0,0,0.6);
-  animation: vwSpin 1.1s linear infinite;
-  position: relative;
-}
-.vw-wheel::before {
-  content: ''; position: absolute; inset: 16px; border-radius: 50%;
-  border: 3px dashed rgba(230,184,77,0.5);
+/* the real vault door, slowly turning as if being opened */
+.vw-door {
+  width: 92px; height: 92px; object-fit: contain;
+  animation: vwSpin 4s linear infinite;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
 }
 @keyframes vwSpin { to { transform: rotate(360deg); } }
 .vw-text {

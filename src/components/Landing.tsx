@@ -31,7 +31,8 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
           <>
             <div className="searchlight" />
             <div className="landing-wait">
-              <div className="vw-wheel" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="vw-door" src="/vault-door.webp" alt="" />
               <div className="vw-text">WAIT FOR NEXT VAULT</div>
             </div>
           </>
