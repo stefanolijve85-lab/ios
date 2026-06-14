@@ -257,7 +257,7 @@ class TensionAudio {
   }
 
   playStash(multiplier = 0) {
-    this.oneShot(this.buffers.stash, 0.9);
+    this.oneShot(this.buffers.stash, 1.0);
     // a triumphant voice line on a big grab (>= 3x)
     if (multiplier >= 3 && this.voiceWin.length) {
       const v = this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
@@ -265,9 +265,12 @@ class TensionAudio {
     }
   }
 
-  crash() {
+  // Always stops the round motif; only plays the alarm + voice if the player
+  // actually lost (was still holding). If you already secured, you're safe → quiet.
+  crash(lost = true) {
     this.running = false;
     this.stopSources();
+    if (!lost) return;
     this.oneShot(this.buffers.crash, 1.0);
     // random voice line ("They got away!") on its own bus, just after the alarm
     if (this.voiceCrash.length) {

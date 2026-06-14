@@ -42,6 +42,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const stateRef = useRef<GameState | null>(null);
   const offsetRef = useRef<number>(0);
   const phaseRef = useRef<string>('');
+  const betsRef = useRef<Bets>({ 0: null, 1: null });
+  betsRef.current = bets;
 
   const serverNow = useCallback(() => Date.now() + offsetRef.current, []);
 
@@ -88,7 +90,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     };
     const onCrash = (s: GameState) => {
       phaseRef.current = 'crashed';
-      audio.crash();
+      // Only play the loss audio (alarm + "they got away") if YOU were still
+      // holding — if you already secured, you're safe, so stay quiet.
+      const stillHolding =
+        (!!betsRef.current[0] && !betsRef.current[0]!.cashedOut) ||
+        (!!betsRef.current[1] && !betsRef.current[1]!.cashedOut);
+      audio.crash(stillHolding); // always stops the motif; alarm/voice only if you lost
       // Resolve the player's own bets for the flash banner.
       setBets((prev) => {
         let won = 0;
