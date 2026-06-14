@@ -139,7 +139,7 @@ input { font-family: inherit; }
   color: var(--text); font-weight: 800; font-size: 14px; letter-spacing: 1px;
   text-align: left;
 }
-.drawer-item .ic { font-size: 18px; }
+.drawer-item .ic { width: 24px; height: 24px; object-fit: contain; flex: none; }
 .drawer-item.active { border-color: rgba(230,184,77,0.5); color: var(--gold-hi); box-shadow: 0 0 14px rgba(230,184,77,0.18) inset; }
 .drawer-test {
   padding: 12px; border-radius: 12px; font-weight: 800; font-size: 13px;

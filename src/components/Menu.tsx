@@ -4,11 +4,11 @@ import { getAudio } from '@/lib/audio';
 import { useGame } from '@/hooks/useGame';
 
 const NAV = [
-  { icon: '🏠', label: 'HOME' },
-  { icon: '🕘', label: 'HISTORY' },
-  { icon: '🏦', label: 'VAULT' },
-  { icon: '🏆', label: 'LEADERBOARD' },
-  { icon: '💬', label: 'CHAT' },
+  { img: '/icons/wallet.webp', label: 'HOME' },
+  { img: '/icons/trophy.webp', label: 'HISTORY' },
+  { img: '/icons/vault.webp', label: 'VAULT' },
+  { img: '/icons/leaderboard.webp', label: 'LEADERBOARD' },
+  { img: '/icons/chat.webp', label: 'CHAT' },
 ];
 
 export default function Menu() {
@@ -49,7 +49,8 @@ export default function Menu() {
               className={`drawer-item${active === n.label ? ' active' : ''}`}
               onClick={() => { setActive(n.label); setOpen(false); }}
             >
-              <span className="ic">{n.icon}</span> {n.label}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="ic" src={n.img} alt="" /> {n.label}
             </button>
           ))}
         </nav>
