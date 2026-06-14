@@ -24,13 +24,14 @@ class TensionAudio {
   private master: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private voiceGain: GainNode | null = null;
+  private musicGain: GainNode | null = null;
+  private musicSrc: MediaElementAudioSourceNode | null = null;
   private buffers: Buffers = {};
   private lowSrc: AudioBufferSourceNode | null = null;
   private highSrc: AudioBufferSourceNode | null = null;
   private lowGain: GainNode | null = null;
   private highGain: GainNode | null = null;
   private lobby: HTMLAudioElement | null = null;
-  private lobbyTimer: ReturnType<typeof setInterval> | undefined;
 
   enabled = false;
   private loaded = false;
@@ -55,8 +56,10 @@ class TensionAudio {
     try { localStorage.setItem(LS_KEY, JSON.stringify(this.levels)); } catch { /* ignore */ }
   }
 
-  private musicIdle() { return this.levels.music * 0.5; }
-  private musicDuck() { return this.levels.music * 0.06; }
+  // Music gain levels (routed through Web Audio so iOS respects them — iOS
+  // ignores HTMLAudioElement.volume entirely).
+  private musicIdle() { return this.levels.music * 0.6; }
+  private musicDuck() { return this.levels.music * 0.08; }
 
   private ensure() {
     if (this.ctx) return;
@@ -72,11 +75,27 @@ class TensionAudio {
     this.voiceGain = this.ctx.createGain();
     this.voiceGain.gain.value = this.levels.voice;
     this.voiceGain.connect(this.master);
-    // Streamed atmosphere bed = MUSIC (don't fetch until first play).
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = this.musicIdle();
+    this.musicGain.connect(this.master);
+    // Streamed atmosphere bed = MUSIC, routed through the graph via a media
+    // source node so its level is controlled by musicGain (works on iOS).
     this.lobby = new Audio('/audio/lobby.mp3');
     this.lobby.loop = true;
     this.lobby.preload = 'none';
-    this.lobby.volume = this.musicIdle();
+    this.lobby.volume = 1; // real level is the musicGain node
+    try {
+      this.musicSrc = this.ctx.createMediaElementSource(this.lobby);
+      this.musicSrc.connect(this.musicGain);
+    } catch { /* already connected */ }
+  }
+
+  // Smoothly ramp the music bus gain.
+  private fadeMusic(target: number, ms = 600) {
+    if (!this.musicGain || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.musicGain.gain.cancelScheduledValues(t);
+    this.musicGain.gain.setTargetAtTime(Math.max(0.0001, target), t, Math.max(0.05, ms / 3000));
   }
 
   private async load() {
@@ -113,10 +132,8 @@ class TensionAudio {
     this.master!.gain.linearRampToValueAtTime(this.enabled ? 0.6 : 0.0001, t + 0.2);
 
     if (this.enabled) {
-      if (this.lobby) {
-        this.lobby.volume = this.running ? this.musicDuck() : this.musicIdle();
-        this.lobby.play().catch(() => {});
-      }
+      this.fadeMusic(this.running ? this.musicDuck() : this.musicIdle(), 300);
+      this.lobby?.play().catch(() => {});
       this.load().then(() => {
         if (this.enabled && this.running) this.startMotif();
       });
@@ -131,7 +148,7 @@ class TensionAudio {
   setMusic(v: number) {
     this.levels.music = Math.max(0, Math.min(1, v));
     this.persist();
-    if (this.lobby) this.fadeLobby(this.running ? this.musicDuck() : this.musicIdle(), 200);
+    this.fadeMusic(this.running ? this.musicDuck() : this.musicIdle(), 150);
   }
   setSfx(v: number) {
     this.levels.sfx = Math.max(0, Math.min(1, v));
@@ -155,21 +172,6 @@ class TensionAudio {
     this.highSrc?.playbackRate.setTargetAtTime(rate, t, 0.25);
   }
 
-  // Smoothly fade the streamed atmosphere bed (HTMLAudio has no AudioParam).
-  private fadeLobby(target: number, ms = 500) {
-    if (!this.lobby) return;
-    if (this.lobbyTimer) clearInterval(this.lobbyTimer);
-    const start = this.lobby.volume;
-    const steps = Math.max(1, Math.round(ms / 40));
-    let i = 0;
-    this.lobbyTimer = setInterval(() => {
-      i++;
-      const v = start + (target - start) * (i / steps);
-      if (this.lobby) this.lobby.volume = Math.max(0, Math.min(1, v));
-      if (i >= steps) { clearInterval(this.lobbyTimer); this.lobbyTimer = undefined; }
-    }, 40);
-  }
-
   startMotif() {
     this.running = true;
     if (!this.enabled || !this.ctx || !this.loaded) return;
@@ -190,7 +192,7 @@ class TensionAudio {
     this.lowSrc = lo.src; this.lowGain = lo.g;
     this.highSrc = hi.src; this.highGain = hi.g;
     this.setIntensity(this.intensity);
-    this.fadeLobby(this.musicDuck(), 700); // music steps aside during the round
+    this.fadeMusic(this.musicDuck(), 700); // music steps aside during the round
   }
 
   private stopSources() {
@@ -203,7 +205,7 @@ class TensionAudio {
     this.running = false;
     this.intensity = 0;
     this.stopSources();
-    if (this.enabled) this.fadeLobby(this.musicIdle(), 900); // music back between rounds
+    if (this.enabled) this.fadeMusic(this.musicIdle(), 900); // music back between rounds
   }
 
   playStash() { this.oneShot(this.buffers.stash, 0.9); }
