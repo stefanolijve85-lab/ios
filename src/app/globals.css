@@ -209,11 +209,11 @@ input { font-family: inherit; }
 @keyframes sweep { from { transform: rotate(-55deg); } to { transform: rotate(-30deg); } }
 /* PLAY -> waiting state (a round is running, wait for the next) */
 .landing-wait {
-  position: absolute; left: 5%; right: 5%; top: 86%; height: 12%;
+  position: absolute; left: 3.5%; right: 3.5%; top: 82%; height: 15%;
   display: flex; align-items: center; justify-content: center; gap: 12px;
-  background: linear-gradient(180deg, rgba(11,42,17,0.98), rgba(6,24,10,0.98));
-  border: 1.5px solid rgba(89,230,42,0.6); border-radius: 18px;
-  box-shadow: 0 0 22px rgba(89,230,42,0.35), 0 8px 22px rgba(0,0,0,0.6);
+  background: linear-gradient(180deg, #0c2c12 0%, #061a0a 100%);
+  border: 2px solid rgba(89,230,42,0.7); border-radius: 18px;
+  box-shadow: 0 0 26px rgba(89,230,42,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .landing-wait .vw-spinner { width: 32px; height: 32px; border-width: 4px; }
 .landing-wait .vw-spinner::after { inset: 7px; border-width: 2px; }
