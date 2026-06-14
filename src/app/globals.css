@@ -383,33 +383,33 @@ input { font-family: inherit; }
 /* ----------------------------------------------------------- stash btn */
 .stash-btn {
   width: 100%;
-  border-radius: 16px;
-  padding: 12px 12px;
+  border-radius: 14px;
+  padding: 9px 12px;
   font-weight: 900;
   letter-spacing: 1px;
   position: relative;
   overflow: hidden;
   text-align: center;
   transition: transform .1s ease, box-shadow .2s ease;
-  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
+  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
   color: #ffffff;
-  border: 1.5px solid var(--green-glow);
-  box-shadow: 0 0 18px rgba(132,255,71,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(10,60,8,0.5);
-  text-shadow: 0 1px 2px rgba(8,45,2,0.65);
-  animation: stashPulse 2.2s ease-in-out infinite;
+  border: 1px solid rgba(132,255,71,0.3);
+  box-shadow: 0 0 9px rgba(132,255,71,0.22), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.4), inset 0 -8px 14px rgba(10,60,8,0.45);
+  text-shadow: 0 1px 2px rgba(8,45,2,0.6);
+  animation: stashPulse 2.6s ease-in-out infinite;
 }
 .stash-btn:active { transform: scale(0.975); }
-.stash-btn .big { font-size: 20px; line-height: 1; display: block; }
+.stash-btn .big { font-size: 17px; line-height: 1; display: block; }
 .stash-btn .sub { font-size: 9px; letter-spacing: 2px; opacity: .85; display: block; margin-top: 3px; }
 @keyframes stashPulse {
-  0%,100% { box-shadow: 0 0 18px rgba(132,255,71,0.5), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.55), inset 0 -8px 16px rgba(10,60,8,0.5); }
-  50% { box-shadow: 0 0 30px rgba(132,255,71,0.8), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(225,255,160,0.6), inset 0 -8px 16px rgba(10,60,8,0.5); }
+  0%,100% { box-shadow: 0 0 9px rgba(132,255,71,0.2), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.4), inset 0 -8px 14px rgba(10,60,8,0.45); }
+  50% { box-shadow: 0 0 15px rgba(132,255,71,0.34), 0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(210,255,150,0.45), inset 0 -8px 14px rgba(10,60,8,0.45); }
 }
 /* primary CTA is always the same green (place bet = stash = bet next) */
 .stash-btn.place {
-  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
+  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
   color: #ffffff;
-  border-color: var(--green-glow);
+  border-color: rgba(132,255,71,0.3);
 }
 .stash-btn.placed {
   background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
@@ -485,10 +485,10 @@ input { font-family: inherit; }
 .bet-chip {
   flex: 1; min-width: 0;
   display: flex; justify-content: center; align-items: center;
-  height: 40px; padding: 0 6px;
-  border-radius: 14px; border: 1px solid #3A2A12;
+  height: 34px; padding: 0 5px;
+  border-radius: 11px; border: 1px solid #3A2A12;
   background: linear-gradient(180deg, #171512 0%, #0F0F0F 50%, #090909 100%);
-  color: #F2D98A; font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
+  color: #F2D98A; font-weight: 700; font-size: 13px; letter-spacing: -0.02em;
   box-shadow: inset 0 1px 0 rgba(255,230,160,0.08), 0 3px 10px rgba(0,0,0,0.45);
   position: relative; overflow: hidden;
 }
@@ -509,13 +509,12 @@ input { font-family: inherit; }
   position: relative; z-index: 2; white-space: nowrap;
 }
 .bet-chip.selected {
-  border-color: var(--green-glow);
-  background: linear-gradient(180deg, var(--green-lime) 0%, var(--green) 50%, var(--green-deep) 100%);
+  border-color: rgba(132,255,71,0.45);
+  background: linear-gradient(180deg, var(--green-hi) 0%, var(--green) 52%, var(--green-deep) 100%);
   box-shadow:
-    0 0 8px rgba(132,255,71,0.65),
-    0 0 20px rgba(132,255,71,0.45),
-    0 6px 18px rgba(132,255,71,0.30),
-    inset 0 1px 0 rgba(255,255,255,0.35);
+    0 0 8px rgba(132,255,71,0.3),
+    0 4px 12px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .bet-chip.selected::before { border-color: rgba(255,255,255,0.35); }
 .bet-chip.selected::after { background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%); }
