@@ -41,6 +41,7 @@ class TensionAudio {
   private running = false;
   private ticking = false;
   private intensity = 0;
+  private voiceBusyUntil = 0; // ctx time the current voice line finishes
 
   private levels: Levels = { music: 0.5, sfx: 0.9, voice: 1.0 };
 
@@ -248,7 +249,7 @@ class TensionAudio {
     this.oneShot(this.buffers.stash, 1.0);
     if (this.voiceWin.length) {
       const v = this.voiceWin[idx] ?? this.voiceWin[Math.floor(Math.random() * this.voiceWin.length)];
-      this.oneShot(v, 1.0, this.voiceGain, 0.2);
+      this.playVoice(v, 0.2);
     }
   }
 
@@ -262,8 +263,19 @@ class TensionAudio {
     // voice line on its own bus, just after the alarm
     if (this.voiceCrash.length) {
       const v = this.voiceCrash[idx] ?? this.voiceCrash[Math.floor(Math.random() * this.voiceCrash.length)];
-      this.oneShot(v, 1.0, this.voiceGain, 0.35);
+      this.playVoice(v, 0.35);
     }
+  }
+
+  // Spoken lines never stack: if a line is still playing when another secure/
+  // crash fires (e.g. securing both bets in a double game in quick succession),
+  // the new line is dropped. Press far enough apart and the second one plays.
+  private playVoice(buf: AudioBuffer | undefined, delay = 0) {
+    if (!this.enabled || !this.ctx || !buf) return;
+    const now = this.ctx.currentTime;
+    if (now + delay < this.voiceBusyUntil) return; // first line still talking → skip
+    this.oneShot(buf, 1.0, this.voiceGain, delay);
+    this.voiceBusyUntil = now + delay + buf.duration;
   }
 
   private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0) {
