@@ -307,15 +307,13 @@ input { font-family: inherit; }
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
-/* the crash (THIEVES STOLE IT) shot fills the area, centered on the thief */
-.vault-scene img.is-heist {
+/* full scenes (crash/secure) fill the area and fade out top & bottom into the UI */
+.vault-scene img.is-heist,
+.vault-scene img.is-caught {
   object-fit: cover;
   object-position: center center;
-}
-/* the secure (THIEF CAUGHT) shot shows the full arrest scene */
-.vault-scene img.is-caught {
-  object-fit: contain;
-  object-position: center center;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 13%, #000 87%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 13%, #000 87%, transparent 100%);
 }
 
 /* neon money glow over the cash, intensifies with the multiplier */
