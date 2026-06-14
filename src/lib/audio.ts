@@ -106,24 +106,23 @@ class TensionAudio {
   private async load() {
     if (this.loaded || this.loading || !this.ctx) return;
     this.loading = true;
-    const get = async (url: string) => {
-      const res = await fetch(url);
-      const ab = await res.arrayBuffer();
-      return await this.ctx!.decodeAudioData(ab);
+    // Decode each clip independently so one bad/slow file can never silence the
+    // rest (a single failing decode used to take down the whole batch).
+    const set = async (key: keyof Buffers, url: string) => {
+      try {
+        const res = await fetch(url);
+        const ab = await res.arrayBuffer();
+        this.buffers[key] = await this.ctx!.decodeAudioData(ab);
+      } catch { /* skip this one */ }
     };
-    try {
-      const [low, high, stash, crash, lobby] = await Promise.all([
-        get('/audio/motif-low.mp3'),
-        get('/audio/motif-high.mp3'),
-        get('/audio/stash.mp3'),
-        get('/audio/crash.mp3'),
-        get('/audio/lobby.mp3'),
-      ]);
-      this.buffers = { low, high, stash, crash, lobby };
-      this.loaded = true;
-    } catch {
-      /* leave unloaded; engine degrades to silence */
-    }
+    await Promise.allSettled([
+      set('low', '/audio/motif-low.mp3'),
+      set('high', '/audio/motif-high.mp3'),
+      set('stash', '/audio/stash.mp3'),
+      set('crash', '/audio/crash.mp3'),
+      set('lobby', '/audio/lobby.mp3'),
+    ]);
+    this.loaded = true;
     this.loading = false;
   }
 
@@ -181,7 +180,7 @@ class TensionAudio {
 
   startMotif() {
     this.running = true;
-    if (!this.enabled || !this.ctx || !this.loaded) return;
+    if (!this.enabled || !this.ctx || !this.buffers.low || !this.buffers.high) return;
     this.stopSources();
     const mk = (buf: AudioBuffer, g0: number) => {
       const src = this.ctx!.createBufferSource();
