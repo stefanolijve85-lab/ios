@@ -192,16 +192,16 @@ input { font-family: inherit; }
 .landing-play-hit:active { background: rgba(255,255,255,0.06); }
 /* sweeping helicopter searchlight while waiting */
 .searchlight {
-  position: absolute; top: 6%; left: 58%; width: 46%; height: 80%;
-  transform-origin: 50% 0%;
-  background: linear-gradient(to bottom, rgba(220,255,235,0.7), rgba(180,255,210,0.22) 50%, transparent 82%);
+  position: absolute; top: 26%; left: 64%; width: 48%; height: 62%;
+  transform-origin: 50% 0%;                 /* apex at the helicopter */
+  background: linear-gradient(to bottom, rgba(220,255,235,0.7), rgba(180,255,210,0.2) 50%, transparent 82%);
   clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
   filter: blur(5px);
   mix-blend-mode: screen;
   pointer-events: none; z-index: 1;
   animation: sweep 3s ease-in-out infinite alternate;
 }
-@keyframes sweep { from { transform: rotate(-22deg); } to { transform: rotate(18deg); } }
+@keyframes sweep { from { transform: rotate(-30deg); } to { transform: rotate(6deg); } }
 /* PLAY -> waiting state (a round is running, wait for the next) */
 .landing-wait {
   position: absolute; left: 5%; right: 5%; top: 79%; height: 14%;
