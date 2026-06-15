@@ -46,7 +46,7 @@ export const trainridex: Theme = {
     motifLow: '/themes/trainridex/audio/motif-low.mp3',
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/trainridex/audio/stash.mp3',
-    crash: '/themes/bankheistx/audio/crash.mp3',
+    crash: '/themes/trainridex/audio/crash.mp3',
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/bankheistx/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
