@@ -50,7 +50,8 @@ export default function SceneMotion() {
     const blank = (): Particle => ({ x: 0, y: 0, r: 0, vx: 0, vy: 0, a: 0, life: 0, len: 0, w: 0, ang: 0, rad: 0, spd: 0 });
     const spawn = () => {
       if (kind === 'speed') {
-        parts.push({ ...blank(), ang: Math.random() * Math.PI * 2, rad: 6 + Math.random() * 36, spd: 2.0 + Math.random() * 1.8, a: 0.10 + Math.random() * 0.28, w: 1 + Math.random() * 2 });
+        const maxR = Math.hypot(W, H) * 0.72;
+        parts.push({ ...blank(), ang: Math.random() * Math.PI * 2, rad: maxR * (0.5 + Math.random() * 0.5), spd: 2.0 + Math.random() * 1.8, a: 0.12 + Math.random() * 0.3, w: 1 + Math.random() * 2.2 });
       } else if (kind === 'steam') {
         parts.push({ ...blank(), x: Math.random() * W, y: H + 12, r: 6 + Math.random() * 12, vx: (Math.random() - 0.5) * 0.2, vy: -(0.2 + Math.random() * 0.5), a: 0.05 + Math.random() * 0.07 });
       } else if (kind === 'embers') {
@@ -80,17 +81,20 @@ export default function SceneMotion() {
         ctx.lineCap = 'round';
         for (let i = parts.length - 1; i >= 0; i--) {
           const p = parts[i];
-          p.rad += p.spd * (0.4 + p.rad * 0.014) * speed * dt / 16; // accelerate outward (perspective)
-          if (p.rad > maxR) { parts.splice(i, 1); continue; }
-          const tail = Math.min(p.rad - 1, 8 + p.rad * 0.3);        // streak grows as it nears the viewer
+          // race inward toward the vanishing point (with the train going forward);
+          // faster in the foreground, slowing as it recedes into the distance.
+          p.rad -= p.spd * (0.25 + p.rad * 0.014) * speed * dt / 16;
+          if (p.rad < 4) { parts.splice(i, 1); continue; }
+          const fade = Math.min(1, p.rad / (maxR * 0.55)); // dim + thin as it recedes
+          const len = 6 + p.rad * 0.32;
           const co = Math.cos(p.ang), si = Math.sin(p.ang);
-          const hx = cx + co * p.rad, hy = cy + si * p.rad;
-          const tx = cx + co * (p.rad - tail), ty = cy + si * (p.rad - tail);
-          const grad = ctx.createLinearGradient(tx, ty, hx, hy);
+          const ix = cx + co * p.rad, iy = cy + si * p.rad;            // inner (leading, into distance)
+          const ox = cx + co * (p.rad + len), oy = cy + si * (p.rad + len); // outer (trailing, foreground)
+          const grad = ctx.createLinearGradient(ix, iy, ox, oy);
           grad.addColorStop(0, rgba(0));
-          grad.addColorStop(1, rgba(p.a * Math.min(1, p.rad / (maxR * 0.5))));
-          ctx.strokeStyle = grad; ctx.lineWidth = p.w;
-          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+          grad.addColorStop(1, rgba(p.a * fade));
+          ctx.strokeStyle = grad; ctx.lineWidth = Math.max(0.5, p.w * fade);
+          ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ox, oy); ctx.stroke();
         }
         raf = requestAnimationFrame(loop);
         return;
