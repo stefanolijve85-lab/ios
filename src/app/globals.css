@@ -252,7 +252,7 @@ input { font-family: inherit; }
 }
 .xhub-logo { height: 30px; width: auto; display: block; }
 .xnav { display: flex; align-items: center; gap: 16px; }
-.xnav > a { text-decoration: none; font-weight: 700; font-size: 12px; letter-spacing: 1.5px; color: #b9b5ad; }
+.xnav > a:not(.xhub-cta) { text-decoration: none; font-weight: 700; font-size: 12px; letter-spacing: 1.5px; color: #b9b5ad; }
 .xnav > a.on { color: #fff; }
 .xnav > a:not(.xhub-cta):hover { color: #fff; }
 .xhub-cta {
