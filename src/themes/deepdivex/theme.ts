@@ -29,6 +29,7 @@ export const deepdivex: Theme = {
   assets: {
     logo: `${A}/logo.webp`,
     landing: `${A}/landing.webp`,
+    landingVideo: `${A}/landing.mp4`,
     sceneIdle: `${A}/descend.webp`,
     sceneLose: `${A}/implosion.webp`,
     sceneWin: `${A}/surface.webp`,
