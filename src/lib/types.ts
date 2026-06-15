@@ -13,6 +13,7 @@ export interface GameState {
   holders: number;
   startHolders: number;
   holdersTimeline: number[];
+  history?: number[]; // recent crash points (newest first)
   online: number;
 }
 

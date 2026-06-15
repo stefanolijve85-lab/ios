@@ -4,6 +4,7 @@ import { useGame } from '@/hooks/useGame';
 import Header from '@/components/Header';
 import StatusRow from '@/components/StatusRow';
 import Vault from '@/components/Vault';
+import HistoryBar from '@/components/HistoryBar';
 import BetPanel from '@/components/BetPanel';
 import LiveChat from '@/components/LiveChat';
 import LiveActivity from '@/components/LiveActivity';
@@ -27,6 +28,8 @@ export default function Page() {
       <div className="vault-zone">
         <Vault />
       </div>
+
+      <HistoryBar />
 
       {twoBets ? (
         <>

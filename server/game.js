@@ -36,6 +36,7 @@ class Game {
     this.startHolders = 0;
     this.holdersTimeline = [];
     this.leaderboard = []; // top wins this server session (shared engine feature)
+    this.history = [];     // recent crash points (newest first) for the results bar
   }
 
   start() {
@@ -183,6 +184,9 @@ class Game {
       const sock = this.io.sockets.sockets.get(id);
       if (sock) sock.emit('balance', p.balance);
     }
+    // record the result for the history bar (newest first, keep last 15)
+    this.history.unshift(Math.round(this.crashPoint * 100) / 100);
+    if (this.history.length > 15) this.history.length = 15;
     this.holdersTimeline.push(0);
     this._broadcast('crash');
   }
@@ -242,6 +246,7 @@ class Game {
       holders: this.holders,
       startHolders: this.startHolders,
       holdersTimeline: this.holdersTimeline,
+      history: this.history,
       online: this.online(),
     };
   }
