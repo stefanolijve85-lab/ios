@@ -49,7 +49,13 @@ export const trainridex: Theme = {
     crash: '/themes/trainridex/audio/crash.mp3',
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
-    voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
+    voiceCrash: [
+      '/themes/trainridex/audio/voice-crash-1.mp3',
+      '/themes/trainridex/audio/voice-crash-2.mp3',
+      '/themes/bankheistx/audio/voice-crash-3.mp3',
+      '/themes/bankheistx/audio/voice-crash-4.mp3',
+      '/themes/bankheistx/audio/voice-crash-5.mp3',
+    ],
     voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-win-${n}.mp3`),
   },
   copy: {
