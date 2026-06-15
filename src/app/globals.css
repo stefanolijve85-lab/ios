@@ -661,7 +661,8 @@ input { font-family: inherit; }
 
 /* the full vault scene render fills the area */
 .vault-scene { position: absolute; inset: 0; z-index: 1; }
-.vault-scene img {
+.vault-scene img,
+.vault-scene video {
   width: 100%; height: 100%;
   object-fit: cover;            /* fill the whole zone — the vault reads BIG */
   object-position: center top;  /* anchor to the top so the vault's top is never cut */
@@ -671,7 +672,9 @@ input { font-family: inherit; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
    stay fully visible while COVER fills the whole zone (no black bars). */
 .vault-scene img.is-heist,
-.vault-scene img.is-caught {
+.vault-scene img.is-caught,
+.vault-scene video.is-heist,
+.vault-scene video.is-caught {
   object-fit: cover;
   object-position: center center;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 95%, transparent 100%);
@@ -698,7 +701,8 @@ input { font-family: inherit; }
   transition: opacity .45s ease, transform .5s cubic-bezier(.2,1.25,.3,1);
 }
 .vault-stack.on { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-/* subtle living drift on the idle scene (never on the result scenes) */
+/* subtle living drift on the idle scene (never on the result scenes).
+   Skipped for cinematic video scenes — they already move on their own. */
 .vault-scene img:not(.is-heist):not(.is-caught) {
   animation: sceneDrift 26s ease-in-out infinite alternate;
   transform-origin: 50% 42%;

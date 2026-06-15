@@ -3,11 +3,18 @@ import { PUBLISHER } from '../../brand';
 
 const A = '/themes/liftoffx';
 
-// LIFTOFF X — rocket / space crash game (STUB).
-// Drop the artwork + audio into public/themes/liftoffx/ using the filenames
-// below, then this game is live on liftoffx.com. Game math + fairness are
-// inherited unchanged from the shared engine; only the "feel" (volatility /
-// pacing) will be tuned later via a per-game gameConfig.
+// LIFTOFF X — rocket / space crash game, now running on the shared engine.
+// Ride the rocket and EJECT before she blows. Presentation only; math +
+// fairness are inherited unchanged from the engine (one transparent RTP, one
+// provably-fair RNG). The "feel" (volatility / pacing) is tuned per-game in
+// server/config.js (GROWTH_K, MAX_MULTIPLIER 1000).
+//
+// Cinematic theme: video start screen + animated video scenes (launch / blow
+// up / eject) instead of static stills.
+//
+// TODO: ships with fallback icons (DEEP DIVE X) and fallback audio
+// (BANKHEIST X) until LIFTOFF-native icons + audio land in
+// public/themes/liftoffx/{icons,audio}/.
 export const liftoffx: Theme = {
   key: 'liftoffx',
   name: 'LIFTOFF X',
@@ -18,41 +25,50 @@ export const liftoffx: Theme = {
       'LIFTOFF X: a mobile-first multiplayer crash game. Ride the rocket, cash out before it burns up.',
   },
   colors: {
-    // placeholder space palette (blue/cyan) — replace when art lands
     green: '#1E73C8',
     greenHi: '#3AA0F0',
     greenLime: '#5FC8FF',
     greenGlow: '#2E9CE6',
     greenDeep: '#0A2E58',
     greenMuted: '#5A8FBE',
-    accentRgb: '58,160,240',   // blue
-    btnTopRgb: '10,46,88',
-    btnBotRgb: '6,28,58',
-    ambientRgb: '58,160,240',
+    accentRgb: '255,150,46',    // ember orange (matches the LET'S GO button)
+    btnTopRgb: '46,20,8',
+    btnBotRgb: '24,10,4',
+    ambientRgb: '255,150,46',
   },
   assets: {
     logo: `${A}/logo.webp`,
-    landing: `${A}/landing.webp`,
-    sceneIdle: `${A}/launchpad.webp`,
-    sceneLose: `${A}/explosion.webp`,
-    sceneWin: `${A}/eject.webp`,
+    // cinematic start screen + the designed "LET'S GO" button
+    landing: '/brand/card-liftoffx.webp', // fallback poster (video plays over it)
+    landingVideo: `${A}/landing.mp4`,
+    playButton: `${A}/play.webp`,
+    // static fallbacks (used only if a scene video fails to load)
+    sceneIdle: '/brand/card-liftoffx.webp',
+    sceneLose: '/brand/card-liftoffx.webp',
+    sceneWin: '/brand/card-liftoffx.webp',
+    // animated scenes: launch (idle/running) → explosion (crash) → eject (win)
+    sceneIdleVideo: `${A}/launch.mp4`,
+    sceneLoseVideo: `${A}/explosion.mp4`,
+    sceneWinVideo: `${A}/eject.mp4`,
+    // fallback icons (DEEP DIVE X) until LIFTOFF-native icons land
     icons: {
-      home: `${A}/icons/home.webp`,
-      history: `${A}/icons/history.webp`,
-      vault: `${A}/icons/rocket.webp`,
-      leaderboard: `${A}/icons/leaderboard.webp`,
-      chat: `${A}/icons/chat.webp`,
+      home: '/themes/deepdivex/icons/home.webp',
+      history: '/themes/deepdivex/icons/history.webp',
+      vault: '/themes/deepdivex/icons/vault.webp',
+      leaderboard: '/themes/deepdivex/icons/leaderboard.webp',
+      chat: '/themes/deepdivex/icons/chat.webp',
     },
   },
+  // fallback audio (BANKHEIST X) until LIFTOFF-native audio lands
   audio: {
-    motifLow: `${A}/audio/motif-low.mp3`,
-    motifHigh: `${A}/audio/motif-high.mp3`,
-    stash: `${A}/audio/eject.mp3`,
-    crash: `${A}/audio/explosion.mp3`,
-    lobby: `${A}/audio/lobby.mp3`,
-    tick: `${A}/audio/countdown.mp3`,
-    voiceCrash: [1, 2, 3, 4, 5].map((n) => `${A}/audio/voice-crash-${n}.mp3`),
-    voiceWin: [1, 2, 3, 4, 5].map((n) => `${A}/audio/voice-win-${n}.mp3`),
+    motifLow: '/themes/bankheistx/audio/motif-low.mp3',
+    motifHigh: '/themes/bankheistx/audio/motif-high.mp3',
+    stash: '/themes/bankheistx/audio/stash.mp3',
+    crash: '/themes/bankheistx/audio/crash.mp3',
+    lobby: '/themes/bankheistx/audio/lobby.mp3',
+    tick: '/themes/bankheistx/audio/tick.mp3',
+    voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
+    voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-win-${n}.mp3`),
   },
   copy: {
     cashOut: 'EJECT',
@@ -67,4 +83,7 @@ export const liftoffx: Theme = {
     loseFlash: 'SHE BLEW UP!',
     landingAlt: 'LIFTOFF X — Ride it. Eject big.',
   },
+  // altitude readout (like DEEP DIVE's depth) reads the multiplier as metres of
+  // altitude; speed lines convey the climb.
+  ui: { motion: { kind: 'speed', color: '#ffd9a8' } },
 };

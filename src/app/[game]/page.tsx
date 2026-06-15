@@ -4,10 +4,10 @@ import { CATALOG } from '@/brand';
 import { THEMES, getTheme } from '@/themes';
 import GameScreen from '@/components/GameScreen';
 
-// /<game> — e.g. /bankheistx, /trainridex. The ThemeProvider reads this path
-// segment to pick the theme; the socket connects to the matching game loop.
-// A catalog entry with an external `url` (a separately deployed game like
-// LIFTOFF X) redirects to that site instead.
+// /<game> — e.g. /bankheistx, /trainridex, /liftoffx. The ThemeProvider reads
+// this path segment to pick the theme; the socket connects to the matching
+// game loop. A catalog entry with an external `url` (a separately deployed
+// game) would redirect to that site instead — none do today.
 export function generateMetadata({ params }: { params: { game: string } }): Metadata {
   const t = THEMES[params.game];
   if (!t) return {};

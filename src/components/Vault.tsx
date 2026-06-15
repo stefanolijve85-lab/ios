@@ -133,17 +133,46 @@ export default function Vault() {
     return () => cancelAnimationFrame(raf);
   }, [liveMultiplier, serverNow, stateRef]);
 
+  // pick the scene for the current phase, preferring a cinematic video if the
+  // theme provides one (still image otherwise).
+  const sceneClass = isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : '';
+  const sceneImg = isSecured
+    ? theme.assets.sceneWin
+    : phase === 'crashed'
+    ? theme.assets.sceneLose
+    : theme.assets.sceneIdle;
+  const sceneVideo = isSecured
+    ? theme.assets.sceneWinVideo
+    : phase === 'crashed'
+    ? theme.assets.sceneLoseVideo
+    : theme.assets.sceneIdleVideo;
+
   return (
     <div className="vault" ref={vaultRef}>
-      {/* scene render: caught (you secured) / heist (robbed) / vault (normal) */}
+      {/* scene render: caught (you secured) / heist (robbed) / vault (normal).
+          When the theme ships cinematic scene videos we loop those instead of
+          the static stills (e.g. LIFTOFF X). */}
       <div className="vault-scene">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : ''}
-          src={isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle}
-          alt={theme.name}
-          draggable={false}
-        />
+        {sceneVideo ? (
+          <video
+            key={sceneVideo}
+            className={sceneClass}
+            src={sceneVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className={sceneClass}
+            src={sceneImg}
+            alt={theme.name}
+            draggable={false}
+          />
+        )}
       </div>
       {/* ambient themed particles — only over the live/idle scene, never on the
           crash or secure result art */}

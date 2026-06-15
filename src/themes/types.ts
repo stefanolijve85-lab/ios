@@ -26,6 +26,11 @@ export interface ThemeAssets {
   sceneIdle: string;    // the "vault" / idle scene while betting + running
   sceneLose: string;    // the crash / robbery scene
   sceneWin: string;     // the secure / caught scene
+  // Optional cinematic (animated) scenes — when present the engine plays these
+  // looping videos instead of the static stills above for the matching phase.
+  sceneIdleVideo?: string; // idle / running
+  sceneLoseVideo?: string; // crash
+  sceneWinVideo?: string;  // secured
   icons: {
     home: string;
     history: string;
