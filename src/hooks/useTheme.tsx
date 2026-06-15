@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { getTheme, resolveClientThemeKey, DEFAULT_THEME_KEY } from '@/themes';
 import type { Theme } from '@/themes';
 import { getAudio } from '@/lib/audio';
@@ -10,6 +11,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Start from the default so SSR markup matches the first client paint
   // (the default theme's palette is baked into globals.css :root).
   const [theme, setTheme] = useState<Theme>(getTheme(DEFAULT_THEME_KEY));
+  const pathname = usePathname();
 
   useEffect(() => {
     const active = getTheme(resolveClientThemeKey());
@@ -32,7 +34,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // hand the audio engine this game's clip paths (used on first unlock)
     getAudio().configure(active.audio);
-  }, []);
+  }, [pathname]); // re-resolve when navigating between games (no stale effects)
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }
