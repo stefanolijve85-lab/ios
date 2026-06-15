@@ -621,6 +621,21 @@ input { font-family: inherit; }
           mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 95%, transparent 100%);
 }
 
+/* ambient particle canvas over the scene */
+.scene-motion {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  mix-blend-mode: screen;
+}
+/* subtle living drift on the idle scene (never on the result scenes) */
+.vault-scene img:not(.is-heist):not(.is-caught) {
+  animation: sceneDrift 26s ease-in-out infinite alternate;
+  transform-origin: 50% 42%;
+}
+@keyframes sceneDrift {
+  from { transform: scale(1.0); }
+  to   { transform: scale(1.055); }
+}
+
 /* neon money glow over the cash, intensifies with the multiplier */
 .vault-glow {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;

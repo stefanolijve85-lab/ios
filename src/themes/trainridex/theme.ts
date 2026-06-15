@@ -61,4 +61,5 @@ export const trainridex: Theme = {
     loseFlash: 'DERAILED!',
     landingAlt: 'TRAINRIDE X — Secure your fortune before the derailment.',
   },
+  ui: { motion: { kind: 'steam', color: '#d6dce2' } },
 };

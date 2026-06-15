@@ -61,6 +61,8 @@ export interface ThemeUI {
   // Reframe the multiplier ladder + a live readout as a DEPTH meter (DEEP DIVE).
   depthMeter?: boolean;
   metersPerX?: number; // depth(m) = round((multiplier - 1) * metersPerX)
+  // Ambient particle motion over the scene; intensity rises with the multiplier.
+  motion?: { kind: 'bubbles' | 'embers' | 'steam'; color: string };
 }
 
 export interface Theme {

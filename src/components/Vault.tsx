@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
+import SceneMotion from './SceneMotion';
 import { ladderTopFor, ladderRungs } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
 
@@ -139,6 +140,9 @@ export default function Vault() {
           draggable={false}
         />
       </div>
+      {/* ambient themed particles (intensify with the multiplier) */}
+      <SceneMotion />
+
       {/* money glow only during the live round — never over the result scenes */}
       {!isSecured && phase !== 'crashed' && <div className="vault-glow" ref={glowRef} />}
 
