@@ -1,0 +1,22 @@
+# Render Blueprint — single web service serving both the Next.js app and the
+# Socket.io realtime layer from one origin / one port.
+#
+# Deploy: push to GitHub, then in Render → "New +" → "Blueprint" → pick this repo.
+# The app lives at the repository root — no Root Directory tweak needed.
+services:
+  - type: web
+    name: stash-crash-game
+    runtime: node
+    plan: free
+    region: frankfurt
+    # --include=dev forces TypeScript + @types to install even though Render
+    # builds with NODE_ENV=production (next build needs them).
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
