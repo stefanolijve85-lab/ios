@@ -36,7 +36,7 @@ interface GameContextValue {
   addCredits: (amount: number) => void;
   waiting: boolean;
   setWaiting: (b: boolean) => void;
-  fair: { commitment?: string; last: FairRound | null; maxMultiplier: number };
+  fair: { commitment?: string; last: FairRound | null; maxMultiplier: number; houseEdge: number };
 }
 
 interface GameCfg { GROWTH_K: number; MAX_MULTIPLIER: number; MAX_RUN_MS: number; HOUSE_EDGE: number }
@@ -55,8 +55,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [lastWin, setLastWin] = useState(0);
   const [waiting, setWaiting] = useState(false);
   const [lastFair, setLastFair] = useState<FairRound | null>(null);
-  // per-game tuning from the server's welcome (the "feel"); defaults until it arrives
+  // per-game tuning from the server's welcome (the "feel" + active RTP); defaults
+  // until it arrives
   const [maxMult, setMaxMult] = useState(MAX_MULTIPLIER);
+  const [edge, setEdge] = useState(HOUSE_EDGE);
   const cfgRef = useRef<GameCfg>({ GROWTH_K, MAX_MULTIPLIER, MAX_RUN_MS: 22000, HOUSE_EDGE });
 
   const stateRef = useRef<GameState | null>(null);
@@ -94,6 +96,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (d.config) {
         cfgRef.current = { ...cfgRef.current, ...d.config };
         if (d.config.MAX_MULTIPLIER != null) setMaxMult(d.config.MAX_MULTIPLIER);
+        if (d.config.HOUSE_EDGE != null) setEdge(d.config.HOUSE_EDGE);
       }
     };
     const onBalance = (b: number) => setBalance(b);
@@ -224,7 +227,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     stateRef, offsetRef, liveMultiplier, serverNow,
     placeBet, cancelBet, stash, sendChat, addCredits,
     waiting, setWaiting,
-    fair: { commitment: state?.serverSeedHash, last: lastFair, maxMultiplier: maxMult },
+    fair: { commitment: state?.serverSeedHash, last: lastFair, maxMultiplier: maxMult, houseEdge: edge },
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

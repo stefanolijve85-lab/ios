@@ -52,11 +52,21 @@ export const THEMES = { bankheistx, liftoffx, <key> };
 ```
 
 ## 3. The feel (tuning)  →  `server/config.js`
-Add one line under `games`. Curve speed + ceiling + run length only — **the
-house edge / RTP is shared and never changes**:
+Add one line under `games`. Curve speed + ceiling + run length (and an optional
+default `rtp`):
 ```js
 <key>: { GROWTH_K: 0.25, MAX_MULTIPLIER: 500, MAX_RUN_MS: 22000 },
 ```
+
+### RTP is configurable
+RTP variants live in `RTP_VARIANTS` (99/97/96/95/94 → house edge). Resolution:
+1. **env `XIT_RTP=96`** — sets the whole deployment's RTP (how an operator runs
+   their instance at a chosen RTP, no code change).
+2. `games[<key>].rtp` — a title's own default.
+3. `DEFAULT_RTP` (97).
+
+The active RTP is sent to the client and used by the provably-fair verifier, so
+every deployment stays transparent and player-verifiable at its own RTP.
 
 ## 4. The catalog  →  `src/brand/index.ts`
 Add it to `CATALOG` (drives the future hub + keeps the line-up in one place):

@@ -39,17 +39,19 @@ function u32BE(bytes: Uint8Array, offset: number): number {
 }
 
 // Deterministic crash point from a seed — mirror of crashPointFromSeed().
-// `cap` is the per-game ceiling (MAX_MULTIPLIER) — defaults to the base value.
+// `cap` is the per-game ceiling (MAX_MULTIPLIER) and `edge` the active house edge
+// (configurable RTP) — both default to the base values.
 export async function crashPointFromSeed(
   serverSeed: string,
   roundId: number,
   cap: number = MAX_MULTIPLIER,
+  edge: number = HOUSE_EDGE,
 ): Promise<number> {
   const h = await hmacSha256(serverSeed, String(roundId));
   const u1 = u32BE(h, 0) / 0x100000000;
   const u2 = u32BE(h, 4) / 0x100000000;
-  if (u1 < HOUSE_EDGE) return 1.0;
-  let cp = (1 - HOUSE_EDGE) / (1 - u2);
+  if (u1 < edge) return 1.0;
+  let cp = (1 - edge) / (1 - u2);
   cp = Math.max(1.01, Math.min(cp, cap));
   return Math.floor(cp * 100) / 100;
 }
@@ -67,9 +69,10 @@ export async function verifyRound(
   roundId: number,
   crashPoint: number,
   cap?: number,
+  edge?: number,
 ): Promise<VerifyResult> {
   const computedHash = await sha256Hex(serverSeed);
-  const computedCrash = await crashPointFromSeed(serverSeed, roundId, cap);
+  const computedCrash = await crashPointFromSeed(serverSeed, roundId, cap, edge);
   return {
     hashOk: computedHash.toLowerCase() === serverSeedHash.toLowerCase(),
     crashOk: Math.abs(computedCrash - crashPoint) < 0.005,

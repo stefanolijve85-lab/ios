@@ -65,6 +65,7 @@ class Game {
         MAX_RUN_MS: this.C.MAX_RUN_MS,
         MAX_MULTIPLIER: this.C.MAX_MULTIPLIER,
         HOUSE_EDGE: this.C.HOUSE_EDGE,
+        RTP: this.C.RTP,
       },
     });
     socket.emit('leaderboard', this.leaderboard);

@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { verifyRound, type VerifyResult } from '@/lib/fairness';
-import { RTP, HOUSE_EDGE } from '@/lib/constants';
 import { PUBLISHER } from '@/brand';
 
 export default function FairnessModal({ onClose }: { onClose: () => void }) {
   const { fair } = useGame();
   const last = fair.last;
+  const edgePct = Math.round(fair.houseEdge * 100);
+  const rtpPct = Math.round((1 - fair.houseEdge) * 100);
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -15,7 +16,7 @@ export default function FairnessModal({ onClose }: { onClose: () => void }) {
     if (!last) return;
     setBusy(true);
     try {
-      setResult(await verifyRound(last.serverSeed, last.serverSeedHash, last.roundId, last.crashPoint, fair.maxMultiplier));
+      setResult(await verifyRound(last.serverSeed, last.serverSeedHash, last.roundId, last.crashPoint, fair.maxMultiplier, fair.houseEdge));
     } finally {
       setBusy(false);
     }
@@ -33,8 +34,7 @@ export default function FairnessModal({ onClose }: { onClose: () => void }) {
           Every round&apos;s crash point is locked in <b>before</b> any bets are placed.
           The server publishes a commitment (a hash) up front and reveals the secret
           seed after the round, so you can prove the outcome was never changed.
-          House edge <b>{Math.round(HOUSE_EDGE * 100)}%</b> · RTP <b>{Math.round(RTP * 100)}%</b> — the
-          same for every {PUBLISHER} title.
+          This game runs at <b>{rtpPct}% RTP</b> (house edge {edgePct}%) — provably fair on every {PUBLISHER} title.
         </p>
 
         <div className="fair-block">
