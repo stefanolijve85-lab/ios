@@ -1,13 +1,13 @@
 import { CATALOG, PUBLISHER } from '@/brand';
-import { HOUSE_EDGE, RTP } from '@/lib/constants';
+import { RTP } from '@/lib/constants';
 
 const CONTACT = 'partners@xitgames.com';
+const DECK = `mailto:${CONTACT}?subject=Request%20deck%20-%20${encodeURIComponent(PUBLISHER)}`;
 const rtpPct = Math.round(RTP * 100);
 
-// One B2B home for operators & aggregators: pitch, full game specs, integration,
-// compliance, live demos to test, and contact. Built so XIT Games can be offered
-// to as many casinos as possible. (No login/backoffice — that's the operator
-// phase.)
+// One B2B home for operators & aggregators (mirrors the LiftOffX operators
+// content, adapted for the multi-game XIT engine). No login/backoffice — that's
+// the operator phase.
 export default function Partners() {
   return (
     <div className="xhub xpartners">
@@ -17,7 +17,7 @@ export default function Partners() {
         <nav className="xnav">
           <a href="/">GAMES</a>
           <a className="on" href="/partners">OPERATORS</a>
-          <a className="xhub-cta" href={`mailto:${CONTACT}`}>CONTACT</a>
+          <a className="xhub-cta" href={DECK}>REQUEST DECK</a>
         </nav>
       </header>
 
@@ -26,41 +26,55 @@ export default function Partners() {
         <h1>Plug-and-play <span>provably-fair</span> crash games</h1>
         <p>
           One certified engine, multiple branded titles. Instant HTML5 launch,
-          seamless wallet, a single transparent {rtpPct}% RTP. Add {PUBLISHER} to
-          your casino in days.
+          seamless wallet, a transparent {rtpPct}% RTP. Add {PUBLISHER} to your
+          casino in days.
         </p>
         <div className="xp-herobtns">
-          <a className="xhub-cta xp-big" href={`mailto:${CONTACT}`}>BECOME A PARTNER</a>
+          <a className="xhub-cta xp-big" href={DECK}>REQUEST DECK</a>
           <a className="xp-ghost" href="#demos">TRY THE DEMOS</a>
         </div>
       </section>
 
       <section className="xp-stats">
-        <div className="xp-stat"><b>{rtpPct}%</b><span>RTP · {Math.round(HOUSE_EDGE * 100)}% edge</span></div>
+        <div className="xp-stat"><b>{rtpPct}%</b><span>default RTP · configurable</span></div>
         <div className="xp-stat"><b>{CATALOG.length}</b><span>live titles</span></div>
         <div className="xp-stat"><b>100%</b><span>provably fair</span></div>
         <div className="xp-stat"><b>HTML5</b><span>any device</span></div>
       </section>
 
-      <section className="xp-block">
-        <h2>Why {PUBLISHER}</h2>
-        <div className="xp-feats">
-          <div className="xp-feat"><b>Provably fair</b><span>Every round committed before bets and verifiable by players.</span></div>
-          <div className="xp-feat"><b>One engine, many games</b><span>New titles ship on a shared, certifiable core.</span></div>
-          <div className="xp-feat"><b>Shared RTP, own feel</b><span>Tune volatility per title; the RTP stays identical.</span></div>
-          <div className="xp-feat"><b>Multiplayer &amp; social</b><span>Live rounds, chat, wins feed and a leaderboard.</span></div>
-          <div className="xp-feat"><b>Mobile-first HTML5</b><span>Instant-play in the browser, no download, low latency.</span></div>
-          <div className="xp-feat"><b>Fast to launch</b><span>A new branded title in days, not months.</span></div>
-        </div>
+      <section className="xp-statement">
+        <h2>Fully white-label ready.</h2>
+        <p className="xp-lead">Your logo. Your colors. Your player experience.</p>
+        <p>Deploy {PUBLISHER} titles entirely under your own brand while keeping full ownership of the customer relationship. No visible third-party branding required.</p>
+        <p>Designed for operators who want complete control without sacrificing speed to market.</p>
+      </section>
+
+      <section className="xp-statement">
+        <h2>More margin. Better retention.</h2>
+        <p>Configurable RTP options let operators align each game with their commercial objectives.</p>
+        <p>Real-time multiplayer dynamics, instant gameplay loops, dual betting and auto cash-out encourage repeat engagement and longer sessions.</p>
+        <p>The result is an experience built for both player enjoyment and operator profitability.</p>
+      </section>
+
+      <section className="xp-statement">
+        <h2>Seamless aggregator distribution.</h2>
+        <p>Built to integrate efficiently through leading aggregators and direct operator partnerships.</p>
+        <p>Reduce technical overhead, simplify onboarding, and accelerate go-live timelines.</p>
+        <p>Launch faster and scale across multiple markets with minimal friction.</p>
       </section>
 
       <section className="xp-block">
-        <h2>White label &amp; custom games</h2>
-        <p className="xp-sub">Your brand on our certified engine — without rebuilding the math.</p>
-        <div className="xp-feats">
-          <div className="xp-feat"><b>Custom-branded skins</b><span>Your logo, art, colours and copy on any title.</span></div>
-          <div className="xp-feat"><b>Exclusive titles</b><span>A game built for your casino, live in days.</span></div>
-          <div className="xp-feat"><b>Same fair core</b><span>Only the look changes — RTP &amp; fairness stay identical.</span></div>
+        <h2>Why operators choose {PUBLISHER}</h2>
+        <div className="xp-checks">
+          <div className="xp-check">Provably fair — players can verify every round.</div>
+          <div className="xp-check">Proven crash game mechanics players already understand.</div>
+          <div className="xp-check">True shared-round multiplayer that creates social engagement.</div>
+          <div className="xp-check">Configurable RTP to support different commercial models.</div>
+          <div className="xp-check">Fully white-label deployment under your own brand.</div>
+          <div className="xp-check">One engine, many branded titles — new games in days.</div>
+          <div className="xp-check">Fast integration through aggregators or direct partnerships.</div>
+          <div className="xp-check">Mobile-first experience optimized for today&apos;s players.</div>
+          <div className="xp-check">Built to increase retention and repeat play.</div>
         </div>
       </section>
 
@@ -102,7 +116,6 @@ export default function Partners() {
           <li><b>Seamless wallet API</b> — one integration powers every title.</li>
           <li><b>Single RGS</b>, server-authoritative outcomes, low latency.</li>
           <li><b>Multi-currency &amp; multi-language</b> ready.</li>
-          <li><b>Provably-fair verification</b> built into every game.</li>
           <li><b>Certification-ready</b> — RNG &amp; RTP in one auditable core (GLI / iTech Labs on request).</li>
         </ul>
         <div className="xp-steps">
@@ -112,26 +125,16 @@ export default function Partners() {
         </div>
       </section>
 
-      <section className="xp-block">
-        <h2>Fairness &amp; compliance</h2>
-        <ul className="xp-list">
-          <li><b>Transparent {rtpPct}% RTP</b>, identical across every title — no hidden per-game edge.</li>
-          <li><b>Player-verifiable</b> — anyone can recompute any round from the revealed seed.</li>
-          <li><b>Responsible gambling</b> hooks and limits supported.</li>
-          <li><b>Licensing &amp; independent certification</b> available on request.</li>
-        </ul>
-      </section>
-
       <section className="xp-cta">
         <h2>Add {PUBLISHER} to your casino</h2>
         <p>Direct or via your aggregator. Let&apos;s get the games in front of your players.</p>
-        <a className="xhub-cta xp-big" href={`mailto:${CONTACT}`}>Talk integration →</a>
+        <a className="xhub-cta xp-big" href={DECK}>Request the deck →</a>
         <div className="xp-contact">{CONTACT}</div>
       </section>
 
       <footer className="xfoot">
         <div className="xfoot-brand">{PUBLISHER}</div>
-        <div className="xfoot-sub">Provably fair · {rtpPct}% RTP · © {new Date().getFullYear()} {PUBLISHER}</div>
+        <div className="xfoot-sub">Provably fair · {rtpPct}% default RTP · © {new Date().getFullYear()} {PUBLISHER}</div>
       </footer>
     </div>
   );
