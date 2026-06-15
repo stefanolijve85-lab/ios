@@ -8,7 +8,10 @@ export default function Hub() {
       <header className="xhub-top">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="xhub-logo" src="/brand/xit-logo.webp" alt={PUBLISHER} />
-        <a className="xhub-cta" href="#games">PLAY NOW</a>
+        <nav className="xnav">
+          <a href="/partners">PARTNERS</a>
+          <a className="xhub-cta" href="#games">PLAY NOW</a>
+        </nav>
       </header>
 
       <section className="xhero">
