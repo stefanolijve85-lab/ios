@@ -41,7 +41,7 @@ export const liftoffx: Theme = {
     // cinematic start screen + the designed "LET'S GO" button
     landing: '/brand/card-liftoffx.webp', // fallback poster (video plays over it)
     landingVideo: `${A}/landing.mp4`,
-    playButton: `${A}/play.webp`,
+    playButton: `${A}/letsgo.webp`,
     // static fallbacks (used only if a scene video fails to load)
     sceneIdle: '/brand/card-liftoffx.webp',
     sceneLose: '/brand/card-liftoffx.webp',
