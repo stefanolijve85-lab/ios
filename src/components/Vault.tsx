@@ -146,6 +146,10 @@ export default function Vault() {
     : phase === 'crashed'
     ? theme.assets.sceneLoseVideo
     : theme.assets.sceneIdleVideo;
+  // some scene clips ship with black pillarbox margins baked in — zoom so the
+  // picture fills the whole scene box edge to edge (themeable, default none).
+  const sceneZoom = theme.ui?.sceneZoom ?? 1;
+  const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -167,6 +171,7 @@ export default function Vault() {
             key={sceneVideo}
             className={`scene-video ${sceneClass}`}
             src={sceneVideo}
+            style={sceneStyle}
             autoPlay
             loop
             muted

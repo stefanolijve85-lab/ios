@@ -77,6 +77,10 @@ export interface ThemeUI {
   motion?: { kind: 'bubbles' | 'embers' | 'steam' | 'speed'; color: string };
   // Loot that piles up as the multiplier climbs (sprite stacks revealed one by one).
   growth?: { sprites: string[] };
+  // Zoom factor for cinematic scene videos whose source has black pillarbox
+  // bars baked in — scales the video up so the picture fills the scene box edge
+  // to edge (>1 crops the empty/black margins). Default 1 (no zoom).
+  sceneZoom?: number;
 }
 
 export interface Theme {

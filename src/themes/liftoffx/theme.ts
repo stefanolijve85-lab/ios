@@ -84,6 +84,7 @@ export const liftoffx: Theme = {
     landingAlt: 'LIFTOFF X — Ride it. Eject big.',
   },
   // altitude readout (like DEEP DIVE's depth) reads the multiplier as metres of
-  // altitude; speed lines convey the climb.
-  ui: { motion: { kind: 'speed', color: '#ffd9a8' } },
+  // altitude; speed lines convey the climb. sceneZoom crops the black pillarbox
+  // margins baked into the scene clips so the rocket fills the box edge to edge.
+  ui: { motion: { kind: 'speed', color: '#ffd9a8' }, sceneZoom: 1.9 },
 };

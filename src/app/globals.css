@@ -660,7 +660,7 @@ input { font-family: inherit; }
 .vault.danger { filter: drop-shadow(0 0 26px rgba(255,40,40,0.45)); }
 
 /* the full vault scene render fills the area */
-.vault-scene { position: absolute; inset: 0; z-index: 1; }
+.vault-scene { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
 .vault-scene img,
 .vault-scene video {
   position: absolute; inset: 0;
@@ -672,7 +672,7 @@ input { font-family: inherit; }
 }
 /* cinematic scene video sits on top of the still and fades in once it can play,
    so there's no black gap and no late start when a scene swaps in */
-.vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .25s ease; }
+.vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .25s ease; transform-origin: center 38%; }
 .vault-scene video.scene-video.ready { opacity: 1; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
    stay fully visible while COVER fills the whole zone (no black bars). */
