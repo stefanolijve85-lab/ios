@@ -30,7 +30,7 @@ export const trainridex: Theme = {
     logo: `${A}/logo.webp`,
     landing: `${A}/landing.webp`,
     landingVideo: `${A}/landing.mp4`,
-    playButton: `${A}/playbtn.webp`,
+    playButton: `${A}/playbtn-v2.webp`,
     sceneIdle: `${A}/train.webp`,
     sceneLose: `${A}/derailment.webp`,
     sceneWin: `${A}/escape.webp`,
