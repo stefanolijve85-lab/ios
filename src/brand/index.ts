@@ -27,3 +27,8 @@ export const CATALOG: CatalogEntry[] = [
 ];
 
 export const creditLine = () => `An ${PUBLISHER} game`;
+
+// Configurable RTP variants offered to operators (mirror RTP_VARIANTS in
+// server/config.js). Default is the flagship player-facing RTP.
+export const RTP_OPTIONS = [99, 97, 96, 95, 94];
+export const DEFAULT_RTP_PCT = 97;

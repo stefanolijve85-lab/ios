@@ -1,4 +1,4 @@
-import { CATALOG, PUBLISHER } from '@/brand';
+import { CATALOG, PUBLISHER, RTP_OPTIONS, DEFAULT_RTP_PCT } from '@/brand';
 import { RTP } from '@/lib/constants';
 
 const CONTACT = 'partners@xitgames.com';
@@ -52,6 +52,12 @@ export default function Partners() {
       <section className="xp-statement">
         <h2>More margin. Better retention.</h2>
         <p>Configurable RTP options let operators align each game with their commercial objectives.</p>
+        <div className="xp-rtps">
+          {RTP_OPTIONS.map((r) => (
+            <span key={r} className={`xp-rtp${r === DEFAULT_RTP_PCT ? ' on' : ''}`}>{r}%</span>
+          ))}
+        </div>
+        <p className="xp-rtp-note">RTP variants · default {DEFAULT_RTP_PCT}% · set per operator deployment.</p>
         <p>Real-time multiplayer dynamics, instant gameplay loops, dual betting and auto cash-out encourage repeat engagement and longer sessions.</p>
         <p>The result is an experience built for both player enjoyment and operator profitability.</p>
       </section>
