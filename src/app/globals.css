@@ -251,6 +251,10 @@ input { font-family: inherit; }
   padding: calc(16px + env(safe-area-inset-top)) 18px 6px;
 }
 .xhub-logo { height: 30px; width: auto; display: block; }
+.xnav { display: flex; align-items: center; gap: 16px; }
+.xnav > a:not(.xhub-cta) { text-decoration: none; font-weight: 700; font-size: 12px; letter-spacing: 1.5px; color: #b9b5ad; }
+.xnav > a.on { color: #fff; }
+.xnav > a:not(.xhub-cta):hover { color: #fff; }
 .xhub-cta {
   text-decoration: none; font-weight: 800; font-size: 12px; letter-spacing: 1.5px; color: #1a1206;
   padding: 9px 16px; border-radius: 999px;
@@ -295,15 +299,22 @@ input { font-family: inherit; }
 .xgame:active { transform: scale(0.99); }
 .xgame-img { display: block; width: 100%; height: auto; }
 .xgame-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 12px 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 16px 14px 18px; text-align: center;
 }
-.xgame-tag { font-size: 11px; color: #b9b5ad; line-height: 1.3; }
+.xgame-tag {
+  font-family: 'Oswald', 'Sora', sans-serif;
+  font-size: 16px; font-weight: 500; letter-spacing: 0.5px; line-height: 1.25;
+  color: #efe9df;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
 .xgame-play {
-  flex: 0 0 auto; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #1a1206;
-  padding: 9px 14px; border-radius: 999px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px; font-weight: 600; letter-spacing: 2px; color: #1a1206;
+  text-transform: uppercase;
+  padding: 11px 30px; border-radius: 999px;
   background: linear-gradient(180deg, var(--xorange-hi), var(--xorange));
-  box-shadow: 0 4px 14px rgba(247,147,30,0.3);
+  box-shadow: 0 6px 18px rgba(247,147,30,0.35);
 }
 
 .xfoot {
@@ -312,6 +323,77 @@ input { font-family: inherit; }
 }
 .xfoot-brand { font-weight: 800; letter-spacing: 2px; color: #f3f1ee; }
 .xfoot-sub { margin-top: 6px; font-size: 11px; color: #7e7a72; letter-spacing: 0.5px; }
+
+/* ----------------------------------------------------- partners (B2B) page */
+.xp-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 3px; color: var(--xorange); margin-bottom: 10px; }
+.xp-big { display: inline-block; padding: 13px 26px; font-size: 13px; }
+.xp-herobtns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
+.xp-ghost {
+  display: inline-block; text-decoration: none; padding: 13px 24px; border-radius: 999px;
+  font-weight: 700; font-size: 13px; letter-spacing: 1px; color: #f3f1ee;
+  border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.03);
+}
+.xp-ghost:hover { border-color: rgba(247,147,30,0.5); }
+.xp-sub { font-size: 13px; color: #9a958c; margin: -6px 0 14px; }
+.xp-note { font-size: 12px; color: #8a857c; margin-top: 12px; line-height: 1.5; }
+
+/* game spec table */
+.xp-specs { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+.xp-spec-head, .xp-spec-row {
+  display: grid; grid-template-columns: 1.6fr 0.8fr 1fr 1fr; gap: 6px; align-items: center;
+  padding: 12px 14px; font-size: 13px;
+}
+.xp-spec-head { background: rgba(255,255,255,0.04); font-size: 10px; letter-spacing: 1.5px; color: #8a857c; font-weight: 800; text-transform: uppercase; }
+.xp-spec-row { border-top: 1px solid rgba(255,255,255,0.06); color: #c7c2ba; font-variant-numeric: tabular-nums; }
+.xp-spec-name { font-family: 'Sora', sans-serif; font-weight: 800; color: #fff; font-size: 13px; }
+
+/* integration steps */
+.xp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.xp-step {
+  text-align: center; padding: 16px 8px; border-radius: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.xp-step b {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 999px; margin-bottom: 8px;
+  background: linear-gradient(180deg, var(--xorange-hi), var(--xorange)); color: #1a1206; font-weight: 900;
+}
+.xp-step span { display: block; font-size: 12px; color: #c7c2ba; }
+
+/* closing CTA band */
+.xp-cta { text-align: center; padding: 30px 18px; margin: 8px 14px 0; border-radius: 18px;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(247,147,30,0.12), transparent 70%), rgba(255,255,255,0.02);
+  border: 1px solid rgba(247,147,30,0.25); }
+.xp-cta h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; margin: 0 0 8px; }
+.xp-cta p { font-size: 14px; color: #b9b5ad; margin: 0 0 18px; }
+.xp-stats {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 18px 8px;
+}
+@media (min-width: 720px) { .xp-stats { grid-template-columns: repeat(4, 1fr); } }
+.xp-stat {
+  text-align: center; padding: 18px 10px; border-radius: 14px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.xp-stat b { display: block; font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; color: #fff; }
+.xp-stat span { display: block; margin-top: 4px; font-size: 11px; letter-spacing: 0.5px; color: #9a958c; }
+.xp-block { padding: 22px 18px; }
+.xp-block h2 { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+.xp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.xp-list li { position: relative; padding-left: 22px; font-size: 14px; line-height: 1.5; color: #c7c2ba; }
+.xp-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
+.xp-list li b { color: #f3f1ee; }
+.xp-demos { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .xp-demos { grid-template-columns: repeat(3, 1fr); } }
+.xp-demo {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  text-decoration: none; padding: 15px 16px; border-radius: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09);
+  transition: border-color .15s, background .15s;
+}
+.xp-demo:hover { border-color: rgba(247,147,30,0.5); background: rgba(247,147,30,0.06); }
+.xp-demo-name { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 14px; color: #fff; }
+.xp-demo-go { font-size: 12px; font-weight: 700; color: var(--xorange); }
+.xp-contact { margin-top: 12px; font-size: 13px; color: #9a958c; letter-spacing: 0.5px; }
 
 /* ---------------------------------------------------------- leaderboard */
 .lb-list { display: flex; flex-direction: column; gap: 4px; }
