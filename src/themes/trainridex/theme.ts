@@ -40,14 +40,14 @@ export const trainridex: Theme = {
       chat: `${A}/icons/chat.webp`,
     },
   },
-  // TODO: drop train-specific audio in /themes/trainridex/audio/ and point here.
-  // For now we reuse BANKHEIST X clips so the game isn't silent.
+  // Music delivered (cinderscattle / thelasttraintonowhere / stationsteam).
+  // FX + voices still reuse BANKHEIST X until train-specific ones land.
   audio: {
-    motifLow: '/themes/bankheistx/audio/motif-low.mp3',
-    motifHigh: '/themes/bankheistx/audio/motif-high.mp3',
+    motifLow: '/themes/trainridex/audio/motif-low.mp3',
+    motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/bankheistx/audio/stash.mp3',
     crash: '/themes/bankheistx/audio/crash.mp3',
-    lobby: '/themes/bankheistx/audio/lobby.mp3',
+    lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/bankheistx/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
     voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-win-${n}.mp3`),
