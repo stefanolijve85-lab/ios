@@ -32,6 +32,16 @@ export function getTheme(key?: string | null): Theme {
   return THEMES[key ?? ''] ?? THEMES[DEFAULT_THEME_KEY];
 }
 
+// Resolve a theme key from a URL path (e.g. "/liftoffx" → "liftoffx"). Works on
+// the server and the client, so the right theme can paint on the very first
+// render (no flash of the default theme). Path-based routing is how
+// xitgames.com/<game> works.
+export function themeKeyForPath(pathname?: string | null): string {
+  const seg = (pathname ?? '').split('/').filter(Boolean)[0];
+  if (seg && THEMES[seg]) return seg;
+  return DEFAULT_THEME_KEY;
+}
+
 // Client-side resolver: ?theme= override → first path segment (/bankheistx) →
 // NEXT_PUBLIC_THEME → hostname. Path segment is how xitgames.com/<game> works.
 export function resolveClientThemeKey(): string {
