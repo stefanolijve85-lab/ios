@@ -48,6 +48,8 @@ const games = {
   bankheistx: { GROWTH_K: 0.21, MAX_MULTIPLIER: 100.0, MAX_RUN_MS: 22000 },
   liftoffx: { GROWTH_K: 0.30, MAX_MULTIPLIER: 1000.0, MAX_RUN_MS: 23000 },
   trainridex: { GROWTH_K: 0.24, MAX_MULTIPLIER: 200.0, MAX_RUN_MS: 22000 },
+  // DEEP DIVE X — descent into the abyss: medium-fast, high ceiling before the breach.
+  deepdivex: { GROWTH_K: 0.26, MAX_MULTIPLIER: 300.0, MAX_RUN_MS: 22000 },
 };
 
 const DEFAULT_GAME_KEY = 'bankheistx';

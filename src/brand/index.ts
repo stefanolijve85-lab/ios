@@ -24,6 +24,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: 'bankheistx', name: 'BANKHEIST X', domain: 'bankheistx.com', tagline: 'Lock it in. Cash out big.', live: true, card: '/brand/card-bankheistx.webp', maxX: 100, volatility: 'High' },
   { key: 'liftoffx', name: 'LIFTOFF X', domain: 'liftoffx.com', tagline: 'Ride it. Eject big.', live: true, url: 'https://www.liftoffx.com', card: '/brand/card-liftoffx.webp', maxX: 1000, volatility: 'Extreme' },
   { key: 'trainridex', name: 'TRAINRIDE X', domain: 'trainridex.com', tagline: 'Secure your fortune before the derailment.', live: true, card: '/brand/card-trainridex.webp', maxX: 200, volatility: 'Very high' },
+  { key: 'deepdivex', name: 'DEEP DIVE X', domain: 'deepdivex.com', tagline: 'Dive deep. Surface rich.', live: true, card: '/brand/card-deepdivex.webp', maxX: 300, volatility: 'High' },
 ];
 
 export const creditLine = () => `An ${PUBLISHER} game`;
