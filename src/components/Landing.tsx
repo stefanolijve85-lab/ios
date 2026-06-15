@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { creditLine } from '@/brand';
@@ -9,7 +9,16 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   const { state } = useGame();
   const theme = useTheme();
   const [clicked, setClicked] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const phase = state?.phase ?? 'betting';
+
+  // Kick the start screen video off the instant it can play (don't wait for the
+  // browser's lazy autoplay) so there's no "starts a beat too late" gap.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
+  }, [theme.assets.landingVideo]);
 
   // Once you've tapped PLAY, enter the game the moment the next betting window opens.
   useEffect(() => {
@@ -30,9 +39,11 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
       <div className={`landing-img-wrap${video ? ' has-video' : ''}`}>
         {video ? (
           <video
+            ref={videoRef}
             className="landing-video"
             src={video}
             autoPlay loop muted playsInline preload="auto"
+            onCanPlay={(e) => { e.currentTarget.play().catch(() => {}); }}
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element

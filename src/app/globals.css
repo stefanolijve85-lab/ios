@@ -522,7 +522,7 @@ input { font-family: inherit; }
   filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6));
   animation: pulsePlayImg 2.2s ease-in-out infinite;
 }
-.landing-vplay-img img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.landing-vplay-img img { display: block; width: 100%; height: auto; }
 .landing-vplay-img:active { transform: scale(0.98); }
 @keyframes pulsePlayImg { 50% { filter: drop-shadow(0 8px 26px rgba(0,0,0,0.6)) brightness(1.1); } }
 @keyframes pulsePlay {
@@ -663,12 +663,17 @@ input { font-family: inherit; }
 .vault-scene { position: absolute; inset: 0; z-index: 1; }
 .vault-scene img,
 .vault-scene video {
+  position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;            /* fill the whole zone — the vault reads BIG */
   object-position: center top;  /* anchor to the top so the vault's top is never cut */
   display: block;
   user-select: none; -webkit-user-drag: none;
 }
+/* cinematic scene video sits on top of the still and fades in once it can play,
+   so there's no black gap and no late start when a scene swaps in */
+.vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .25s ease; }
+.vault-scene video.scene-video.ready { opacity: 1; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
    stay fully visible while COVER fills the whole zone (no black bars). */
 .vault-scene img.is-heist,
