@@ -275,6 +275,11 @@ input { font-family: inherit; }
 }
 .xhero h1 span { color: var(--xorange); }
 .xhero p { margin: 14px auto 0; max-width: 520px; font-size: 14px; color: #b9b5ad; line-height: 1.5; }
+.xhero p.xhero-tag {
+  white-space: nowrap; font-weight: 700; color: #e7e3db;
+  font-size: clamp(15px, 4.6vw, 22px); letter-spacing: 0.3px;
+}
+.xhero p.xhero-tag span { color: var(--xorange); font-weight: 800; }
 .xfeatures {
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 18px;
 }

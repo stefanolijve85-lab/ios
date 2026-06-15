@@ -16,7 +16,7 @@ export default function Hub() {
 
       <section className="xhero">
         <h1>KNOW WHEN TO <span>XIT.</span></h1>
-        <p>Multiplayer crash games. Cash out, get out — before it&apos;s too late.</p>
+        <p className="xhero-tag"><span>GET OUT!</span> Before it&apos;s too late.</p>
         <div className="xfeatures">
           <span>🛡️ Provably fair</span>
           <span>👥 24/7 multiplayer</span>
