@@ -4,8 +4,13 @@ import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
 import SceneMotion from './SceneMotion';
-import { ladderTopFor, ladderRungs } from '@/lib/constants';
 import { euro, clock } from '@/lib/format';
+
+// ladder: a fixed stack of rungs whose VALUES scroll up as the round climbs,
+// with the marker floating near the top.
+const LADDER_N = 9;
+const MARKER_FRAC = 0.15; // where the marker hovers (fraction from the top)
+const fmtX = (v: number) => (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : String(Math.round(v))) + 'x';
 
 export default function Vault() {
   const { stateRef, liveMultiplier, serverNow, bets } = useGame();
@@ -18,23 +23,15 @@ export default function Vault() {
   const glowRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef<HTMLDivElement>(null);
+  const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
   const metersPerX = theme.ui?.metersPerX ?? 33;
   const depthOf = (m: number) => Math.max(0, Math.round((m - 1) * metersPerX));
-  const niceDepth = (m: number) => {
-    const d = depthOf(m);
-    return d < 100 ? Math.round(d / 5) * 5 : Math.round(d / 10) * 10;
-  };
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
-
-  // Dynamic ladder: rescales upward as the multiplier climbs past the top rung
-  // (so the game can show far more than 23x). topRef holds the live ceiling.
-  const [ladder, setLadder] = useState<number[]>(() => ladderRungs(ladderTopFor(1)));
-  const topRef = useRef<number>(ladderTopFor(1));
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -101,18 +98,25 @@ export default function Vault() {
 
       if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
-      // grow the ladder when the multiplier nears the top rung
-      const desiredTop = ladderTopFor(m);
-      if (desiredTop !== topRef.current) {
-        topRef.current = desiredTop;
-        setLadder(ladderRungs(desiredTop));
-      }
-
-      // smooth ladder indicator: log position so it lines up with the rungs
-      if (markerRef.current) {
-        const top = topRef.current;
-        const pos = Math.max(0, Math.min(1, 1 - Math.log(Math.max(1, m)) / Math.log(top)));
-        markerRef.current.style.top = (pos * 100) + '%';
+      // floating-marker ladder: the whole scale follows the multiplier so every
+      // number scrolls up while the marker stays fixed near the top.
+      {
+        const running = s?.phase === 'running';
+        const scaleM = running ? Math.max(m, 1.5) : 12; // static teaser while betting
+        const topVal = Math.pow(scaleM, 1 / (1 - MARKER_FRAC));
+        const lnTop = Math.log(topVal);
+        for (let i = 0; i < LADDER_N; i++) {
+          const el = rungRefs.current[i];
+          if (!el) continue;
+          const v = Math.pow(topVal, 1 - i / (LADDER_N - 1)); // i=0 → top, last → 1
+          el.textContent = depthMeter ? depthOf(v).toLocaleString('en-US') + 'm' : fmtX(v);
+        }
+        if (markerRef.current) {
+          const pos = running
+            ? Math.max(0, Math.min(1, 1 - Math.log(Math.max(1, m)) / lnTop))
+            : 1; // rests at the bottom (1x) while betting
+          markerRef.current.style.top = (pos * 100) + '%';
+        }
       }
 
       if (vaultRef.current) vaultRef.current.classList.toggle('danger', danger);
@@ -161,17 +165,18 @@ export default function Vault() {
         <div className="vault-depth"><span>DEPTH</span><b ref={depthRef}>0m</b></div>
       )}
 
-      {/* multiplier ladder — labelled as depth for DEEP DIVE (hidden on crash) */}
+      {/* ladder — fixed rungs whose values scroll up; marker floats near the top
+          (labelled as depth for DEEP DIVE; hidden on crash) */}
       {phase !== 'crashed' && (
         <div className={`vault-ladder${depthMeter ? ' depth' : ''}`}>
-          {ladder.map((r, i) => (
-            <div key={`${i}-${r}`} className={`rung${i === 0 ? ' top' : i <= 2 ? ' hot' : ''}`}>
-              {depthMeter
-                ? `${niceDepth(r).toLocaleString('en-US')}m`
-                : `${Number.isInteger(r) ? r : r.toFixed(1)}x`}
-            </div>
+          {Array.from({ length: LADDER_N }).map((_, i) => (
+            <div
+              key={i}
+              ref={(el) => { rungRefs.current[i] = el; }}
+              className={`rung${i === 0 ? ' top' : i <= 2 ? ' hot' : ''}`}
+            />
           ))}
-          <div className="ladder-marker" ref={markerRef} style={{ top: '100%' }} />
+          <div className="ladder-marker" ref={markerRef} style={{ top: '15%' }} />
         </div>
       )}
 
