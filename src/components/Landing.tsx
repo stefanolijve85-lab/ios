@@ -32,8 +32,7 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
           <video
             className="landing-video"
             src={video}
-            poster={theme.assets.landing}
-            autoPlay loop muted playsInline
+            autoPlay loop muted playsInline preload="auto"
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
