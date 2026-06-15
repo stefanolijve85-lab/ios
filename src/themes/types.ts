@@ -22,6 +22,7 @@ export interface ThemeAssets {
   logo: string;
   landing: string;
   landingVideo?: string; // optional cinematic for the start screen (overlay logo + PLAY)
+  playButton?: string;   // optional designed PLAY button image (overlaid on the video)
   sceneIdle: string;    // the "vault" / idle scene while betting + running
   sceneLose: string;    // the crash / robbery scene
   sceneWin: string;     // the secure / caught scene

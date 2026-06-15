@@ -515,6 +515,16 @@ input { font-family: inherit; }
   animation: pulsePlay 2.2s ease-in-out infinite;
 }
 .landing-vplay:active { transform: scale(0.985); }
+/* original designed PLAY button (image) overlaid on the video */
+.landing-vplay-img {
+  position: absolute; left: 6%; right: 6%; bottom: 6%;
+  background: none; border: none; padding: 0;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6));
+  animation: pulsePlayImg 2.2s ease-in-out infinite;
+}
+.landing-vplay-img img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.landing-vplay-img:active { transform: scale(0.98); }
+@keyframes pulsePlayImg { 50% { filter: drop-shadow(0 8px 26px rgba(0,0,0,0.6)) brightness(1.1); } }
 @keyframes pulsePlay {
   50% { box-shadow:
     0 0 48px rgba(var(--ambient-rgb),0.75),

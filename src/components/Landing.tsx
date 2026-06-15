@@ -50,7 +50,14 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
 
         {!clicked ? (
           video ? (
-            <button className="landing-vplay" onClick={handlePlay}>PLAY</button>
+            theme.assets.playButton ? (
+              <button className="landing-vplay-img" onClick={handlePlay} aria-label="Play">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={theme.assets.playButton} alt="PLAY" />
+              </button>
+            ) : (
+              <button className="landing-vplay" onClick={handlePlay}>PLAY</button>
+            )
           ) : (
             <button className="landing-play-hit" onClick={handlePlay} aria-label="Play">
               <span className="sr-only">PLAY</span>
