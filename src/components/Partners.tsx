@@ -55,6 +55,16 @@ export default function Partners() {
       </section>
 
       <section className="xp-block">
+        <h2>White label &amp; custom games</h2>
+        <p className="xp-sub">Your brand on our certified engine — without rebuilding the math.</p>
+        <div className="xp-feats">
+          <div className="xp-feat"><b>Custom-branded skins</b><span>Your logo, art, colours and copy on any title.</span></div>
+          <div className="xp-feat"><b>Exclusive titles</b><span>A game built for your casino, live in days.</span></div>
+          <div className="xp-feat"><b>Same fair core</b><span>Only the look changes — RTP &amp; fairness stay identical.</span></div>
+        </div>
+      </section>
+
+      <section className="xp-block">
         <h2>Game specs</h2>
         <div className="xp-specs">
           <div className="xp-spec-head">
