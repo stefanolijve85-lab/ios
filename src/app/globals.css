@@ -24,6 +24,7 @@
   --accent-rgb: 89,230,42;   /* bright neon accent (glows, borders, marker) */
   --btn-top: 11,42,17;       /* CTA button gradient top (dark) */
   --btn-bot: 6,24,10;        /* CTA button gradient bottom (darker) */
+  --ambient-rgb: 230,184,77; /* game's signature tone (wait box, spinner) */
 
   --danger: #ff3b3b;
   --danger-glow: #ff5c5c;
@@ -526,9 +527,9 @@ input { font-family: inherit; }
 .landing-wait {
   position: absolute; left: 3.5%; right: 3.5%; top: 82%; height: 15%;
   display: flex; align-items: center; justify-content: center; gap: 12px;
-  background: linear-gradient(180deg, rgba(var(--btn-top),0.96) 0%, rgba(var(--btn-bot),0.96) 100%);
-  border: 2px solid rgba(var(--accent-rgb),0.7); border-radius: 18px;
-  box-shadow: 0 0 26px rgba(var(--accent-rgb),0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(20,16,11,0.92) 0%, rgba(10,9,7,0.95) 100%);
+  border: 2px solid rgba(var(--ambient-rgb),0.6); border-radius: 18px;
+  box-shadow: 0 0 26px rgba(var(--ambient-rgb),0.4), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .landing-wait .vw-spinner { width: 32px; height: 32px; border-width: 4px; }
 .landing-wait .vw-spinner::after { inset: 7px; border-width: 2px; }
@@ -637,6 +638,8 @@ input { font-family: inherit; }
   position: absolute; inset: 0; z-index: 3; pointer-events: none;
   mix-blend-mode: screen;
 }
+/* steam reads as soft smoke, not crisp bubbles */
+.scene-motion.m-steam { filter: blur(4px); }
 /* subtle living drift on the idle scene (never on the result scenes) */
 .vault-scene img:not(.is-heist):not(.is-caught) {
   animation: sceneDrift 26s ease-in-out infinite alternate;
@@ -708,10 +711,10 @@ input { font-family: inherit; }
 /* clean spinning vault-wheel loader (simple wait icon) */
 .vw-spinner {
   width: 64px; height: 64px; border-radius: 50%;
-  border: 5px solid rgba(230,184,77,0.22);
-  border-top-color: var(--gold-hi);
-  border-right-color: var(--gold);
-  box-shadow: 0 0 16px rgba(230,184,77,0.35);
+  border: 5px solid rgba(var(--ambient-rgb),0.22);
+  border-top-color: rgb(var(--ambient-rgb));
+  border-right-color: rgba(var(--ambient-rgb),0.7);
+  box-shadow: 0 0 16px rgba(var(--ambient-rgb),0.35);
   position: relative;
   animation: vwSpin 0.9s linear infinite;
 }

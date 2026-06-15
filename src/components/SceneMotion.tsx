@@ -83,5 +83,5 @@ export default function SceneMotion() {
   }, [motion, liveMultiplier, stateRef]);
 
   if (!motion) return null;
-  return <canvas ref={ref} className="scene-motion" aria-hidden />;
+  return <canvas ref={ref} className={`scene-motion m-${motion.kind}`} aria-hidden />;
 }

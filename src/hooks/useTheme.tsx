@@ -28,6 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--accent-rgb', c.accentRgb);
     root.style.setProperty('--btn-top', c.btnTopRgb);
     root.style.setProperty('--btn-bot', c.btnBotRgb);
+    root.style.setProperty('--ambient-rgb', c.ambientRgb);
 
     // hand the audio engine this game's clip paths (used on first unlock)
     getAudio().configure(active.audio);

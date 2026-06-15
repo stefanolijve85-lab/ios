@@ -24,6 +24,7 @@ export const bankheistx: Theme = {
     accentRgb: '89,230,42',
     btnTopRgb: '11,42,17',
     btnBotRgb: '6,24,10',
+    ambientRgb: '230,184,77',
   },
   assets: {
     logo: `${A}/logo.webp`,

@@ -28,6 +28,7 @@ export const liftoffx: Theme = {
     accentRgb: '58,160,240',   // blue
     btnTopRgb: '10,46,88',
     btnBotRgb: '6,28,58',
+    ambientRgb: '58,160,240',
   },
   assets: {
     logo: `${A}/logo.webp`,

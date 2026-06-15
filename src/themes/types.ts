@@ -15,6 +15,7 @@ export interface ThemeColors {
   accentRgb: string;    // bright neon accent (glows/borders/marker/chips)
   btnTopRgb: string;    // CTA button gradient top (dark)
   btnBotRgb: string;    // CTA button gradient bottom (darker)
+  ambientRgb: string;   // the game's signature tone (wait box, spinner, ambient)
 }
 
 export interface ThemeAssets {

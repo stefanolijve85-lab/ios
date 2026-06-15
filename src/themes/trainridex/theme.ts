@@ -24,6 +24,7 @@ export const trainridex: Theme = {
     accentRgb: '89,230,42',
     btnTopRgb: '11,42,17',
     btnBotRgb: '6,24,10',
+    ambientRgb: '212,142,78',
   },
   assets: {
     logo: `${A}/logo.webp`,
