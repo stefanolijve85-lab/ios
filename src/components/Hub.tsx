@@ -1,39 +1,46 @@
-import type { CSSProperties } from 'react';
 import { CATALOG, PUBLISHER } from '@/brand';
-import { getTheme } from '@/themes';
 
-// XIT Games hub — the umbrella page listing every title. Each card opens that
-// game by path (/bankheistx), or jumps to an external URL for games that are
-// deployed separately (LIFTOFF X → liftoffx.com).
+// XIT Games hub (xitgames.com). "Know when to XIT." — hero + the three game
+// cards, each playable. Matches the brand mockup.
 export default function Hub() {
   return (
-    <main className="hub">
-      <div className="hub-head">
-        <div className="hub-brand">{PUBLISHER}</div>
-        <div className="hub-sub">PROVABLY FAIR CRASH GAMES · 97% RTP</div>
-      </div>
+    <div className="xhub">
+      <header className="xhub-top">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="xhub-logo" src="/brand/xit-logo.webp" alt={PUBLISHER} />
+        <a className="xhub-cta" href="#games">PLAY NOW</a>
+      </header>
 
-      <div className="hub-grid">
-        {CATALOG.map((g) => {
-          const t = getTheme(g.key);
-          return (
-            <a
-              key={g.key}
-              className={`hub-card${g.live ? '' : ' soon'}`}
-              href={g.url ?? `/${g.key}`}
-              style={{ ['--accent' as keyof CSSProperties]: t.colors.greenHi } as CSSProperties}
-            >
+      <section className="xhero">
+        <h1>KNOW WHEN TO <span>XIT.</span></h1>
+        <p>Multiplayer crash games. Cash out, get out — before it&apos;s too late.</p>
+        <div className="xfeatures">
+          <span>🛡️ Provably fair</span>
+          <span>👥 24/7 multiplayer</span>
+          <span>⚡ Instant payouts</span>
+        </div>
+      </section>
+
+      <section className="xgames" id="games">
+        <h2 className="xgames-title">OUR GAMES</h2>
+        <div className="xgames-grid">
+          {CATALOG.map((g) => (
+            <a key={g.key} className="xgame" href={g.url ?? `/${g.key}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="hub-logo" src={t.assets.logo} alt={g.name} />
-              <div className="hub-tag">{g.tagline}</div>
-              {!g.live && <div className="hub-badge">ART COMING SOON</div>}
-              <div className="hub-play">PLAY →</div>
+              <img className="xgame-img" src={g.card} alt={g.name} />
+              <div className="xgame-bar">
+                <span className="xgame-tag">{g.tagline}</span>
+                <span className="xgame-play">PLAY NOW →</span>
+              </div>
             </a>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      </section>
 
-      <div className="hub-foot">An {PUBLISHER} network</div>
-    </main>
+      <footer className="xfoot">
+        <div className="xfoot-brand">{PUBLISHER}</div>
+        <div className="xfoot-sub">Provably fair · 97% RTP · © {new Date().getFullYear()} {PUBLISHER}</div>
+      </footer>
+    </div>
   );
 }
