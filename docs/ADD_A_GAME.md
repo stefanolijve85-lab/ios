@@ -16,7 +16,8 @@ sizes/aspect ratios so the layout fits without tweaking CSS.
 | File | What | Size (reference) | Aspect | Notes |
 |------|------|------------------|--------|-------|
 | `logo.webp` | wordmark | ~660×157 | 4.2:1 | **transparent** background |
-| `landing.webp` | full landing page | 852×1846 | 0.46:1 (phone) | text + PLAY button **baked in**; PLAY must sit at ~87–98% height (the invisible tap area is fixed there) |
+| `landing.mp4` | **cinematic start screen (standard)** | portrait | 9:16 | logo + PLAY are overlaid; set `assets.landingVideo`. See `docs/video/landing-videos.md` |
+| `landing.webp` | start-screen poster / fallback | 852×1846 | 0.46:1 (phone) | first-frame poster behind the video (and used if no `landing.mp4`) |
 | `<idle>.webp` | idle/running scene | 760×997 | 0.76:1 (portrait) | shown `cover` anchored top → keep the subject in the **upper half** |
 | `<lose>.webp` | crash scene | 1024×759 | 1.35:1 (landscape) | character centred; fills via `cover` |
 | `<win>.webp` | secure/win scene | 853×632 | 1.35:1 (landscape) | character centred; fills via `cover` |
