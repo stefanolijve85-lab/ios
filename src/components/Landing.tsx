@@ -77,7 +77,7 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
         ) : (
           <div className="landing-wait">
             <div className="vw-spinner" />
-            <div className="vw-text">WAIT FOR NEXT VAULT</div>
+            <div className="vw-text">{theme.copy.waitForNext}</div>
           </div>
         )}
 

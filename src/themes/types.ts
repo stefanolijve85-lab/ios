@@ -62,6 +62,7 @@ export interface ThemeCopy {
   currentAmount: string;  // "CURRENT AMOUNT"
   wouldBeWorth: string;   // "WOULD BE WORTH"
   countdownLabel: string; // "VAULT CLOSES IN"
+  waitForNext: string;    // start-screen wait box: "WAITING FOR THE NEXT VAULT"
   // flash banners
   winFlash: string;       // "YOU GOT OUT!"
   loseFlash: string;      // "THEY GOT AWAY!"

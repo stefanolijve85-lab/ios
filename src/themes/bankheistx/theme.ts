@@ -61,6 +61,7 @@ export const bankheistx: Theme = {
     currentAmount: 'CURRENT AMOUNT',
     wouldBeWorth: 'WOULD BE WORTH',
     countdownLabel: 'VAULT CLOSES IN',
+    waitForNext: 'WAITING FOR THE NEXT VAULT',
     winFlash: 'YOU GOT OUT!',
     loseFlash: 'THEY GOT AWAY!',
     landingAlt: 'BANKHEIST X — Lock it in. Cash out big.',

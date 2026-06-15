@@ -79,6 +79,7 @@ export const liftoffx: Theme = {
     currentAmount: 'CURRENT PAYOUT',
     wouldBeWorth: 'WOULD BE WORTH',
     countdownLabel: 'LIFTOFF IN',
+    waitForNext: 'WAITING FOR THE NEXT ROCKET',
     winFlash: 'CLEAN EJECT!',
     loseFlash: 'SHE BLEW UP!',
     landingAlt: 'LIFTOFF X — Ride it. Eject big.',

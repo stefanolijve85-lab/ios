@@ -63,6 +63,7 @@ export const deepdivex: Theme = {
     currentAmount: 'CURRENT HAUL',
     wouldBeWorth: 'WOULD BE WORTH',
     countdownLabel: 'DESCENT IN',
+    waitForNext: 'WAITING FOR THE NEXT SUBMARINE',
     winFlash: 'YOU MADE IT OUT!',
     loseFlash: 'HULL BREACH!',
     landingAlt: 'DEEP DIVE X — Dive deep. Surface rich.',

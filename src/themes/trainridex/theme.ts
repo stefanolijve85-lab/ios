@@ -63,6 +63,7 @@ export const trainridex: Theme = {
     currentAmount: 'CURRENT AMOUNT',
     wouldBeWorth: 'WOULD BE WORTH',
     countdownLabel: 'TRAIN LEAVES IN',
+    waitForNext: 'WAITING FOR THE NEXT TRAIN',
     winFlash: 'YOU MADE IT!',
     loseFlash: 'DERAILED!',
     landingAlt: 'TRAINRIDE X — Secure your fortune before the derailment.',
