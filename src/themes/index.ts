@@ -30,11 +30,14 @@ export function getTheme(key?: string | null): Theme {
   return THEMES[key ?? ''] ?? THEMES[DEFAULT_THEME_KEY];
 }
 
-// Client-side resolver: ?theme= override → NEXT_PUBLIC_THEME → hostname.
+// Client-side resolver: ?theme= override → first path segment (/bankheistx) →
+// NEXT_PUBLIC_THEME → hostname. Path segment is how xitgames.com/<game> works.
 export function resolveClientThemeKey(): string {
   if (typeof window === 'undefined') return DEFAULT_THEME_KEY;
   const q = new URLSearchParams(window.location.search).get('theme');
   if (q && THEMES[q]) return q;
+  const seg = window.location.pathname.split('/').filter(Boolean)[0];
+  if (seg && THEMES[seg]) return seg;
   if (process.env.NEXT_PUBLIC_THEME && THEMES[process.env.NEXT_PUBLIC_THEME]) {
     return process.env.NEXT_PUBLIC_THEME;
   }
