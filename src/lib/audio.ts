@@ -265,13 +265,14 @@ class TensionAudio {
   }
 
   // Always stops the round motif; only plays the alarm + voice if the player
-  // actually lost (was still holding). If you already secured, you're safe → quiet.
+  // The derailment/explosion SFX plays whenever a round busts (the crash scene
+  // is on screen). The spoken panic line only fires if YOU were still aboard.
   crash(lost = true, idx = -1) {
     this.running = false;
     this.stopSources();
-    if (!lost) return;
     this.oneShot(this.buffers.crash, 1.0);
-    // voice line on its own bus, just after the alarm
+    if (!lost) return;
+    // voice line on its own bus, just after the crash
     if (this.voiceCrash.length) {
       const v = this.voiceCrash[idx] ?? this.voiceCrash[Math.floor(Math.random() * this.voiceCrash.length)];
       this.playVoice(v, 0.35);
