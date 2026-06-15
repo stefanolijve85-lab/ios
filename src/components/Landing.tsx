@@ -23,16 +23,40 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
     else setClicked(true);               // a round is running → wait for the next
   };
 
+  const video = theme.assets.landingVideo;
+
   return (
     <div className="landing">
-      <div className="landing-img-wrap">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="landing-img" src={theme.assets.landing} alt={theme.copy.landingAlt} />
+      <div className={`landing-img-wrap${video ? ' has-video' : ''}`}>
+        {video ? (
+          <video
+            className="landing-video"
+            src={video}
+            poster={theme.assets.landing}
+            autoPlay loop muted playsInline
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="landing-img" src={theme.assets.landing} alt={theme.copy.landingAlt} />
+        )}
+
+        {/* over a video we render the logo + a visible PLAY button (the static
+            landing image already has them baked in) */}
+        {video && (
+          <div className="landing-vov">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="landing-vlogo" src={theme.assets.logo} alt={theme.name} />
+          </div>
+        )}
 
         {!clicked ? (
-          <button className="landing-play-hit" onClick={handlePlay} aria-label="Play">
-            <span className="sr-only">PLAY</span>
-          </button>
+          video ? (
+            <button className="landing-vplay" onClick={handlePlay}>PLAY</button>
+          ) : (
+            <button className="landing-play-hit" onClick={handlePlay} aria-label="Play">
+              <span className="sr-only">PLAY</span>
+            </button>
+          )
         ) : (
           <div className="landing-wait">
             <div className="vw-spinner" />
