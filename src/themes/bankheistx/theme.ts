@@ -63,5 +63,4 @@ export const bankheistx: Theme = {
     loseFlash: 'THEY GOT AWAY!',
     landingAlt: 'BANKHEIST X — Lock it in. Cash out big.',
   },
-  ui: { motion: { kind: 'embers', color: '#ffcf6b' } },
 };
