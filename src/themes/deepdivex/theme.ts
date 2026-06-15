@@ -61,4 +61,6 @@ export const deepdivex: Theme = {
     loseFlash: 'HULL BREACH!',
     landingAlt: 'DEEP DIVE X — Dive deep. Surface rich.',
   },
+  // the DEEP DIVE twist: the ladder + a live readout read as ocean depth
+  ui: { depthMeter: true, metersPerX: 33 },
 };

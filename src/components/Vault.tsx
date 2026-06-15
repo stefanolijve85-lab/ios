@@ -16,6 +16,16 @@ export default function Vault() {
   const vaultRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLDivElement>(null);
+  const depthRef = useRef<HTMLDivElement>(null);
+
+  // DEEP DIVE twist: read the multiplier as ocean depth.
+  const depthMeter = !!theme.ui?.depthMeter;
+  const metersPerX = theme.ui?.metersPerX ?? 33;
+  const depthOf = (m: number) => Math.max(0, Math.round((m - 1) * metersPerX));
+  const niceDepth = (m: number) => {
+    const d = depthOf(m);
+    return d < 100 ? Math.round(d / 5) * 5 : Math.round(d / 10) * 10;
+  };
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
@@ -56,6 +66,7 @@ export default function Vault() {
 
       if (amountRef.current) amountRef.current.textContent = euro(amount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
+      if (depthRef.current) depthRef.current.textContent = depthOf(m).toLocaleString('en-US') + 'm';
 
       // "YOU MISSED" — extra you'd have had if you hadn't stashed yet
       if (missedRef.current) {
@@ -141,12 +152,19 @@ export default function Vault() {
         </div>
       )}
 
-      {/* multiplier ladder (hidden only during the robbery) */}
+      {/* live DEPTH readout (DEEP DIVE only), shown while descending */}
+      {depthMeter && phase === 'running' && (
+        <div className="vault-depth"><span>DEPTH</span><b ref={depthRef}>0m</b></div>
+      )}
+
+      {/* multiplier ladder — labelled as depth for DEEP DIVE (hidden on crash) */}
       {phase !== 'crashed' && (
-        <div className="vault-ladder">
+        <div className={`vault-ladder${depthMeter ? ' depth' : ''}`}>
           {ladder.map((r, i) => (
             <div key={`${i}-${r}`} className={`rung${i === 0 ? ' top' : i <= 2 ? ' hot' : ''}`}>
-              {Number.isInteger(r) ? r : r.toFixed(1)}x
+              {depthMeter
+                ? `${niceDepth(r).toLocaleString('en-US')}m`
+                : `${Number.isInteger(r) ? r : r.toFixed(1)}x`}
             </div>
           ))}
           <div className="ladder-marker" ref={markerRef} style={{ top: '100%' }} />

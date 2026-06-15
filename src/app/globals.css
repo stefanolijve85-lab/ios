@@ -757,6 +757,24 @@ input { font-family: inherit; }
   transition: top .12s linear;
   pointer-events: none;
 }
+/* DEEP DIVE: ladder rungs read as metres (a touch narrower text) */
+.vault-ladder.depth .rung { font-size: 10px; letter-spacing: -0.2px; }
+/* live DEPTH readout while descending */
+.vault-depth {
+  position: absolute; left: 50%; top: 7%; transform: translateX(-50%);
+  z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  pointer-events: none; white-space: nowrap;
+}
+.vault-depth span {
+  font-size: 9px; letter-spacing: 3px; font-weight: 800; color: #bfeff8;
+  text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 1px 2px #000;
+}
+.vault-depth b {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: clamp(20px, 6.5vw, 30px); font-weight: 900; color: #d8f7ff;
+  text-shadow: 0 0 4px #000, 0 2px 6px #000, 0 0 16px var(--green-glow);
+  font-variant-numeric: tabular-nums;
+}
 .ladder-marker::after {
   content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
   width: 8px; height: 8px; border-radius: 50%;

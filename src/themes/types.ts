@@ -56,6 +56,13 @@ export interface ThemeCopy {
   landingAlt: string;
 }
 
+// Optional per-theme UI variants (bigger than a skin, opt-in per game).
+export interface ThemeUI {
+  // Reframe the multiplier ladder + a live readout as a DEPTH meter (DEEP DIVE).
+  depthMeter?: boolean;
+  metersPerX?: number; // depth(m) = round((multiplier - 1) * metersPerX)
+}
+
 export interface Theme {
   key: string;            // "bankheistx"
   name: string;           // "BANKHEIST X"
@@ -65,4 +72,5 @@ export interface Theme {
   assets: ThemeAssets;
   audio: ThemeAudio;
   copy: ThemeCopy;
+  ui?: ThemeUI;
 }
