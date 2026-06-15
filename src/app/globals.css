@@ -326,7 +326,46 @@ input { font-family: inherit; }
 
 /* ----------------------------------------------------- partners (B2B) page */
 .xp-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 3px; color: var(--xorange); margin-bottom: 10px; }
-.xp-big { display: inline-block; margin-top: 20px; padding: 13px 26px; font-size: 13px; }
+.xp-big { display: inline-block; padding: 13px 26px; font-size: 13px; }
+.xp-herobtns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
+.xp-ghost {
+  display: inline-block; text-decoration: none; padding: 13px 24px; border-radius: 999px;
+  font-weight: 700; font-size: 13px; letter-spacing: 1px; color: #f3f1ee;
+  border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.03);
+}
+.xp-ghost:hover { border-color: rgba(247,147,30,0.5); }
+.xp-sub { font-size: 13px; color: #9a958c; margin: -6px 0 14px; }
+.xp-note { font-size: 12px; color: #8a857c; margin-top: 12px; line-height: 1.5; }
+
+/* game spec table */
+.xp-specs { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+.xp-spec-head, .xp-spec-row {
+  display: grid; grid-template-columns: 1.6fr 0.8fr 1fr 1fr; gap: 6px; align-items: center;
+  padding: 12px 14px; font-size: 13px;
+}
+.xp-spec-head { background: rgba(255,255,255,0.04); font-size: 10px; letter-spacing: 1.5px; color: #8a857c; font-weight: 800; text-transform: uppercase; }
+.xp-spec-row { border-top: 1px solid rgba(255,255,255,0.06); color: #c7c2ba; font-variant-numeric: tabular-nums; }
+.xp-spec-name { font-family: 'Sora', sans-serif; font-weight: 800; color: #fff; font-size: 13px; }
+
+/* integration steps */
+.xp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.xp-step {
+  text-align: center; padding: 16px 8px; border-radius: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.xp-step b {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 999px; margin-bottom: 8px;
+  background: linear-gradient(180deg, var(--xorange-hi), var(--xorange)); color: #1a1206; font-weight: 900;
+}
+.xp-step span { display: block; font-size: 12px; color: #c7c2ba; }
+
+/* closing CTA band */
+.xp-cta { text-align: center; padding: 30px 18px; margin: 8px 14px 0; border-radius: 18px;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(247,147,30,0.12), transparent 70%), rgba(255,255,255,0.02);
+  border: 1px solid rgba(247,147,30,0.25); }
+.xp-cta h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; margin: 0 0 8px; }
+.xp-cta p { font-size: 14px; color: #b9b5ad; margin: 0 0 18px; }
 .xp-stats {
   display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 18px 8px;
 }
