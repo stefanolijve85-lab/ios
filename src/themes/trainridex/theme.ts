@@ -45,7 +45,7 @@ export const trainridex: Theme = {
   audio: {
     motifLow: '/themes/trainridex/audio/motif-low.mp3',
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
-    stash: '/themes/bankheistx/audio/stash.mp3',
+    stash: '/themes/trainridex/audio/stash.mp3',
     crash: '/themes/bankheistx/audio/crash.mp3',
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/bankheistx/audio/tick.mp3',
