@@ -67,7 +67,7 @@ export interface ThemeUI {
   depthMeter?: boolean;
   metersPerX?: number; // depth(m) = round((multiplier - 1) * metersPerX)
   // Ambient particle motion over the scene; intensity rises with the multiplier.
-  motion?: { kind: 'bubbles' | 'embers' | 'steam'; color: string };
+  motion?: { kind: 'bubbles' | 'embers' | 'steam' | 'speed'; color: string };
 }
 
 export interface Theme {
