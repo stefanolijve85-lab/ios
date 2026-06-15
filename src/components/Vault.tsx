@@ -144,8 +144,9 @@ export default function Vault() {
           draggable={false}
         />
       </div>
-      {/* ambient themed particles (intensify with the multiplier) */}
-      <SceneMotion />
+      {/* ambient themed particles — only over the live/idle scene, never on the
+          crash or secure result art */}
+      {!isSecured && phase !== 'crashed' && <SceneMotion />}
 
       {/* money glow only during the live round — never over the result scenes */}
       {!isSecured && phase !== 'crashed' && <div className="vault-glow" ref={glowRef} />}
