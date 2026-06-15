@@ -1,12 +1,14 @@
 import type { Theme } from './types';
 import { bankheistx } from './bankheistx/theme';
 import { liftoffx } from './liftoffx/theme';
+import { trainridex } from './trainridex/theme';
 
 export type { Theme } from './types';
 
 export const THEMES: Record<string, Theme> = {
   bankheistx,
   liftoffx,
+  trainridex,
 };
 
 export const DEFAULT_THEME_KEY = 'bankheistx';

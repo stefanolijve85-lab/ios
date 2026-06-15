@@ -35,6 +35,8 @@ const games = {
   bankheistx: { GROWTH_K: 0.21, MAX_MULTIPLIER: 100.0, MAX_RUN_MS: 22000 },
   // LIFTOFF X — fast, "to the moon" rocket: climbs quicker, far higher ceiling.
   liftoffx: { GROWTH_K: 0.30, MAX_MULTIPLIER: 1000.0, MAX_RUN_MS: 23000 },
+  // TRAINRIDE X — runaway train: medium burn, high ceiling before the derail.
+  trainridex: { GROWTH_K: 0.24, MAX_MULTIPLIER: 200.0, MAX_RUN_MS: 22000 },
 };
 
 const DEFAULT_GAME_KEY = 'bankheistx';
