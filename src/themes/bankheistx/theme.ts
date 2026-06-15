@@ -63,4 +63,6 @@ export const bankheistx: Theme = {
     loseFlash: 'THEY GOT AWAY!',
     landingAlt: 'BANKHEIST X — Lock it in. Cash out big.',
   },
+  // money stacks that pile up on the vault floor as the multiplier climbs
+  ui: { growth: { sprites: [`${A}/stack.webp`, `${A}/stack-2.webp`] } },
 };

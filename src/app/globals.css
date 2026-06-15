@@ -640,6 +640,19 @@ input { font-family: inherit; }
 }
 /* steam reads as soft smoke, not crisp bubbles */
 .scene-motion.m-steam { filter: blur(4px); }
+
+/* loot pile that grows with the multiplier */
+.vault-stacks { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.vault-stack {
+  position: absolute;
+  aspect-ratio: 380 / 300;
+  background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+  transform: translateX(-50%) translateY(14px) scale(0.55);
+  opacity: 0;
+  filter: drop-shadow(0 5px 7px rgba(0,0,0,0.55));
+  transition: opacity .45s ease, transform .5s cubic-bezier(.2,1.25,.3,1);
+}
+.vault-stack.on { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 /* subtle living drift on the idle scene (never on the result scenes) */
 .vault-scene img:not(.is-heist):not(.is-caught) {
   animation: sceneDrift 26s ease-in-out infinite alternate;

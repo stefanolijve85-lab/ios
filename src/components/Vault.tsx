@@ -4,6 +4,7 @@ import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
 import SceneMotion from './SceneMotion';
+import StackGrowth from './StackGrowth';
 import { euro, clock } from '@/lib/format';
 
 // ladder: a fixed stack of rungs whose VALUES scroll up as the round climbs,
@@ -147,6 +148,8 @@ export default function Vault() {
       {/* ambient themed particles — only over the live/idle scene, never on the
           crash or secure result art */}
       {!isSecured && phase !== 'crashed' && <SceneMotion />}
+      {/* loot that piles up with the multiplier (themed) */}
+      {!isSecured && phase !== 'crashed' && <StackGrowth />}
 
       {/* money glow only during the live round — never over the result scenes */}
       {!isSecured && phase !== 'crashed' && <div className="vault-glow" ref={glowRef} />}

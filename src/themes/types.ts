@@ -68,6 +68,8 @@ export interface ThemeUI {
   metersPerX?: number; // depth(m) = round((multiplier - 1) * metersPerX)
   // Ambient particle motion over the scene; intensity rises with the multiplier.
   motion?: { kind: 'bubbles' | 'embers' | 'steam' | 'speed'; color: string };
+  // Loot that piles up as the multiplier climbs (sprite stacks revealed one by one).
+  growth?: { sprites: string[] };
 }
 
 export interface Theme {
