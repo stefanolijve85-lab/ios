@@ -44,14 +44,14 @@ export default function Partners() {
 
       <section className="xp-block">
         <h2>Why {PUBLISHER}</h2>
-        <ul className="xp-list">
-          <li><b>Provably fair</b> — every round is committed before bets and verifiable by the player (HMAC-SHA256 commit–reveal).</li>
-          <li><b>One engine, many games</b> — new titles are a theme on a shared, certifiable core. Faster to launch, one place to audit.</li>
-          <li><b>Per-game feel, shared math</b> — tune volatility &amp; pacing per title while the RTP stays identical everywhere.</li>
-          <li><b>Multiplayer &amp; social</b> — shared live rounds, chat, a live-wins feed and a leaderboard, out of the box.</li>
-          <li><b>Mobile-first HTML5</b> — instant-play in the browser, no download, portrait-optimised, low latency.</li>
-          <li><b>Fast time-to-market</b> — a new branded title in days, not months.</li>
-        </ul>
+        <div className="xp-feats">
+          <div className="xp-feat"><b>Provably fair</b><span>Every round committed before bets and verifiable by players.</span></div>
+          <div className="xp-feat"><b>One engine, many games</b><span>New titles ship on a shared, certifiable core.</span></div>
+          <div className="xp-feat"><b>Shared RTP, own feel</b><span>Tune volatility per title; the RTP stays identical.</span></div>
+          <div className="xp-feat"><b>Multiplayer &amp; social</b><span>Live rounds, chat, wins feed and a leaderboard.</span></div>
+          <div className="xp-feat"><b>Mobile-first HTML5</b><span>Instant-play in the browser, no download, low latency.</span></div>
+          <div className="xp-feat"><b>Fast to launch</b><span>A new branded title in days, not months.</span></div>
+        </div>
       </section>
 
       <section className="xp-block">

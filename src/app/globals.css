@@ -378,6 +378,19 @@ input { font-family: inherit; }
 .xp-stat span { display: block; margin-top: 4px; font-size: 11px; letter-spacing: 0.5px; color: #9a958c; }
 .xp-block { padding: 22px 18px; }
 .xp-block h2 { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+.xp-feats { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .xp-feats { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 860px) { .xp-feats { grid-template-columns: repeat(3, 1fr); } }
+.xp-feat {
+  padding: 16px; border-radius: 14px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.xp-feat b {
+  display: block; font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: #fff;
+  padding-left: 22px; position: relative; margin-bottom: 6px;
+}
+.xp-feat b::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
+.xp-feat span { display: block; font-size: 13px; line-height: 1.45; color: #b9b5ad; }
 .xp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .xp-list li { position: relative; padding-left: 22px; font-size: 14px; line-height: 1.5; color: #c7c2ba; }
 .xp-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
