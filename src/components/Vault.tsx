@@ -150,6 +150,7 @@ export default function Vault() {
   // picture fills the whole scene box edge to edge (themeable, default none).
   const sceneZoom = theme.ui?.sceneZoom ?? 1;
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
+  const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -178,6 +179,7 @@ export default function Vault() {
             playsInline
             preload="auto"
             onCanPlay={(e) => {
+              e.currentTarget.playbackRate = sceneSpeed;
               e.currentTarget.play().catch(() => {});
               e.currentTarget.classList.add('ready');
             }}

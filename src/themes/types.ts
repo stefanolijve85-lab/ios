@@ -81,6 +81,8 @@ export interface ThemeUI {
   // bars baked in — scales the video up so the picture fills the scene box edge
   // to edge (>1 crops the empty/black margins). Default 1 (no zoom).
   sceneZoom?: number;
+  // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
+  sceneSpeed?: number;
 }
 
 export interface Theme {
