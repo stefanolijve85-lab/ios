@@ -21,6 +21,9 @@ export const deepdivex: Theme = {
     greenGlow: '#27B8D6',
     greenDeep: '#08566B',
     greenMuted: '#4FA8BA',
+    accentRgb: '47,208,230',   // cyan
+    btnTopRgb: '10,58,74',     // dark teal-blue
+    btnBotRgb: '6,34,46',
   },
   assets: {
     logo: `${A}/logo.webp`,

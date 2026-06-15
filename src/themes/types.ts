@@ -11,6 +11,10 @@ export interface ThemeColors {
   greenGlow: string;    // glow
   greenDeep: string;    // dark gradient bottom
   greenMuted: string;   // labels / secondary
+  // RGB triplets (e.g. "47,208,230") driving the themeable accent in globals.css
+  accentRgb: string;    // bright neon accent (glows/borders/marker/chips)
+  btnTopRgb: string;    // CTA button gradient top (dark)
+  btnBotRgb: string;    // CTA button gradient bottom (darker)
 }
 
 export interface ThemeAssets {

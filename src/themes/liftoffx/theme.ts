@@ -25,6 +25,9 @@ export const liftoffx: Theme = {
     greenGlow: '#2E9CE6',
     greenDeep: '#0A2E58',
     greenMuted: '#5A8FBE',
+    accentRgb: '58,160,240',   // blue
+    btnTopRgb: '10,46,88',
+    btnBotRgb: '6,28,58',
   },
   assets: {
     logo: `${A}/logo.webp`,

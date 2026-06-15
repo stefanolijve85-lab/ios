@@ -24,6 +24,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--green-glow', c.greenGlow);
     root.style.setProperty('--green-deep', c.greenDeep);
     root.style.setProperty('--green-muted', c.greenMuted);
+    // themeable accent (drives the rgba() colours in globals.css)
+    root.style.setProperty('--accent-rgb', c.accentRgb);
+    root.style.setProperty('--btn-top', c.btnTopRgb);
+    root.style.setProperty('--btn-bot', c.btnBotRgb);
 
     // hand the audio engine this game's clip paths (used on first unlock)
     getAudio().configure(active.audio);
