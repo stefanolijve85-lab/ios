@@ -40,8 +40,8 @@ export const trainridex: Theme = {
       chat: `${A}/icons/chat.webp`,
     },
   },
-  // Music delivered (cinderscattle / thelasttraintonowhere / stationsteam).
-  // FX + voices still reuse BANKHEIST X until train-specific ones land.
+  // Full TRAINRIDE X audio set: music (cinderscattle / thelasttraintonowhere /
+  // stationsteam), FX (cash-out / derailment / countdown) and voice lines.
   audio: {
     motifLow: '/themes/trainridex/audio/motif-low.mp3',
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
@@ -49,13 +49,7 @@ export const trainridex: Theme = {
     crash: '/themes/trainridex/audio/crash.mp3',
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
-    voiceCrash: [
-      '/themes/trainridex/audio/voice-crash-1.mp3',
-      '/themes/trainridex/audio/voice-crash-2.mp3',
-      '/themes/bankheistx/audio/voice-crash-3.mp3',
-      '/themes/bankheistx/audio/voice-crash-4.mp3',
-      '/themes/bankheistx/audio/voice-crash-5.mp3',
-    ],
+    voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-crash-${n}.mp3`),
     voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-win-${n}.mp3`),
   },
   copy: {
