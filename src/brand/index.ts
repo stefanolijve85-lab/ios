@@ -19,7 +19,7 @@ export interface CatalogEntry {
 
 export const CATALOG: CatalogEntry[] = [
   { key: 'bankheistx', name: 'BANKHEIST X', domain: 'bankheistx.com', tagline: 'Lock it in. Cash out big.', live: true },
-  { key: 'liftoffx', name: 'LIFTOFF X', domain: 'liftoffx.com', tagline: 'Ride it. Eject big.', live: true },
+  { key: 'liftoffx', name: 'LIFTOFF X', domain: 'liftoffx.com', tagline: 'Ride it. Eject big.', live: true, url: 'https://www.liftoffx.com' },
   { key: 'trainridex', name: 'TRAINRIDE X', domain: 'trainridex.com', tagline: 'Secure your fortune before the derailment.', live: true },
 ];
 
