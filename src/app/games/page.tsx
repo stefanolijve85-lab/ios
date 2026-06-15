@@ -25,7 +25,7 @@ export default function GamesHub() {
             <a
               key={g.key}
               className={`hub-card${g.live ? '' : ' soon'}`}
-              href={`/?theme=${g.key}`}
+              href={g.url ?? `/?theme=${g.key}`}
               style={{ ['--accent' as keyof CSSProperties]: t.colors.greenHi } as CSSProperties}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

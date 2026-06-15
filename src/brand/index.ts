@@ -13,6 +13,8 @@ export interface CatalogEntry {
   domain: string;  // its own domain
   tagline: string;
   live: boolean;
+  url?: string;    // external URL — if set, the hub links here (a separately
+                   // deployed game) instead of /?theme=<key> on this engine
 }
 
 export const CATALOG: CatalogEntry[] = [
