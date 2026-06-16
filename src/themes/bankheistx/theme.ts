@@ -39,7 +39,6 @@ export const bankheistx: Theme = {
     sceneWinVideo: `${A}/scene-win-v2.mp4`,
     scenePosters: {
       idle: `${A}/scene-idle-poster.webp`,
-      lose: `${A}/scene-lose-poster.webp`,
       win: `${A}/scene-win-poster.webp`,
     },
     icons: {
