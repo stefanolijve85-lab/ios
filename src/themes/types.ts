@@ -103,6 +103,9 @@ export interface ThemeUI {
   // Loop just the last N seconds of the idle clip when it ends (instead of
   // holding the last frame) — e.g. the rocket keeps flying while the round runs.
   idleTailLoop?: number;
+  // How long before the round starts the countdown (tick) clip fires, so it ends
+  // exactly at zero. Default 4600ms (the bomb-clock); match a shorter countdown.
+  tickLeadMs?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
   sceneSpeed?: number;
   // Loop scene videos? Default true. Set false to play once and hold on the

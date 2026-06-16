@@ -93,8 +93,9 @@ export default function Vault() {
         const remaining = (s.phaseEndsAt ?? 0) - serverNow();
         text = clock(remaining);
         w = remaining <= 5000;
-        // play the 4.6s bomb-clock so it ends right when the vault closes (0s)
-        if (!tickFired && remaining <= 4600 && remaining > 0) {
+        // fire the countdown clip so it ends right at zero (themeable lead time;
+        // 4.6s bomb-clock by default, shorter for LIFTOFF's launch countdown)
+        if (!tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
           getAudio().tick();
           tickFired = true;
         }

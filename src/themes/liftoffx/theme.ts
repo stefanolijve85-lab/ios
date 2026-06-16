@@ -60,14 +60,16 @@ export const liftoffx: Theme = {
       chat: '/themes/deepdivex/icons/chat.webp',
     },
   },
-  // fallback audio (BANKHEIST X) until LIFTOFF-native audio lands
+  // Native LIFTOFF FX restored from the old Rocket Rush project (countdown /
+  // explosion / engine); music + voice lines still use the BANKHEIST fallback.
   audio: {
     motifLow: '/themes/bankheistx/audio/motif-low.mp3',
     motifHigh: '/themes/bankheistx/audio/motif-high.mp3',
     stash: '/themes/bankheistx/audio/stash.mp3',
-    crash: '/themes/bankheistx/audio/crash.mp3',
+    crash: `${A}/audio/explosion.mp3`,
+    launch: `${A}/audio/engine.mp3`,   // rocket roar at lift-off (round start)
     lobby: '/themes/bankheistx/audio/lobby.mp3',
-    tick: '/themes/bankheistx/audio/tick.mp3',
+    tick: `${A}/audio/countdown.mp3`,  // the launch countdown over the betting clock
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
     voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-win-${n}.mp3`),
   },
@@ -101,5 +103,6 @@ export const liftoffx: Theme = {
     idleSpeedBetting: 0.35, // ignition crawls through the countdown (rocket stays on the pad)
     idleSpeed: 0.7,         // then speeds up for the lift-off + flight when the round runs
     idleTailLoop: 1.5,      // keep the rocket flying while the round runs
+    tickLeadMs: 3700,       // the ~3.7s countdown clip ends right at lift-off
   },
 };
