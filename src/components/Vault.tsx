@@ -158,16 +158,9 @@ export default function Vault() {
           When the theme ships cinematic scene videos we loop those instead of
           the static stills (e.g. LIFTOFF X). */}
       <div className="vault-scene">
-        {/* still underneath — paints instantly so there's never a black gap
-            while a cinematic scene video buffers/decodes in */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={sceneClass}
-          src={sceneImg}
-          alt={theme.name}
-          draggable={false}
-        />
-        {sceneVideo && (
+        {sceneVideo ? (
+          // cinematic scene: play the video only (fades in over the dark scene
+          // background) — no static still flashing before it
           <video
             key={sceneVideo}
             className={`scene-video ${sceneClass}`}
@@ -183,6 +176,14 @@ export default function Vault() {
               e.currentTarget.play().catch(() => {});
               e.currentTarget.classList.add('ready');
             }}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className={sceneClass}
+            src={sceneImg}
+            alt={theme.name}
+            draggable={false}
           />
         )}
       </div>

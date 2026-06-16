@@ -664,7 +664,7 @@ input { font-family: inherit; }
 .vault.danger { filter: drop-shadow(0 0 26px rgba(255,40,40,0.45)); }
 
 /* the full vault scene render fills the area */
-.vault-scene { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
+.vault-scene { position: absolute; inset: 0; z-index: 1; overflow: hidden; background: #08080b; }
 .vault-scene img,
 .vault-scene video {
   position: absolute; inset: 0;
