@@ -4,6 +4,7 @@ import { getSocket } from '@/lib/socket';
 import { getAudio } from '@/lib/audio';
 import { multiplierAt, MAX_MULTIPLIER, GROWTH_K, HOUSE_EDGE } from '@/lib/constants';
 import { useTheme } from '@/hooks/useTheme';
+import { netWin } from '@/lib/format';
 import type { GameState, ChatMessage, ActivityItem, BetState, LeaderboardEntry } from '@/lib/types';
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
@@ -161,7 +162,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
       const i = Math.floor(Math.random() * themeRef.current.audio.voiceWin.length);
       setFlash({ kind: 'win', text: themeRef.current.copy.winFlash, key: Date.now() });
-      setLastWin(payout);
+      setLastWin(netWin(payout, multiplier)); // show the profit, not stake + profit
       audio.playStash(i);
     };
 

@@ -51,7 +51,8 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     if (!(phase === 'running' && holding)) return;
     let raf = 0;
     const loop = () => {
-      if (valueRef.current && bet) valueRef.current.textContent = euro(bet.amount * liveMultiplier());
+      // show the live WINNINGS (profit), not stake + profit
+      if (valueRef.current && bet) valueRef.current.textContent = euro(bet.amount * (liveMultiplier() - 1));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -126,7 +127,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
     big = theme.copy.cashOut; sub = theme.copy.cashOutSub;
     onClick = () => stash(slot);
   } else if (cashed) {
-    cls += ' done'; big = theme.copy.bagSecured(euro(bet!.payout));
+    cls += ' done'; big = theme.copy.bagSecured(euro(bet!.payout - bet!.amount));
     sub = null; disabled = true;
   } else if (phase === 'crashed' && bet && !cashed) {
     cls += ' placed'; big = theme.copy.crashedTile;
@@ -152,7 +153,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
         <span className="big">
           {big}
           {phase === 'running' && holding && (
-            <> <span ref={valueRef}>{euro(bet!.amount * (state?.multiplier ?? 1))}</span></>
+            <> <span ref={valueRef}>{euro(bet!.amount * ((state?.multiplier ?? 1) - 1))}</span></>
           )}
         </span>
         {sub && <span className="sub">{sub}</span>}

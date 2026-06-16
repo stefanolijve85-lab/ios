@@ -1,7 +1,7 @@
 'use client';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
-import { euro } from '@/lib/format';
+import { euro, netWin } from '@/lib/format';
 
 export default function Leaderboard({ onClose }: { onClose: () => void }) {
   const { leaderboard } = useGame();
@@ -26,7 +26,7 @@ export default function Leaderboard({ onClose }: { onClose: () => void }) {
                 <span className="lb-rank">{i + 1}</span>
                 <span className="lb-name">{e.name}</span>
                 <span className="lb-mult">{e.multiplier ? `${e.multiplier.toFixed(2)}x` : ''}</span>
-                <span className="lb-amt">{euro(e.amount)}</span>
+                <span className="lb-amt">{euro(netWin(e.amount, e.multiplier))}</span>
               </div>
             ))}
           </div>

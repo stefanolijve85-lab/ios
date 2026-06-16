@@ -1,7 +1,7 @@
 'use client';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
-import { euro } from '@/lib/format';
+import { euro, netWin } from '@/lib/format';
 
 function ago(ts: number): string {
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
@@ -24,7 +24,7 @@ export default function LiveActivity() {
               <div>
                 <span className="nm">{a.name}</span>{' '}
                 {a.kind === 'stash' ? (
-                  <>{theme.copy.securedVerb} <span className="amt">{euro(a.amount)}</span></>
+                  <>{theme.copy.securedVerb} <span className="amt">{euro(netWin(a.amount, a.multiplier ?? 0))}</span></>
                 ) : (
                   <>lost <span className="amt">{euro(a.amount)}</span></>
                 )}

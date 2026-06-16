@@ -62,9 +62,10 @@ export default function Vault() {
       // Counter keeps running on your bet (even after you stash); falls back to
       // an illustrative pot when you have no bet.
       const baseStake = st.active > 0 ? st.active : st.cashed > 0 ? st.cashed : 100;
-      const amount = baseStake * m;
+      const amount = baseStake * m;            // gross value of the position (for "YOU MISSED")
+      const winAmount = baseStake * (m - 1);   // the WINNINGS (profit) — stake excluded
 
-      if (amountRef.current) amountRef.current.textContent = euro(amount);
+      if (amountRef.current) amountRef.current.textContent = euro(winAmount);
       if (multRef.current) multRef.current.textContent = m.toFixed(2) + 'x';
       if (depthRef.current) depthRef.current.textContent = depthOf(m).toLocaleString('en-US') + 'm';
 
