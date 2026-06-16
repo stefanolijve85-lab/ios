@@ -681,6 +681,13 @@ input { font-family: inherit; }
 .vault-scene img.scene-still { z-index: 1; }
 .vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .3s ease; transform-origin: center 18%; }
 .vault-scene video.scene-video.active { opacity: 1; }
+/* once the idle clip holds its last frame, gently drift it (slow zoom in/out
+   with eased turns) so long rounds keep smooth motion, never a frozen still */
+.vault-scene video.scene-video.held {
+  transform-origin: center 48%;
+  animation: idleDrift 11s ease-in-out 1s infinite alternate;
+}
+@keyframes idleDrift { from { transform: scale(1); } to { transform: scale(1.06); } }
 /* poster (first frame) under the scene video — instant, no drift, aligned to it */
 .vault-scene img.scene-poster { z-index: 1; animation: none; transform-origin: center 18%; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
