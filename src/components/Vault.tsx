@@ -151,6 +151,14 @@ export default function Vault() {
   const sceneZoom = theme.ui?.sceneZoom ?? 1;
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
+  // poster shown instantly while the scene video buffers (its first frame, for a
+  // seamless start) — the video crossfades in over it. Falls back to nothing
+  // (dark scene background) when not provided.
+  const scenePoster = isSecured
+    ? theme.assets.scenePosters?.win
+    : phase === 'crashed'
+    ? theme.assets.scenePosters?.lose
+    : theme.assets.scenePosters?.idle;
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -159,24 +167,37 @@ export default function Vault() {
           the static stills (e.g. LIFTOFF X). */}
       <div className="vault-scene">
         {sceneVideo ? (
-          // cinematic scene: play the video only (fades in over the dark scene
-          // background) — no static still flashing before it
-          <video
-            key={sceneVideo}
-            className={`scene-video ${sceneClass}`}
-            src={sceneVideo}
-            style={sceneStyle}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            onCanPlay={(e) => {
-              e.currentTarget.playbackRate = sceneSpeed;
-              e.currentTarget.play().catch(() => {});
-              e.currentTarget.classList.add('ready');
-            }}
-          />
+          <>
+            {/* poster (the video's first frame) shows instantly so the start is
+                seamless; the video crossfades in over it once it can play */}
+            {scenePoster && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                className={`scene-poster ${sceneClass}`}
+                src={scenePoster}
+                style={sceneStyle}
+                alt=""
+                draggable={false}
+              />
+            )}
+            <video
+              key={sceneVideo}
+              className={`scene-video ${sceneClass}`}
+              src={sceneVideo}
+              poster={scenePoster}
+              style={sceneStyle}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              onCanPlay={(e) => {
+                e.currentTarget.playbackRate = sceneSpeed;
+                e.currentTarget.play().catch(() => {});
+                e.currentTarget.classList.add('ready');
+              }}
+            />
+          </>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img

@@ -31,6 +31,9 @@ export interface ThemeAssets {
   sceneIdleVideo?: string; // idle / running
   sceneLoseVideo?: string; // crash
   sceneWinVideo?: string;  // secured
+  // Optional poster stills shown instantly while a scene video buffers, with the
+  // video fading in over them. Use the video's FIRST FRAME for a seamless start.
+  scenePosters?: { idle?: string; lose?: string; win?: string };
   icons: {
     home: string;
     history: string;
