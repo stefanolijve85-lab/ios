@@ -49,7 +49,7 @@ export const liftoffx: Theme = {
     // animated scenes: launch (idle, full-frame, countdown-synced) → explosion
     // (crash) → eject (win)
     sceneIdleVideo: `${A}/scene-idle-v2.mp4`,
-    sceneLoseVideo: `${A}/explosion.mp4`,
+    sceneLoseVideo: `${A}/scene-lose.mp4`,
     sceneWinVideo: `${A}/eject.mp4`,
     // fallback icons (DEEP DIVE X) until LIFTOFF-native icons land
     icons: {
@@ -96,7 +96,7 @@ export const liftoffx: Theme = {
   // pillarbox zoom. Plays once, holds the last frame (rocket in space).
   ui: {
     motion: { kind: 'speed', color: '#ffd9a8' },
-    sceneZoom: { lose: 1.9, win: 1.9 },
+    sceneZoom: { win: 1.9 },
     sceneSpeed: 0.6,
     sceneLoop: false,
     idleSyncCountdown: true,
