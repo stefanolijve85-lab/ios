@@ -49,6 +49,7 @@ export interface ThemeAudio {
   motifHigh: string;
   stash: string;
   crash: string;
+  crashAlt?: string; // optional 2nd crash/alarm clip — alternated with `crash`
   lobby: string;
   tick: string;
   voiceCrash: string[]; // random "loss" lines

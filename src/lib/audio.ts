@@ -14,6 +14,7 @@ type Buffers = {
   high?: AudioBuffer;
   stash?: AudioBuffer;
   crash?: AudioBuffer;
+  crashAlt?: AudioBuffer;
   lobby?: AudioBuffer;
   tick?: AudioBuffer;
 };
@@ -138,6 +139,7 @@ class TensionAudio {
       set('crash', p.crash),
       set('lobby', p.lobby),
       set('tick', p.tick),
+      ...(p.crashAlt ? [set('crashAlt', p.crashAlt)] : []),
     ]);
     // crash + win voice lines (random pick) — load independently
     const loadVoices = (urls: string[], into: AudioBuffer[]) =>
@@ -270,7 +272,10 @@ class TensionAudio {
   crash(lost = true, idx = -1) {
     this.running = false;
     this.stopSources();
-    this.oneShot(this.buffers.crash, 1.0);
+    // alternate between the two alarm clips (less repetitive), a touch softer
+    const alt = this.buffers.crashAlt;
+    const alarm = alt && Math.random() < 0.5 ? alt : this.buffers.crash;
+    this.oneShot(alarm, 0.7);
     if (!lost) return;
     // voice line on its own bus, just after the crash
     if (this.voiceCrash.length) {
