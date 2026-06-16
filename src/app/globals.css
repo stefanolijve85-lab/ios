@@ -490,7 +490,11 @@ input { font-family: inherit; }
 .landing-img { display: block; width: 100%; height: 100%; object-fit: fill; }
 /* cinematic video start screen (logo + visible PLAY overlaid) */
 .landing-img-wrap.has-video { background: #08080b; } /* dark while the video loads — no old-photo flash */
-.landing-video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.landing-video {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .45s ease;   /* fade in over the dark bg when the first frame is ready */
+}
+.landing-video.ready { opacity: 1; }
 .landing-vov { position: absolute; inset: 0; pointer-events: none; }
 .landing-vlogo {
   position: absolute; top: 7%; left: 50%; transform: translateX(-50%);

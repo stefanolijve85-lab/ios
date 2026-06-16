@@ -9,6 +9,7 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   const { state } = useGame();
   const theme = useTheme();
   const [clicked, setClicked] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const soundUnlocked = useRef(false);
   const phase = state?.phase ?? 'betting';
@@ -51,10 +52,11 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
         {video ? (
           <video
             ref={videoRef}
-            className="landing-video"
+            className={`landing-video${videoReady ? ' ready' : ''}`}
             src={video}
             autoPlay loop muted playsInline preload="auto"
-            onCanPlay={(e) => { e.currentTarget.play().catch(() => {}); }}
+            onCanPlay={(e) => { e.currentTarget.play().catch(() => {}); setVideoReady(true); }}
+            onPlaying={() => setVideoReady(true)}
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
