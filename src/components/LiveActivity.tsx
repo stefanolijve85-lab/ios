@@ -10,12 +10,15 @@ function ago(ts: number): string {
   return `${Math.round(s / 60)}m ago`;
 }
 
-export default function LiveActivity() {
+export default function LiveActivity({ open = false, onToggle }: { open?: boolean; onToggle?: () => void }) {
   const { activity } = useGame();
   const theme = useTheme();
   return (
     <div className="panel">
-      <h3>LIVE ACTIVITY ⚡</h3>
+      <h3 className="panel-head" onClick={onToggle} role="button">
+        <span>LIVE ACTIVITY ⚡</span>
+        <span className={`panel-caret${open ? ' up' : ''}`} aria-hidden="true">▾</span>
+      </h3>
       <div className="act-list">
         {activity.map((a, i) => (
           <div key={`${a.ts}-${i}`} className={`act ${a.kind === 'stash' ? 'win' : 'lose'}`}>

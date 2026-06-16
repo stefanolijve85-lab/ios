@@ -12,7 +12,7 @@ function hhmm(ts: number) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function LiveChat() {
+export default function LiveChat({ open = false, onToggle }: { open?: boolean; onToggle?: () => void }) {
   const { chat, sendChat, state } = useGame();
   const [text, setText] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -31,8 +31,9 @@ export default function LiveChat() {
 
   return (
     <div className="panel">
-      <h3>
-        LIVE CHAT <span className="count">👥 {(state?.online ?? 0).toLocaleString('en-US')}</span>
+      <h3 className="panel-head" onClick={onToggle} role="button">
+        <span>LIVE CHAT <span className="count">👥 {(state?.online ?? 0).toLocaleString('en-US')}</span></span>
+        <span className={`panel-caret${open ? ' up' : ''}`} aria-hidden="true">▾</span>
       </h3>
       <div className="chat-list" ref={listRef}>
         {chat.map((m) => (

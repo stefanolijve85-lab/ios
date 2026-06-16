@@ -1179,6 +1179,20 @@ input { font-family: inherit; }
   color: var(--gold-hi); display: flex; align-items: center; justify-content: space-between;
 }
 .panel h3 .count { color: var(--muted); font-weight: 700; }
+/* tap the chat/activity header to grow the panels (drop-up) */
+.panel-head { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.panel-caret { color: var(--muted); font-size: 12px; transition: transform .3s ease; }
+.panel-caret.up { transform: rotate(180deg); }
+
+/* expanded chat/activity: the quick-chip rows + add-second collapse to make room
+   while the amount stepper + bet button stay playable. Top of the game is kept
+   by growing the panels by roughly the freed space. */
+.chips { transition: max-height .3s ease, opacity .25s ease, margin-top .3s ease; max-height: 64px; overflow: hidden; }
+.add-second { transition: max-height .3s ease, opacity .25s ease, margin .3s ease, padding .3s ease; max-height: 48px; overflow: hidden; }
+.cols { transition: height .35s ease; }
+.app.chat-open .chips { max-height: 0; opacity: 0; margin-top: 0; pointer-events: none; }
+.app.chat-open .add-second { max-height: 0; opacity: 0; margin: 0; padding: 0; border: 0; pointer-events: none; }
+.app.chat-open .cols { height: 232px; }
 
 .chat-list, .act-list {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;

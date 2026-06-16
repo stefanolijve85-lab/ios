@@ -17,11 +17,12 @@ export default function GameScreen() {
   const { connected } = useGame();
   const [started, setStarted] = useState(false);
   const [twoBets, setTwoBets] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   if (!started) return <Landing onPlay={() => setStarted(true)} />;
 
   return (
-    <main className="app">
+    <main className={`app${chatOpen ? ' chat-open' : ''}`}>
       {!connected && <div className="conn">Connecting…</div>}
 
       <Header />
@@ -49,8 +50,8 @@ export default function GameScreen() {
       )}
 
       <div className="cols">
-        <LiveChat />
-        <LiveActivity />
+        <LiveChat open={chatOpen} onToggle={() => setChatOpen((v) => !v)} />
+        <LiveActivity open={chatOpen} onToggle={() => setChatOpen((v) => !v)} />
       </div>
 
       <FlashBanner />
