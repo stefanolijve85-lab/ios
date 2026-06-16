@@ -66,7 +66,7 @@ export const bankheistx: Theme = {
     cashOutSub: 'LOCK YOUR WINNINGS',
     securedVerb: 'secured',
     bagSecured: (amount) => `BAG SECURED ${amount}`,
-    crashedTile: 'TOO LATE — STOLEN',
+    crashedTile: 'TOO LATE — GONE',
     currentAmount: 'CURRENT WIN',
     wouldBeWorth: 'WIN WOULD BE',
     countdownLabel: 'VAULT CLOSES IN',

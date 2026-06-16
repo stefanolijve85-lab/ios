@@ -10,7 +10,7 @@ export const nl: Record<string, ThemeLocale> = {
       cashOutSub: 'ZEKER JE WINST',
       securedVerb: 'veiliggesteld',
       bagSecured: (amount) => `BUIT BINNEN ${amount}`,
-      crashedTile: 'TE LAAT — GESTOLEN',
+      crashedTile: 'TE LAAT — WEG',
       currentAmount: 'HUIDIGE WINST',
       wouldBeWorth: 'WINST ZOU ZIJN',
       countdownLabel: 'KLUIS SLUIT OVER',
