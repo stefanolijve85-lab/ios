@@ -26,6 +26,7 @@ export default function Vault() {
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sceneRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const loseSeededRef = useRef(false); // crash clip start-point chosen once per crash
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
@@ -221,11 +222,19 @@ export default function Vault() {
   // Play the active clip (or hold it on frame 0); keep the rest paused at 0 and
   // ready. Because they're warmed, switching scenes starts instantly.
   useEffect(() => {
+    if (scene !== 'lose') loseSeededRef.current = false; // re-seed each new crash
     SCENE_KEYS.forEach((k) => {
       const v = sceneRefs.current[k];
       if (!v) return;
       if (k === scene) {
         if (k === 'idle' && idleHeld) return; // the drift effect drives this clip
+        // crash clip: alternate which part you see — the escape (start) or the
+        // money-counting (the end) — by seeding the start point once per crash
+        if (k === 'lose' && !loseSeededRef.current) {
+          loseSeededRef.current = true;
+          const dur = isFinite(v.duration) ? v.duration : 0;
+          try { v.currentTime = dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0; } catch {}
+        }
         // scenes with their own audio play at normal speed so the sound isn't pitched
         v.playbackRate = activeHasSound ? 1 : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
