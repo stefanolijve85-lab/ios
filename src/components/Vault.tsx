@@ -201,9 +201,6 @@ export default function Vault() {
   const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
-  // a countdown-synced idle runs slower during betting (stretch the ignition),
-  // then speeds up at lift-off when the round runs
-  const idleRate = syncCountdown && phase === 'betting' ? theme.ui?.idleSpeedBetting ?? idleSpeed : idleSpeed;
   const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
@@ -247,8 +244,10 @@ export default function Vault() {
           try { v.currentTime = dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0; } catch {}
         }
         // scenes with their own audio play at normal speed so the sound isn't
-        // pitched; the idle clip can have its own rate (countdown sync)
-        v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleRate : sceneSpeed;
+        // pitched; a countdown-synced idle's rate is ramped by the effect below
+        if (!(k === 'idle' && syncCountdown)) {
+          v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeed;
+        }
         if (activePlaying) v.play().catch(() => {});
         else { v.pause(); try { v.currentTime = 0; } catch {} }
       } else if (!v.paused || v.currentTime !== 0) {
@@ -256,7 +255,30 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [scene, activePlaying, sceneSpeed, idleRate, activeHasSound, idleHeld]);
+  }, [scene, activePlaying, sceneSpeed, idleSpeed, syncCountdown, activeHasSound, idleHeld]);
+
+  // Countdown-synced idle: hold the slow ignition rate through betting, then
+  // SMOOTHLY ramp up to flight speed when the round starts (no abrupt jump).
+  useEffect(() => {
+    if (!syncCountdown) return;
+    const v = sceneRefs.current['idle'];
+    if (!v) return;
+    const slow = theme.ui?.idleSpeedBetting ?? idleSpeed;
+    if (phase !== 'running') { v.playbackRate = slow; return; }
+    const from = v.playbackRate || slow;
+    const to = idleSpeed;
+    const dur = 1600; // ms ramp
+    const start = performance.now();
+    let raf = 0;
+    const loop = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      const e = t * t * (3 - 2 * t); // smoothstep
+      v.playbackRate = from + (to - from) * e;
+      if (t < 1) raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [phase, syncCountdown, idleSpeed, theme.ui?.idleSpeedBetting]);
 
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
