@@ -9,8 +9,8 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   const { state } = useGame();
   const theme = useTheme();
   const [clicked, setClicked] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const soundUnlocked = useRef(false);
   const phase = state?.phase ?? 'betting';
 
   // Kick the start screen video off the instant it can play (don't wait for the
@@ -22,12 +22,13 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   }, [theme.assets.landingVideo]);
 
   // Browsers only autoplay video that's muted, so the cinematic intro starts
-  // silent. This tap counts as the user gesture that lets it have sound.
-  const toggleSound = () => {
+  // silent. The first tap anywhere on the start screen counts as the user
+  // gesture that lets it have sound.
+  const unlockSound = () => {
+    if (soundUnlocked.current) return;
+    soundUnlocked.current = true;
     const v = videoRef.current;
-    const next = !soundOn;
-    setSoundOn(next);
-    if (v) { v.muted = !next; v.play().catch(() => {}); }
+    if (v) { v.muted = false; v.play().catch(() => {}); }
   };
 
   // Once you've tapped PLAY, enter the game the moment the next betting window opens.
@@ -45,7 +46,7 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
   const video = theme.assets.landingVideo;
 
   return (
-    <div className="landing">
+    <div className="landing" onPointerDown={video ? unlockSound : undefined}>
       <div className={`landing-img-wrap${video ? ' has-video' : ''}`}>
         {video ? (
           <video
@@ -67,17 +68,6 @@ export default function Landing({ onPlay }: { onPlay: () => void }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="landing-vlogo" src={theme.assets.logo} alt={theme.name} />
           </div>
-        )}
-
-        {/* tap-to-unmute the cinematic intro (autoplay forces it to start muted) */}
-        {video && !clicked && (
-          <button
-            className={`landing-sound${soundOn ? ' on' : ''}`}
-            onClick={toggleSound}
-            aria-label={soundOn ? 'Mute intro' : 'Unmute intro'}
-          >
-            <span className="ls-ico" aria-hidden="true">{soundOn ? '🔊' : '🔇'}</span>
-          </button>
         )}
 
         {!clicked ? (
