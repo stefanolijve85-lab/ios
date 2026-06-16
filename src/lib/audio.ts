@@ -242,12 +242,13 @@ class TensionAudio {
   // One tick per second, fired in sync with the on-screen numbers.
   startTick() { this.ticking = true; }
   stopTick() { this.ticking = false; }
-  // Fire the countdown clip so it ENDS at zero: if the clip is longer than the
-  // lead window we start it partway in (its last `leadMs` plays over the count).
-  tick(leadMs = 4600) {
+  // Fire the countdown clip. By default it's end-aligned (its last `leadMs`
+  // plays, ending at zero); an explicit `offsetSec` instead starts at a fixed
+  // point so e.g. the spoken "3" lands on clock 3.
+  tick(leadMs = 4600, offsetSec?: number) {
     const buf = this.buffers.tick;
     if (!this.enabled || !this.ticking || !buf) return;
-    const offset = Math.max(0, buf.duration - leadMs / 1000);
+    const offset = offsetSec != null ? offsetSec : Math.max(0, buf.duration - leadMs / 1000);
     this.oneShot(buf, 0.6, undefined, 0, undefined, undefined, offset);
   }
 

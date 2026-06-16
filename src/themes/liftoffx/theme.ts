@@ -103,6 +103,7 @@ export const liftoffx: Theme = {
     idleSpeedBetting: 0.35, // ignition crawls through the countdown (rocket stays on the pad)
     idleSpeed: 0.7,         // then speeds up for the lift-off + flight when the round runs
     idleTailLoop: 1.5,      // keep the rocket flying while the round runs
-    tickLeadMs: 4900,       // the 6.95s countdown clip plays its last ~4.9s, ending at lift-off
+    tickLeadMs: 3000,       // fire the spoken "3,2,1,LIFTOFF" when the clock hits 3
+    tickOffset: 2.05,       // start at the "3" in the clip so it lands on clock 3
   },
 };

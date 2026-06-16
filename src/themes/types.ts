@@ -106,6 +106,9 @@ export interface ThemeUI {
   // How long before the round starts the countdown (tick) clip fires, so it ends
   // exactly at zero. Default 4600ms (the bomb-clock); match a shorter countdown.
   tickLeadMs?: number;
+  // Explicit start offset (seconds) into the countdown clip, so a spoken "3"
+  // lands on clock 3 (overrides the auto end-aligned offset).
+  tickOffset?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
   sceneSpeed?: number;
   // Loop scene videos? Default true. Set false to play once and hold on the
