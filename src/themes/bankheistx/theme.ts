@@ -37,6 +37,7 @@ export const bankheistx: Theme = {
     sceneLoseVideo: `${A}/scene-lose.mp4`,
     sceneWin: `${A}/caught.webp`,
     sceneWinVideo: `${A}/scene-win-v2.mp4`,
+    sceneSplitVideo: `${A}/scene-split.mp4`,
     scenePosters: {
       idle: `${A}/scene-idle-poster.webp`,
       win: `${A}/scene-win-poster.webp`,

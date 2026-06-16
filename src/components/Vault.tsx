@@ -140,17 +140,31 @@ export default function Vault() {
   // game's scene videos at once and keep them WARMED (buffered + first frame
   // decoded), so a phase change starts the right clip instantly — no poster, no
   // buffer. Themes without videos fall back to the still images.
-  const SCENE_KEYS = ['idle', 'lose', 'win'] as const;
+  const SCENE_KEYS = ['idle', 'lose', 'win', 'split'] as const;
   type SceneKey = (typeof SCENE_KEYS)[number];
   const sceneVideoFor = (k: SceneKey) =>
     k === 'win' ? theme.assets.sceneWinVideo
     : k === 'lose' ? theme.assets.sceneLoseVideo
+    : k === 'split' ? theme.assets.sceneSplitVideo
     : theme.assets.sceneIdleVideo;
-  const sceneClassFor = (k: SceneKey) => (k === 'win' ? 'is-caught' : k === 'lose' ? 'is-heist' : '');
+  const sceneClassFor = (k: SceneKey) =>
+    k === 'win' ? 'is-caught' : k === 'lose' ? 'is-heist' : k === 'split' ? 'is-split' : '';
 
-  const activeScene: SceneKey = isSecured ? 'win' : phase === 'crashed' ? 'lose' : 'idle';
+  // Mixed result: with two bets, one cashed out AND one rode it into the crash.
+  const wonCount = (bets[0]?.cashedOut ? 1 : 0) + (bets[1]?.cashedOut ? 1 : 0);
+  const lostCount = (bets[0] && !bets[0].cashedOut ? 1 : 0) + (bets[1] && !bets[1].cashedOut ? 1 : 0);
+  const splitOutcome = phase === 'crashed' && wonCount > 0 && lostCount > 0;
+
+  const activeScene: SceneKey = splitOutcome
+    ? 'split'
+    : isSecured
+    ? 'win'
+    : phase === 'crashed'
+    ? 'lose'
+    : 'idle';
   const sceneClass = sceneClassFor(activeScene);
-  const sceneImg = isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle;
+  const sceneImg =
+    splitOutcome || isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle;
   const hasSceneVideos = SCENE_KEYS.some((k) => sceneVideoFor(k));
   // the idle clip holds on its first frame (paused) through the betting
   // countdown and starts the moment the round runs; result scenes play at once.

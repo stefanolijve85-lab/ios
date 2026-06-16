@@ -687,8 +687,10 @@ input { font-family: inherit; }
    stay fully visible while COVER fills the whole zone (no black bars). */
 .vault-scene img.is-heist,
 .vault-scene img.is-caught,
+.vault-scene img.is-split,
 .vault-scene video.is-heist,
-.vault-scene video.is-caught {
+.vault-scene video.is-caught,
+.vault-scene video.is-split {
   object-fit: cover;
   object-position: center center;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 95%, transparent 100%);

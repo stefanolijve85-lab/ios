@@ -28,9 +28,10 @@ export interface ThemeAssets {
   sceneWin: string;     // the secure / caught scene
   // Optional cinematic (animated) scenes — when present the engine plays these
   // looping videos instead of the static stills above for the matching phase.
-  sceneIdleVideo?: string; // idle / running
-  sceneLoseVideo?: string; // crash
-  sceneWinVideo?: string;  // secured
+  sceneIdleVideo?: string;  // idle / running
+  sceneLoseVideo?: string;  // crash (all bets lost)
+  sceneWinVideo?: string;   // secured (all bets cashed)
+  sceneSplitVideo?: string; // mixed result: one bet won AND one bet lost
   // Optional poster stills shown instantly while a scene video buffers, with the
   // video fading in over them. Use the video's FIRST FRAME for a seamless start.
   scenePosters?: { idle?: string; lose?: string; win?: string };
