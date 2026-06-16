@@ -1,11 +1,44 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext, useCallback, useContext, useEffect, useMemo, useState,
+} from 'react';
 import { usePathname } from 'next/navigation';
 import { getTheme, resolveClientThemeKey, themeKeyForPath, DEFAULT_THEME_KEY } from '@/themes';
 import type { Theme } from '@/themes';
 import { getAudio } from '@/lib/audio';
+import {
+  DEFAULT_LOCALE, LOCALES, localeFor, persistLocale, resolveClientLocale,
+} from '@/i18n';
+import type { Locale } from '@/i18n';
 
 const ThemeContext = createContext<Theme>(getTheme(DEFAULT_THEME_KEY));
+
+interface LocaleCtx {
+  locale: Locale;
+  setLocale: (l: Locale) => void;
+  locales: readonly Locale[];
+}
+const LocaleContext = createContext<LocaleCtx>({
+  locale: DEFAULT_LOCALE, setLocale: () => {}, locales: LOCALES,
+});
+
+// Merge a language's overrides over the theme's English base. Copy keys missing
+// from the translation fall back to English; voice clips fall back too. Music +
+// SFX are universal and never touched.
+function localize(theme: Theme, locale: Locale): Theme {
+  const tr = localeFor(theme.key, locale);
+  if (!tr) return theme;
+  const copy = tr.copy ? { ...theme.copy, ...tr.copy } : theme.copy;
+  const audio =
+    tr.voiceCrash || tr.voiceWin
+      ? {
+          ...theme.audio,
+          voiceCrash: tr.voiceCrash ?? theme.audio.voiceCrash,
+          voiceWin: tr.voiceWin ?? theme.audio.voiceWin,
+        }
+      : theme.audio;
+  return { ...theme, copy, audio };
+}
 
 // The CSS custom properties globals.css reads for the palette/accent. Setting
 // these inline (on a display:contents wrapper) means the right colours paint on
@@ -30,20 +63,29 @@ function paletteVars(t: Theme): React.CSSProperties {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Resolve from the path on the very first render (server + client agree) so
-  // the correct game theme paints immediately — no flash of the default
-  // (vault) button / logo / palette before an effect swaps it in.
-  const [theme, setTheme] = useState<Theme>(() => getTheme(themeKeyForPath(pathname)));
+  // the correct game theme paints immediately — no flash of the default theme.
+  const [themeKey, setThemeKey] = useState<string>(() => themeKeyForPath(pathname));
+  // Locale starts at the default (English) so SSR + first client paint match;
+  // an effect swaps in the user's language right after mount.
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
+  // refine the theme key on navigation (covers ?theme= / bare game domains)
+  useEffect(() => { setThemeKey(resolveClientThemeKey()); }, [pathname]);
+  // resolve the language once (client-only signals: ?lang= / saved / browser)
+  useEffect(() => { setLocaleState(resolveClientLocale()); }, []);
+
+  const setLocale = useCallback((l: Locale) => {
+    persistLocale(l);
+    setLocaleState(l);
+  }, []);
+
+  const theme = useMemo(() => localize(getTheme(themeKey), locale), [themeKey, locale]);
+
+  // paint the palette tokens on :root and hand the audio engine this game's
+  // (localized) clip paths whenever the active theme/language changes
   useEffect(() => {
-    // client-only refinement: ?theme= override or a bare game domain (hostname),
-    // neither of which is visible during SSR. Path-based routing already
-    // resolved above, so for /<game> this is a no-op.
-    const active = getTheme(resolveClientThemeKey());
-    setTheme(active);
-
-    // also paint the palette tokens on :root so the body/global chrome matches
     const root = document.documentElement;
-    const c = active.colors;
+    const c = theme.colors;
     root.style.setProperty('--green', c.green);
     root.style.setProperty('--green-hi', c.greenHi);
     root.style.setProperty('--green-lime', c.greenLime);
@@ -54,18 +96,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--btn-top', c.btnTopRgb);
     root.style.setProperty('--btn-bot', c.btnBotRgb);
     root.style.setProperty('--ambient-rgb', c.ambientRgb);
+    getAudio().configure(theme.audio);
+  }, [theme]);
 
-    // hand the audio engine this game's clip paths (used on first unlock)
-    getAudio().configure(active.audio);
-  }, [pathname]); // re-resolve when navigating between games (no stale effects)
+  const localeCtx = useMemo<LocaleCtx>(
+    () => ({ locale, setLocale, locales: LOCALES }),
+    [locale, setLocale],
+  );
 
   return (
-    <ThemeContext.Provider value={theme}>
-      <div style={paletteVars(theme)}>{children}</div>
-    </ThemeContext.Provider>
+    <LocaleContext.Provider value={localeCtx}>
+      <ThemeContext.Provider value={theme}>
+        <div style={paletteVars(theme)}>{children}</div>
+      </ThemeContext.Provider>
+    </LocaleContext.Provider>
   );
 }
 
 export function useTheme(): Theme {
   return useContext(ThemeContext);
+}
+
+export function useLocale(): LocaleCtx {
+  return useContext(LocaleContext);
 }
