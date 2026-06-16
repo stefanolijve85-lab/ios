@@ -676,10 +676,11 @@ input { font-family: inherit; }
 }
 /* cinematic scene video sits on top of the still and fades in once it can play,
    so there's no black gap and no late start when a scene swaps in */
-/* scene video sits over its poster; only visible (and moving) once it's playing
-   — during the betting countdown we hold on the poster (first frame) */
+/* scene video sits over its poster; only revealed once it's ACTUALLY moving
+   (the 'live' class is set on the playing event), so a frozen first frame is
+   never shown while it buffers/starts — the poster/dark holds until then */
 .vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .3s ease; transform-origin: center 18%; }
-.vault-scene video.scene-video.playing { opacity: 1; }
+.vault-scene video.scene-video.live { opacity: 1; }
 /* poster (first frame) under the scene video — instant, no drift, aligned to it */
 .vault-scene img.scene-poster { z-index: 1; animation: none; transform-origin: center 18%; }
 /* full scenes (crash/secure): cropped landscape around the characters so they

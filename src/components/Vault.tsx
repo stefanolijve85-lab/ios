@@ -34,6 +34,9 @@ export default function Vault() {
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
+  // becomes true only once the scene video is ACTUALLY playing (frames moving),
+  // so we never reveal a frozen first frame while it buffers/starts.
+  const [sceneLive, setSceneLive] = useState(false);
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -170,6 +173,7 @@ export default function Vault() {
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   // Drive scene-video playback off the phase: hold on the first frame while
   // betting, start it the moment the round runs (and on result scenes).
+  useEffect(() => { setSceneLive(false); }, [sceneVideo]); // new clip → not live until it plays
   useEffect(() => {
     const v = sceneVideoRef.current;
     if (!v) return;
@@ -179,6 +183,7 @@ export default function Vault() {
     } else {
       v.pause();
       try { v.currentTime = 0; } catch { /* not seekable yet */ }
+      setSceneLive(false);
     }
   }, [scenePlaying, sceneSpeed, sceneVideo]);
 
@@ -205,7 +210,7 @@ export default function Vault() {
             <video
               key={sceneVideo}
               ref={sceneVideoRef}
-              className={`scene-video ${sceneClass}${scenePlaying ? ' playing' : ''}`}
+              className={`scene-video ${sceneClass}${sceneLive ? ' live' : ''}`}
               src={sceneVideo}
               poster={scenePoster}
               style={sceneStyle}
@@ -217,6 +222,7 @@ export default function Vault() {
                 e.currentTarget.playbackRate = sceneSpeed;
                 if (scenePlaying) e.currentTarget.play().catch(() => {});
               }}
+              onPlaying={() => setSceneLive(true)}
             />
           </>
         ) : (
