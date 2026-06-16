@@ -50,6 +50,7 @@ export interface ThemeAudio {
   stash: string;
   crash: string;
   crashAlt?: string; // optional 2nd crash/alarm clip — alternated with `crash`
+  launch?: string;   // optional callout played when the round starts (e.g. "LIFTOFF!")
   lobby: string;
   tick: string;
   voiceCrash: string[]; // random "loss" lines

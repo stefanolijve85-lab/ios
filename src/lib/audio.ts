@@ -15,6 +15,7 @@ type Buffers = {
   stash?: AudioBuffer;
   crash?: AudioBuffer;
   crashAlt?: AudioBuffer;
+  launch?: AudioBuffer;
   lobby?: AudioBuffer;
   tick?: AudioBuffer;
 };
@@ -140,6 +141,7 @@ class TensionAudio {
       set('lobby', p.lobby),
       set('tick', p.tick),
       ...(p.crashAlt ? [set('crashAlt', p.crashAlt)] : []),
+      ...(p.launch ? [set('launch', p.launch)] : []),
     ]);
     // crash + win voice lines (random pick) — load independently
     const loadVoices = (urls: string[], into: AudioBuffer[]) =>
@@ -256,6 +258,12 @@ class TensionAudio {
     this.intensity = 0;
     this.stopSources();
     if (this.enabled) this.fadeMusic(this.musicIdle(), 900); // music back between rounds
+  }
+
+  // Launch callout (e.g. "LIFTOFF!") fired when the round starts — no-op until a
+  // theme provides audio.launch.
+  launch() {
+    this.oneShot(this.buffers.launch, 1.0);
   }
 
   playStash(idx = -1) {
