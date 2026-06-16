@@ -276,7 +276,8 @@ class TensionAudio {
     //  - the new clip plays clearly softer
     //  - the old clip is shortened so it isn't drawn-out
     const alt = this.buffers.crashAlt;
-    if (alt && Math.random() < 0.5) this.oneShot(alt, 0.45);
+    // new clip: softer + low-passed so it's not shrill; old clip: shortened
+    if (alt && Math.random() < 0.5) this.oneShot(alt, 0.38, undefined, 0, undefined, 2000);
     else this.oneShot(this.buffers.crash, 0.7, undefined, 0, 0.9);
     if (!lost) return;
     // voice line on its own bus, just after the crash
@@ -297,14 +298,23 @@ class TensionAudio {
     this.voiceBusyUntil = now + delay + buf.duration;
   }
 
-  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0, maxDur?: number) {
+  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0, maxDur?: number, lowpassHz?: number) {
     if (!this.enabled || !this.ctx || !buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();
     g.gain.value = vol;
     src.connect(g);
-    g.connect(bus ?? this.sfxGain!);
+    // optional low-pass to tame a shrill/harsh clip (rolls off the highs)
+    if (lowpassHz) {
+      const lp = this.ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = lowpassHz;
+      g.connect(lp);
+      lp.connect(bus ?? this.sfxGain!);
+    } else {
+      g.connect(bus ?? this.sfxGain!);
+    }
     const t = this.ctx.currentTime + delay;
     src.start(t);
     // optionally shorten a long clip with a quick fade-out (no click)
