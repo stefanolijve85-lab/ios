@@ -34,6 +34,9 @@ export default function Vault() {
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
+  // the idle clip plays once then holds its last frame; after a beat we drift it
+  // (slow zoom) so long rounds don't look like a frozen still.
+  const [idleHeld, setIdleHeld] = useState(false);
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -49,8 +52,6 @@ export default function Vault() {
   const stakeRef = useRef({ active: activeStake, cashed: cashedStake, payout: cashedPayout });
   stakeRef.current = { active: activeStake, cashed: cashedStake, payout: cashedPayout };
 
-  // You secured this round → show the "thief caught" result.
-  const isSecured = cashedPayout > 0;
 
   useEffect(() => {
     let raf = 0;
@@ -150,21 +151,30 @@ export default function Vault() {
   const sceneClassFor = (k: SceneKey) =>
     k === 'win' ? 'is-caught' : k === 'lose' ? 'is-heist' : k === 'split' ? 'is-split' : '';
 
-  // Mixed result: with two bets, one cashed out AND one rode it into the crash.
+  // Outcome of YOUR bets. While any bet is still live (holding) we keep showing
+  // the vault — the result scene only resolves once every bet of yours is
+  // settled, so cashing 1 of 2 doesn't pop the win clip early:
+  //   all cashed         → win
+  //   one cashed + lost  → split (the "in-between")
+  //   all lost           → lose
+  const crashed = phase === 'crashed';
   const wonCount = (bets[0]?.cashedOut ? 1 : 0) + (bets[1]?.cashedOut ? 1 : 0);
-  const lostCount = (bets[0] && !bets[0].cashedOut ? 1 : 0) + (bets[1] && !bets[1].cashedOut ? 1 : 0);
-  const splitOutcome = phase === 'crashed' && wonCount > 0 && lostCount > 0;
+  const placedOpen = (bets[0] && !bets[0].cashedOut ? 1 : 0) + (bets[1] && !bets[1].cashedOut ? 1 : 0);
+  const holdingCount = crashed ? 0 : placedOpen; // open bets are "holding" until the bust
+  const lostCount = crashed ? placedOpen : 0;    // then they're lost
 
-  const activeScene: SceneKey = splitOutcome
-    ? 'split'
-    : isSecured
-    ? 'win'
-    : phase === 'crashed'
-    ? 'lose'
-    : 'idle';
+  let activeScene: SceneKey;
+  if (holdingCount > 0) activeScene = 'idle';                  // still in play → keep the vault
+  else if (wonCount > 0 && lostCount > 0) activeScene = 'split';
+  else if (wonCount > 0) activeScene = 'win';
+  else if (lostCount > 0 || crashed) activeScene = 'lose';
+  else activeScene = 'idle';
+
   const sceneClass = sceneClassFor(activeScene);
   const sceneImg =
-    splitOutcome || isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle;
+    activeScene === 'win' || activeScene === 'split' ? theme.assets.sceneWin
+    : activeScene === 'lose' ? theme.assets.sceneLose
+    : theme.assets.sceneIdle;
   const hasSceneVideos = SCENE_KEYS.some((k) => sceneVideoFor(k));
   // the idle clip holds on its first frame (paused) through the betting
   // countdown and starts the moment the round runs; result scenes play at once.
@@ -216,6 +226,11 @@ export default function Vault() {
     });
   }, [activeScene, activePlaying, sceneSpeed, activeHasSound]);
 
+  // reset the "held last frame" drift whenever we leave the live idle scene
+  useEffect(() => {
+    if (!(activeScene === 'idle' && phase === 'running')) setIdleHeld(false);
+  }, [activeScene, phase]);
+
   return (
     <div className="vault" ref={vaultRef}>
       {/* scene render: caught (you secured) / heist (robbed) / vault (normal).
@@ -236,31 +251,32 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === activeScene ? ' active' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === activeScene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
                 src={src}
                 style={sceneStyle}
                 loop={sceneLoop}
                 muted={!(soundScenes.includes(k) && k === activeScene)}
                 playsInline
                 preload="auto"
+                onEnded={k === 'idle' ? () => setIdleHeld(true) : undefined}
               />
             );
           })}
       </div>
-      {/* ambient themed particles — only over the live/idle scene, never on the
-          crash or secure result art */}
-      {!isSecured && phase !== 'crashed' && <SceneMotion />}
+      {/* ambient themed particles — only over the live/idle scene, never on a
+          result scene (win / split / crash) */}
+      {activeScene === 'idle' && <SceneMotion />}
       {/* loot that piles up with the multiplier (themed) */}
-      {!isSecured && phase !== 'crashed' && <StackGrowth />}
+      {activeScene === 'idle' && <StackGrowth />}
 
       {/* money glow only during the live round — never over the result scenes */}
-      {!isSecured && phase !== 'crashed' && <div className="vault-glow" ref={glowRef} />}
+      {activeScene === 'idle' && <div className="vault-glow" ref={glowRef} />}
 
       {/* center readout — also shown after you secure, so you see the climbing
           amount + what you're missing while the round finishes */}
       {phase !== 'crashed' && (
         <div className="vault-readout">
-          <div className="label">{isSecured ? theme.copy.wouldBeWorth : theme.copy.currentAmount}</div>
+          <div className="label">{activeStake > 0 ? theme.copy.currentAmount : theme.copy.wouldBeWorth}</div>
           <div className="amount" ref={amountRef}>€0.00</div>
           <div className="missed" ref={missedRef} style={{ display: 'none' }} />
         </div>
