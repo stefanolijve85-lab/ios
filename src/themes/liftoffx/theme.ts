@@ -48,7 +48,7 @@ export const liftoffx: Theme = {
     sceneWin: '/brand/card-liftoffx.webp',
     // animated scenes: launch (idle, full-frame, countdown-synced) → explosion
     // (crash) → eject (win)
-    sceneIdleVideo: `${A}/scene-idle.mp4`,
+    sceneIdleVideo: `${A}/scene-idle-v2.mp4`,
     sceneLoseVideo: `${A}/explosion.mp4`,
     sceneWinVideo: `${A}/eject.mp4`,
     // fallback icons (DEEP DIVE X) until LIFTOFF-native icons land
@@ -98,7 +98,8 @@ export const liftoffx: Theme = {
     sceneSpeed: 0.6,
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeed: 0.56,      // launch lands ~as the round starts (was lifting off too early)
-    idleTailLoop: 1.5,    // keep the rocket flying while the round runs
+    idleSpeedBetting: 0.35, // ignition crawls through the countdown (rocket stays on the pad)
+    idleSpeed: 0.7,         // then speeds up for the lift-off + flight when the round runs
+    idleTailLoop: 1.5,      // keep the rocket flying while the round runs
   },
 };

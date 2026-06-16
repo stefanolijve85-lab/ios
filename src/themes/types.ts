@@ -96,6 +96,9 @@ export interface ThemeUI {
   // Playback rate for the idle clip specifically (defaults to sceneSpeed). Lets
   // a countdown-synced launch be slowed to match the 5s countdown.
   idleSpeed?: number;
+  // Slower rate during the betting countdown only (e.g. stretch the rocket's
+  // ignition over the countdown, then speed up for the lift-off when running).
+  idleSpeedBetting?: number;
   // Loop just the last N seconds of the idle clip when it ends (instead of
   // holding the last frame) — e.g. the rocket keeps flying while the round runs.
   idleTailLoop?: number;

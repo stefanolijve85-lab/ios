@@ -201,6 +201,9 @@ export default function Vault() {
   const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
+  // a countdown-synced idle runs slower during betting (stretch the ignition),
+  // then speeds up at lift-off when the round runs
+  const idleRate = syncCountdown && phase === 'betting' ? theme.ui?.idleSpeedBetting ?? idleSpeed : idleSpeed;
   const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
@@ -245,7 +248,7 @@ export default function Vault() {
         }
         // scenes with their own audio play at normal speed so the sound isn't
         // pitched; the idle clip can have its own rate (countdown sync)
-        v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeed;
+        v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleRate : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
         else { v.pause(); try { v.currentTime = 0; } catch {} }
       } else if (!v.paused || v.currentTime !== 0) {
@@ -253,7 +256,7 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [scene, activePlaying, sceneSpeed, idleSpeed, activeHasSound, idleHeld]);
+  }, [scene, activePlaying, sceneSpeed, idleRate, activeHasSound, idleHeld]);
 
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
