@@ -96,6 +96,9 @@ export interface ThemeUI {
   // Playback rate for the idle clip specifically (defaults to sceneSpeed). Lets
   // a countdown-synced launch be slowed to match the 5s countdown.
   idleSpeed?: number;
+  // Loop just the last N seconds of the idle clip when it ends (instead of
+  // holding the last frame) — e.g. the rocket keeps flying while the round runs.
+  idleTailLoop?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
   sceneSpeed?: number;
   // Loop scene videos? Default true. Set false to play once and hold on the

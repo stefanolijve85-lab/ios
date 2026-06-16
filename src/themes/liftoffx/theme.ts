@@ -98,6 +98,7 @@ export const liftoffx: Theme = {
     sceneSpeed: 0.6,
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeed: 0.7,
+    idleSpeed: 0.56,      // launch lands ~as the round starts (was lifting off too early)
+    idleTailLoop: 1.5,    // keep the rocket flying while the round runs
   },
 };

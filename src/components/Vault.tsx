@@ -201,6 +201,7 @@ export default function Vault() {
   const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
+  const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
   // lock a sound result scene on as soon as it appears, so it plays out fully
@@ -299,8 +300,16 @@ export default function Vault() {
                 muted={!(soundScenes.includes(k) && k === scene)}
                 playsInline
                 preload="auto"
-                onEnded={() => {
-                  if (k === 'idle') setIdleHeld(true);
+                onEnded={(e) => {
+                  if (k === 'idle') {
+                    if (idleTailLoop > 0 && isFinite(e.currentTarget.duration)) {
+                      // keep flying: loop just the tail instead of holding the last frame
+                      try { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - idleTailLoop); } catch {}
+                      e.currentTarget.play().catch(() => {});
+                    } else {
+                      setIdleHeld(true);
+                    }
+                  }
                   if (k === lockedScene) setLockedScene(null); // release the lock when it finishes
                 }}
               />
