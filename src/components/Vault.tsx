@@ -166,6 +166,7 @@ export default function Vault() {
   const sceneZoom = theme.ui?.sceneZoom ?? 1;
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
+  const sceneLoop = theme.ui?.sceneLoop ?? true;
   // Drive scene-video playback off the phase: hold on the first frame while
   // betting, start it the moment the round runs (and on result scenes).
   useEffect(() => {
@@ -207,7 +208,7 @@ export default function Vault() {
               src={sceneVideo}
               poster={scenePoster}
               style={sceneStyle}
-              loop
+              loop={sceneLoop}
               muted
               playsInline
               preload="auto"

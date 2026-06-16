@@ -70,7 +70,8 @@ export const bankheistx: Theme = {
     landingAlt: 'BANKHEIST X — Lock it in. Cash out big.',
   },
   // (the animated idle scene already shows the money piling up — no sprite overlay)
-  // play the scene videos in slow-motion so the idle clip lasts the whole round
-  // (it would otherwise finish/loop before the round busts).
-  ui: { sceneSpeed: 0.5 },
+  // play the scene videos in slow-motion, and DON'T loop — the idle clip plays
+  // once and holds on its last frame (full vault) until the round busts, so it
+  // never visibly restarts mid-round.
+  ui: { sceneSpeed: 0.5, sceneLoop: false },
 };

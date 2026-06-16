@@ -87,6 +87,9 @@ export interface ThemeUI {
   sceneZoom?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
   sceneSpeed?: number;
+  // Loop scene videos? Default true. Set false to play once and hold on the
+  // last frame until the phase changes (e.g. the vault stays full for the round).
+  sceneLoop?: boolean;
 }
 
 export interface Theme {
