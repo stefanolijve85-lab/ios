@@ -328,6 +328,13 @@ export default function Vault() {
         </div>
       )}
 
+      {/* a locked result clip (e.g. split) can be tapped to skip ahead */}
+      {lockedScene && (
+        <button className="scene-skip" onClick={() => setLockedScene(null)} aria-label="Continue">
+          <span className="scene-skip-hint">TAP TO CONTINUE</span>
+        </button>
+      )}
+
       {/* countdown only on the live vault while betting — never over a result
           scene (e.g. a split clip still playing into the next round) */}
       {scene === 'idle' && phase === 'betting' && (

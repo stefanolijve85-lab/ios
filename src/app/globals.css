@@ -687,6 +687,21 @@ input { font-family: inherit; }
 .vault-scene video.scene-video.idle-clip { transform-origin: center 48%; transform: scale(1.08); }
 .vault-scene video.scene-video.idle-clip.held { animation: idlePullback 10s ease-in-out 1s infinite alternate; }
 @keyframes idlePullback { from { transform: scale(1.08); } to { transform: scale(1); } }
+/* tap-to-skip overlay on a locked result clip (e.g. the split scene) */
+.scene-skip {
+  position: absolute; inset: 0; z-index: 6;
+  background: transparent; border: none; padding: 0 0 14px; cursor: pointer;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.scene-skip-hint {
+  font-size: 11px; font-weight: 800; letter-spacing: 1.6px;
+  color: rgba(255,255,255,0.9);
+  background: rgba(8,8,11,0.55); padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  animation: skipPulse 1.8s ease-in-out infinite;
+}
+@keyframes skipPulse { 50% { opacity: 0.55; } }
 /* poster (first frame) under the scene video — instant, no drift, aligned to it */
 .vault-scene img.scene-poster { z-index: 1; animation: none; transform-origin: center 18%; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
