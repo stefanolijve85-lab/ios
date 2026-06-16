@@ -36,7 +36,7 @@ export const bankheistx: Theme = {
     sceneLose: `${A}/heist.webp`,
     sceneWin: `${A}/caught.webp`,
     sceneWinVideo: `${A}/scene-win-v2.mp4`,
-    scenePosters: { idle: `${A}/vault.webp`, win: `${A}/scene-win-poster.webp` },
+    scenePosters: { win: `${A}/scene-win-poster.webp` },
     icons: {
       home: `${A}/icons/wallet.webp`,
       history: `${A}/icons/trophy.webp`,
@@ -69,6 +69,5 @@ export const bankheistx: Theme = {
     loseFlash: 'THEY GOT AWAY!',
     landingAlt: 'BANKHEIST X — Lock it in. Cash out big.',
   },
-  // money stacks that pile up on the vault floor as the multiplier climbs
-  ui: { growth: { sprites: [`${A}/stack.webp`, `${A}/stack-2.webp`] } },
+  // (the animated idle scene already shows the money piling up — no sprite overlay)
 };
