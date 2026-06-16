@@ -225,6 +225,7 @@ export default function Vault() {
       const v = sceneRefs.current[k];
       if (!v) return;
       if (k === scene) {
+        if (k === 'idle' && idleHeld) return; // the drift effect drives this clip
         // scenes with their own audio play at normal speed so the sound isn't pitched
         v.playbackRate = activeHasSound ? 1 : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
@@ -234,7 +235,33 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [scene, activePlaying, sceneSpeed, activeHasSound]);
+  }, [scene, activePlaying, sceneSpeed, activeHasSound, idleHeld]);
+
+  // Once the idle clip has played out, ease it backward and forward (reverse
+  // playback with natural slow turns) so long rounds keep gentle motion instead
+  // of freezing on the last frame.
+  useEffect(() => {
+    if (!idleHeld) return;
+    const v = sceneRefs.current['idle'];
+    if (!v || !v.duration || !isFinite(v.duration)) return;
+    const dur = v.duration;
+    const omega = Math.PI / 6; // ~6s per sweep (≈12s full back-and-forth cycle)
+    const start = performance.now();
+    let last = 0;
+    let raf = 0;
+    try { v.pause(); } catch { /* ignore */ }
+    const loop = (now: number) => {
+      if (now - last >= 45) { // throttle the seeks (~22fps) to ease the load
+        last = now;
+        const e = (now - start) / 1000;
+        // cosine sweep: starts at the end, eases to the start, eases back, …
+        try { v.currentTime = (dur / 2) * (1 + Math.cos(omega * e)); } catch { /* ignore */ }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [idleHeld]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -266,7 +293,7 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === scene ? ' active' : ''}`}
                 src={src}
                 style={sceneStyle}
                 loop={sceneLoop}
