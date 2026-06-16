@@ -175,6 +175,8 @@ export default function Vault() {
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
+  const soundScenes = theme.ui?.sceneSound ?? []; // scenes that play with their own audio
+  const activeHasSound = soundScenes.includes(activeScene);
 
   // Warm every scene video once (briefly play muted, then pause to frame 0) so
   // even iOS — which won't buffer paused videos — has them ready to start
@@ -203,7 +205,8 @@ export default function Vault() {
       const v = sceneRefs.current[k];
       if (!v) return;
       if (k === activeScene) {
-        v.playbackRate = sceneSpeed;
+        // scenes with their own audio play at normal speed so the sound isn't pitched
+        v.playbackRate = activeHasSound ? 1 : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
         else { v.pause(); try { v.currentTime = 0; } catch {} }
       } else if (!v.paused || v.currentTime !== 0) {
@@ -211,7 +214,7 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [activeScene, activePlaying, sceneSpeed]);
+  }, [activeScene, activePlaying, sceneSpeed, activeHasSound]);
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -237,7 +240,7 @@ export default function Vault() {
                 src={src}
                 style={sceneStyle}
                 loop={sceneLoop}
-                muted
+                muted={!(soundScenes.includes(k) && k === activeScene)}
                 playsInline
                 preload="auto"
               />

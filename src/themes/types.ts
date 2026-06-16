@@ -91,6 +91,9 @@ export interface ThemeUI {
   // Loop scene videos? Default true. Set false to play once and hold on the
   // last frame until the phase changes (e.g. the vault stays full for the round).
   sceneLoop?: boolean;
+  // Scene keys whose video plays WITH its own audio (e.g. ['split'] so the
+  // thief's shout is heard). All other scenes stay muted (game SFX take over).
+  sceneSound?: ('idle' | 'lose' | 'win' | 'split')[];
 }
 
 export interface Theme {
