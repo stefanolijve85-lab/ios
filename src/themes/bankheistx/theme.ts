@@ -34,6 +34,7 @@ export const bankheistx: Theme = {
     sceneIdle: `${A}/vault.webp`,
     sceneLose: `${A}/heist.webp`,
     sceneWin: `${A}/caught.webp`,
+    sceneWinVideo: `${A}/scene-win.mp4`,
     icons: {
       home: `${A}/icons/wallet.webp`,
       history: `${A}/icons/trophy.webp`,
