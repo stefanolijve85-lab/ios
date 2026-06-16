@@ -25,7 +25,7 @@ export default function Vault() {
   const markerRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const sceneVideoRef = useRef<HTMLVideoElement>(null);
+  const sceneRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
@@ -34,9 +34,6 @@ export default function Vault() {
 
   const [phase, setPhase] = useState('betting');
   const [warn, setWarn] = useState(false);
-  // becomes true only once the scene video is ACTUALLY playing (frames moving),
-  // so we never reveal a frozen first frame while it buffers/starts.
-  const [sceneLive, setSceneLive] = useState(false);
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -138,54 +135,69 @@ export default function Vault() {
     return () => cancelAnimationFrame(raf);
   }, [liveMultiplier, serverNow, stateRef]);
 
-  // pick the scene for the current phase, preferring a cinematic video if the
-  // theme provides one (still image otherwise).
-  const sceneClass = isSecured ? 'is-caught' : phase === 'crashed' ? 'is-heist' : '';
-  const sceneImg = isSecured
-    ? theme.assets.sceneWin
-    : phase === 'crashed'
-    ? theme.assets.sceneLose
-    : theme.assets.sceneIdle;
-  const sceneVideo = isSecured
-    ? theme.assets.sceneWinVideo
-    : phase === 'crashed'
-    ? theme.assets.sceneLoseVideo
+  // ---- cinematic scenes ---------------------------------------------------
+  // A theme can supply a video per phase (idle / lose / win). We mount ALL of a
+  // game's scene videos at once and keep them WARMED (buffered + first frame
+  // decoded), so a phase change starts the right clip instantly — no poster, no
+  // buffer. Themes without videos fall back to the still images.
+  const SCENE_KEYS = ['idle', 'lose', 'win'] as const;
+  type SceneKey = (typeof SCENE_KEYS)[number];
+  const sceneVideoFor = (k: SceneKey) =>
+    k === 'win' ? theme.assets.sceneWinVideo
+    : k === 'lose' ? theme.assets.sceneLoseVideo
     : theme.assets.sceneIdleVideo;
-  // poster shown instantly while the scene video buffers (its first frame, for a
-  // seamless start) — the video crossfades in over it. Falls back to nothing
-  // (dark scene background) when not provided.
-  const scenePoster = isSecured
-    ? theme.assets.scenePosters?.win
-    : phase === 'crashed'
-    ? theme.assets.scenePosters?.lose
-    : theme.assets.scenePosters?.idle;
-  // The idle scene holds on its first-frame poster during the betting countdown
-  // and only starts playing the moment the round RUNS (the multiplier climbs) —
-  // but only when there's a poster to hold on (else keep playing, no dark gap).
-  // Result scenes (win/lose) always play immediately.
-  const idleScene = !isSecured && phase !== 'crashed';
-  const scenePlaying = !!sceneVideo && !(idleScene && phase === 'betting' && !!scenePoster);
-  // some scene clips ship with black pillarbox margins baked in — zoom so the
-  // picture fills the whole scene box edge to edge (themeable, default none).
+  const sceneClassFor = (k: SceneKey) => (k === 'win' ? 'is-caught' : k === 'lose' ? 'is-heist' : '');
+
+  const activeScene: SceneKey = isSecured ? 'win' : phase === 'crashed' ? 'lose' : 'idle';
+  const sceneClass = sceneClassFor(activeScene);
+  const sceneImg = isSecured ? theme.assets.sceneWin : phase === 'crashed' ? theme.assets.sceneLose : theme.assets.sceneIdle;
+  const hasSceneVideos = SCENE_KEYS.some((k) => sceneVideoFor(k));
+  // the idle clip holds on its first frame (paused) through the betting
+  // countdown and starts the moment the round runs; result scenes play at once.
+  const activePlaying = !!sceneVideoFor(activeScene) && !(activeScene === 'idle' && phase === 'betting');
+
+  // some clips ship with black pillarbox margins baked in — zoom to fill.
   const sceneZoom = theme.ui?.sceneZoom ?? 1;
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
-  // Drive scene-video playback off the phase: hold on the first frame while
-  // betting, start it the moment the round runs (and on result scenes).
-  useEffect(() => { setSceneLive(false); }, [sceneVideo]); // new clip → not live until it plays
+
+  // Warm every scene video once (briefly play muted, then pause to frame 0) so
+  // even iOS — which won't buffer paused videos — has them ready to start
+  // instantly. Runs after mount; Vault only mounts once the PLAY tap has
+  // unlocked playback, and the clips are muted, so this is allowed.
+  const warmedRef = useRef(false);
   useEffect(() => {
-    const v = sceneVideoRef.current;
-    if (!v) return;
-    if (scenePlaying) {
-      v.playbackRate = sceneSpeed;
-      v.play().catch(() => {});
-    } else {
-      v.pause();
-      try { v.currentTime = 0; } catch { /* not seekable yet */ }
-      setSceneLive(false);
-    }
-  }, [scenePlaying, sceneSpeed, sceneVideo]);
+    if (warmedRef.current) return;
+    warmedRef.current = true;
+    SCENE_KEYS.forEach((k) => {
+      const v = sceneRefs.current[k];
+      if (!v) return;
+      v.muted = true;
+      const p = v.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => { v.pause(); try { v.currentTime = 0; } catch {} }).catch(() => {});
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Play the active clip (or hold it on frame 0); keep the rest paused at 0 and
+  // ready. Because they're warmed, switching scenes starts instantly.
+  useEffect(() => {
+    SCENE_KEYS.forEach((k) => {
+      const v = sceneRefs.current[k];
+      if (!v) return;
+      if (k === activeScene) {
+        v.playbackRate = sceneSpeed;
+        if (activePlaying) v.play().catch(() => {});
+        else { v.pause(); try { v.currentTime = 0; } catch {} }
+      } else if (!v.paused || v.currentTime !== 0) {
+        v.pause();
+        try { v.currentTime = 0; } catch {}
+      }
+    });
+  }, [activeScene, activePlaying, sceneSpeed]);
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -193,47 +205,30 @@ export default function Vault() {
           When the theme ships cinematic scene videos we loop those instead of
           the static stills (e.g. LIFTOFF X). */}
       <div className="vault-scene">
-        {sceneVideo ? (
-          <>
-            {/* poster (the video's first frame) shows instantly so the start is
-                seamless; the video crossfades in over it once it can play */}
-            {scenePoster && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                className={`scene-poster ${sceneClass}`}
-                src={scenePoster}
+        {/* base still — shown for any phase that has no scene video */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className={`scene-still ${sceneClass}`} src={sceneImg} alt={theme.name} draggable={false} />
+        {/* all of the theme's scene videos, preloaded + warmed; the active one
+            is visible and playing, the rest hidden and paused at frame 0, so a
+            phase change starts instantly with no buffer and no poster */}
+        {hasSceneVideos &&
+          SCENE_KEYS.map((k) => {
+            const src = sceneVideoFor(k);
+            if (!src) return null;
+            return (
+              <video
+                key={k}
+                ref={(el) => { sceneRefs.current[k] = el; }}
+                className={`scene-video ${sceneClassFor(k)}${k === activeScene ? ' active' : ''}`}
+                src={src}
                 style={sceneStyle}
-                alt=""
-                draggable={false}
+                loop={sceneLoop}
+                muted
+                playsInline
+                preload="auto"
               />
-            )}
-            <video
-              key={sceneVideo}
-              ref={sceneVideoRef}
-              className={`scene-video ${sceneClass}${sceneLive ? ' live' : ''}`}
-              src={sceneVideo}
-              poster={scenePoster}
-              style={sceneStyle}
-              loop={sceneLoop}
-              muted
-              playsInline
-              preload="auto"
-              onCanPlay={(e) => {
-                e.currentTarget.playbackRate = sceneSpeed;
-                if (scenePlaying) e.currentTarget.play().catch(() => {});
-              }}
-              onPlaying={() => setSceneLive(true)}
-            />
-          </>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            className={sceneClass}
-            src={sceneImg}
-            alt={theme.name}
-            draggable={false}
-          />
-        )}
+            );
+          })}
       </div>
       {/* ambient themed particles — only over the live/idle scene, never on the
           crash or secure result art */}
