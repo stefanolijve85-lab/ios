@@ -96,7 +96,7 @@ export default function Vault() {
         // fire the countdown clip so it ends right at zero (themeable lead time;
         // 4.6s bomb-clock by default, shorter for LIFTOFF's launch countdown)
         if (!tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
-          getAudio().tick();
+          getAudio().tick(theme.ui?.tickLeadMs ?? 4600);
           tickFired = true;
         }
       } else {

@@ -242,9 +242,13 @@ class TensionAudio {
   // One tick per second, fired in sync with the on-screen numbers.
   startTick() { this.ticking = true; }
   stopTick() { this.ticking = false; }
-  tick() {
-    if (!this.enabled || !this.ticking) return;
-    this.oneShot(this.buffers.tick, 0.6);
+  // Fire the countdown clip so it ENDS at zero: if the clip is longer than the
+  // lead window we start it partway in (its last `leadMs` plays over the count).
+  tick(leadMs = 4600) {
+    const buf = this.buffers.tick;
+    if (!this.enabled || !this.ticking || !buf) return;
+    const offset = Math.max(0, buf.duration - leadMs / 1000);
+    this.oneShot(buf, 0.6, undefined, 0, undefined, undefined, offset);
   }
 
   private stopSources() {
@@ -306,7 +310,7 @@ class TensionAudio {
     this.voiceBusyUntil = now + delay + buf.duration;
   }
 
-  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0, maxDur?: number, lowpassHz?: number) {
+  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0, maxDur?: number, lowpassHz?: number, offset = 0) {
     if (!this.enabled || !this.ctx || !buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -324,7 +328,7 @@ class TensionAudio {
       g.connect(bus ?? this.sfxGain!);
     }
     const t = this.ctx.currentTime + delay;
-    src.start(t);
+    src.start(t, Math.max(0, Math.min(offset, buf.duration - 0.05)));
     // optionally shorten a long clip with a quick fade-out (no click)
     if (maxDur && maxDur < buf.duration) {
       const end = t + maxDur;
