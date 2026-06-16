@@ -55,7 +55,6 @@ export const bankheistx: Theme = {
     motifHigh: `${A}/audio/motif-high.mp3`,
     stash: `${A}/audio/stash.mp3`,
     crash: `${A}/audio/crash.mp3`,
-    crashAlt: `${A}/audio/crash-2.mp3`,
     lobby: `${A}/audio/lobby.mp3`,
     tick: `${A}/audio/tick.mp3`,
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `${A}/audio/voice-crash-${n}.mp3`),
