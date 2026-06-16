@@ -25,6 +25,7 @@ export default function Vault() {
   const markerRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sceneVideoRef = useRef<HTMLVideoElement>(null);
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
@@ -146,11 +147,6 @@ export default function Vault() {
     : phase === 'crashed'
     ? theme.assets.sceneLoseVideo
     : theme.assets.sceneIdleVideo;
-  // some scene clips ship with black pillarbox margins baked in — zoom so the
-  // picture fills the whole scene box edge to edge (themeable, default none).
-  const sceneZoom = theme.ui?.sceneZoom ?? 1;
-  const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
-  const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   // poster shown instantly while the scene video buffers (its first frame, for a
   // seamless start) — the video crossfades in over it. Falls back to nothing
   // (dark scene background) when not provided.
@@ -159,6 +155,30 @@ export default function Vault() {
     : phase === 'crashed'
     ? theme.assets.scenePosters?.lose
     : theme.assets.scenePosters?.idle;
+  // The idle scene holds on its first-frame poster during the betting countdown
+  // and only starts playing the moment the round RUNS (the multiplier climbs) —
+  // but only when there's a poster to hold on (else keep playing, no dark gap).
+  // Result scenes (win/lose) always play immediately.
+  const idleScene = !isSecured && phase !== 'crashed';
+  const scenePlaying = !!sceneVideo && !(idleScene && phase === 'betting' && !!scenePoster);
+  // some scene clips ship with black pillarbox margins baked in — zoom so the
+  // picture fills the whole scene box edge to edge (themeable, default none).
+  const sceneZoom = theme.ui?.sceneZoom ?? 1;
+  const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
+  const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
+  // Drive scene-video playback off the phase: hold on the first frame while
+  // betting, start it the moment the round runs (and on result scenes).
+  useEffect(() => {
+    const v = sceneVideoRef.current;
+    if (!v) return;
+    if (scenePlaying) {
+      v.playbackRate = sceneSpeed;
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+      try { v.currentTime = 0; } catch { /* not seekable yet */ }
+    }
+  }, [scenePlaying, sceneSpeed, sceneVideo]);
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -182,19 +202,18 @@ export default function Vault() {
             )}
             <video
               key={sceneVideo}
-              className={`scene-video ${sceneClass}`}
+              ref={sceneVideoRef}
+              className={`scene-video ${sceneClass}${scenePlaying ? ' playing' : ''}`}
               src={sceneVideo}
               poster={scenePoster}
               style={sceneStyle}
-              autoPlay
               loop
               muted
               playsInline
               preload="auto"
               onCanPlay={(e) => {
                 e.currentTarget.playbackRate = sceneSpeed;
-                e.currentTarget.play().catch(() => {});
-                e.currentTarget.classList.add('ready');
+                if (scenePlaying) e.currentTarget.play().catch(() => {});
               }}
             />
           </>

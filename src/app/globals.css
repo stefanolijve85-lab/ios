@@ -676,8 +676,10 @@ input { font-family: inherit; }
 }
 /* cinematic scene video sits on top of the still and fades in once it can play,
    so there's no black gap and no late start when a scene swaps in */
-.vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .25s ease; transform-origin: center 18%; }
-.vault-scene video.scene-video.ready { opacity: 1; }
+/* scene video sits over its poster; only visible (and moving) once it's playing
+   — during the betting countdown we hold on the poster (first frame) */
+.vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .3s ease; transform-origin: center 18%; }
+.vault-scene video.scene-video.playing { opacity: 1; }
 /* poster (first frame) under the scene video — instant, no drift, aligned to it */
 .vault-scene img.scene-poster { z-index: 1; animation: none; transform-origin: center 18%; }
 /* full scenes (crash/secure): cropped landscape around the characters so they
