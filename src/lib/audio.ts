@@ -272,10 +272,12 @@ class TensionAudio {
   crash(lost = true, idx = -1) {
     this.running = false;
     this.stopSources();
-    // alternate between the two alarm clips (less repetitive), a touch softer
+    // alternate between the two alarm clips (less repetitive):
+    //  - the new clip plays clearly softer
+    //  - the old clip is shortened so it isn't drawn-out
     const alt = this.buffers.crashAlt;
-    const alarm = alt && Math.random() < 0.5 ? alt : this.buffers.crash;
-    this.oneShot(alarm, 0.7);
+    if (alt && Math.random() < 0.5) this.oneShot(alt, 0.45);
+    else this.oneShot(this.buffers.crash, 0.7, undefined, 0, 0.9);
     if (!lost) return;
     // voice line on its own bus, just after the crash
     if (this.voiceCrash.length) {
@@ -295,7 +297,7 @@ class TensionAudio {
     this.voiceBusyUntil = now + delay + buf.duration;
   }
 
-  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0) {
+  private oneShot(buf: AudioBuffer | undefined, vol: number, bus?: GainNode | null, delay = 0, maxDur?: number) {
     if (!this.enabled || !this.ctx || !buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -303,7 +305,15 @@ class TensionAudio {
     g.gain.value = vol;
     src.connect(g);
     g.connect(bus ?? this.sfxGain!);
-    src.start(this.ctx.currentTime + delay);
+    const t = this.ctx.currentTime + delay;
+    src.start(t);
+    // optionally shorten a long clip with a quick fade-out (no click)
+    if (maxDur && maxDur < buf.duration) {
+      const end = t + maxDur;
+      g.gain.setValueAtTime(vol, Math.max(t, end - 0.12));
+      g.gain.linearRampToValueAtTime(0.0001, end);
+      src.stop(end + 0.02);
+    }
   }
 }
 
