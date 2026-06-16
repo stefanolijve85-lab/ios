@@ -79,5 +79,5 @@ export const bankheistx: Theme = {
   // Hold the last frame (no loop), so the clip needn't be very slow — a gentle
   // 0.8x keeps it smooth (0.5x looked choppy: not enough source frames) while
   // still reading as slow-motion.
-  ui: { sceneSpeed: 0.8, sceneLoop: false, sceneSound: ['split'] },
+  ui: { sceneSpeed: 0.8, sceneLoop: false, sceneSound: ['split'], idlePullback: true },
 };

@@ -46,8 +46,9 @@ export const liftoffx: Theme = {
     sceneIdle: '/brand/card-liftoffx.webp',
     sceneLose: '/brand/card-liftoffx.webp',
     sceneWin: '/brand/card-liftoffx.webp',
-    // animated scenes: launch (idle/running) → explosion (crash) → eject (win)
-    sceneIdleVideo: `${A}/launch.mp4`,
+    // animated scenes: launch (idle, full-frame, countdown-synced) → explosion
+    // (crash) → eject (win)
+    sceneIdleVideo: `${A}/scene-idle.mp4`,
     sceneLoseVideo: `${A}/explosion.mp4`,
     sceneWinVideo: `${A}/eject.mp4`,
     // fallback icons (DEEP DIVE X) until LIFTOFF-native icons land
@@ -87,5 +88,16 @@ export const liftoffx: Theme = {
   // altitude readout (like DEEP DIVE's depth) reads the multiplier as metres of
   // altitude; speed lines convey the climb. sceneZoom crops the black pillarbox
   // margins baked into the scene clips so the rocket fills the box edge to edge.
-  ui: { motion: { kind: 'speed', color: '#ffd9a8' }, sceneZoom: 1.9, sceneSpeed: 0.6 },
+  // The idle launch clip is full-frame (no zoom) and plays through the betting
+  // countdown so the lift-off lands as the round starts (idleSpeed slows the 8s
+  // clip to match the 5s countdown). The old crash/win clips still need the
+  // pillarbox zoom. Plays once, holds the last frame (rocket in space).
+  ui: {
+    motion: { kind: 'speed', color: '#ffd9a8' },
+    sceneZoom: { lose: 1.9, win: 1.9 },
+    sceneSpeed: 0.6,
+    sceneLoop: false,
+    idleSyncCountdown: true,
+    idleSpeed: 0.7,
+  },
 };

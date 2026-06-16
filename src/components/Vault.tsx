@@ -186,14 +186,21 @@ export default function Vault() {
     : scene === 'lose' ? theme.assets.sceneLose
     : theme.assets.sceneIdle;
   const hasSceneVideos = SCENE_KEYS.some((k) => sceneVideoFor(k));
-  // the idle clip holds on its first frame (paused) through the betting
-  // countdown and starts the moment the round runs; result scenes play at once.
-  const activePlaying = !!sceneVideoFor(scene) && !(scene === 'idle' && phase === 'betting');
 
-  // some clips ship with black pillarbox margins baked in — zoom to fill.
-  const sceneZoom = theme.ui?.sceneZoom ?? 1;
-  const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
+  const pullback = !!theme.ui?.idlePullback;            // BANKHEIST: hold + slow zoom-out
+  const syncCountdown = !!theme.ui?.idleSyncCountdown;  // LIFTOFF: idle plays through the countdown
+  // The idle clip either holds on frame 0 through the betting countdown, or (for
+  // a countdown-synced launch) plays right through it; result scenes play at once.
+  const idleHoldsBetting = scene === 'idle' && phase === 'betting' && !syncCountdown;
+  const activePlaying = !!sceneVideoFor(scene) && !idleHoldsBetting;
+
+  // some clips ship with black pillarbox margins baked in — zoom to fill (per
+  // scene or one value for all).
+  const zoomCfg = theme.ui?.sceneZoom;
+  const zoomFor = (k: SceneKey): number => (typeof zoomCfg === 'number' ? zoomCfg : zoomCfg?.[k] ?? 1);
+  const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
+  const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
   // lock a sound result scene on as soon as it appears, so it plays out fully
@@ -235,8 +242,9 @@ export default function Vault() {
           const dur = isFinite(v.duration) ? v.duration : 0;
           try { v.currentTime = dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0; } catch {}
         }
-        // scenes with their own audio play at normal speed so the sound isn't pitched
-        v.playbackRate = activeHasSound ? 1 : sceneSpeed;
+        // scenes with their own audio play at normal speed so the sound isn't
+        // pitched; the idle clip can have its own rate (countdown sync)
+        v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
         else { v.pause(); try { v.currentTime = 0; } catch {} }
       } else if (!v.paused || v.currentTime !== 0) {
@@ -244,7 +252,7 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [scene, activePlaying, sceneSpeed, activeHasSound, idleHeld]);
+  }, [scene, activePlaying, sceneSpeed, idleSpeed, activeHasSound, idleHeld]);
 
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
@@ -284,9 +292,9 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === 'idle' ? ' idle-clip' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
                 src={src}
-                style={sceneStyle}
+                style={styleFor(k)}
                 loop={sceneLoop}
                 muted={!(soundScenes.includes(k) && k === scene)}
                 playsInline

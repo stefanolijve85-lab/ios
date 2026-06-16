@@ -85,8 +85,17 @@ export interface ThemeUI {
   growth?: { sprites: string[] };
   // Zoom factor for cinematic scene videos whose source has black pillarbox
   // bars baked in — scales the video up so the picture fills the scene box edge
-  // to edge (>1 crops the empty/black margins). Default 1 (no zoom).
-  sceneZoom?: number;
+  // to edge (>1 crops the empty/black margins). Default 1 (no zoom). Either one
+  // value for all scenes, or per scene (e.g. { lose: 1.9, win: 1.9 }).
+  sceneZoom?: number | { idle?: number; lose?: number; win?: number; split?: number };
+  // Idle "hold last frame then slowly pull back" drift (e.g. the BANKHEIST vault).
+  idlePullback?: boolean;
+  // Idle clip plays through the betting countdown so its key moment (e.g. the
+  // LIFTOFF launch) lands as the round starts — instead of holding on frame 0.
+  idleSyncCountdown?: boolean;
+  // Playback rate for the idle clip specifically (defaults to sceneSpeed). Lets
+  // a countdown-synced launch be slowed to match the 5s countdown.
+  idleSpeed?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
   sceneSpeed?: number;
   // Loop scene videos? Default true. Set false to play once and hold on the
