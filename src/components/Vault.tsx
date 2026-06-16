@@ -240,8 +240,15 @@ export default function Vault() {
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
-  // safety: never carry a lock into a fresh live round
-  useEffect(() => { if (phase === 'running') setLockedScene(null); }, [phase]);
+  // safety: release the lock after the clip's own duration (+buffer) in case the
+  // 'ended' event is missed — so it always plays out fully but never sticks.
+  useEffect(() => {
+    if (!lockedScene) return;
+    const v = sceneRefs.current[lockedScene];
+    const ms = v && isFinite(v.duration) && v.duration > 0 ? v.duration * 1000 + 1500 : 15000;
+    const t = setTimeout(() => setLockedScene(null), ms);
+    return () => clearTimeout(t);
+  }, [lockedScene]);
 
   // reset the "held last frame" drift whenever we leave the live idle scene
   useEffect(() => {
@@ -268,7 +275,7 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === 'idle' ? ' idle-clip' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
                 src={src}
                 style={sceneStyle}
                 loop={sceneLoop}
@@ -307,9 +314,8 @@ export default function Vault() {
         <div className="vault-depth"><span>DEPTH</span><b ref={depthRef}>0m</b></div>
       )}
 
-      {/* ladder — fixed rungs whose values scroll up; marker floats near the top
-          (labelled as depth for DEEP DIVE; hidden on crash) */}
-      {phase !== 'crashed' && (
+      {/* ladder — only over the live vault (idle), never on a result scene */}
+      {scene === 'idle' && phase !== 'crashed' && (
         <div className={`vault-ladder${depthMeter ? ' depth' : ''}`}>
           {Array.from({ length: LADDER_N }).map((_, i) => (
             <div
@@ -322,8 +328,9 @@ export default function Vault() {
         </div>
       )}
 
-      {/* countdown only while betting — during a round the crash is unpredictable */}
-      {phase === 'betting' && (
+      {/* countdown only on the live vault while betting — never over a result
+          scene (e.g. a split clip still playing into the next round) */}
+      {scene === 'idle' && phase === 'betting' && (
         <div className={`vault-countdown${warn ? ' warn' : ''}`}>
           <div className="cd-pill">
             <span className="lbl">🔒 {theme.copy.countdownLabel}</span>
