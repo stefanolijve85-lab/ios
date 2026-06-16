@@ -37,6 +37,9 @@ export default function Vault() {
   // the idle clip plays once then holds its last frame; after a beat we drift it
   // (slow zoom) so long rounds don't look like a frozen still.
   const [idleHeld, setIdleHeld] = useState(false);
+  // a sound result scene (e.g. split) stays locked on screen until its clip
+  // finishes, so the full spoken line is heard past the short crash window.
+  const [lockedScene, setLockedScene] = useState<string | null>(null);
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -170,23 +173,30 @@ export default function Vault() {
   else if (lostCount > 0 || crashed) activeScene = 'lose';
   else activeScene = 'idle';
 
-  const sceneClass = sceneClassFor(activeScene);
+  // the effective on-screen scene: a locked (still-playing) sound clip wins,
+  // otherwise the phase-based result above.
+  const soundScenes = theme.ui?.sceneSound ?? []; // scenes that play with their own audio
+  const lockedKey = lockedScene as SceneKey | null;
+  const scene: SceneKey = lockedKey && sceneVideoFor(lockedKey) ? lockedKey : activeScene;
+
+  const sceneClass = sceneClassFor(scene);
   const sceneImg =
-    activeScene === 'win' || activeScene === 'split' ? theme.assets.sceneWin
-    : activeScene === 'lose' ? theme.assets.sceneLose
+    scene === 'win' || scene === 'split' ? theme.assets.sceneWin
+    : scene === 'lose' ? theme.assets.sceneLose
     : theme.assets.sceneIdle;
   const hasSceneVideos = SCENE_KEYS.some((k) => sceneVideoFor(k));
   // the idle clip holds on its first frame (paused) through the betting
   // countdown and starts the moment the round runs; result scenes play at once.
-  const activePlaying = !!sceneVideoFor(activeScene) && !(activeScene === 'idle' && phase === 'betting');
+  const activePlaying = !!sceneVideoFor(scene) && !(scene === 'idle' && phase === 'betting');
 
   // some clips ship with black pillarbox margins baked in — zoom to fill.
   const sceneZoom = theme.ui?.sceneZoom ?? 1;
   const sceneStyle = sceneZoom !== 1 ? { transform: `scale(${sceneZoom})` } : undefined;
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const sceneLoop = theme.ui?.sceneLoop ?? true;
-  const soundScenes = theme.ui?.sceneSound ?? []; // scenes that play with their own audio
-  const activeHasSound = soundScenes.includes(activeScene);
+  const activeHasSound = soundScenes.includes(scene);
+  // lock a sound result scene on as soon as it appears, so it plays out fully
+  const lockable = activeScene !== 'idle' && soundScenes.includes(activeScene);
 
   // Warm every scene video once (briefly play muted, then pause to frame 0) so
   // even iOS — which won't buffer paused videos — has them ready to start
@@ -214,7 +224,7 @@ export default function Vault() {
     SCENE_KEYS.forEach((k) => {
       const v = sceneRefs.current[k];
       if (!v) return;
-      if (k === activeScene) {
+      if (k === scene) {
         // scenes with their own audio play at normal speed so the sound isn't pitched
         v.playbackRate = activeHasSound ? 1 : sceneSpeed;
         if (activePlaying) v.play().catch(() => {});
@@ -224,12 +234,17 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [activeScene, activePlaying, sceneSpeed, activeHasSound]);
+  }, [scene, activePlaying, sceneSpeed, activeHasSound]);
+
+  // lock a sound result scene on as soon as it appears (released on its 'ended')
+  useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
+  // safety: never carry a lock into a fresh live round
+  useEffect(() => { if (phase === 'running') setLockedScene(null); }, [phase]);
 
   // reset the "held last frame" drift whenever we leave the live idle scene
   useEffect(() => {
-    if (!(activeScene === 'idle' && phase === 'running')) setIdleHeld(false);
-  }, [activeScene, phase]);
+    if (!(scene === 'idle' && phase === 'running')) setIdleHeld(false);
+  }, [scene, phase]);
 
   return (
     <div className="vault" ref={vaultRef}>
@@ -251,30 +266,33 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === activeScene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld ? ' held' : ''}`}
                 src={src}
                 style={sceneStyle}
                 loop={sceneLoop}
-                muted={!(soundScenes.includes(k) && k === activeScene)}
+                muted={!(soundScenes.includes(k) && k === scene)}
                 playsInline
                 preload="auto"
-                onEnded={k === 'idle' ? () => setIdleHeld(true) : undefined}
+                onEnded={() => {
+                  if (k === 'idle') setIdleHeld(true);
+                  if (k === lockedScene) setLockedScene(null); // release the lock when it finishes
+                }}
               />
             );
           })}
       </div>
       {/* ambient themed particles — only over the live/idle scene, never on a
           result scene (win / split / crash) */}
-      {activeScene === 'idle' && <SceneMotion />}
+      {scene === 'idle' && <SceneMotion />}
       {/* loot that piles up with the multiplier (themed) */}
-      {activeScene === 'idle' && <StackGrowth />}
+      {scene === 'idle' && <StackGrowth />}
 
       {/* money glow only during the live round — never over the result scenes */}
-      {activeScene === 'idle' && <div className="vault-glow" ref={glowRef} />}
+      {scene === 'idle' && <div className="vault-glow" ref={glowRef} />}
 
       {/* center readout — also shown after you secure, so you see the climbing
           amount + what you're missing while the round finishes */}
-      {phase !== 'crashed' && (
+      {phase !== 'crashed' && !lockedScene && (
         <div className="vault-readout">
           <div className="label">{activeStake > 0 ? theme.copy.currentAmount : theme.copy.wouldBeWorth}</div>
           <div className="amount" ref={amountRef}>€0.00</div>

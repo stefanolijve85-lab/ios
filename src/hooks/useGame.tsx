@@ -141,11 +141,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const stillHolding =
         (!!betsRef.current[0] && !betsRef.current[0]!.cashedOut) ||
         (!!betsRef.current[1] && !betsRef.current[1]!.cashedOut);
+      const alsoWon = !!betsRef.current[0]?.cashedOut || !!betsRef.current[1]?.cashedOut;
+      const t = themeRef.current;
+      // mixed result with a "split" clip that has its own audio → let that clip
+      // carry the moment; don't talk over it with the game's crash voice/flash.
+      const splitWithSound =
+        alsoWon && stillHolding && !!t.assets.sceneSplitVideo && !!t.ui?.sceneSound?.includes('split');
       // always stops the motif; alarm/voice + balloon only if YOU lost
-      if (stillHolding) {
-        const i = Math.floor(Math.random() * themeRef.current.audio.voiceCrash.length);
+      if (splitWithSound) {
+        audio.crash(false);
+      } else if (stillHolding) {
+        const i = Math.floor(Math.random() * t.audio.voiceCrash.length);
         audio.crash(true, i);
-        setFlash({ kind: 'lose', text: themeRef.current.copy.loseFlash, key: Date.now() });
+        setFlash({ kind: 'lose', text: t.copy.loseFlash, key: Date.now() });
       } else {
         audio.crash(false);
       }
