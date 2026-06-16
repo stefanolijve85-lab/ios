@@ -30,7 +30,7 @@ export const bankheistx: Theme = {
     logo: `${A}/logo.webp`,
     landing: `${A}/landing.webp`,
     landingVideo: `${A}/landing-v2.mp4`,
-    playButton: `${A}/playbtn.webp`,
+    playButton: `${A}/playbtn-v2.webp`,
     sceneIdle: `${A}/vault.webp`,
     sceneLose: `${A}/heist.webp`,
     sceneWin: `${A}/caught.webp`,
