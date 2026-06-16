@@ -25,8 +25,10 @@ export function isLocale(x?: string | null): x is Locale {
 
 const STORAGE_KEY = 'xit_lang';
 
-// Client-side resolver: ?lang= override → saved choice → browser language →
-// default (English). Persists an explicit ?lang= choice.
+// Client-side resolver: an explicit `?lang=` override → a previously chosen
+// language (localStorage) → default (English). The browser's language is NOT
+// auto-applied — English is the product default everywhere, and a translation
+// only shows when explicitly selected.
 export function resolveClientLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
   try {
@@ -37,10 +39,6 @@ export function resolveClientLocale(): Locale {
   } catch {
     /* storage blocked — fall through */
   }
-  const nav = (typeof navigator !== 'undefined' ? navigator.language : '')
-    .slice(0, 2)
-    .toLowerCase();
-  if (isLocale(nav)) return nav;
   return DEFAULT_LOCALE;
 }
 
