@@ -33,6 +33,7 @@ export const trainridex: Theme = {
     playButton: `${A}/playbtn-v2.webp`,
     sceneIdle: `${A}/scene-idle-poster.webp`,
     sceneIdleVideo: `${A}/scene-idle-v2.mp4`,
+    sceneIdleLoopVideo: `${A}/scene-idle-loop.mp4`, // seamless racing loop (native, no seek)
     sceneLose: `${A}/derailment.webp`,
     sceneWin: `${A}/escape.webp`,
     icons: {
