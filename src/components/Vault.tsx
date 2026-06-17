@@ -216,15 +216,23 @@ export default function Vault() {
   useEffect(() => {
     if (warmedRef.current) return;
     warmedRef.current = true;
-    SCENE_KEYS.forEach((k) => {
-      const v = sceneRefs.current[k];
-      if (!v) return;
-      v.muted = true;
-      const p = v.play();
-      if (p && typeof p.then === 'function') {
-        p.then(() => { v.pause(); try { v.currentTime = 0; } catch {} }).catch(() => {});
+    let cancelled = false;
+    // Warm the result clips ONE AT A TIME (iOS throttles concurrent video play),
+    // so each buffers + decodes its first frame and starts instantly later. The
+    // active (idle) clip is left to the play/pause effect.
+    (async () => {
+      for (const k of SCENE_KEYS) {
+        if (cancelled || k === activeScene) continue;
+        const v = sceneRefs.current[k];
+        if (!v) continue;
+        v.muted = true;
+        try {
+          await v.play();
+          if (!cancelled) { v.pause(); v.currentTime = 0; }
+        } catch { /* skip */ }
       }
-    });
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
