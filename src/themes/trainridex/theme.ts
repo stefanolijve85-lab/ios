@@ -78,7 +78,6 @@ export const trainridex: Theme = {
   //   2. round start → scene-idle-v2.mp4  (the departure, plays once, full speed)
   //   3. running   → scene-idle-loop.mp4  (racing, seamless native loop)
   ui: {
-    motion: { kind: 'speed', color: '#ffe7cc' },
     sceneLoop: false,
     idleSpeed: 1,          // the departure clip plays at full speed at round start
     idleAudioNormal: true, // departure clip's steam + horn (decoupled, in sync at 1x)
