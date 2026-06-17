@@ -121,7 +121,8 @@ export interface ThemeUI {
   // lands on clock 3 (overrides the auto end-aligned offset).
   tickOffset?: number;
   // Playback rate for cinematic scene videos (<1 = slow-motion). Default 1.
-  sceneSpeed?: number;
+  // One value for all scenes, or per scene (e.g. { lose: 0.85, win: 0.6 }).
+  sceneSpeed?: number | { idle?: number; lose?: number; win?: number; split?: number };
   // Loop scene videos? Default true. Set false to play once and hold on the
   // last frame until the phase changes (e.g. the vault stays full for the round).
   sceneLoop?: boolean;

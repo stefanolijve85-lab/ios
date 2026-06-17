@@ -227,8 +227,10 @@ export default function Vault() {
   const zoomCfg = theme.ui?.sceneZoom;
   const zoomFor = (k: SceneKey): number => (typeof zoomCfg === 'number' ? zoomCfg : zoomCfg?.[k] ?? 1);
   const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
-  const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
-  const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
+  // playback rate for scene videos — one value for all, or per scene (<1 = slo-mo)
+  const speedCfg = theme.ui?.sceneSpeed;
+  const sceneSpeedFor = (k: SceneKey): number => (typeof speedCfg === 'number' ? speedCfg : speedCfg?.[k] ?? 1);
+  const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeedFor('idle');
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
@@ -296,7 +298,7 @@ export default function Vault() {
         // scenes with their own audio play at normal speed so the sound isn't
         // pitched; a countdown-synced idle's rate is ramped by the effect below
         if (!(k === 'idle' && syncCountdown)) {
-          v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeed;
+          v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeedFor(k);
         }
         if (activePlaying) v.play().catch(() => {});
         else { v.pause(); try { v.currentTime = 0; } catch {} }
@@ -305,7 +307,7 @@ export default function Vault() {
         try { v.currentTime = 0; } catch {}
       }
     });
-  }, [scene, activePlaying, sceneSpeed, idleSpeed, syncCountdown, activeHasSound, idleHeld]);
+  }, [scene, activePlaying, speedCfg, idleSpeed, syncCountdown, activeHasSound, idleHeld]);
 
   // Countdown-synced idle: hold the slow ignition rate through betting, then
   // SMOOTHLY ramp up to flight speed when the round starts (no abrupt jump).
