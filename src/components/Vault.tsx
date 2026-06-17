@@ -378,15 +378,17 @@ export default function Vault() {
   //  - ambient (muted): native-loop it through the whole betting countdown.
   //  - own audio (countdownSound): hold frame 0; the rAF loop starts it
   //    end-aligned so its clock + "all aboard" climax lands at zero.
-  // Either way, pause+reset once betting ends so the departure clip takes over.
+  // Reset to frame 0 when betting BEGINS (show the waiting-station frame), but on
+  // round start just pause and HOLD the last frame so it doesn't jump to frame 0
+  // mid-fade as the departure clip takes over.
   useEffect(() => {
     const cv = countdownRef.current;
     if (!cv) return;
-    if (countdownPlaying && !countdownSound) {
-      cv.play().catch(() => {});
-    } else if (!countdownPlaying) {
-      cv.pause();
+    if (countdownPlaying) {
       try { cv.currentTime = 0; } catch { /* not ready */ }
+      if (!countdownSound) cv.play().catch(() => {}); // ambient loops now; sound-mode end-aligns later
+    } else {
+      cv.pause();
     }
   }, [countdownPlaying, countdownSound]);
 
