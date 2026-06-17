@@ -122,7 +122,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const onRoundStart = () => {
       phaseRef.current = 'running';
       audio.stopTick();
-      audio.launch();      // launch callout (e.g. "LIFTOFF!") — no-op until the theme has one
+      audio.launch(themeRef.current.ui?.launchDelayMs ?? 0); // callout (e.g. "ALL ABOARD!") — no-op until the theme has one
       audio.startMotif();
     };
     const onCrash = (s?: GameState) => {

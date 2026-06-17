@@ -120,6 +120,9 @@ export interface ThemeUI {
   // Play the idle clip's audio at NORMAL speed, decoupled from the slow-mo
   // video (a separate audio element), so steam/horn aren't time-stretched.
   idleAudioNormal?: boolean;
+  // Delay (ms) before the launch callout (audio.launch) fires at round start,
+  // so the shout lands AFTER the departure horn (e.g. "ALL ABOARD!"). Default 0.
+  launchDelayMs?: number;
 }
 
 export interface Theme {

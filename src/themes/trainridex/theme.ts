@@ -50,6 +50,7 @@ export const trainridex: Theme = {
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/trainridex/audio/stash.mp3',
     crash: '/themes/trainridex/audio/crash.mp3',
+    launch: '/themes/trainridex/audio/all-aboard.mp3', // conductor's "ALL ABOARD!" after the horn
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-crash-${n}.mp3`),
@@ -80,5 +81,6 @@ export const trainridex: Theme = {
     idleSpeed: 1,          // ramps up at zero so it really departs + gains speed on 0
     idleTailLoop: 1,       // loop the seamless 7–8s section (train keeps racing)
     idleAudioNormal: true, // steam + horn at normal speed, decoupled from the slow-mo
+    launchDelayMs: 900,    // hold the "ALL ABOARD!" shout until just after the departure horn
   },
 };

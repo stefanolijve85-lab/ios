@@ -267,8 +267,8 @@ class TensionAudio {
 
   // Launch callout (e.g. "LIFTOFF!") fired when the round starts — no-op until a
   // theme provides audio.launch.
-  launch() {
-    this.oneShot(this.buffers.launch, 1.0);
+  launch(delayMs = 0) {
+    this.oneShot(this.buffers.launch, 1.0, undefined, Math.max(0, delayMs) / 1000);
   }
 
   playStash(idx = -1) {
