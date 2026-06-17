@@ -291,23 +291,33 @@ export default function Vault() {
     return () => cancelAnimationFrame(raf);
   }, [phase, syncCountdown, idleSpeed, theme.ui?.idleSpeedBetting]);
 
-  // Seamless tail-loop: jump back just BEFORE the clip ends (not on 'ended',
-  // which stalls a frame) to a point whose frame matches the end, so the loop is
-  // invisible — the train just keeps racing.
+  // Seamless tail-loop: jump back to the loop start at the EXACT last frame
+  // (frame-accurate via requestVideoFrameCallback) so the matching frames line
+  // up and the seam is invisible — the train just keeps racing.
   useEffect(() => {
     if (idleTailLoop <= 0) return;
-    const v = sceneRefs.current['idle'];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const v = sceneRefs.current['idle'] as any;
     if (!v) return;
-    let raf = 0;
-    const tick = () => {
+    let id = 0;
+    let cancelled = false;
+    const seekBack = (t: number) => {
       const d = v.duration;
-      if (d && isFinite(d) && !v.paused && v.currentTime >= d - 0.06) {
+      if (d && isFinite(d) && !v.paused && t >= d - 0.045) {
         try { v.currentTime = Math.max(0, d - idleTailLoop); } catch { /* not seekable */ }
       }
-      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    if (typeof v.requestVideoFrameCallback === 'function') {
+      const onFrame = (_now: number, meta: { mediaTime: number }) => {
+        seekBack(meta?.mediaTime ?? v.currentTime);
+        if (!cancelled) id = v.requestVideoFrameCallback(onFrame);
+      };
+      id = v.requestVideoFrameCallback(onFrame);
+      return () => { cancelled = true; if (v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(id); };
+    }
+    const onRaf = () => { seekBack(v.currentTime); if (!cancelled) id = requestAnimationFrame(onRaf); };
+    id = requestAnimationFrame(onRaf);
+    return () => { cancelled = true; cancelAnimationFrame(id); };
   }, [idleTailLoop]);
 
   // Decoupled idle audio: play the clip's own track at NORMAL speed (separate
@@ -371,8 +381,17 @@ export default function Vault() {
                 playsInline
                 preload="auto"
                 onEnded={(e) => {
-                  // tail-loop themes are handled by the rAF below; others hold
-                  if (k === 'idle' && idleTailLoop <= 0) setIdleHeld(true);
+                  if (k === 'idle') {
+                    if (idleTailLoop > 0) {
+                      // fallback: rVFC normally seeks back before the last frame,
+                      // but if it misses, jump back into the seamless tail + resume
+                      const v = e.currentTarget;
+                      try { v.currentTime = Math.max(0, (v.duration || 0) - idleTailLoop); } catch {}
+                      v.play().catch(() => {});
+                    } else {
+                      setIdleHeld(true); // non-loop idle holds the last frame
+                    }
+                  }
                   if (k === lockedScene) setLockedScene(null); // release the lock when it finishes
                 }}
               />
