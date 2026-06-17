@@ -31,7 +31,7 @@ export const trainridex: Theme = {
     landing: `${A}/landing.webp`,
     landingVideo: `${A}/landing-v5.mp4`,
     playButton: `${A}/playbtn-v2.webp`,
-    sceneIdle: `${A}/train.webp`,
+    sceneIdle: `${A}/scene-idle-poster.webp`,
     sceneIdleVideo: `${A}/scene-idle-v2.mp4`,
     sceneLose: `${A}/derailment.webp`,
     sceneWin: `${A}/escape.webp`,
@@ -76,8 +76,8 @@ export const trainridex: Theme = {
     motion: { kind: 'speed', color: '#ffe7cc' },
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeedBetting: 1,   // the clip's first 5s are authored to fill the 5s countdown
-    idleSpeed: 1,
+    idleSpeedBetting: 0.3, // big slow-mo: the train stays at the station through the countdown
+    idleSpeed: 1,          // ramps up at zero so it really departs + gains speed on 0
     idleTailLoop: 1,       // loop the seamless 7–8s section (train keeps racing)
     sceneSound: ['idle'],  // play the clip's own audio (steam + horn)
   },
