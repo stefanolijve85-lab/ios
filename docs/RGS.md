@@ -100,6 +100,29 @@ the in-app player verification.
 | `RGS_CURRENCY` | `EUR` | default currency |
 | `RGS_DEMO_BALANCE_MINOR` | `245321` | demo opening balance (€2453.21) |
 
+### Responsible gaming (player protection)
+
+All default to `0` (= **OFF**), so demo/fun-play is unchanged until an operator
+turns them on. Money values are in **minor units**; times in **milliseconds**.
+A per-player override can be sent in the launch token's `limits` claim (it wins
+over these deployment defaults).
+
+| Var | Default | Meaning |
+|-----|---------|---------|
+| `RG_STAKE_MAX_MINOR` | `0` | max stake per bet |
+| `RG_SESSION_WAGER_MAX_MINOR` | `0` | max total staked per session |
+| `RG_SESSION_LOSS_MAX_MINOR` | `0` | max **net** loss (stakes − payouts) per session |
+| `RG_SESSION_TIME_MAX_MS` | `0` | max session length before betting is blocked |
+| `RG_REALITY_CHECK_MS` | `0` | interval for the "you've played N min" nudge |
+
+Enforcement lives in `server/rgs/responsible.js` and runs **before any money
+moves** in `placeBet`. A blocked bet throws `RG_LIMIT` (with a `reason`), which
+the game surfaces to the client as an `rg_limit` event + an `error_msg`. Players
+can self-exclude / take a cool-off via the `self_exclude` socket event
+(`{ ms }`; `0` = permanent), persisted in `self_exclusions` and enforced across
+sessions. Reality-check nudges arrive as a `reality_check` event with live
+session stats.
+
 ## Postgres setup (real money)
 
 ```bash
@@ -113,11 +136,16 @@ RGS_STORE=postgres RGS_MODE=seamless RGS_WALLET_URL=… RGS_SECRET=… npm start
 
 - ✅ **A1 (done):** ledger core — wallet/store contracts, demo + memory
   implementations, seamless + postgres targets, launch tokens, round audit,
-  idempotent bet lifecycle, self-test (17/17).
-- ⏳ **A2 (next):** wire this into the live game loop (`server/game.js`): route
-  `placeBet` / `stash` / auto-cashout / crash settlement through the RGS, open a
-  session per socket (token or demo), and persist every round. Then we move to
-  **B** (responsible gaming + compliance UI).
+  idempotent bet lifecycle.
+- ✅ **A2 (done):** wired into the live game loop (`server/game.js`). A wallet
+  session opens per socket (token or demo); `placeBet` / `cancel` / `stash` /
+  auto-cashout / crash settlement all flow through the RGS ledger; every round
+  records its commit + seal. Falls back to legacy balances if the RGS can't init.
+- ✅ **B (done — server):** responsible gaming. Stake / session-wager / net-loss
+  / session-time limits + reality-check nudges + persisted self-exclusion, all
+  enforced before money moves. Config above; limits default OFF. A player-facing
+  limits/self-exclusion UI is the next visible step.
+- self-test now covers all of the above (26/26).
 
 Run the test suite any time:
 ```bash

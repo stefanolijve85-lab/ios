@@ -72,5 +72,59 @@ async function throws(fn, code, msg) {
   await rgs.revealRound(round.id, 'the-secret-seed');
   ok((await rgs.store.getRound(round.id)).serverSeed === 'the-secret-seed', 'seed revealed for audit after bust');
 
+  console.log('\nResponsible gaming — stake + wager limits');
+  // stake + wager limits (loss limit OFF here so wager is the binding rule)
+  const rgRgs = await RGS.create({
+    mode: 'demo', store: 'memory', secret: 's', currency: 'EUR', demoBalanceMinor: 100000, tokenTtlSec: 3600,
+    rg: { stakeMaxMinor: 5000, sessionWagerMaxMinor: 12000, realityCheckMs: 1000 },
+  });
+  const { session: rgSes } = await rgRgs.openDemoSession({ gameKey: 'bankheistx' });
+  const rgRound = async (n) => (await rgRgs.openRound({ gameKey: 'bankheistx', roundNo: n, serverSeedHash: 'h' + n, crashPoint: 2, rtp: 97 })).id;
+
+  const rr1 = await rgRound(1);
+  await throws(() => rgRgs.placeBet({ session: rgSes, roundId: rr1, slot: 0, stakeMinor: 5001 }), 'RG_LIMIT', 'stake over the per-bet limit is blocked');
+
+  // wager limit: 5000 + 5000 = 10000 ok, next 5000 → 15000 > 12000 blocked
+  await rgRgs.placeBet({ session: rgSes, roundId: await rgRound(2), slot: 0, stakeMinor: 5000 });
+  await rgRgs.placeBet({ session: rgSes, roundId: await rgRound(3), slot: 0, stakeMinor: 5000 });
+  const rr4 = await rgRound(4);
+  await throws(() => rgRgs.placeBet({ session: rgSes, roundId: rr4, slot: 0, stakeMinor: 5000 }), 'RG_LIMIT', 'wager over the session limit is blocked');
+  ok(rgRgs.rg.status(rgSes).wagerMinor === 10000, 'session wager tracked (10000)');
+
+  // reality check is due after the interval, then resets
+  const before = rgRgs.rg.realityCheck(rgSes, Date.now());
+  ok(before === null, 'reality check not due immediately');
+  const due = rgRgs.rg.realityCheck(rgSes, Date.now() + 2000);
+  ok(due && due.bets === 2 && due.intervalMs === 1000, 'reality check fires after the interval with live stats');
+
+  console.log('\nResponsible gaming — loss limit (net of payouts)');
+  const lossRgs = await RGS.create({
+    mode: 'demo', store: 'memory', secret: 's', currency: 'EUR', demoBalanceMinor: 100000, tokenTtlSec: 3600,
+    rg: { sessionLossMaxMinor: 8000 },
+  });
+  const { session: lSes } = await lossRgs.openDemoSession({ gameKey: 'bankheistx' });
+  const lRound = async (n) => (await lossRgs.openRound({ gameKey: 'bankheistx', roundNo: n, serverSeedHash: 'L' + n, crashPoint: 2, rtp: 97 })).id;
+  // win the first bet back: a payout offsets the running net loss
+  const lb1 = (await lossRgs.placeBet({ session: lSes, roundId: await lRound(1), slot: 0, stakeMinor: 5000 })).bet;
+  await lossRgs.settleWin({ session: lSes, betId: lb1.id, multiplier: 2 }); // +10000 payout → net +5000
+  ok(lossRgs.rg.status(lSes).netMinor === 5000, 'net result tracks wins minus stakes (+5000)');
+  // now lose 5000 (net -0), then a 5000 stake would risk net -5000 (ok), but a
+  // 9000 stake would risk beyond the 8000 loss cap
+  await lossRgs.settleLoss({ betId: (await lossRgs.placeBet({ session: lSes, roundId: await lRound(2), slot: 0, stakeMinor: 5000 })).bet.id });
+  const lr3 = await lRound(3);
+  await throws(() => lossRgs.placeBet({ session: lSes, roundId: lr3, slot: 0, stakeMinor: 9000 }), 'RG_LIMIT', 'a stake that would breach the loss limit is blocked');
+
+  console.log('\nResponsible gaming — self-exclusion');
+  const exRgs = await RGS.create({ mode: 'demo', store: 'memory', secret: 's', currency: 'EUR', demoBalanceMinor: 100000, tokenTtlSec: 3600, rg: {} });
+  const { session: exSes } = await exRgs.openDemoSession({ gameKey: 'bankheistx' });
+  const exRound = async (n) => (await exRgs.openRound({ gameKey: 'bankheistx', roundNo: n, serverSeedHash: 'z' + n, crashPoint: 2, rtp: 97 })).id;
+  await exRgs.placeBet({ session: exSes, roundId: await exRound(1), slot: 0, stakeMinor: 1000 });
+  await exRgs.rg.selfExclude({ session: exSes, untilTs: Date.now() + 60000 });
+  const excludedRound = await exRound(2);
+  await throws(() => exRgs.placeBet({ session: exSes, roundId: excludedRound, slot: 0, stakeMinor: 1000 }), 'RG_LIMIT', 'self-excluded player is blocked from betting');
+  await exRgs.rg.selfExclude({ session: exSes, untilTs: Date.now() - 1000 }); // cool-off elapsed
+  const after = await exRgs.placeBet({ session: exSes, roundId: await exRound(3), slot: 0, stakeMinor: 1000 });
+  ok(after && after.bet, 'play resumes once the cool-off has elapsed');
+
   console.log(`\nAll ${passed} assertions passed ✓\n`);
 })().catch((e) => { console.error('\nself-test failed:', e.message); process.exit(1); });

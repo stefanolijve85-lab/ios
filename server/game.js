@@ -91,6 +91,8 @@ class Game {
   }
 
   removePlayer(socketId) {
+    const p = this.players.get(socketId);
+    if (p && p.session && this.rgs && this.rgs.rg) this.rgs.rg.endSession(p.session);
     this.players.delete(socketId);
   }
 
@@ -141,6 +143,11 @@ class Game {
         socket.emit('bet_ack', { slot, amount, autoCashout: auto });
       } catch (e) {
         if (e.code === 'INSUFFICIENT_FUNDS') return socket.emit('error_msg', 'Insufficient balance');
+        if (e.code === 'RG_LIMIT') {
+          // a responsible-gaming limit blocked the bet — surface it clearly
+          socket.emit('rg_limit', { reason: e.reason, message: e.message, detail: e.detail || {} });
+          return socket.emit('error_msg', e.message);
+        }
         console.warn(`[RGS] placeBet failed (${this.key}):`, e.message);
         return socket.emit('error_msg', 'Bet failed, please retry');
       }
@@ -173,6 +180,19 @@ class Game {
     p.bets[slot] = null;
     socket.emit('balance', p.balance);
     socket.emit('bet_cancelled', { slot });
+  }
+
+  // Responsible gaming: a player chooses to self-exclude / take a cool-off.
+  // `ms` = 0 → permanent; otherwise block for that many milliseconds.
+  async selfExclude(socket, ms) {
+    const p = this.players.get(socket.id);
+    if (!p || !p.session || !this.rgs || !this.rgs.rg) return;
+    const dur = Math.max(0, Number(ms) || 0);
+    const untilTs = dur > 0 ? Date.now() + dur : 0;
+    try {
+      await this.rgs.rg.selfExclude({ session: p.session, untilTs });
+      socket.emit('rg_excluded', { untilTs });
+    } catch (e) { /* ignore */ }
   }
 
   // STASH — lock the winnings for a slot (manual button → current multiplier).
@@ -356,6 +376,21 @@ class Game {
     if (act) {
       this.io.to(this.key).emit('activity', act);
       if (act.kind === 'stash') this._recordWin(act.name, act.amount, act.multiplier);
+    }
+    this._realityChecks();
+  }
+
+  // Responsible gaming: nudge any player whose reality-check interval is due
+  // (no-op unless RG_REALITY_CHECK_MS / a per-player limit is configured).
+  _realityChecks() {
+    if (!this.rgs || !this.rgs.rg) return;
+    for (const [id, p] of this.players.entries()) {
+      if (!p.session) continue;
+      const rc = this.rgs.rg.realityCheck(p.session);
+      if (rc) {
+        const sock = this.io.sockets.sockets.get(id);
+        if (sock) sock.emit('reality_check', rc);
+      }
     }
   }
 

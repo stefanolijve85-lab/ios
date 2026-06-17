@@ -62,6 +62,7 @@ app.prepare().then(async () => {
     socket.on('cancel_bet', ({ slot } = {}) => game.cancelBet(socket, slot));
     socket.on('stash', ({ slot } = {}) => game.stash(socket, slot));
     socket.on('add_credits', ({ amount } = {}) => game.addCredits(socket, amount));
+    socket.on('self_exclude', ({ ms } = {}) => game.selfExclude(socket, ms));
     socket.on('chat', ({ text } = {}) => {
       if (typeof text === 'string' && text.trim()) {
         const clean = text.trim().slice(0, 120);

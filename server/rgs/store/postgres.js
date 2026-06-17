@@ -126,6 +126,23 @@ class PostgresStore {
     );
     return balanceMinor | 0;
   }
+
+  // responsible gaming: self-exclusion (until_ts: 0 = permanent)
+  async setExclusion({ operatorId, playerId, untilTs = 0 }) {
+    return this._one(
+      `INSERT INTO self_exclusions (operator_id, player_id, until_ts)
+       VALUES ($1,$2,$3)
+       ON CONFLICT (operator_id, player_id) DO UPDATE SET until_ts = EXCLUDED.until_ts, created_at = now()
+       RETURNING *`,
+      [operatorId, playerId, Math.round(untilTs) || 0],
+    );
+  }
+  async getExclusion({ operatorId, playerId }) {
+    const r = await this._one(
+      'SELECT * FROM self_exclusions WHERE operator_id=$1 AND player_id=$2', [operatorId, playerId],
+    );
+    return r ? { ...r, untilTs: Number(r.until_ts) } : null;
+  }
 }
 
 module.exports = { PostgresStore };

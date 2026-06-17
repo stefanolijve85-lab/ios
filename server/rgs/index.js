@@ -17,15 +17,17 @@
 const tokens = require('./tokens');
 const { createStore } = require('./store');
 const { createWallet } = require('./wallet');
+const { ResponsibleGaming } = require('./responsible');
 
 const toMinor = (major) => Math.round(Number(major) * 100);
 const toMajor = (minor) => Math.round(minor) / 100;
 
 class RGS {
-  constructor({ config, store, wallet, log = console }) {
+  constructor({ config, store, wallet, rg, log = console }) {
     this.config = config;
     this.store = store;
     this.wallet = wallet;
+    this.rg = rg; // responsible-gaming gate (player protection)
     this.log = log;
   }
 
@@ -33,7 +35,8 @@ class RGS {
     const store = createStore(config, log);
     if (store.init) await store.init();
     const wallet = createWallet(config, store);
-    return new RGS({ config, store, wallet, log });
+    const rg = new ResponsibleGaming(config.rg || {}, store);
+    return new RGS({ config, store, wallet, rg, log });
   }
 
   get mode() { return this.config.mode; }
@@ -49,8 +52,10 @@ class RGS {
     await this.store.upsertOperator({ id: operatorId, name: claims.operatorName, mode });
     const player = await this.store.getOrCreatePlayer({ operatorId, externalId: String(claims.playerId), currency });
     const session = await this.store.createSession({ operatorId, playerId: player.id, currency, gameKey, mode });
+    // per-player responsible-gaming limits handed over by the operator (optional)
+    this.rg.noteSessionOpen(session, claims.limits || {});
     const balanceMinor = await this.wallet.getBalance(session);
-    return { session, balanceMinor };
+    return { session, balanceMinor, limits: this.rg.status(session).limits };
   }
 
   // Demo handoff: anonymous fun-play session with a seeded local balance.
@@ -61,8 +66,9 @@ class RGS {
       operatorId: 'demo', externalId: `guest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, currency: cur,
     });
     const session = await this.store.createSession({ operatorId: 'demo', playerId: player.id, currency: cur, gameKey, mode: 'demo' });
+    this.rg.noteSessionOpen(session, {}); // demo: deployment-default limits (usually OFF)
     const balanceMinor = await this.wallet.getBalance(session); // demo wallet seeds the opening balance
-    return { session, balanceMinor };
+    return { session, balanceMinor, limits: this.rg.status(session).limits };
   }
 
   async getBalance(session) {
@@ -93,6 +99,9 @@ class RGS {
       // already placed (retry) — return the existing bet
       return { bet: await this.store.getBet(prior.betId), balanceMinor: prior.balanceAfterMinor, replayed: true };
     }
+    // responsible-gaming gate: self-exclusion + stake/wager/loss/time limits.
+    // Throws RgLimitError (code 'RG_LIMIT') before any money moves.
+    await this.rg.check(session, stakeMinor);
     const bet = await this.store.createBet({
       roundId, sessionId: session.id, playerId: session.playerId,
       slot, stakeMinor, currency: session.currency, autoCashout,
@@ -103,6 +112,7 @@ class RGS {
       sessionId: session.id, roundId, betId: bet.id, amountMinor: stakeMinor,
       currency: session.currency, balanceAfterMinor: balanceMinor,
     });
+    this.rg.noteWager(session, stakeMinor); // count toward session wager/loss limits
     return { bet, balanceMinor };
   }
 
@@ -120,6 +130,7 @@ class RGS {
       return { balanceMinor, tx };
     });
     await this.store.updateBet(betId, { status: 'cancelled', settledAt: new Date().toISOString() });
+    this.rg.noteCancel(session, bet.stakeMinor); // un-count toward wager/loss limits
     return { balanceMinor: result.balanceMinor };
   }
 
@@ -140,6 +151,7 @@ class RGS {
     await this.store.updateBet(betId, {
       status: 'won', cashoutMultiplier: multiplier, payoutMinor, settledAt: new Date().toISOString(),
     });
+    this.rg.notePayout(session, payoutMinor); // offsets net loss for the loss limit
     return { payoutMinor, balanceMinor: result.balanceMinor };
   }
 

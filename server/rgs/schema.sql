@@ -89,3 +89,13 @@ CREATE TABLE IF NOT EXISTS wallet_accounts (
   balance_minor bigint NOT NULL DEFAULT 0,
   PRIMARY KEY (operator_id, player_id, currency)
 );
+
+-- Responsible gaming: self-exclusion / cool-off. until_ts is epoch millis
+-- (0 = permanent). A player with an active row is blocked from placing bets.
+CREATE TABLE IF NOT EXISTS self_exclusions (
+  operator_id  text NOT NULL,
+  player_id    text NOT NULL,
+  until_ts     bigint NOT NULL DEFAULT 0,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (operator_id, player_id)
+);

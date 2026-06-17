@@ -38,6 +38,18 @@ const config = {
 
   // launch-token lifetime (seconds)
   tokenTtlSec: intEnv('RGS_TOKEN_TTL_SEC', 3600),
+
+  // Responsible Gaming / player protection. Everything defaults to 0 (= OFF) so
+  // demo play is unchanged; an operator turns limits on via env, or per player
+  // via the launch token's `limits` claim (which overrides these defaults).
+  // Money limits are in INTEGER MINOR UNITS; times in milliseconds.
+  rg: {
+    stakeMaxMinor: intEnv('RG_STAKE_MAX_MINOR', 0),            // max stake per bet
+    sessionWagerMaxMinor: intEnv('RG_SESSION_WAGER_MAX_MINOR', 0), // max total staked / session
+    sessionLossMaxMinor: intEnv('RG_SESSION_LOSS_MAX_MINOR', 0),   // max net loss / session
+    sessionTimeMaxMs: intEnv('RG_SESSION_TIME_MAX_MS', 0),    // max session length
+    realityCheckMs: intEnv('RG_REALITY_CHECK_MS', 0),         // periodic "you've played N min" nudge
+  },
 };
 
 function isProd() {

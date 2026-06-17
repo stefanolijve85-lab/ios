@@ -26,6 +26,7 @@ class MemoryStore {
     this.transactions = new Map();   // id -> tx
     this.txByRef = new Map();         // ref -> tx   (idempotency)
     this.wallets = new Map();         // walletKey -> balanceMinor
+    this.exclusions = new Map();      // operatorId::playerId -> { untilTs }
   }
 
   async init() { /* nothing to do */ }
@@ -116,6 +117,16 @@ class MemoryStore {
   async setWalletBalance({ operatorId, playerId, currency }, balanceMinor) {
     this.wallets.set(walletKey(operatorId, playerId, currency), balanceMinor | 0);
     return balanceMinor | 0;
+  }
+
+  // --- responsible gaming: self-exclusion ----------------------------------
+  async setExclusion({ operatorId, playerId, untilTs = 0 }) {
+    const rec = { operatorId, playerId, untilTs: Math.max(0, Math.round(Number(untilTs) || 0)), createdAt: now() };
+    this.exclusions.set(`${operatorId}::${playerId}`, rec);
+    return rec;
+  }
+  async getExclusion({ operatorId, playerId }) {
+    return this.exclusions.get(`${operatorId}::${playerId}`) || null;
   }
 }
 
