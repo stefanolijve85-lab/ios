@@ -6,12 +6,14 @@ import { useTheme } from '@/hooks/useTheme';
 import { creditLine } from '@/brand';
 import FairnessModal from './FairnessModal';
 import Leaderboard from './Leaderboard';
+import ResponsibleGaming from './ResponsibleGaming';
 
 export default function Menu() {
   const { addCredits } = useGame();
   const theme = useTheme();
   const [fairOpen, setFairOpen] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
+  const [rgOpen, setRgOpen] = useState(false);
   const NAV = [
     { img: theme.assets.icons.home, label: 'HOME' },
     { img: theme.assets.icons.history, label: 'HISTORY' },
@@ -73,6 +75,10 @@ export default function Menu() {
           🔒 PROVABLY FAIR
         </button>
 
+        <button className="drawer-fair rg" onClick={() => { setRgOpen(true); setOpen(false); }}>
+          🛡 RESPONSIBLE GAMING
+        </button>
+
         <div className="drawer-audio">
           <div className="drawer-title">AUDIO</div>
           {([
@@ -97,6 +103,7 @@ export default function Menu() {
 
       {fairOpen && <FairnessModal onClose={() => setFairOpen(false)} />}
       {lbOpen && <Leaderboard onClose={() => setLbOpen(false)} />}
+      {rgOpen && <ResponsibleGaming onClose={() => setRgOpen(false)} />}
     </>
   );
 }

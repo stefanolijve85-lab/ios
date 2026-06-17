@@ -49,3 +49,28 @@ export interface LeaderboardEntry {
   multiplier: number;
   ts: number;
 }
+
+// Responsible gaming — limits are in minor units (cents) / milliseconds; 0 = off.
+export interface RgLimits {
+  stakeMaxMinor: number;
+  sessionWagerMaxMinor: number;
+  sessionLossMaxMinor: number;
+  sessionTimeMaxMs: number;
+  realityCheckMs: number;
+}
+
+export interface RealityCheck {
+  elapsedMs: number;
+  bets: number;
+  wagerMinor: number;
+  payoutMinor: number;
+  netMinor: number;        // +profit / −loss
+  limits: RgLimits;
+  intervalMs: number;
+}
+
+export interface RgLimitHit {
+  reason: 'RG_SELF_EXCLUDED' | 'RG_STAKE_LIMIT' | 'RG_WAGER_LIMIT' | 'RG_LOSS_LIMIT' | 'RG_SESSION_TIME';
+  message: string;
+  detail: { limitMinor?: number; limitMs?: number; untilTs?: number };
+}

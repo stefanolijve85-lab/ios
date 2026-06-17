@@ -10,6 +10,8 @@ import LiveChat from '@/components/LiveChat';
 import LiveActivity from '@/components/LiveActivity';
 import FlashBanner from '@/components/FlashBanner';
 import Landing from '@/components/Landing';
+import RealityCheck from '@/components/RealityCheck';
+import ExcludedOverlay from '@/components/ExcludedOverlay';
 
 // The actual game screen. Rendered at /<game> (e.g. /bankheistx); the active
 // theme is resolved from that path segment by the ThemeProvider.
@@ -55,6 +57,8 @@ export default function GameScreen() {
       </div>
 
       <FlashBanner />
+      <RealityCheck />
+      <ExcludedOverlay />
     </main>
   );
 }

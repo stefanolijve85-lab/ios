@@ -5,7 +5,7 @@ import { getAudio } from '@/lib/audio';
 import { multiplierAt, MAX_MULTIPLIER, GROWTH_K, HOUSE_EDGE } from '@/lib/constants';
 import { useTheme } from '@/hooks/useTheme';
 import { netWin } from '@/lib/format';
-import type { GameState, ChatMessage, ActivityItem, BetState, LeaderboardEntry } from '@/lib/types';
+import type { GameState, ChatMessage, ActivityItem, BetState, LeaderboardEntry, RgLimits, RealityCheck, RgLimitHit } from '@/lib/types';
 
 interface Bets { 0: BetState | null; 1: BetState | null; }
 
@@ -38,6 +38,15 @@ interface GameContextValue {
   waiting: boolean;
   setWaiting: (b: boolean) => void;
   fair: { commitment?: string; last: FairRound | null; maxMultiplier: number; houseEdge: number };
+  // responsible gaming
+  rgLimits: RgLimits | null;
+  realityCheck: RealityCheck | null;
+  excludedUntil: number | null;     // epoch ms; 0 = permanent; null = not excluded
+  rgNotice: RgLimitHit | null;       // last limit that blocked a bet
+  setLimits: (limits: Partial<RgLimits>) => void;
+  selfExclude: (ms: number) => void;
+  dismissRealityCheck: () => void;
+  clearRgNotice: () => void;
 }
 
 interface GameCfg { GROWTH_K: number; MAX_MULTIPLIER: number; MAX_RUN_MS: number; HOUSE_EDGE: number }
@@ -56,6 +65,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [lastWin, setLastWin] = useState(0);
   const [waiting, setWaiting] = useState(false);
   const [lastFair, setLastFair] = useState<FairRound | null>(null);
+  const [rgLimits, setRgLimits] = useState<RgLimits | null>(null);
+  const [realityCheck, setRealityCheck] = useState<RealityCheck | null>(null);
+  const [excludedUntil, setExcludedUntil] = useState<number | null>(null);
+  const [rgNotice, setRgNotice] = useState<RgLimitHit | null>(null);
   // per-game tuning from the server's welcome (the "feel" + active RTP); defaults
   // until it arrives
   const [maxMult, setMaxMult] = useState(MAX_MULTIPLIER);
@@ -92,13 +105,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
 
-    const onWelcome = (d: { balance: number; config?: Partial<GameCfg> }) => {
+    const onWelcome = (d: { balance: number; config?: Partial<GameCfg>; rgLimits?: RgLimits | null }) => {
       setBalance(d.balance);
       if (d.config) {
         cfgRef.current = { ...cfgRef.current, ...d.config };
         if (d.config.MAX_MULTIPLIER != null) setMaxMult(d.config.MAX_MULTIPLIER);
         if (d.config.HOUSE_EDGE != null) setEdge(d.config.HOUSE_EDGE);
       }
+      if (d.rgLimits) setRgLimits(d.rgLimits);
     };
     const onBalance = (b: number) => setBalance(b);
 
@@ -181,6 +195,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const onErrorMsg = (msg: string) =>
       setFlash({ kind: 'lose', text: typeof msg === 'string' ? msg.toUpperCase() : 'ERROR', key: Date.now() });
 
+    // responsible gaming
+    const onRgLimits = (l: RgLimits) => setRgLimits(l);
+    const onRealityCheck = (rc: RealityCheck) => setRealityCheck(rc);
+    const onRgLimit = (hit: RgLimitHit) => {
+      setRgNotice(hit);
+      if (hit.reason === 'RG_SELF_EXCLUDED') setExcludedUntil(hit.detail?.untilTs ?? 0);
+    };
+    const onRgExcluded = ({ untilTs }: { untilTs: number }) => setExcludedUntil(untilTs ?? 0);
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('welcome', onWelcome);
@@ -196,6 +219,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     socket.on('activity', onActivity);
     socket.on('leaderboard', onLeaderboard);
     socket.on('error_msg', onErrorMsg);
+    socket.on('rg_limits', onRgLimits);
+    socket.on('reality_check', onRealityCheck);
+    socket.on('rg_limit', onRgLimit);
+    socket.on('rg_excluded', onRgExcluded);
 
     return () => {
       socket.off('connect', onConnect);
@@ -213,6 +240,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       socket.off('activity', onActivity);
       socket.off('leaderboard', onLeaderboard);
       socket.off('error_msg', onErrorMsg);
+      socket.off('rg_limits', onRgLimits);
+      socket.off('reality_check', onRealityCheck);
+      socket.off('rg_limit', onRgLimit);
+      socket.off('rg_excluded', onRgExcluded);
     };
   }, []);
 
@@ -231,6 +262,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const addCredits = useCallback((amount: number) => {
     getSocket().emit('add_credits', { amount });
   }, []);
+  const setLimits = useCallback((limits: Partial<RgLimits>) => {
+    getSocket().emit('set_limits', { limits });
+  }, []);
+  const selfExclude = useCallback((ms: number) => {
+    getSocket().emit('self_exclude', { ms });
+  }, []);
+  const dismissRealityCheck = useCallback(() => setRealityCheck(null), []);
+  const clearRgNotice = useCallback(() => setRgNotice(null), []);
 
   const value: GameContextValue = {
     connected, state, balance, lastWin, bets, chat, activity, leaderboard, flash,
@@ -238,6 +277,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     placeBet, cancelBet, stash, sendChat, addCredits,
     waiting, setWaiting,
     fair: { commitment: state?.serverSeedHash, last: lastFair, maxMultiplier: maxMult, houseEdge: edge },
+    rgLimits, realityCheck, excludedUntil, rgNotice,
+    setLimits, selfExclude, dismissRealityCheck, clearRgNotice,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

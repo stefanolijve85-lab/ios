@@ -57,10 +57,28 @@ class ResponsibleGaming {
   noteSessionOpen(session, limits = {}, now = Date.now()) {
     const a = {
       startedAt: now, wagerMinor: 0, payoutMinor: 0, bets: 0,
-      limits: this._limits(limits), lastRealityAt: now,
+      limits: this._limits(limits), operatorCaps: this._limits(limits), lastRealityAt: now,
     };
     this.activity.set(session.id, a);
     return a;
+  }
+
+  // A player tightening their own limits at runtime. They can only make a limit
+  // STRICTER than the operator cap (if any); 0 from the operator means "no cap",
+  // so the player may set any value. Returns the new effective limits.
+  setLimits(session, wanted = {}, now = Date.now()) {
+    const a = this._activity(session, now);
+    const caps = a.operatorCaps;
+    const clamp = (key, v) => {
+      if (!Number.isFinite(v) || v < 0) return a.limits[key]; // ignore bad input
+      const cap = caps[key];
+      // tighten-only: a non-zero operator cap is the ceiling the player can't exceed
+      return cap > 0 ? Math.min(v, cap) : v;
+    };
+    for (const key of Object.keys(a.limits)) {
+      if (wanted[key] != null) a.limits[key] = clamp(key, Number(wanted[key]));
+    }
+    return a.limits;
   }
 
   _activity(session, now = Date.now()) {

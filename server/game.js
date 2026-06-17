@@ -75,9 +75,12 @@ class Game {
         .catch((e) => { console.warn(`[RGS] session open failed (${this.key}):`, e.message); });
       await p.ready;
     }
+    // current responsible-gaming limits for this session (UI shows/edits these)
+    const rgLimits = (this.rgs && this.rgs.rg && p.session) ? this.rgs.rg.status(p.session).limits : null;
     socket.emit('welcome', {
       balance: p.balance,
       game: this.key,
+      rgLimits,
       config: {
         GROWTH_K: this.C.GROWTH_K,
         MAX_RUN_MS: this.C.MAX_RUN_MS,
@@ -180,6 +183,14 @@ class Game {
     p.bets[slot] = null;
     socket.emit('balance', p.balance);
     socket.emit('bet_cancelled', { slot });
+  }
+
+  // Responsible gaming: a player sets (tightens) their own limits at runtime.
+  setLimits(socket, limits) {
+    const p = this.players.get(socket.id);
+    if (!p || !p.session || !this.rgs || !this.rgs.rg) return;
+    const eff = this.rgs.rg.setLimits(p.session, limits || {});
+    socket.emit('rg_limits', eff);
   }
 
   // Responsible gaming: a player chooses to self-exclude / take a cool-off.
