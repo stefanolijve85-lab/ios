@@ -148,6 +148,18 @@ class RGS {
     if (!bet || bet.status !== 'placed') return null;
     return this.store.updateBet(betId, { status: 'lost', settledAt: new Date().toISOString() });
   }
+
+  // --- misc ---------------------------------------------------------------
+  // Out-of-band credit (dev/test top-up). Auditable like everything else.
+  async topUp({ session, amountMinor }) {
+    const ref = `topup:${session.id}:${Date.now()}:${Math.round(Math.random() * 1e6)}`;
+    const { balanceMinor } = await this.wallet.credit({ session, amountMinor, ref });
+    await this.store.createTransaction({
+      ref, type: 'credit', operatorId: session.operatorId, playerId: session.playerId,
+      sessionId: session.id, amountMinor, currency: session.currency, balanceAfterMinor: balanceMinor,
+    });
+    return { balanceMinor };
+  }
 }
 
 module.exports = { RGS, toMinor, toMajor };

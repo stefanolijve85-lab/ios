@@ -7,6 +7,8 @@ const next = require('next');
 const { Server } = require('socket.io');
 const { Game } = require('./server/game');
 const { configFor, games, DEFAULT_GAME_KEY } = require('./server/config');
+const { RGS } = require('./server/rgs');
+const { config: rgsConfig, validate: validateRgs } = require('./server/rgs/config');
 
 // Which game a socket belongs to: explicit ?game= from the client wins, else
 // infer from the hostname (bankheistx.com → bankheistx, liftoffx.com → liftoffx).
@@ -23,7 +25,7 @@ const port = parseInt(process.env.PORT || '3000', 10);
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
   const httpServer = createServer((req, res) => handle(req, res));
 
   const io = new Server(httpServer, {
@@ -32,10 +34,21 @@ app.prepare().then(() => {
     transports: ['websocket', 'polling'],
   });
 
-  // One independent game (own round loop + tuning) per title.
+  // RGS (wallet + provably-fair ledger). Shared across every game. If it fails to
+  // init the engine still runs on legacy in-memory balances (rgs stays null).
+  validateRgs();
+  let rgs = null;
+  try {
+    rgs = await RGS.create(rgsConfig);
+    console.log(`> RGS ready  (mode=${rgs.mode}, store=${rgsConfig.store})`);
+  } catch (e) {
+    console.error('[RGS] init failed — falling back to legacy balances:', e.message);
+  }
+
+  // One independent game (own round loop + tuning) per title, all on one RGS.
   const instances = {};
   for (const key of Object.keys(games)) {
-    instances[key] = new Game(io, configFor(key));
+    instances[key] = new Game(io, configFor(key), rgs);
     instances[key].start();
   }
 

@@ -1,5 +1,6 @@
 const { Bots } = require('./bots');
 const { generateServerSeed, commitment, crashPointFromSeed } = require('./fairness');
+const { toMinor, toMajor } = require('./rgs');
 
 // ---------------------------------------------------------------------------
 // Multiplier math (server authoritative). The same pure function lives on the
@@ -18,10 +19,16 @@ function elapsedForMultiplier(m, k) {
 class Game {
   // `cfg` is the merged config for THIS game (configFor(key)); each game runs
   // its own independent round loop and broadcasts only to its own room.
-  constructor(io, cfg) {
+  constructor(io, cfg, rgs = null) {
     this.io = io;
     this.C = cfg;
     this.key = cfg.key;
+    // RGS ledger (wallet + audit trail). When present, money + the provably-fair
+    // round trail flow through it; when null the engine falls back to the legacy
+    // in-memory balances so the games keep running even if the RGS fails to init.
+    this.rgs = rgs;
+    this.rgsRoundId = null;   // the current round's id in the RGS audit store
+    this.roundReady = null;   // resolves when openRound has recorded the commit
     this.bots = new Bots();
     this.roundId = 0;
     this.phase = 'betting';
@@ -51,14 +58,25 @@ class Game {
     return this.C.BASE_ONLINE + this.players.size + wobble;
   }
 
-  addPlayer(socket) {
+  async addPlayer(socket) {
     socket.join(this.key); // only receive this game's broadcasts
-    this.players.set(socket.id, {
+    const p = {
       balance: this.C.START_BALANCE,
-      bets: { 0: null, 1: null }, // each: { amount, cashedOut, payout }
-    });
+      bets: { 0: null, 1: null }, // each: { amount, cashedOut, payout, betId }
+      session: null,              // RGS session (null → legacy local balance)
+      ready: null,                // resolves once the RGS session is open
+    };
+    this.players.set(socket.id, p);
+    // Open a wallet/ledger session for this player. Demo mode seeds the opening
+    // balance; a real operator handoff (launch token) lands here later.
+    if (this.rgs) {
+      p.ready = this.rgs.openDemoSession({ gameKey: this.key })
+        .then(({ session, balanceMinor }) => { p.session = session; p.balance = toMajor(balanceMinor); })
+        .catch((e) => { console.warn(`[RGS] session open failed (${this.key}):`, e.message); });
+      await p.ready;
+    }
     socket.emit('welcome', {
-      balance: this.C.START_BALANCE,
+      balance: p.balance,
       game: this.key,
       config: {
         GROWTH_K: this.C.GROWTH_K,
@@ -77,16 +95,23 @@ class Game {
   }
 
   // Test helper: top up credits.
-  addCredits(socket, amount) {
+  async addCredits(socket, amount) {
     const p = this.players.get(socket.id);
     if (!p) return;
     const add = Math.max(0, Math.min(1_000_000, Number(amount) || 0));
-    p.balance = Math.round((p.balance + add) * 100) / 100;
+    if (this.rgs && p.session) {
+      try {
+        const { balanceMinor } = await this.rgs.topUp({ session: p.session, amountMinor: toMinor(add) });
+        p.balance = toMajor(balanceMinor);
+      } catch (e) { return; }
+    } else {
+      p.balance = Math.round((p.balance + add) * 100) / 100;
+    }
     socket.emit('balance', p.balance);
   }
 
   // --- player actions ------------------------------------------------------
-  placeBet(socket, slot, amount, autoCashout) {
+  async placeBet(socket, slot, amount, autoCashout) {
     const p = this.players.get(socket.id);
     if (!p) return;
     if (this.phase !== 'betting') return socket.emit('error_msg', 'Betting is closed');
@@ -94,24 +119,57 @@ class Game {
     amount = Math.max(0, Number(amount) || 0);
     if (amount <= 0) return;
     if (p.bets[slot]) return; // already bet this slot
-    if (p.balance < amount) return socket.emit('error_msg', 'Insufficient balance');
     // optional auto cash-out target (server-side so it fires even if the UI lags)
     let auto = Number(autoCashout);
     auto = Number.isFinite(auto) && auto > 1.01 ? Math.min(auto, this.C.MAX_MULTIPLIER) : null;
+
+    // RGS path: debit the stake against the player's wallet (ledgered + audited).
+    if (this.rgs && p.session) {
+      try {
+        if (p.ready) await p.ready;
+        const roundId = this.rgsRoundId || (this.roundReady ? await this.roundReady : null);
+        // awaits above could cross the phase boundary — re-check we're still open
+        if (this.phase !== 'betting') return socket.emit('error_msg', 'Betting is closed');
+        if (!roundId) return socket.emit('error_msg', 'Bet failed, please retry');
+        if (p.bets[slot]) return; // a concurrent bet won the slot while we awaited
+        const { bet, balanceMinor } = await this.rgs.placeBet({
+          session: p.session, roundId, slot, stakeMinor: toMinor(amount), autoCashout: auto,
+        });
+        p.balance = toMajor(balanceMinor);
+        p.bets[slot] = { amount, cashedOut: false, payout: 0, autoCashout: auto, betId: bet.id };
+        socket.emit('balance', p.balance);
+        socket.emit('bet_ack', { slot, amount, autoCashout: auto });
+      } catch (e) {
+        if (e.code === 'INSUFFICIENT_FUNDS') return socket.emit('error_msg', 'Insufficient balance');
+        console.warn(`[RGS] placeBet failed (${this.key}):`, e.message);
+        return socket.emit('error_msg', 'Bet failed, please retry');
+      }
+      return;
+    }
+
+    // legacy path (no RGS session): local balance only
+    if (p.balance < amount) return socket.emit('error_msg', 'Insufficient balance');
     p.balance = Math.round((p.balance - amount) * 100) / 100;
     p.bets[slot] = { amount, cashedOut: false, payout: 0, autoCashout: auto };
     socket.emit('balance', p.balance);
     socket.emit('bet_ack', { slot, amount, autoCashout: auto });
   }
 
-  cancelBet(socket, slot) {
+  async cancelBet(socket, slot) {
     const p = this.players.get(socket.id);
     if (!p) return;
     if (this.phase !== 'betting') return;
     slot = slot === 1 ? 1 : 0;
     const bet = p.bets[slot];
     if (!bet || bet.cashedOut) return;
-    p.balance = Math.round((p.balance + bet.amount) * 100) / 100;
+    if (this.rgs && p.session && bet.betId) {
+      try {
+        const res = await this.rgs.cancelBet({ session: p.session, betId: bet.betId });
+        if (res) p.balance = toMajor(res.balanceMinor);
+      } catch (e) { return; }
+    } else {
+      p.balance = Math.round((p.balance + bet.amount) * 100) / 100;
+    }
     p.bets[slot] = null;
     socket.emit('balance', p.balance);
     socket.emit('bet_cancelled', { slot });
@@ -124,18 +182,31 @@ class Game {
     this._cashOut(socket.id, slot, this._currentMultiplier());
   }
 
-  // Shared cash-out path for manual stash AND server-side auto cash-out.
-  _cashOut(id, slot, m) {
+  // Shared cash-out path for manual stash AND server-side auto cash-out. Async
+  // because the win is settled through the RGS ledger; we mark the bet cashed
+  // up front so a racing auto/manual cash-out can't double-fire.
+  async _cashOut(id, slot, m) {
     const p = this.players.get(id);
     if (!p) return false;
     const bet = p.bets[slot];
     if (!bet || bet.cashedOut) return false;
     const mult = Math.round(m * 100) / 100;
-    const payout = Math.round(bet.amount * m * 100) / 100;
-    bet.cashedOut = true;
+    bet.cashedOut = true; // claim the slot synchronously (prevents double cash-out)
+    let payout = Math.round(bet.amount * m * 100) / 100;
+    if (this.rgs && p.session && bet.betId) {
+      try {
+        const res = await this.rgs.settleWin({ session: p.session, betId: bet.betId, multiplier: m });
+        if (res) { payout = toMajor(res.payoutMinor); p.balance = toMajor(res.balanceMinor); }
+      } catch (e) {
+        bet.cashedOut = false; // settlement failed — allow a retry
+        console.warn(`[RGS] settleWin failed (${this.key}):`, e.message);
+        return false;
+      }
+    } else {
+      p.balance = Math.round((p.balance + payout) * 100) / 100;
+    }
     bet.payout = payout;
     bet.cashedAt = m;
-    p.balance = Math.round((p.balance + payout) * 100) / 100;
     const sock = this.io.sockets.sockets.get(id);
     if (sock) {
       sock.emit('balance', p.balance);
@@ -156,6 +227,15 @@ class Game {
     this.serverSeed = generateServerSeed();
     this.serverSeedHash = commitment(this.serverSeed);
     this.crashPoint = crashPointFromSeed(this.serverSeed, this.roundId, this.C);
+    // RGS audit: record the round commitment (hash + crash point) BEFORE any bet.
+    this.rgsRoundId = null;
+    if (this.rgs) {
+      this.roundReady = this.rgs.openRound({
+        gameKey: this.key, roundNo: this.roundId, serverSeedHash: this.serverSeedHash,
+        crashPoint: this.crashPoint, rtp: this.C.RTP,
+      }).then((r) => { this.rgsRoundId = r.id; return r.id; })
+        .catch((e) => { console.warn(`[RGS] openRound failed (${this.key}):`, e.message); return null; });
+    }
     this.phaseEndsAt = Date.now() + this.C.BETTING_MS;
     this.startHolders = this.C.MIN_HOLDERS + Math.floor(Math.random() * (this.C.MAX_HOLDERS - this.C.MIN_HOLDERS));
     this.holders = this.startHolders;
@@ -176,15 +256,21 @@ class Game {
   _enterCrashed() {
     this.phase = 'crashed';
     this.phaseEndsAt = Date.now() + this.C.CRASHED_MS;
-    // Settle losers (real players who never stashed).
+    // Settle losers (real players who never stashed) — mark the bet lost in the
+    // ledger; the stake was already debited at place time, so the balance holds.
     for (const [id, p] of this.players.entries()) {
       for (const slot of [0, 1]) {
         const bet = p.bets[slot];
-        if (bet && !bet.cashedOut) bet.lost = true;
+        if (bet && !bet.cashedOut) {
+          bet.lost = true;
+          if (this.rgs && p.session && bet.betId) this.rgs.settleLoss({ betId: bet.betId }).catch(() => {});
+        }
       }
       const sock = this.io.sockets.sockets.get(id);
       if (sock) sock.emit('balance', p.balance);
     }
+    // RGS audit: reveal the server seed so the round is independently verifiable.
+    if (this.rgs && this.rgsRoundId) this.rgs.revealRound(this.rgsRoundId, this.serverSeed).catch(() => {});
     // record the result for the history bar (newest first, keep last 15)
     this.history.unshift(Math.round(this.crashPoint * 100) / 100);
     if (this.history.length > 15) this.history.length = 15;
