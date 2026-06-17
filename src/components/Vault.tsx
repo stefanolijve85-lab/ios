@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
 import { getAudio } from '@/lib/audio';
-import SceneMotion from './SceneMotion';
-import StackGrowth from './StackGrowth';
 import { euro, clock } from '@/lib/format';
 
 // ladder: a fixed stack of rungs whose VALUES scroll up as the round climbs,
@@ -21,7 +19,6 @@ export default function Vault() {
   const timeRef = useRef<HTMLDivElement>(null);
   const missedRef = useRef<HTMLDivElement>(null);
   const vaultRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -126,8 +123,6 @@ export default function Vault() {
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }
-
-      if (glowRef.current) glowRef.current.style.opacity = String(0.3 + Math.min(0.7, (m - 1) * 0.12));
 
       // floating-marker ladder: the whole scale follows the multiplier so every
       // number scrolls up while the marker stays fixed near the top.
@@ -512,14 +507,6 @@ export default function Vault() {
           <audio ref={idleAudioRef} src={sceneVideoFor('idle')} preload="auto" />
         )}
       </div>
-      {/* ambient themed particles — only over the live/idle scene, never on a
-          result scene (win / split / crash) */}
-      {scene === 'idle' && <SceneMotion />}
-      {/* loot that piles up with the multiplier (themed) */}
-      {scene === 'idle' && <StackGrowth />}
-
-      {/* money glow only during the live round — never over the result scenes */}
-      {scene === 'idle' && <div className="vault-glow" ref={glowRef} />}
 
       {/* center readout — also shown after you secure, so you see the climbing
           amount + what you're missing while the round finishes */}
