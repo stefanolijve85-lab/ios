@@ -77,9 +77,10 @@ export const trainridex: Theme = {
     motion: { kind: 'speed', color: '#ffe7cc' },
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeedBetting: 0.3, // big slow-mo: the train stays at the station through the countdown
+    idleSpeedBetting: 0.5, // gentle slow-mo through the countdown (less stutter than 0.3)
     idleSpeed: 1,          // ramps up at zero so it really departs + gains speed on 0
     idleTailLoop: 1,       // loop the seamless 7–8s section (train keeps racing)
+    idleFadeIn: true,      // linger on the station poster, then fade the clip in
     idleAudioNormal: true, // steam + horn at normal speed, decoupled from the slow-mo
     launchDelayMs: 900,    // hold the "ALL ABOARD!" shout until just after the departure horn
   },

@@ -120,6 +120,9 @@ export interface ThemeUI {
   // Play the idle clip's audio at NORMAL speed, decoupled from the slow-mo
   // video (a separate audio element), so steam/horn aren't time-stretched.
   idleAudioNormal?: boolean;
+  // Linger on the idle poster (first frame) a beat longer at round start, then
+  // gently fade the clip in (so the train clearly departs from a held station).
+  idleFadeIn?: boolean;
   // Delay (ms) before the launch callout (audio.launch) fires at round start,
   // so the shout lands AFTER the departure horn (e.g. "ALL ABOARD!"). Default 0.
   launchDelayMs?: number;

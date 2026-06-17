@@ -205,6 +205,7 @@ export default function Vault() {
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
   const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
+  const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
   // lock a sound result scene on as soon as it appears, so it plays out fully
@@ -321,20 +322,23 @@ export default function Vault() {
   }, [idleTailLoop]);
 
   // Decoupled idle audio: play the clip's own track at NORMAL speed (separate
-  // from the slow-mo video) so the steam/horn aren't time-stretched. Restarts
-  // each round when the idle scene comes up.
+  // from the slow-mo video) so the steam/horn aren't time-stretched. Restarts at
+  // the start of EVERY betting countdown (scene stays 'idle' between rounds, so
+  // keying on `scene` alone would only ever play it once), and keeps running
+  // through the round.
   useEffect(() => {
     if (!idleAudioNormal) return;
     const a = idleAudioRef.current;
     if (!a) return;
-    if (scene === 'idle') {
+    if (scene !== 'idle') { a.pause(); return; }
+    if (phase === 'betting') {
       a.playbackRate = 1;
       try { a.currentTime = 0; } catch { /* not ready */ }
       a.play().catch(() => {});
-    } else {
-      a.pause();
+    } else if (a.paused) {
+      a.play().catch(() => {}); // resumed idle mid-round → keep the steam/horn going
     }
-  }, [scene, idleAudioNormal]);
+  }, [scene, phase, idleAudioNormal]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -373,7 +377,7 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === 'idle' && idleFadeIn ? ' idle-fade' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
                 src={src}
                 style={styleFor(k)}
                 loop={sceneLoop}
