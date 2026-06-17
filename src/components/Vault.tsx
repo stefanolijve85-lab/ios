@@ -27,6 +27,7 @@ export default function Vault() {
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sceneRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const idleLoopRef = useRef<HTMLVideoElement | null>(null); // dedicated seamless idle loop clip
+  const countdownRef = useRef<HTMLVideoElement | null>(null); // dedicated betting-countdown clip
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const loseSeededRef = useRef(false); // crash clip start-point chosen once per crash
 
@@ -196,10 +197,14 @@ export default function Vault() {
 
   const pullback = !!theme.ui?.idlePullback;            // BANKHEIST: hold + slow zoom-out
   const syncCountdown = !!theme.ui?.idleSyncCountdown;  // LIFTOFF: idle plays through the countdown
+  const countdownSrc = theme.assets.sceneCountdownVideo; // TRAINRIDE: own clip during betting
   // The idle clip either holds on frame 0 through the betting countdown, or (for
   // a countdown-synced launch) plays right through it; result scenes play at once.
-  const idleHoldsBetting = scene === 'idle' && phase === 'betting' && !syncCountdown;
+  // A dedicated countdown clip also makes the idle clip hold (it plays at round
+  // start as the departure).
+  const idleHoldsBetting = scene === 'idle' && phase === 'betting' && (!syncCountdown || !!countdownSrc);
   const activePlaying = !!sceneVideoFor(scene) && !idleHoldsBetting;
+  const countdownPlaying = !!countdownSrc && scene === 'idle' && phase === 'betting';
 
   // some clips ship with black pillarbox margins baked in — zoom to fill (per
   // scene or one value for all).
@@ -231,7 +236,11 @@ export default function Vault() {
     // active (idle) clip is left to the play/pause effect.
     (async () => {
       for (const k of SCENE_KEYS) {
-        if (cancelled || k === activeScene) continue;
+        if (cancelled) continue;
+        // skip the active clip (the play/pause effect drives it) — UNLESS it's
+        // the idle clip held behind a countdown clip, which never plays during
+        // betting and so still needs warming for an instant departure.
+        if (k === activeScene && !(k === 'idle' && countdownSrc)) continue;
         const v = sceneRefs.current[k];
         if (!v) continue;
         v.muted = true;
@@ -240,11 +249,12 @@ export default function Vault() {
           if (!cancelled) { v.pause(); v.currentTime = 0; }
         } catch { /* skip */ }
       }
-      // warm the dedicated idle loop clip too (so the hand-off is instant)
-      const lv = idleLoopRef.current;
-      if (lv && !cancelled) {
-        lv.muted = true;
-        try { await lv.play(); if (!cancelled) { lv.pause(); lv.currentTime = 0; } } catch { /* skip */ }
+      // warm the dedicated idle loop + countdown clips too (instant hand-offs)
+      for (const ref of [idleLoopRef, countdownRef]) {
+        const v = ref.current;
+        if (!v || cancelled) continue;
+        v.muted = true;
+        try { await v.play(); if (!cancelled) { v.pause(); v.currentTime = 0; } } catch { /* skip */ }
       }
     })();
     return () => { cancelled = true; };
@@ -333,24 +343,36 @@ export default function Vault() {
     return () => { cancelled = true; cancelAnimationFrame(id); };
   }, [idleTailLoop]);
 
-  // Decoupled idle audio: play the clip's own track at NORMAL speed (separate
-  // from the slow-mo video) so the steam/horn aren't time-stretched. Restarts at
-  // the start of EVERY betting countdown (scene stays 'idle' between rounds, so
-  // keying on `scene` alone would only ever play it once), and keeps running
-  // through the round.
+  // Decoupled idle audio: play the idle clip's own track at NORMAL speed
+  // (separate from the slow-mo video) so the steam/horn aren't time-stretched.
+  // Tracks the idle VIDEO: it starts from 0 whenever the idle clip actually
+  // begins playing (through the countdown, or — with a dedicated countdown clip
+  // — at the departure on round start) and stops once it hands off to the loop.
   useEffect(() => {
     if (!idleAudioNormal) return;
     const a = idleAudioRef.current;
     if (!a) return;
-    if (scene !== 'idle') { a.pause(); return; }
-    if (phase === 'betting') {
+    const idleVideoPlaying = scene === 'idle' && activePlaying && !idleLoopActive;
+    if (idleVideoPlaying) {
       a.playbackRate = 1;
-      try { a.currentTime = 0; } catch { /* not ready */ }
-      a.play().catch(() => {});
-    } else if (a.paused) {
-      a.play().catch(() => {}); // resumed idle mid-round → keep the steam/horn going
+      if (a.paused) { try { a.currentTime = 0; } catch { /* not ready */ } a.play().catch(() => {}); }
+    } else if (!a.paused) {
+      a.pause();
     }
-  }, [scene, phase, idleAudioNormal]);
+  }, [scene, activePlaying, idleLoopActive, idleAudioNormal]);
+
+  // Dedicated countdown clip: native-loop it through the betting countdown, then
+  // pause+reset so the departure (idle clip) takes over at round start.
+  useEffect(() => {
+    const cv = countdownRef.current;
+    if (!cv) return;
+    if (countdownPlaying) {
+      cv.play().catch(() => {});
+    } else {
+      cv.pause();
+      try { cv.currentTime = 0; } catch { /* not ready */ }
+    }
+  }, [countdownPlaying]);
 
   // Dedicated idle loop clip: play it natively-looped once it's active, else
   // keep it paused at frame 0. Reset the hand-off whenever we leave the idle
@@ -405,7 +427,7 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === 'idle' && idleFadeIn ? ' idle-fade' : ''}${k === scene && !(k === 'idle' && idleLoopActive) ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === 'idle' && idleFadeIn ? ' idle-fade' : ''}${k === scene && !(k === 'idle' && (idleLoopActive || countdownPlaying)) ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
                 src={src}
                 style={styleFor(k)}
                 loop={sceneLoop}
@@ -435,6 +457,20 @@ export default function Vault() {
               />
             );
           })}
+        {/* dedicated countdown clip (loops natively through the betting phase,
+            then the idle clip plays the departure at round start) */}
+        {countdownSrc && (
+          <video
+            ref={countdownRef}
+            className={`scene-video${countdownPlaying ? ' active' : ''}`}
+            src={countdownSrc}
+            style={styleFor('idle')}
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+        )}
         {/* dedicated seamless idle loop clip (hard-cut from the main idle clip
             on matching frames, then native-looped — no seek, no visible seam) */}
         {idleLoopSrc && (

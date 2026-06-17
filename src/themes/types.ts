@@ -29,6 +29,11 @@ export interface ThemeAssets {
   // Optional cinematic (animated) scenes — when present the engine plays these
   // looping videos instead of the static stills above for the matching phase.
   sceneIdleVideo?: string;  // idle / running
+  // Optional dedicated clip shown DURING the betting countdown (loops natively),
+  // e.g. the train waiting at the station. At round start the engine switches to
+  // sceneIdleVideo (the departure). Lets the idle clip be a crisp normal-speed
+  // departure instead of a slowed-down buildup.
+  sceneCountdownVideo?: string;
   // Optional dedicated seamless LOOP clip for the idle scene: after the main
   // idle clip plays once (e.g. the train's departure) the engine hard-cuts to
   // this clip and loops it natively (no seek), so the loop point is invisible.
