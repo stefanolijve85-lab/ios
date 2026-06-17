@@ -70,8 +70,10 @@ export const liftoffx: Theme = {
     launch: `${A}/audio/engine.mp3`,   // rocket roar at lift-off (round start)
     lobby: '/themes/bankheistx/audio/lobby.mp3',
     tick: `${A}/audio/countdown.mp3`,  // the launch countdown over the betting clock
-    voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
-    voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-win-${n}.mp3`),
+    // no voice lines yet — the BANKHEIST heist barks don't fit LIFTOFF, so stay
+    // silent (explosion / stash SFX still play) until native lines land
+    voiceCrash: [],
+    voiceWin: [],
   },
   copy: {
     cashOut: 'EJECT',
