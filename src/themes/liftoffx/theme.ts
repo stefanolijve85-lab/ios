@@ -50,7 +50,7 @@ export const liftoffx: Theme = {
     // (crash) → eject (win)
     sceneIdleVideo: `${A}/scene-idle-v2.mp4`,
     sceneLoseVideo: `${A}/scene-lose.mp4`,
-    sceneWinVideo: `${A}/eject.mp4`,
+    sceneWinVideo: `${A}/scene-win.mp4`,
     // fallback icons (DEEP DIVE X) until LIFTOFF-native icons land
     icons: {
       home: '/themes/deepdivex/icons/home.webp',
@@ -96,7 +96,6 @@ export const liftoffx: Theme = {
   // pillarbox zoom. Plays once, holds the last frame (rocket in space).
   ui: {
     motion: { kind: 'speed', color: '#ffd9a8' },
-    sceneZoom: { win: 1.9 },
     sceneSpeed: 0.6,
     sceneLoop: false,
     idleSyncCountdown: true,
