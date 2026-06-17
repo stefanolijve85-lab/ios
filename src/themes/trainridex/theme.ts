@@ -32,6 +32,7 @@ export const trainridex: Theme = {
     landingVideo: `${A}/landing-v5.mp4`,
     playButton: `${A}/playbtn-v2.webp`,
     sceneIdle: `${A}/train.webp`,
+    sceneIdleVideo: `${A}/scene-idle.mp4`,
     sceneLose: `${A}/derailment.webp`,
     sceneWin: `${A}/escape.webp`,
     icons: {
@@ -68,5 +69,13 @@ export const trainridex: Theme = {
     loseFlash: 'DERAILED!',
     landingAlt: 'TRAINRIDE X — Secure your fortune before the derailment.',
   },
-  ui: { motion: { kind: 'speed', color: '#ffe7cc' } },
+  // Idle clip: hold the first frame (train waiting) through the betting
+  // countdown, then play (the train leaves) when the round runs; loop the tail
+  // so it keeps racing for the whole round. Result scenes stay as stills.
+  ui: {
+    motion: { kind: 'speed', color: '#ffe7cc' },
+    sceneSpeed: 0.85,
+    sceneLoop: false,
+    idleTailLoop: 2,
+  },
 };
