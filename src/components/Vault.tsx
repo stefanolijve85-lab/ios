@@ -101,10 +101,10 @@ export default function Vault() {
         const remaining = (s.phaseEndsAt ?? 0) - serverNow();
         text = clock(remaining);
         w = remaining <= 5000;
-        // fire the game's tick clip so it ends right at zero (themeable lead time;
-        // 4.6s bomb-clock by default, shorter for LIFTOFF's launch countdown) —
-        // suppressed when the countdown clip carries its own clock audio
-        if (!cdSound && !tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
+        // fire the game's tick clock so it ends right at zero (themeable lead
+        // time; 4.6s bomb-clock by default). A train has no spoken countdown but
+        // we still want the ticking clock, so it plays alongside the clip audio.
+        if (!tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
           getAudio().tick(theme.ui?.tickLeadMs ?? 4600, theme.ui?.tickOffset);
           tickFired = true;
         }

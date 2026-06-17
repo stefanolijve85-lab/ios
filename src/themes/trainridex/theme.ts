@@ -82,6 +82,6 @@ export const trainridex: Theme = {
     sceneLoop: false,
     idleSpeed: 1,          // the departure clip plays at full speed at round start
     idleAudioNormal: true, // departure clip's steam + horn (decoupled, in sync at 1x)
-    countdownSound: true,  // the countdown clip plays its own clock + "all aboard" (no game tick)
+    countdownSound: true,  // play the countdown clip's "all aboard"; the game's clock still ticks
   },
 };
