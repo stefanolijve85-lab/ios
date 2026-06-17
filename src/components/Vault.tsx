@@ -66,7 +66,8 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastPhase = '', lastWarn = false, tickFired = false;
+    let lastPhase = '', lastWarn = false, tickFired = false, cdStarted = false;
+    const cdSound = !!theme.ui?.countdownSound; // countdown clip carries its own audio
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
@@ -100,14 +101,28 @@ export default function Vault() {
         const remaining = (s.phaseEndsAt ?? 0) - serverNow();
         text = clock(remaining);
         w = remaining <= 5000;
-        // fire the countdown clip so it ends right at zero (themeable lead time;
-        // 4.6s bomb-clock by default, shorter for LIFTOFF's launch countdown)
-        if (!tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
+        // fire the game's tick clip so it ends right at zero (themeable lead time;
+        // 4.6s bomb-clock by default, shorter for LIFTOFF's launch countdown) —
+        // suppressed when the countdown clip carries its own clock audio
+        if (!cdSound && !tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
           getAudio().tick(theme.ui?.tickLeadMs ?? 4600, theme.ui?.tickOffset);
           tickFired = true;
         }
+        // end-align the countdown clip (clock + "all aboard") so its climax lands
+        // exactly at zero: start it `clipDuration` before the round begins
+        if (cdSound && !cdStarted && remaining > 0) {
+          const cv = countdownRef.current;
+          const dur = cv && isFinite(cv.duration) ? cv.duration : 0;
+          if (cv && dur > 0 && remaining <= dur * 1000 + 80) {
+            cv.muted = false; // un-mute (warming forced it muted; React's attr is unreliable)
+            try { cv.currentTime = 0; } catch { /* not ready */ }
+            cv.play().catch(() => {});
+            cdStarted = true;
+          }
+        }
       } else {
         tickFired = false;
+        cdStarted = false;
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }
@@ -205,6 +220,7 @@ export default function Vault() {
   const idleHoldsBetting = scene === 'idle' && phase === 'betting' && (!syncCountdown || !!countdownSrc);
   const activePlaying = !!sceneVideoFor(scene) && !idleHoldsBetting;
   const countdownPlaying = !!countdownSrc && scene === 'idle' && phase === 'betting';
+  const countdownSound = !!theme.ui?.countdownSound; // countdown clip plays its own audio (clock + "all aboard")
 
   // some clips ship with black pillarbox margins baked in — zoom to fill (per
   // scene or one value for all).
@@ -361,18 +377,21 @@ export default function Vault() {
     }
   }, [scene, activePlaying, idleLoopActive, idleAudioNormal]);
 
-  // Dedicated countdown clip: native-loop it through the betting countdown, then
-  // pause+reset so the departure (idle clip) takes over at round start.
+  // Dedicated countdown clip. Two modes:
+  //  - ambient (muted): native-loop it through the whole betting countdown.
+  //  - own audio (countdownSound): hold frame 0; the rAF loop starts it
+  //    end-aligned so its clock + "all aboard" climax lands at zero.
+  // Either way, pause+reset once betting ends so the departure clip takes over.
   useEffect(() => {
     const cv = countdownRef.current;
     if (!cv) return;
-    if (countdownPlaying) {
+    if (countdownPlaying && !countdownSound) {
       cv.play().catch(() => {});
-    } else {
+    } else if (!countdownPlaying) {
       cv.pause();
       try { cv.currentTime = 0; } catch { /* not ready */ }
     }
-  }, [countdownPlaying]);
+  }, [countdownPlaying, countdownSound]);
 
   // Dedicated idle loop clip: play it natively-looped once it's active, else
   // keep it paused at frame 0. Reset the hand-off whenever we leave the idle
@@ -465,8 +484,8 @@ export default function Vault() {
             className={`scene-video${countdownPlaying ? ' active' : ''}`}
             src={countdownSrc}
             style={styleFor('idle')}
-            loop
-            muted
+            loop={!countdownSound}
+            muted={!countdownSound}
             playsInline
             preload="auto"
           />

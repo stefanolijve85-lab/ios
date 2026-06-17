@@ -131,6 +131,10 @@ export interface ThemeUI {
   // Play the idle clip's audio at NORMAL speed, decoupled from the slow-mo
   // video (a separate audio element), so steam/horn aren't time-stretched.
   idleAudioNormal?: boolean;
+  // The dedicated countdown clip carries its OWN audio (e.g. the clock + an
+  // "all aboard" callout): play it un-muted and end-aligned (once, so its climax
+  // lands at zero), and suppress the game's tick clock so they don't double up.
+  countdownSound?: boolean;
   // Linger on the idle poster (first frame) a beat longer at round start, then
   // gently fade the clip in (so the train clearly departs from a held station).
   idleFadeIn?: boolean;

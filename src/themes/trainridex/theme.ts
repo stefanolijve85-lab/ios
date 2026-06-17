@@ -52,7 +52,8 @@ export const trainridex: Theme = {
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/trainridex/audio/stash.mp3',
     crash: '/themes/trainridex/audio/crash.mp3',
-    launch: '/themes/trainridex/audio/all-aboard.mp3', // conductor's "ALL ABOARD!" after the horn
+    // no separate "ALL ABOARD!" callout — the countdown clip carries its own
+    // clock + all-aboard audio (see ui.countdownSound)
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-crash-${n}.mp3`),
@@ -81,6 +82,6 @@ export const trainridex: Theme = {
     sceneLoop: false,
     idleSpeed: 1,          // the departure clip plays at full speed at round start
     idleAudioNormal: true, // departure clip's steam + horn (decoupled, in sync at 1x)
-    launchDelayMs: 900,    // hold the "ALL ABOARD!" shout until just after the departure horn
+    countdownSound: true,  // the countdown clip plays its own clock + "all aboard" (no game tick)
   },
 };
