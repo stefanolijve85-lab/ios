@@ -26,6 +26,7 @@ export default function Vault() {
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sceneRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const loseSeededRef = useRef(false); // crash clip start-point chosen once per crash
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
@@ -203,6 +204,7 @@ export default function Vault() {
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
   const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
+  const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
   // lock a sound result scene on as soon as it appears, so it plays out fully
@@ -289,6 +291,40 @@ export default function Vault() {
     return () => cancelAnimationFrame(raf);
   }, [phase, syncCountdown, idleSpeed, theme.ui?.idleSpeedBetting]);
 
+  // Seamless tail-loop: jump back just BEFORE the clip ends (not on 'ended',
+  // which stalls a frame) to a point whose frame matches the end, so the loop is
+  // invisible — the train just keeps racing.
+  useEffect(() => {
+    if (idleTailLoop <= 0) return;
+    const v = sceneRefs.current['idle'];
+    if (!v) return;
+    let raf = 0;
+    const tick = () => {
+      const d = v.duration;
+      if (d && isFinite(d) && !v.paused && v.currentTime >= d - 0.06) {
+        try { v.currentTime = Math.max(0, d - idleTailLoop); } catch { /* not seekable */ }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [idleTailLoop]);
+
+  // Decoupled idle audio: play the clip's own track at NORMAL speed (separate
+  // from the slow-mo video) so the steam/horn aren't time-stretched. Restarts
+  // each round when the idle scene comes up.
+  useEffect(() => {
+    if (!idleAudioNormal) return;
+    const a = idleAudioRef.current;
+    if (!a) return;
+    if (scene === 'idle') {
+      a.playbackRate = 1;
+      try { a.currentTime = 0; } catch { /* not ready */ }
+      a.play().catch(() => {});
+    } else {
+      a.pause();
+    }
+  }, [scene, idleAudioNormal]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -331,24 +367,22 @@ export default function Vault() {
                 src={src}
                 style={styleFor(k)}
                 loop={sceneLoop}
-                muted={!(soundScenes.includes(k) && k === scene)}
+                muted={k === 'idle' && idleAudioNormal ? true : !(soundScenes.includes(k) && k === scene)}
                 playsInline
                 preload="auto"
                 onEnded={(e) => {
-                  if (k === 'idle') {
-                    if (idleTailLoop > 0 && isFinite(e.currentTarget.duration)) {
-                      // keep flying: loop just the tail instead of holding the last frame
-                      try { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - idleTailLoop); } catch {}
-                      e.currentTarget.play().catch(() => {});
-                    } else {
-                      setIdleHeld(true);
-                    }
-                  }
+                  // tail-loop themes are handled by the rAF below; others hold
+                  if (k === 'idle' && idleTailLoop <= 0) setIdleHeld(true);
                   if (k === lockedScene) setLockedScene(null); // release the lock when it finishes
                 }}
               />
             );
           })}
+        {/* decoupled idle audio (normal speed) — the muted clip handles visuals */}
+        {idleAudioNormal && sceneVideoFor('idle') && (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <audio ref={idleAudioRef} src={sceneVideoFor('idle')} preload="auto" />
+        )}
       </div>
       {/* ambient themed particles — only over the live/idle scene, never on a
           result scene (win / split / crash) */}

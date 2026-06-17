@@ -79,6 +79,6 @@ export const trainridex: Theme = {
     idleSpeedBetting: 0.3, // big slow-mo: the train stays at the station through the countdown
     idleSpeed: 1,          // ramps up at zero so it really departs + gains speed on 0
     idleTailLoop: 1,       // loop the seamless 7–8s section (train keeps racing)
-    sceneSound: ['idle'],  // play the clip's own audio (steam + horn)
+    idleAudioNormal: true, // steam + horn at normal speed, decoupled from the slow-mo
   },
 };

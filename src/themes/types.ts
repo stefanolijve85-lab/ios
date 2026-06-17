@@ -117,6 +117,9 @@ export interface ThemeUI {
   // Scene keys whose video plays WITH its own audio (e.g. ['split'] so the
   // thief's shout is heard). All other scenes stay muted (game SFX take over).
   sceneSound?: ('idle' | 'lose' | 'win' | 'split')[];
+  // Play the idle clip's audio at NORMAL speed, decoupled from the slow-mo
+  // video (a separate audio element), so steam/horn aren't time-stretched.
+  idleAudioNormal?: boolean;
 }
 
 export interface Theme {
