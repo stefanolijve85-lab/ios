@@ -793,6 +793,10 @@ input { font-family: inherit; }
 /* TRAINRIDE: hold the station poster a beat longer, then fade the clip in
    gently so the train clearly only departs / builds speed once it's faded up */
 .vault-scene video.scene-video.idle-fade { transition: opacity 1.2s ease .55s; }
+/* countdown clip is held on frame 0 for the first ~1s (it end-aligns its climax
+   to zero), so fade it up from the station poster over that hold instead of
+   showing a frozen frame */
+.vault-scene video.scene-video.countdown-clip { transition: opacity 1s ease; }
 /* the idle clip sits slightly zoomed-in; once it has played out and holds its
    last frame, it slowly pulls back (zoom out) to full and gently breathes in/out
    so long rounds keep clear motion — gap-free (never below the full frame) */

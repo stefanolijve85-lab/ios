@@ -481,7 +481,7 @@ export default function Vault() {
         {countdownSrc && (
           <video
             ref={countdownRef}
-            className={`scene-video${countdownPlaying ? ' active' : ''}`}
+            className={`scene-video countdown-clip${countdownPlaying ? ' active' : ''}`}
             src={countdownSrc}
             style={styleFor('idle')}
             loop={!countdownSound}
