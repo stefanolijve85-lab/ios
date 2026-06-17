@@ -79,5 +79,6 @@ export const trainridex: Theme = {
     idleSpeedBetting: 1,   // the clip's first 5s are authored to fill the 5s countdown
     idleSpeed: 1,
     idleTailLoop: 1,       // loop the seamless 7–8s section (train keeps racing)
+    sceneSound: ['idle'],  // play the clip's own audio (steam + horn)
   },
 };
