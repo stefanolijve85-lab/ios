@@ -29,6 +29,12 @@ export interface ThemeAssets {
   // Optional cinematic (animated) scenes — when present the engine plays these
   // looping videos instead of the static stills above for the matching phase.
   sceneIdleVideo?: string;  // idle / running
+  // Optional dedicated seamless LOOP clip for the idle scene: after the main
+  // idle clip plays once (e.g. the train's departure) the engine hard-cuts to
+  // this clip and loops it natively (no seek), so the loop point is invisible.
+  // Author it so its FIRST frame == the idle clip's LAST frame, and its first
+  // frame == its own last frame. When present it replaces idleTailLoop.
+  sceneIdleLoopVideo?: string;
   sceneLoseVideo?: string;  // crash (all bets lost)
   sceneWinVideo?: string;   // secured (all bets cashed)
   sceneSplitVideo?: string; // mixed result: one bet won AND one bet lost

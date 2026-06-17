@@ -26,6 +26,7 @@ export default function Vault() {
   const depthRef = useRef<HTMLDivElement>(null);
   const rungRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sceneRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const idleLoopRef = useRef<HTMLVideoElement | null>(null); // dedicated seamless idle loop clip
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const loseSeededRef = useRef(false); // crash clip start-point chosen once per crash
 
@@ -42,6 +43,10 @@ export default function Vault() {
   // a sound result scene (e.g. split) stays locked on screen until its clip
   // finishes, so the full spoken line is heard past the short crash window.
   const [lockedScene, setLockedScene] = useState<string | null>(null);
+  // when a dedicated seamless loop clip exists, the main idle clip plays once
+  // then hard-cuts to the loop (native loop, no seek). True once that handoff
+  // has happened this round.
+  const [idleLoopActive, setIdleLoopActive] = useState(false);
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -203,7 +208,8 @@ export default function Vault() {
   const styleFor = (k: SceneKey) => (zoomFor(k) !== 1 ? { transform: `scale(${zoomFor(k)})` } : undefined);
   const sceneSpeed = theme.ui?.sceneSpeed ?? 1;
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeed;
-  const idleTailLoop = theme.ui?.idleTailLoop ?? 0;
+  const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
+  const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
@@ -233,6 +239,12 @@ export default function Vault() {
           await v.play();
           if (!cancelled) { v.pause(); v.currentTime = 0; }
         } catch { /* skip */ }
+      }
+      // warm the dedicated idle loop clip too (so the hand-off is instant)
+      const lv = idleLoopRef.current;
+      if (lv && !cancelled) {
+        lv.muted = true;
+        try { await lv.play(); if (!cancelled) { lv.pause(); lv.currentTime = 0; } } catch { /* skip */ }
       }
     })();
     return () => { cancelled = true; };
@@ -340,6 +352,22 @@ export default function Vault() {
     }
   }, [scene, phase, idleAudioNormal]);
 
+  // Dedicated idle loop clip: play it natively-looped once it's active, else
+  // keep it paused at frame 0. Reset the hand-off whenever we leave the idle
+  // scene, so each round starts again from the main (departure) clip.
+  useEffect(() => {
+    const lv = idleLoopRef.current;
+    if (!lv) return;
+    if (scene === 'idle' && idleLoopActive) {
+      lv.playbackRate = idleSpeed;
+      lv.play().catch(() => {});
+    } else {
+      lv.pause();
+      try { lv.currentTime = 0; } catch { /* not ready */ }
+    }
+  }, [scene, idleLoopActive, idleSpeed]);
+  useEffect(() => { if (scene !== 'idle') setIdleLoopActive(false); }, [scene]);
+
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
   // safety: release the lock after the clip's own duration (+buffer) in case the
@@ -377,7 +405,7 @@ export default function Vault() {
               <video
                 key={k}
                 ref={(el) => { sceneRefs.current[k] = el; }}
-                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === 'idle' && idleFadeIn ? ' idle-fade' : ''}${k === scene ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
+                className={`scene-video ${sceneClassFor(k)}${k === 'idle' && pullback ? ' idle-clip' : ''}${k === 'idle' && idleFadeIn ? ' idle-fade' : ''}${k === scene && !(k === 'idle' && idleLoopActive) ? ' active' : ''}${k === 'idle' && idleHeld && pullback ? ' held' : ''}`}
                 src={src}
                 style={styleFor(k)}
                 loop={sceneLoop}
@@ -386,7 +414,13 @@ export default function Vault() {
                 preload="auto"
                 onEnded={(e) => {
                   if (k === 'idle') {
-                    if (idleTailLoop > 0) {
+                    if (idleLoopSrc) {
+                      // hard-cut to the dedicated seamless loop clip (its first
+                      // frame matches this clip's last frame, so it's invisible)
+                      const lv = idleLoopRef.current;
+                      if (lv) { try { lv.currentTime = 0; } catch {} lv.play().catch(() => {}); }
+                      setIdleLoopActive(true);
+                    } else if (idleTailLoop > 0) {
                       // fallback: rVFC normally seeks back before the last frame,
                       // but if it misses, jump back into the seamless tail + resume
                       const v = e.currentTarget;
@@ -401,6 +435,20 @@ export default function Vault() {
               />
             );
           })}
+        {/* dedicated seamless idle loop clip (hard-cut from the main idle clip
+            on matching frames, then native-looped — no seek, no visible seam) */}
+        {idleLoopSrc && (
+          <video
+            ref={idleLoopRef}
+            className={`scene-video${scene === 'idle' && idleLoopActive ? ' active' : ''}`}
+            src={idleLoopSrc}
+            style={styleFor('idle')}
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+        )}
         {/* decoupled idle audio (normal speed) — the muted clip handles visuals */}
         {idleAudioNormal && sceneVideoFor('idle') && (
           // eslint-disable-next-line jsx-a11y/media-has-caption
