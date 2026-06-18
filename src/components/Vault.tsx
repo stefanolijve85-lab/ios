@@ -274,8 +274,25 @@ export default function Vault() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Play the active clip (or hold it on frame 0); keep the rest paused at 0 and
-  // ready. Because they're warmed, switching scenes starts instantly.
+  // iOS drops the decode buffer of long-paused clips, so a clip warmed only at
+  // mount is cold by the time the round resolves (the win clip especially —
+  // ~12MB). Re-warm the result clips at the start of EACH betting phase (calm
+  // moment) so they're hot and start instantly when the round ends.
+  useEffect(() => {
+    if (phase !== 'betting') return;
+    let cancelled = false;
+    (async () => {
+      for (const k of ['win', 'lose', 'split'] as SceneKey[]) {
+        if (cancelled || k === scene || !sceneVideoFor(k)) continue;
+        const v = sceneRefs.current[k];
+        if (!v) continue;
+        v.muted = true;
+        try { await v.play(); if (!cancelled) { v.pause(); v.currentTime = 0; } } catch { /* skip */ }
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
   useEffect(() => {
     if (scene !== 'lose') loseSeededRef.current = false; // re-seed each new crash
     SCENE_KEYS.forEach((k) => {
