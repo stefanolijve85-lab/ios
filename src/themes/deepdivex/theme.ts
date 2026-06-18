@@ -73,5 +73,5 @@ export const deepdivex: Theme = {
   // The descent scene is a single cinematic clip that loops continuously through
   // betting + the run (idleSyncCountdown keeps it playing — never frozen — so the
   // big clip never has to resume from a pause and stall).
-  ui: { depthMeter: true, metersPerX: 33, sceneLoop: true, idleSyncCountdown: true },
+  ui: { depthMeter: true, metersPerX: 33, sceneLoop: true, idleSyncCountdown: true, sceneSound: ['idle'] },
 };
