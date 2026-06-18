@@ -69,6 +69,7 @@ export const bankheistx: Theme = {
     currentAmount: 'CURRENT WIN',
     wouldBeWorth: 'WIN WOULD BE',
     countdownLabel: 'VAULT CLOSES IN',
+    betOpen: 'VAULT OPEN',
     waitForNext: 'WAITING FOR THE NEXT VAULT',
     winFlash: 'YOU GOT OUT!',
     loseFlash: 'THEY GOT AWAY!',

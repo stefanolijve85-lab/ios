@@ -79,6 +79,7 @@ export interface ThemeCopy {
   currentAmount: string;  // "CURRENT AMOUNT"
   wouldBeWorth: string;   // "WOULD BE WORTH"
   countdownLabel: string; // "VAULT CLOSES IN"
+  betOpen?: string;       // optional tag after the stake on the PLACE BET button (BANKHEIST: "VAULT OPEN")
   waitForNext: string;    // start-screen wait box: "WAITING FOR THE NEXT VAULT"
   // flash banners
   winFlash: string;       // "YOU GOT OUT!"

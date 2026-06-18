@@ -120,7 +120,7 @@ export default function BetPanel({ slot, hero = false }: { slot: 0 | 1; hero?: b
       disabled = true;
     } else {
       cls += ' place'; big = 'PLACE BET';
-      sub = `${euro(amount)} · VAULT OPEN`;
+      sub = theme.copy.betOpen ? `${euro(amount)} · ${theme.copy.betOpen}` : euro(amount);
       onClick = () => { placeBet(slot, amount, autoTarget()); };
     }
   } else if (phase === 'running' && holding) {
