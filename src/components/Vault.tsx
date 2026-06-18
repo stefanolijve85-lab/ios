@@ -295,8 +295,15 @@ export default function Vault() {
         if (!(k === 'idle' && syncCountdown)) {
           v.playbackRate = activeHasSound ? 1 : k === 'idle' ? idleSpeed : sceneSpeedFor(k);
         }
-        if (activePlaying) v.play().catch(() => {});
-        else { v.pause(); try { v.currentTime = 0; } catch {} }
+        if (activePlaying) {
+          // iOS blocks UN-muted programmatic play() without a user gesture, so
+          // always start muted (guaranteed to play — never a frozen frame), then
+          // un-mute scenes that carry their own audio (already unlocked by the
+          // PLAY tap). Fixes the split clip freezing on iOS.
+          const wantSound = activeHasSound;
+          v.muted = true;
+          v.play().then(() => { if (wantSound) v.muted = false; }).catch(() => {});
+        } else { v.pause(); try { v.currentTime = 0; } catch {} }
       } else if (!v.paused || v.currentTime !== 0) {
         v.pause();
         try { v.currentTime = 0; } catch {}
