@@ -80,6 +80,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const phaseRef = useRef<string>('');
   const betsRef = useRef<Bets>({ 0: null, 1: null });
   betsRef.current = bets;
+  // accumulates the net winnings of every bet cashed in the CURRENT round, so
+  // "LAST WIN" shows the combined total when both bets win (reset each round).
+  const roundWinRef = useRef(0);
 
   // theme drives the flash copy + how many voice clips to pick from; keep it in
   // a ref so the (mount-only) socket handlers always see the active theme.
@@ -129,6 +132,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     const onRoundNew = () => {
       setBets({ 0: null, 1: null });
+      roundWinRef.current = 0; // new round → start a fresh "last win" total
       phaseRef.current = 'betting';
       audio.stopMotif();
       audio.startTick(); // clock ticks during the "VAULT CLOSES IN" countdown
@@ -185,8 +189,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
       const i = Math.floor(Math.random() * themeRef.current.audio.voiceWin.length);
       setFlash({ kind: 'win', text: themeRef.current.copy.winFlash, key: Date.now() });
-      setLastWin(netWin(payout, multiplier)); // show the profit, not stake + profit
-      audio.playStash(i);
+      // add this bet's profit to the round total so "LAST WIN" shows the sum of
+      // both bets when you win two (not just the last one)
+      roundWinRef.current += netWin(payout, multiplier); // profit, not stake + profit
+      setLastWin(roundWinRef.current);      audio.playStash(i);
     };
 
     const onChat = (m: ChatMessage) => setChat((c) => [...c.slice(-60), m]);
