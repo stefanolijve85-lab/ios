@@ -37,6 +37,7 @@ export const deepdivex: Theme = {
     sceneLose: `${A}/implosion.webp`,
     sceneLoseVideo: `${A}/implosion-v1.mp4`, // hull-breach crash clip (plays once, full speed)
     sceneWin: `${A}/surface.webp`,
+    sceneWinVideo: `${A}/surface-v1.mp4`,    // surface/win clip (muted — game win SFX plays; can't filter the clip's voices out)
     icons: {
       home: `${A}/icons/home.webp`,
       history: `${A}/icons/history.webp`,
