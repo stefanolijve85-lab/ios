@@ -32,7 +32,8 @@ export const deepdivex: Theme = {
     landingVideo: `${A}/landing-v2.mp4`,
     playButton: `${A}/playbtn-v3.webp`,
     sceneIdle: `${A}/descend.webp`,
-    sceneIdleVideo: `${A}/descend-v1.mp4`, // looping underwater descent scene
+    sceneIdleVideo: `${A}/dive-intro.mp4`,     // 8s: first 5s = surface (during countdown), last 3s = the dive begins at zero
+    sceneIdleLoopVideo: `${A}/dive-main.mp4`,  // the dive continues, then loops while the round runs
     sceneLose: `${A}/implosion.webp`,
     sceneWin: `${A}/surface.webp`,
     icons: {
@@ -69,9 +70,10 @@ export const deepdivex: Theme = {
     loseFlash: 'HULL BREACH!',
     landingAlt: 'DEEP DIVE X — Dive deep. Surface rich.',
   },
-  // the DEEP DIVE twist: the ladder + a live readout read as ocean depth.
-  // The descent scene is a single cinematic clip that loops continuously through
-  // betting + the run (idleSyncCountdown keeps it playing — never frozen — so the
-  // big clip never has to resume from a pause and stall).
-  ui: { depthMeter: true, metersPerX: 33, sceneLoop: true, idleSyncCountdown: true, sceneSound: ['idle'] },
+  // the DEEP DIVE twist: the ladder + a live readout read as ocean depth. The
+  // descent is two clips authored as one continuous film: the intro plays right
+  // through the betting countdown (idleSyncCountdown) so the dive begins exactly
+  // at zero, then hands off seamlessly to the dive-loop clip while the round
+  // runs. sceneSound plays the clips' underwater audio.
+  ui: { depthMeter: true, metersPerX: 33, idleSyncCountdown: true, sceneLoop: false, sceneSound: ['idle'] },
 };

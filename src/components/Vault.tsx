@@ -232,6 +232,7 @@ export default function Vault() {
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
+  const idleHasSound = soundScenes.includes('idle'); // the idle clip + its loop clip play their own audio
   // lock a sound result scene on as soon as it appears, so it plays out fully
   const lockable = activeScene !== 'idle' && soundScenes.includes(activeScene);
 
@@ -424,12 +425,14 @@ export default function Vault() {
     if (!lv) return;
     if (scene === 'idle' && idleLoopActive) {
       lv.playbackRate = idleSpeed;
-      lv.play().catch(() => {});
+      // start muted (iOS-safe), then un-mute if the dive carries its own audio
+      lv.muted = true;
+      lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
     } else {
       lv.pause();
       try { lv.currentTime = 0; } catch { /* not ready */ }
     }
-  }, [scene, idleLoopActive, idleSpeed]);
+  }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
   useEffect(() => { if (scene !== 'idle') setIdleLoopActive(false); }, [scene]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
@@ -482,7 +485,11 @@ export default function Vault() {
                       // hard-cut to the dedicated seamless loop clip (its first
                       // frame matches this clip's last frame, so it's invisible)
                       const lv = idleLoopRef.current;
-                      if (lv) { try { lv.currentTime = 0; } catch {} lv.play().catch(() => {}); }
+                      if (lv) {
+                        try { lv.currentTime = 0; } catch {}
+                        lv.muted = true;
+                        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+                      }
                       setIdleLoopActive(true);
                     } else if (idleTailLoop > 0) {
                       // fallback: rVFC normally seeks back before the last frame,
@@ -522,7 +529,7 @@ export default function Vault() {
             src={idleLoopSrc}
             style={styleFor('idle')}
             loop
-            muted
+            muted={!idleHasSound}
             playsInline
             preload="auto"
           />
