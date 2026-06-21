@@ -141,7 +141,7 @@ export interface ThemeUI {
   // Play a spoken line (audio.sceneVoice) during a result scene, at a delay so it
   // lands on a specific beat of the (muted) clip — e.g. when the case hits the
   // deck. That scene also locks on screen until its clip finishes.
-  sceneVoice?: { on: 'win' | 'lose' | 'split'; delayMs?: number };
+  sceneVoice?: { on: 'win' | 'lose' | 'split'; delayMs?: number; gain?: number };
   // Start a result clip this many seconds in (skip its buildup) — e.g. cut to the
   // implosion sooner. Per scene.
   sceneStartSec?: { lose?: number; win?: number; split?: number };

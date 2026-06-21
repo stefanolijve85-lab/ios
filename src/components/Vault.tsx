@@ -41,6 +41,8 @@ export default function Vault() {
   // a sound result scene (e.g. split) stays locked on screen until its clip
   // finishes, so the full spoken line is heard past the short crash window.
   const [lockedScene, setLockedScene] = useState<string | null>(null);
+  const lockedSceneRef = useRef<string | null>(null);
+  lockedSceneRef.current = lockedScene; // so the rAF loop can see the lock
   // when a dedicated seamless loop clip exists, the main idle clip plays once
   // then hard-cuts to the loop (native loop, no seek). True once that handoff
   // has happened this round.
@@ -102,7 +104,10 @@ export default function Vault() {
         // time; 4.6s bomb-clock by default). A train has no spoken countdown but
         // we still want the ticking clock, so it plays alongside the clip audio.
         if (!tickFired && remaining <= (theme.ui?.tickLeadMs ?? 4600) && remaining > 0) {
-          getAudio().tick(theme.ui?.tickLeadMs ?? 4600, theme.ui?.tickOffset);
+          // a locked result clip (e.g. the half-win) owns this moment — skip the
+          // next round's tick so it doesn't bleed over the scene (and never fire
+          // it late, which would run past zero)
+          if (!lockedSceneRef.current) getAudio().tick(theme.ui?.tickLeadMs ?? 4600, theme.ui?.tickOffset);
           tickFired = true;
         }
         // end-align the countdown clip (clock + "all aboard") so its climax lands
@@ -454,7 +459,7 @@ export default function Vault() {
     if (sceneVoiceCfg && scene === sceneVoiceCfg.on) {
       if (!sceneVoiceFiredRef.current) {
         sceneVoiceFiredRef.current = true;
-        getAudio().sceneVoice(sceneVoiceCfg.delayMs ?? 0);
+        getAudio().sceneVoice(sceneVoiceCfg.delayMs ?? 0, sceneVoiceCfg.gain ?? 1);
       }
     } else {
       sceneVoiceFiredRef.current = false;
