@@ -57,8 +57,10 @@ export const deepdivex: Theme = {
     sceneVoice: `${A}/audio/halfwin-voice.mp3`, // "case on deck" line over the muted half-win clip
     lobby: '/themes/bankheistx/audio/lobby.mp3',
     tick: '/themes/bankheistx/audio/tick.mp3',
-    voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
-    voiceWin: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-win-${n}.mp3`),
+    // no voice barks — the BANKHEIST heist lines ("they cleaned us out") don't fit
+    // a submarine dive; the crash/implosion SFX still play, plus the half-win line
+    voiceCrash: [],
+    voiceWin: [],
   },
   copy: {
     cashOut: 'SURFACE',
