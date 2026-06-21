@@ -16,6 +16,7 @@ type Buffers = {
   crash?: AudioBuffer;
   crashAlt?: AudioBuffer;
   launch?: AudioBuffer;
+  sceneVoice?: AudioBuffer;
   lobby?: AudioBuffer;
   tick?: AudioBuffer;
 };
@@ -142,6 +143,7 @@ class TensionAudio {
       set('tick', p.tick),
       ...(p.crashAlt ? [set('crashAlt', p.crashAlt)] : []),
       ...(p.launch ? [set('launch', p.launch)] : []),
+      ...(p.sceneVoice ? [set('sceneVoice', p.sceneVoice)] : []),
     ]);
     // crash + win voice lines (random pick) — load independently
     const loadVoices = (urls: string[], into: AudioBuffer[]) =>
@@ -269,6 +271,13 @@ class TensionAudio {
   // theme provides audio.launch.
   launch(delayMs = 0) {
     this.oneShot(this.buffers.launch, 1.0, undefined, Math.max(0, delayMs) / 1000);
+  }
+
+  // Spoken line during a result scene, fired at a delay so it lands on a specific
+  // beat of the clip (e.g. when the case hits the deck). Routed through the voice
+  // bus. No-op until a theme provides audio.sceneVoice.
+  sceneVoice(delayMs = 0) {
+    this.oneShot(this.buffers.sceneVoice, 1.0, this.voiceGain, Math.max(0, delayMs) / 1000);
   }
 
   playStash(idx = -1) {

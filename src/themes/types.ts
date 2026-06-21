@@ -62,6 +62,7 @@ export interface ThemeAudio {
   crash: string;
   crashAlt?: string; // optional 2nd crash/alarm clip — alternated with `crash`
   launch?: string;   // optional callout played when the round starts (e.g. "LIFTOFF!")
+  sceneVoice?: string; // optional spoken line played during a result scene (see ui.sceneVoice)
   lobby: string;
   tick: string;
   voiceCrash: string[]; // random "loss" lines
@@ -137,6 +138,10 @@ export interface ThemeUI {
   // callout): play it un-muted and end-aligned (once, so its climax lands at
   // zero). The game's tick clock still plays alongside it.
   countdownSound?: boolean;
+  // Play a spoken line (audio.sceneVoice) during a result scene, at a delay so it
+  // lands on a specific beat of the (muted) clip — e.g. when the case hits the
+  // deck. That scene also locks on screen until its clip finishes.
+  sceneVoice?: { on: 'win' | 'lose' | 'split'; delayMs?: number };
   // Linger on the idle poster (first frame) a beat longer at round start, then
   // gently fade the clip in (so the train clearly departs from a held station).
   idleFadeIn?: boolean;

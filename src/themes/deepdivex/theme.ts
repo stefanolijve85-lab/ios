@@ -38,6 +38,7 @@ export const deepdivex: Theme = {
     sceneLoseVideo: `${A}/implosion-v1.mp4`, // hull-breach crash clip (plays once, full speed)
     sceneWin: `${A}/surface.webp`,
     sceneWinVideo: `${A}/surface-v1.mp4`,    // surface/win clip (muted — game win SFX plays; can't filter the clip's voices out)
+    sceneSplitVideo: `${A}/halfwin.mp4`,     // half-win (one bet won, one lost) — muted clip + a timed "case on deck" voice
     icons: {
       home: `${A}/icons/home.webp`,
       history: `${A}/icons/history.webp`,
@@ -53,6 +54,7 @@ export const deepdivex: Theme = {
     motifHigh: '/themes/bankheistx/audio/motif-high.mp3',
     stash: '/themes/bankheistx/audio/stash.mp3',
     crash: '/themes/bankheistx/audio/crash.mp3',
+    sceneVoice: `${A}/audio/halfwin-voice.mp3`, // "case on deck" line over the muted half-win clip
     lobby: '/themes/bankheistx/audio/lobby.mp3',
     tick: '/themes/bankheistx/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/bankheistx/audio/voice-crash-${n}.mp3`),
@@ -85,5 +87,8 @@ export const deepdivex: Theme = {
     sceneSound: ['idle'],
     idleSpeedBetting: 0.85, // light slow-mo over the surface during the countdown
     idleSpeed: 1,           // ramps up to full speed at zero so the dive accelerates downward
+    // half-win: the muted clip locks on, and the spoken line lands when the case
+    // hits the deck (tune delayMs to that beat of the clip)
+    sceneVoice: { on: 'split', delayMs: 2500 },
   },
 };

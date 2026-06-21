@@ -233,8 +233,11 @@ export default function Vault() {
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
   const idleHasSound = soundScenes.includes('idle'); // the idle clip + its loop clip play their own audio
-  // lock a sound result scene on as soon as it appears, so it plays out fully
-  const lockable = activeScene !== 'idle' && soundScenes.includes(activeScene);
+  const sceneVoiceCfg = theme.ui?.sceneVoice; // a timed spoken line over a (muted) result clip
+  // lock a result scene on as soon as it appears, so it plays out fully — either
+  // because it carries its own audio, or because it has a timed scene-voice
+  const lockable = activeScene !== 'idle' &&
+    (soundScenes.includes(activeScene) || sceneVoiceCfg?.on === activeScene);
 
   // Warm every scene video once (briefly play muted, then pause to frame 0) so
   // even iOS — which won't buffer paused videos — has them ready to start
@@ -437,6 +440,20 @@ export default function Vault() {
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
+
+  // fire the timed scene-voice when its scene appears (e.g. the "case on deck"
+  // line over the muted split clip); reset when we leave that scene
+  const sceneVoiceFiredRef = useRef(false);
+  useEffect(() => {
+    if (sceneVoiceCfg && scene === sceneVoiceCfg.on) {
+      if (!sceneVoiceFiredRef.current) {
+        sceneVoiceFiredRef.current = true;
+        getAudio().sceneVoice(sceneVoiceCfg.delayMs ?? 0);
+      }
+    } else {
+      sceneVoiceFiredRef.current = false;
+    }
+  }, [scene, sceneVoiceCfg]);
   // safety: release the lock after the clip's own duration (+buffer) in case the
   // 'ended' event is missed — so it always plays out fully but never sticks.
   useEffect(() => {

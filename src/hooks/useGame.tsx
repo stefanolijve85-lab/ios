@@ -162,10 +162,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         (!!betsRef.current[1] && !betsRef.current[1]!.cashedOut);
       const alsoWon = !!betsRef.current[0]?.cashedOut || !!betsRef.current[1]?.cashedOut;
       const t = themeRef.current;
-      // mixed result with a "split" clip that has its own audio → let that clip
-      // carry the moment; don't talk over it with the game's crash voice/flash.
+      // mixed result with a "split" clip that carries the moment itself — either
+      // its own audio, or a timed scene-voice over a muted clip → don't talk over
+      // it with the game's crash voice/flash.
       const splitWithSound =
-        alsoWon && stillHolding && !!t.assets.sceneSplitVideo && !!t.ui?.sceneSound?.includes('split');
+        alsoWon && stillHolding && !!t.assets.sceneSplitVideo &&
+        (!!t.ui?.sceneSound?.includes('split') || t.ui?.sceneVoice?.on === 'split');
       // always stops the motif; alarm/voice + balloon only if YOU lost
       if (splitWithSound) {
         audio.crash(false);
