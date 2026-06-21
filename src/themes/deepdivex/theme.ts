@@ -35,6 +35,7 @@ export const deepdivex: Theme = {
     sceneIdleVideo: `${A}/dive-intro.mp4`,     // 8s: first 5s = surface (during countdown), last 3s = the dive begins at zero
     sceneIdleLoopVideo: `${A}/dive-main.mp4`,  // the dive continues, then loops while the round runs
     sceneLose: `${A}/implosion.webp`,
+    sceneLoseVideo: `${A}/implosion-v1.mp4`, // hull-breach crash clip (plays once, full speed)
     sceneWin: `${A}/surface.webp`,
     icons: {
       home: `${A}/icons/home.webp`,
