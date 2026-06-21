@@ -304,12 +304,18 @@ export default function Vault() {
       if (!v) return;
       if (k === scene) {
         if (k === 'idle' && idleHeld) return; // the drift effect drives this clip
-        // crash clip: alternate which part you see — the escape (start) or the
-        // money-counting (the end) — by seeding the start point once per crash
+        // crash clip start point (seeded once per crash): a fixed start offset
+        // (skip the buildup, e.g. cut to the implosion sooner) when the theme sets
+        // one, otherwise alternate the escape (start) or money-counting (end).
         if (k === 'lose' && !loseSeededRef.current) {
           loseSeededRef.current = true;
           const dur = isFinite(v.duration) ? v.duration : 0;
-          try { v.currentTime = dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0; } catch {}
+          const startSec = theme.ui?.sceneStartSec?.lose;
+          try {
+            v.currentTime = startSec != null
+              ? Math.min(Math.max(0, startSec), Math.max(0, dur - 0.1))
+              : (dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0);
+          } catch {}
         }
         // scenes with their own audio play at normal speed so the sound isn't
         // pitched; a countdown-synced idle's rate is ramped by the effect below

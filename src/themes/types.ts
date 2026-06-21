@@ -142,6 +142,9 @@ export interface ThemeUI {
   // lands on a specific beat of the (muted) clip — e.g. when the case hits the
   // deck. That scene also locks on screen until its clip finishes.
   sceneVoice?: { on: 'win' | 'lose' | 'split'; delayMs?: number };
+  // Start a result clip this many seconds in (skip its buildup) — e.g. cut to the
+  // implosion sooner. Per scene.
+  sceneStartSec?: { lose?: number; win?: number; split?: number };
   // Linger on the idle poster (first frame) a beat longer at round start, then
   // gently fade the clip in (so the train clearly departs from a held station).
   idleFadeIn?: boolean;

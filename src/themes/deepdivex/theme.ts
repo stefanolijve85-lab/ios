@@ -92,5 +92,6 @@ export const deepdivex: Theme = {
     // half-win: the muted clip locks on, and the spoken line lands when the case
     // hits the deck (tune delayMs to that beat of the clip)
     sceneVoice: { on: 'split', delayMs: 2500 },
+    sceneStartSec: { lose: 1.5 }, // skip the buildup — cut to the implosion sooner
   },
 };
