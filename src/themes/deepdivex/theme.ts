@@ -75,5 +75,13 @@ export const deepdivex: Theme = {
   // through the betting countdown (idleSyncCountdown) so the dive begins exactly
   // at zero, then hands off seamlessly to the dive-loop clip while the round
   // runs. sceneSound plays the clips' underwater audio.
-  ui: { depthMeter: true, metersPerX: 33, idleSyncCountdown: true, sceneLoop: false, sceneSound: ['idle'] },
+  ui: {
+    depthMeter: true,
+    metersPerX: 33,
+    idleSyncCountdown: true,
+    sceneLoop: false,
+    sceneSound: ['idle'],
+    idleSpeedBetting: 0.85, // light slow-mo over the surface during the countdown
+    idleSpeed: 1,           // ramps up to full speed at zero so the dive accelerates downward
+  },
 };
