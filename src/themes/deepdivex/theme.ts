@@ -80,13 +80,13 @@ export const deepdivex: Theme = {
   // descent is two clips authored as one continuous film: the intro plays right
   // through the betting countdown (idleSyncCountdown) so the dive begins exactly
   // at zero, then hands off seamlessly to the dive-loop clip while the round
-  // runs. sceneSound plays the clips' underwater audio.
+  // runs. The dive clips stay muted (un-muting a looping video freezes it on
+  // iOS); the game motif carries the audio.
   ui: {
     depthMeter: true,
     metersPerX: 33,
     idleSyncCountdown: true,
     sceneLoop: false,
-    sceneSound: ['idle'],
     idleSpeedBetting: 0.85, // light slow-mo over the surface during the countdown
     idleSpeed: 1,           // ramps up to full speed at zero so the dive accelerates downward
     // half-win: the muted clip locks on, and the spoken line lands when the case
