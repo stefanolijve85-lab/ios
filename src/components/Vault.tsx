@@ -555,7 +555,7 @@ export default function Vault() {
         {idleLoopSrc && (
           <video
             ref={idleLoopRef}
-            className={`scene-video${scene === 'idle' && idleLoopActive ? ' active' : ''}${idleLoopEnded && idleEndZoom ? ' dive-hold' : ''}`}
+            className={`scene-video idle-loop-clip${scene === 'idle' && idleLoopActive ? ' active' : ''}${idleLoopEnded && idleEndZoom ? ' dive-hold' : ''}`}
             src={idleLoopSrc}
             style={styleFor('idle')}
             loop={!idleEndZoom}

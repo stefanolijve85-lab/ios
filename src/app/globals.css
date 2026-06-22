@@ -790,6 +790,9 @@ input { font-family: inherit; }
 .vault-scene img.scene-still { z-index: 1; }
 .vault-scene video.scene-video { z-index: 2; opacity: 0; transition: opacity .3s ease; transform-origin: center 18%; }
 .vault-scene video.scene-video.active { opacity: 1; }
+/* the dedicated idle loop clip is a HARD cut from the main clip (matching frames)
+   — no cross-fade, so the seam is invisible instead of blending two moving frames */
+.vault-scene video.scene-video.idle-loop-clip { transition: none; }
 /* TRAINRIDE: hold the station poster a beat longer, then fade the clip in
    gently so the train clearly only departs / builds speed once it's faded up */
 .vault-scene video.scene-video.idle-fade { transition: opacity 1.2s ease .55s; }
