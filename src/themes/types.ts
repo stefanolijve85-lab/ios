@@ -104,6 +104,9 @@ export interface ThemeUI {
   sceneZoom?: number | { idle?: number; lose?: number; win?: number; split?: number };
   // Idle "hold last frame then slowly pull back" drift (e.g. the BANKHEIST vault).
   idlePullback?: boolean;
+  // When the idle loop clip finishes (play-once, no native loop), slowly zoom the
+  // held last frame so there's still ambient motion (e.g. DEEP DIVE's depths).
+  idleEndZoom?: boolean;
   // Idle clip plays through the betting countdown so its key moment (e.g. the
   // LIFTOFF launch) lands as the round starts — instead of holding on frame 0.
   idleSyncCountdown?: boolean;

@@ -88,7 +88,8 @@ export const deepdivex: Theme = {
     idleSyncCountdown: true,
     sceneLoop: false,
     idleSpeedBetting: 0.85, // light slow-mo over the surface during the countdown
-    idleSpeed: 1,           // ramps up to full speed at zero so the dive accelerates downward
+    idleSpeed: 0.8,         // dive plays a touch slow so it lasts longer
+    idleEndZoom: true,      // when the dive clip ends, slowly zoom the last frame for ambient motion
     // half-win: the muted clip locks on, and the spoken line lands when the case
     // hits the deck (tune delayMs to that beat of the clip)
     sceneVoice: { on: 'split', delayMs: 2500, gain: 1.9 },

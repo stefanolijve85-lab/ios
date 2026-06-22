@@ -47,6 +47,7 @@ export default function Vault() {
   // then hard-cuts to the loop (native loop, no seek). True once that handoff
   // has happened this round.
   const [idleLoopActive, setIdleLoopActive] = useState(false);
+  const [idleLoopEnded, setIdleLoopEnded] = useState(false); // loop clip finished → drift-zoom its last frame
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -232,6 +233,7 @@ export default function Vault() {
   const sceneSpeedFor = (k: SceneKey): number => (typeof speedCfg === 'number' ? speedCfg : speedCfg?.[k] ?? 1);
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeedFor('idle');
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
+  const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -447,7 +449,7 @@ export default function Vault() {
       try { lv.currentTime = 0; } catch { /* not ready */ }
     }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
-  useEffect(() => { if (scene !== 'idle') setIdleLoopActive(false); }, [scene]);
+  useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); } }, [scene]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -553,13 +555,14 @@ export default function Vault() {
         {idleLoopSrc && (
           <video
             ref={idleLoopRef}
-            className={`scene-video${scene === 'idle' && idleLoopActive ? ' active' : ''}`}
+            className={`scene-video${scene === 'idle' && idleLoopActive ? ' active' : ''}${idleLoopEnded && idleEndZoom ? ' dive-hold' : ''}`}
             src={idleLoopSrc}
             style={styleFor('idle')}
-            loop
+            loop={!idleEndZoom}
             muted={!idleHasSound}
             playsInline
             preload="auto"
+            onEnded={() => { if (idleEndZoom) setIdleLoopEnded(true); }}
           />
         )}
         {/* decoupled idle audio (normal speed) — the muted clip handles visuals */}
@@ -572,7 +575,7 @@ export default function Vault() {
       {/* center readout — also shown after you secure, so you see the climbing
           amount + what you're missing while the round finishes */}
       {phase !== 'crashed' && !lockedScene && (
-        <div className="vault-readout">
+        <div className={`vault-readout${depthMeter ? ' has-depth' : ''}`}>
           <div className="label">{activeStake > 0 ? theme.copy.currentAmount : theme.copy.wouldBeWorth}</div>
           <div className="amount" ref={amountRef}>€0.00</div>
           <div className="missed" ref={missedRef} style={{ display: 'none' }} />

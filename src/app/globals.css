@@ -803,6 +803,13 @@ input { font-family: inherit; }
 .vault-scene video.scene-video.idle-clip { transform-origin: center 50%; transform: scale(1.1); }
 .vault-scene video.scene-video.idle-clip.held { animation: idlePullback 6s ease-in-out infinite alternate; }
 @keyframes idlePullback { from { transform: scale(1.1); } to { transform: scale(1); } }
+/* loop clip finished → slow drift-zoom on the held last frame for ambient motion
+   (e.g. DEEP DIVE drifting in the depths) */
+.vault-scene video.scene-video.dive-hold {
+  animation: diveDrift 11s ease-in-out infinite alternate;
+  transform-origin: center 45%;
+}
+@keyframes diveDrift { from { transform: scale(1); } to { transform: scale(1.12); } }
 /* tap-to-skip overlay on a locked result clip (e.g. the split scene) */
 .scene-skip {
   position: absolute; inset: 0; z-index: 6;
@@ -885,6 +892,9 @@ input { font-family: inherit; }
   white-space: nowrap;
   display: flex; flex-direction: column; align-items: center; gap: 7px;
 }
+/* depth-meter games (DEEP DIVE) show the DEPTH readout up top, so drop the win
+   readout lower to keep them from overlapping */
+.vault-readout.has-depth { top: 34%; }
 .vault-readout .label {
   font-size: 10px; letter-spacing: 3px; color: #cfffe0; font-weight: 700;
   text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 1px 2px #000;
@@ -1006,7 +1016,7 @@ input { font-family: inherit; }
 .vault-ladder.depth .rung { font-size: 10px; letter-spacing: -0.2px; }
 /* live DEPTH readout while descending */
 .vault-depth {
-  position: absolute; left: 50%; top: 7%; transform: translateX(-50%);
+  position: absolute; left: 50%; top: 5%; transform: translateX(-50%);
   z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 1px;
   pointer-events: none; white-space: nowrap;
 }
@@ -1016,7 +1026,7 @@ input { font-family: inherit; }
 }
 .vault-depth b {
   font-family: 'Montserrat', system-ui, sans-serif;
-  font-size: clamp(20px, 6.5vw, 30px); font-weight: 900; color: #d8f7ff;
+  font-size: clamp(16px, 5vw, 23px); font-weight: 900; color: #d8f7ff;
   text-shadow: 0 0 4px #000, 0 2px 6px #000, 0 0 16px var(--green-glow);
   font-variant-numeric: tabular-nums;
 }
