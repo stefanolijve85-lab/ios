@@ -234,6 +234,7 @@ export default function Vault() {
   const idleSpeed = theme.ui?.idleSpeed ?? sceneSpeedFor('idle');
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
   const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
+  const idleLoopStartSec = theme.ui?.idleLoopStartSec ?? 0; // skip the loop clip's first bit to align the seam
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -516,7 +517,7 @@ export default function Vault() {
                       // frame matches this clip's last frame, so it's invisible)
                       const lv = idleLoopRef.current;
                       if (lv) {
-                        try { lv.currentTime = 0; } catch {}
+                        try { lv.currentTime = idleLoopStartSec; } catch {}
                         lv.muted = true;
                         lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
                       }

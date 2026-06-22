@@ -107,6 +107,9 @@ export interface ThemeUI {
   // When the idle loop clip finishes (play-once, no native loop), slowly zoom the
   // held last frame so there's still ambient motion (e.g. DEEP DIVE's depths).
   idleEndZoom?: boolean;
+  // Start the idle loop clip this many seconds in, to line its first shown frame
+  // up with the main clip's last frame (kills a tiny backward jump at the seam).
+  idleLoopStartSec?: number;
   // Idle clip plays through the betting countdown so its key moment (e.g. the
   // LIFTOFF launch) lands as the round starts — instead of holding on frame 0.
   idleSyncCountdown?: boolean;
