@@ -65,8 +65,8 @@ export const deepdivex: Theme = {
   copy: {
     cashOut: 'SURFACE',
     cashOutSub: 'BEFORE THE BREACH',
-    securedVerb: 'surfaced',
-    bagSecured: (amount) => `SURFACED ${amount}`,
+    securedVerb: 'secured',
+    bagSecured: (amount) => `SECURED ${amount}`,
     crashedTile: 'IMPLODED — LOST',
     currentAmount: 'CURRENT WIN',
     wouldBeWorth: 'WIN WOULD BE',
