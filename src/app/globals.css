@@ -883,6 +883,7 @@ input { font-family: inherit; }
   text-align: center;
   pointer-events: none;
   white-space: nowrap;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
 }
 .vault-readout .label {
   font-size: 10px; letter-spacing: 3px; color: #cfffe0; font-weight: 700;
@@ -907,7 +908,7 @@ input { font-family: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .vault-readout .missed {
-  margin-top: 3px;
+  margin-top: 6px;
   font-family: 'Montserrat', system-ui, sans-serif;
   font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
   color: #ffd0d0;
