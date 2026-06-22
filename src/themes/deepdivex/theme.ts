@@ -72,7 +72,7 @@ export const deepdivex: Theme = {
     wouldBeWorth: 'WIN WOULD BE',
     countdownLabel: 'DESCENT IN',
     waitForNext: 'WAITING FOR THE NEXT SUBMARINE',
-    winFlash: 'YOU FOUND THE TREASURE!',
+    winFlash: 'TREASURE SECURED!',
     loseFlash: 'IMPLODED!',
     landingAlt: 'DEEP DIVE X — Dive deep. Surface rich.',
   },
