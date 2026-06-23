@@ -235,7 +235,6 @@ export default function Vault() {
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
   const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
   const idleLoopStartSec = theme.ui?.idleLoopStartSec ?? 0; // skip the loop clip's first bit to align the seam
-  const idleLoopCrossfadeMs = 500; // cross-fade the intro->loop hand-off (hold the loop's first frame still during it)
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -455,19 +454,15 @@ export default function Vault() {
     if (!lv) return;
     if (scene === 'idle' && idleLoopActive) {
       lv.playbackRate = idleSpeed;
-      // Hold the offset frame STILL during the cross-fade (so two static frames
-      // blend — smoothing a position mismatch between the clips), then start
-      // playing once it's faded in. A hard cut would make the jump obvious.
+      // start playing immediately from the hand-off frame (no static hold)
       lv.muted = true;
       try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
-      const t = setTimeout(() => {
-        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
-      }, idleLoopCrossfadeMs);
-      return () => clearTimeout(t);
+      lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+    } else {
+      lv.pause();
+      // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
+      try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
     }
-    lv.pause();
-    // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
-    try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
   useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); } }, [scene]);
 
