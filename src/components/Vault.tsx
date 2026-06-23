@@ -26,7 +26,7 @@ export default function Vault() {
   const idleLoopRef = useRef<HTMLVideoElement | null>(null); // dedicated seamless idle loop clip
   const countdownRef = useRef<HTMLVideoElement | null>(null); // dedicated betting-countdown clip
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
-  const loseSeededRef = useRef(false); // crash clip start-point chosen once per crash
+  const seededRef = useRef<string | null>(null); // result clip whose start-point has been seeded this appearance
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
@@ -320,23 +320,23 @@ export default function Vault() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
   useEffect(() => {
-    if (scene !== 'lose') loseSeededRef.current = false; // re-seed each new crash
+    if (seededRef.current && seededRef.current !== scene) seededRef.current = null; // re-seed when the result scene changes
     SCENE_KEYS.forEach((k) => {
       const v = sceneRefs.current[k];
       if (!v) return;
       if (k === scene) {
         if (k === 'idle' && idleHeld) return; // the drift effect drives this clip
-        // crash clip start point (seeded once per crash): a fixed start offset
-        // (skip the buildup, e.g. cut to the implosion sooner) when the theme sets
-        // one, otherwise alternate the escape (start) or money-counting (end).
-        if (k === 'lose' && !loseSeededRef.current) {
-          loseSeededRef.current = true;
+        // result clip start point (seeded once when it appears): a fixed start
+        // offset (skip the buildup — e.g. cut to the implosion / the eject sooner)
+        // when the theme sets one, else the crash alternates escape/money-counting.
+        if ((k === 'lose' || k === 'win' || k === 'split') && seededRef.current !== k) {
+          seededRef.current = k;
           const dur = isFinite(v.duration) ? v.duration : 0;
-          const startSec = theme.ui?.sceneStartSec?.lose;
+          const startSec = theme.ui?.sceneStartSec?.[k];
           try {
             v.currentTime = startSec != null
               ? Math.min(Math.max(0, startSec), Math.max(0, dur - 0.1))
-              : (dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0);
+              : (k === 'lose' && dur > 4 && Math.random() < 0.5 ? Math.max(0, dur - 2.6) : 0);
           } catch {}
         }
         // scenes with their own audio play at normal speed so the sound isn't

@@ -98,6 +98,7 @@ export const liftoffx: Theme = {
   // pillarbox zoom. Plays once, holds the last frame (rocket in space).
   ui: {
     sceneSpeed: { lose: 1.0 }, // crash at full speed (no slow-mo); win full speed too
+    sceneStartSec: { win: 1.5 }, // skip the eject clip's buildup — start just before the capsule comes loose
     sceneLoop: false,
     idleSyncCountdown: true,
     idleSpeedBetting: 0.5,  // gentler ignition slow-mo through the countdown (less stutter than 0.35)
