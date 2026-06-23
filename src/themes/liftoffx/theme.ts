@@ -101,7 +101,7 @@ export const liftoffx: Theme = {
     sceneStartSec: { win: 1.5 }, // skip the eject clip's buildup — start just before the capsule comes loose
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeedBetting: 0.5,  // gentler ignition slow-mo through the countdown (less stutter than 0.35)
+    idleSpeedBetting: 0.45, // ignition pace: slow enough that lift-off lands on the "we got a liftoff" voice, but smoother than 0.35
     idleSpeed: 0.85,        // flight a touch faster so the slow-mo doesn't judder
     idleTailLoop: 1.5,      // keep the rocket flying while the round runs
     tickLeadMs: 3000,       // fire the spoken "3,2,1,LIFTOFF" when the clock hits 3
