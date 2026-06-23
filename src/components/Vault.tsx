@@ -237,6 +237,7 @@ export default function Vault() {
   const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
   const idleLoopStartSec = theme.ui?.idleLoopStartSec ?? 0; // skip the loop clip's first bit to align the seam
   const idleHandoffDip = !!theme.ui?.idleHandoffDip; // mask the hand-off jump with a brief darkening dip
+  const idleLoopTailSec = theme.ui?.idleLoopTailSec ?? 0; // loop only the loop clip's last N seconds
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -412,6 +413,34 @@ export default function Vault() {
     return () => { cancelled = true; cancelAnimationFrame(id); };
   }, [idleTailLoop]);
 
+  // Same frame-accurate tail-loop for the dedicated LOOP clip: it plays through
+  // once, then repeats only its last N seconds (not the whole clip).
+  useEffect(() => {
+    if (idleLoopTailSec <= 0) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const v = idleLoopRef.current as any;
+    if (!v) return;
+    let id = 0;
+    let cancelled = false;
+    const seekBack = (t: number) => {
+      const d = v.duration;
+      if (d && isFinite(d) && !v.paused && t >= d - 0.045) {
+        try { v.currentTime = Math.max(0, d - idleLoopTailSec); } catch { /* not seekable */ }
+      }
+    };
+    if (typeof v.requestVideoFrameCallback === 'function') {
+      const onFrame = (_now: number, meta: { mediaTime: number }) => {
+        seekBack(meta?.mediaTime ?? v.currentTime);
+        if (!cancelled) id = v.requestVideoFrameCallback(onFrame);
+      };
+      id = v.requestVideoFrameCallback(onFrame);
+      return () => { cancelled = true; if (v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(id); };
+    }
+    const onRaf = () => { seekBack(v.currentTime); if (!cancelled) id = requestAnimationFrame(onRaf); };
+    id = requestAnimationFrame(onRaf);
+    return () => { cancelled = true; cancelAnimationFrame(id); };
+  }, [idleLoopTailSec]);
+
   // Decoupled idle audio: play the idle clip's own track at NORMAL speed
   // (separate from the slow-mo video) so the steam/horn aren't time-stretched.
   // Tracks the idle VIDEO: it starts from 0 whenever the idle clip actually
@@ -582,11 +611,19 @@ export default function Vault() {
             className={`scene-video idle-loop-clip${scene === 'idle' && idleLoopActive ? ' active' : ''}${idleLoopEnded && idleEndZoom ? ' dive-hold' : ''}`}
             src={idleLoopSrc}
             style={styleFor('idle')}
-            loop={!idleEndZoom}
+            loop={!idleEndZoom && idleLoopTailSec <= 0}
             muted={!idleHasSound}
             playsInline
             preload="auto"
-            onEnded={() => { if (idleEndZoom) setIdleLoopEnded(true); }}
+            onEnded={(e) => {
+              if (idleEndZoom) setIdleLoopEnded(true);
+              else if (idleLoopTailSec > 0) {
+                // loop only the tail: jump back into the last N seconds and resume
+                const v = e.currentTarget;
+                try { v.currentTime = Math.max(0, (v.duration || 0) - idleLoopTailSec); } catch {}
+                v.play().catch(() => {});
+              }
+            }}
           />
         )}
         {/* decoupled idle audio (normal speed) — the muted clip handles visuals */}

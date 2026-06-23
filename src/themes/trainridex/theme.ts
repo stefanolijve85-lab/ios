@@ -81,5 +81,6 @@ export const trainridex: Theme = {
     idleSyncCountdown: true, // intro plays through the countdown (departs at zero)
     idleSpeed: 1,           // full speed so the 5s of countdown lands the departure on zero
     idleAudioNormal: true,  // play the intro clip's own audio (horn/steam/all-aboard), decoupled, in sync at 1x
+    idleLoopTailSec: 2,     // loop only the loop clip's last 2s (the steady racing), not the whole clip
   },
 };

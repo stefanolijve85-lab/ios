@@ -113,6 +113,9 @@ export interface ThemeUI {
   // Start the idle loop clip this many seconds in, to line its first shown frame
   // up with the main clip's last frame (kills a tiny backward jump at the seam).
   idleLoopStartSec?: number;
+  // Loop only the LAST N seconds of the idle loop clip (it plays through once,
+  // then repeats just its tail) instead of replaying the whole clip.
+  idleLoopTailSec?: number;
   // Idle clip plays through the betting countdown so its key moment (e.g. the
   // LIFTOFF launch) lands as the round starts — instead of holding on frame 0.
   idleSyncCountdown?: boolean;
