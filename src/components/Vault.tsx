@@ -290,8 +290,10 @@ export default function Vault() {
   // mount is cold by the time the round resolves (the win clip especially —
   // ~12MB). Re-warm the result clips at the start of EACH betting phase (calm
   // moment) so they're hot and start instantly when the round ends.
+  // NOT for idleSyncCountdown games: their idle clip is PLAYING through betting,
+  // and starting another clip pauses it on iOS (which would freeze the scene).
   useEffect(() => {
-    if (phase !== 'betting') return;
+    if (phase !== 'betting' || syncCountdown) return;
     let cancelled = false;
     (async () => {
       for (const k of ['win', 'lose', 'split'] as SceneKey[]) {
