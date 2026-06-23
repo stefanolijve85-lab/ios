@@ -235,6 +235,7 @@ export default function Vault() {
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
   const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
   const idleLoopStartSec = theme.ui?.idleLoopStartSec ?? 0; // skip the loop clip's first bit to align the seam
+  const idleLoopCrossfadeMs = 500; // cross-fade the intro->loop hand-off (hold the loop's first frame still during it)
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -454,14 +455,19 @@ export default function Vault() {
     if (!lv) return;
     if (scene === 'idle' && idleLoopActive) {
       lv.playbackRate = idleSpeed;
-      // start muted (iOS-safe), then un-mute if the dive carries its own audio
+      // Hold the offset frame STILL during the cross-fade (so two static frames
+      // blend — smoothing a position mismatch between the clips), then start
+      // playing once it's faded in. A hard cut would make the jump obvious.
       lv.muted = true;
-      lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
-    } else {
-      lv.pause();
-      // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
       try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
+      const t = setTimeout(() => {
+        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+      }, idleLoopCrossfadeMs);
+      return () => clearTimeout(t);
     }
+    lv.pause();
+    // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
+    try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
   useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); } }, [scene]);
 
@@ -526,14 +532,11 @@ export default function Vault() {
                 onEnded={(e) => {
                   if (k === 'idle') {
                     if (idleLoopSrc) {
-                      // hard-cut to the dedicated seamless loop clip (its first
-                      // frame matches this clip's last frame, so it's invisible)
+                      // cross-fade to the dedicated loop clip — the effect holds
+                      // its first frame still during the fade, then plays it, so a
+                      // position mismatch between the clips morphs instead of jumps
                       const lv = idleLoopRef.current;
-                      if (lv) {
-                        try { lv.currentTime = idleLoopStartSec; } catch {}
-                        lv.muted = true;
-                        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
-                      }
+                      if (lv) { lv.pause(); try { lv.currentTime = idleLoopStartSec; } catch {} }
                       setIdleLoopActive(true);
                     } else if (idleTailLoop > 0) {
                       // fallback: rVFC normally seeks back before the last frame,
