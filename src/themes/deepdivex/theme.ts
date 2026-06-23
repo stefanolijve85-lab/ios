@@ -92,7 +92,7 @@ export const deepdivex: Theme = {
     idleEndZoom: true,      // when the dive clip ends, slowly zoom the last frame for ambient motion
     idleLoopStartSec: 0.55, // start clip 2 this far in (trim its first 0.55s) to line up with clip 1's last frame
     sceneSpeed: { win: 0.75 }, // surface/win clip in slight slow-mo
-    sceneZoom: { lose: 1.16 }, // crop the implosion clip's baked-in top/bottom fade
+    sceneZoom: 1.16, // crop the clips' baked-in top/bottom fade (all DEEP DIVE scenes)
     // half-win: the muted clip locks on, and the spoken line lands when the case
     // hits the deck (tune delayMs to that beat of the clip)
     sceneVoice: { on: 'split', delayMs: 2500, gain: 1.9 },

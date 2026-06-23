@@ -808,12 +808,13 @@ input { font-family: inherit; }
 .vault-scene video.scene-video.idle-clip.held { animation: idlePullback 6s ease-in-out infinite alternate; }
 @keyframes idlePullback { from { transform: scale(1.1); } to { transform: scale(1); } }
 /* loop clip finished → slow drift-zoom on the held last frame for ambient motion
-   (e.g. DEEP DIVE drifting in the depths) */
+   (e.g. DEEP DIVE drifting in the depths). Starts at the scene's crop scale so
+   the baked-in top/bottom fade stays cropped during the drift. */
 .vault-scene video.scene-video.dive-hold {
   animation: diveDrift 11s ease-in-out infinite alternate;
   transform-origin: center 45%;
 }
-@keyframes diveDrift { from { transform: scale(1); } to { transform: scale(1.12); } }
+@keyframes diveDrift { from { transform: scale(1.16); } to { transform: scale(1.28); } }
 /* tap-to-skip overlay on a locked result clip (e.g. the split scene) */
 .scene-skip {
   position: absolute; inset: 0; z-index: 6;
