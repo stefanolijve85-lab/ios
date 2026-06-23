@@ -281,6 +281,14 @@ export default function Vault() {
         v.muted = true;
         try { await v.play(); if (!cancelled) { v.pause(); v.currentTime = 0; } } catch { /* skip */ }
       }
+      // idleSyncCountdown games play the idle clip THROUGH the countdown, so it
+      // must autostart on open. The result-clip warming above already unlocked
+      // muted playback; kick the idle here (in the same post-tap context) and
+      // leave it running, so it plays without waiting for a button press.
+      if (syncCountdown && !cancelled) {
+        const iv = sceneRefs.current['idle'];
+        if (iv) { iv.muted = true; iv.play().catch(() => {}); }
+      }
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
