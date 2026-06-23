@@ -90,7 +90,7 @@ export const deepdivex: Theme = {
     idleSpeedBetting: 0.85, // light slow-mo over the surface during the countdown
     idleSpeed: 0.8,         // dive plays a touch slow so it lasts longer
     idleEndZoom: true,      // when the dive clip ends, slowly zoom the last frame for ambient motion
-    idleLoopStartSec: 0.55, // start clip 2 this far in (trim its first 0.55s) to line up with clip 1's last frame
+    idleLoopStartSec: 0.45, // start clip 2 this far in (trim its first 0.45s) to line up with clip 1's last frame
     sceneSpeed: { win: 0.75 }, // surface/win clip in slight slow-mo
     sceneZoom: 1.16, // crop the clips' baked-in top/bottom fade (all DEEP DIVE scenes)
     // half-win: the muted clip locks on, and the spoken line lands when the case
