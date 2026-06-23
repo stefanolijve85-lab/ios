@@ -570,8 +570,14 @@ export default function Vault() {
                         setTimeout(() => setIdleLoopActive(true), 120);
                         setTimeout(() => setDipping(false), 320);
                       } else {
-                        // immediate hard cut (clips that line up)
-                        if (lv) { lv.pause(); try { lv.currentTime = idleLoopStartSec; } catch {} }
+                        // immediate hard cut (clips that line up): start clip 2
+                        // playing RIGHT NOW (not after a React render) so the train
+                        // never freezes on its first frame at the seam
+                        if (lv) {
+                          try { lv.currentTime = idleLoopStartSec; } catch {}
+                          lv.muted = true;
+                          lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+                        }
                         setIdleLoopActive(true);
                       }
                     } else if (idleTailLoop > 0) {
