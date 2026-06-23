@@ -274,12 +274,14 @@ export default function Vault() {
           if (!cancelled) { v.pause(); v.currentTime = 0; }
         } catch { /* skip */ }
       }
-      // warm the dedicated idle loop + countdown clips too (instant hand-offs)
+      // warm the dedicated idle loop + countdown clips too (instant hand-offs);
+      // hold the loop clip ON its hand-off frame (idleLoopStartSec) so that frame
+      // is already decoded and the cut doesn't have to seek-and-decode live
       for (const ref of [idleLoopRef, countdownRef]) {
         const v = ref.current;
         if (!v || cancelled) continue;
         v.muted = true;
-        try { await v.play(); if (!cancelled) { v.pause(); v.currentTime = 0; } } catch { /* skip */ }
+        try { await v.play(); if (!cancelled) { v.pause(); v.currentTime = ref === idleLoopRef ? idleLoopStartSec : 0; } } catch { /* skip */ }
       }
       // idleSyncCountdown games play the idle clip THROUGH the countdown, so it
       // must autostart on open. The result-clip warming above already unlocked
@@ -457,7 +459,8 @@ export default function Vault() {
       lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
     } else {
       lv.pause();
-      try { lv.currentTime = 0; } catch { /* not ready */ }
+      // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
+      try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
     }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
   useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); } }, [scene]);
