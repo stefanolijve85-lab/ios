@@ -97,11 +97,11 @@ export const liftoffx: Theme = {
   // clip to match the 5s countdown). The old crash/win clips still need the
   // pillarbox zoom. Plays once, holds the last frame (rocket in space).
   ui: {
-    sceneSpeed: { lose: 0.85 }, // crash slightly slowed; win plays at full speed so it kicks off at once
+    sceneSpeed: { lose: 1.0 }, // crash at full speed (no slow-mo); win full speed too
     sceneLoop: false,
     idleSyncCountdown: true,
-    idleSpeedBetting: 0.35, // ignition crawls through the countdown (rocket stays on the pad)
-    idleSpeed: 0.7,         // then speeds up for the lift-off + flight when the round runs
+    idleSpeedBetting: 0.5,  // gentler ignition slow-mo through the countdown (less stutter than 0.35)
+    idleSpeed: 0.85,        // flight a touch faster so the slow-mo doesn't judder
     idleTailLoop: 1.5,      // keep the rocket flying while the round runs
     tickLeadMs: 3000,       // fire the spoken "3,2,1,LIFTOFF" when the clock hits 3
     tickOffset: 2.05,       // start at the "3" in the clip so it lands on clock 3
