@@ -332,8 +332,11 @@ class Game {
           }
         }
       }
-      const progress = Math.min(1, (now - this.startTime) / Math.max(1, this.crashAt - this.startTime));
-      const decay = Math.pow(1 - progress, 2.2);
+      // Holders melt away as the MULTIPLIER climbs — not as a function of how
+      // close the (secret) crash is, which would both leak the timing and force
+      // the count to ~1 at every bust. Tie it to the public multiplier so a low
+      // crash still has lots of players caught in it, a high one only a few.
+      const decay = Math.pow(Math.max(1, m), -1.1);
       const noise = 0.96 + Math.random() * 0.06;
       this.holders = Math.max(1, Math.round(this.startHolders * decay * noise));
       if (this.holdersTimeline.length === 0 || m >= 1) {
