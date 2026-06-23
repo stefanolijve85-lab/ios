@@ -538,8 +538,8 @@ export default function Vault() {
                         lv.muted = true;
                         lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
                         setDipping(true);
-                        setTimeout(() => setIdleLoopActive(true), 220);
-                        setTimeout(() => setDipping(false), 620);
+                        setTimeout(() => setIdleLoopActive(true), 120);
+                        setTimeout(() => setDipping(false), 320);
                       } else {
                         // immediate hard cut (clips that line up)
                         if (lv) { lv.pause(); try { lv.currentTime = idleLoopStartSec; } catch {} }
