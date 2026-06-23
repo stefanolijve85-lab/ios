@@ -103,7 +103,7 @@ export const liftoffx: Theme = {
     idleSyncCountdown: true,
     idleSpeedBetting: 0.45, // ignition pace: slow enough that lift-off lands on the "we got a liftoff" voice, but smoother than 0.35
     idleSpeed: 0.85,        // flight a touch faster so the slow-mo doesn't judder
-    idleTailLoop: 1.5,      // keep the rocket flying while the round runs
+    idlePullback: true,     // an ascending rocket can't tail-loop without a big jump — hold the last frame + slow pull-back instead
     tickLeadMs: 3000,       // fire the spoken "3,2,1,LIFTOFF" when the clock hits 3
     tickOffset: 2.05,       // start at the "3" in the clip so it lands on clock 3
   },
