@@ -48,6 +48,7 @@ export default function Vault() {
   // has happened this round.
   const [idleLoopActive, setIdleLoopActive] = useState(false);
   const [idleLoopEnded, setIdleLoopEnded] = useState(false); // loop clip finished → drift-zoom its last frame
+  const [dipping, setDipping] = useState(false); // brief darkening that masks the intro->loop hand-off
 
   // Track active (still holding) vs cashed bets so the counter can keep running
   // after a stash and show what you "missed".
@@ -235,6 +236,7 @@ export default function Vault() {
   const idleLoopSrc = theme.assets.sceneIdleLoopVideo; // dedicated seamless loop clip (preferred over tail-loop)
   const idleEndZoom = !!theme.ui?.idleEndZoom; // loop clip plays once, then a slow zoom on the held last frame
   const idleLoopStartSec = theme.ui?.idleLoopStartSec ?? 0; // skip the loop clip's first bit to align the seam
+  const idleHandoffDip = !!theme.ui?.idleHandoffDip; // mask the hand-off jump with a brief darkening dip
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -464,7 +466,7 @@ export default function Vault() {
       try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
     }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
-  useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); } }, [scene]);
+  useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); setDipping(false); } }, [scene]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -527,12 +529,22 @@ export default function Vault() {
                 onEnded={(e) => {
                   if (k === 'idle') {
                     if (idleLoopSrc) {
-                      // cross-fade to the dedicated loop clip — the effect holds
-                      // its first frame still during the fade, then plays it, so a
-                      // position mismatch between the clips morphs instead of jumps
                       const lv = idleLoopRef.current;
-                      if (lv) { lv.pause(); try { lv.currentTime = idleLoopStartSec; } catch {} }
-                      setIdleLoopActive(true);
+                      if (idleHandoffDip && lv) {
+                        // start clip 2 playing HIDDEN behind clip 1, dip to dark,
+                        // and swap to it at peak darkness so the (mismatched) jump
+                        // happens unseen, then the dip clears onto a moving clip 2
+                        try { lv.currentTime = idleLoopStartSec; } catch {}
+                        lv.muted = true;
+                        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+                        setDipping(true);
+                        setTimeout(() => setIdleLoopActive(true), 220);
+                        setTimeout(() => setDipping(false), 620);
+                      } else {
+                        // immediate hard cut (clips that line up)
+                        if (lv) { lv.pause(); try { lv.currentTime = idleLoopStartSec; } catch {} }
+                        setIdleLoopActive(true);
+                      }
                     } else if (idleTailLoop > 0) {
                       // fallback: rVFC normally seeks back before the last frame,
                       // but if it misses, jump back into the seamless tail + resume
@@ -582,6 +594,8 @@ export default function Vault() {
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio ref={idleAudioRef} src={sceneVideoFor('idle')} preload="auto" />
         )}
+        {/* brief darkening that masks the intro->loop hand-off jump */}
+        {idleHandoffDip && <div className={`scene-dip${dipping ? ' on' : ''}`} aria-hidden />}
       </div>
 
       {/* center readout — also shown after you secure, so you see the climbing

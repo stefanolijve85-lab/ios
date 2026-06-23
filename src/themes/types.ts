@@ -107,6 +107,9 @@ export interface ThemeUI {
   // When the idle loop clip finishes (play-once, no native loop), slowly zoom the
   // held last frame so there's still ambient motion (e.g. DEEP DIVE's depths).
   idleEndZoom?: boolean;
+  // Mask the intro->loop hand-off with a brief darkening dip (the clip swap
+  // happens at peak darkness), to hide a jump between two non-matching clips.
+  idleHandoffDip?: boolean;
   // Start the idle loop clip this many seconds in, to line its first shown frame
   // up with the main clip's last frame (kills a tiny backward jump at the seam).
   idleLoopStartSec?: number;
