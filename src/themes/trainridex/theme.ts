@@ -32,8 +32,8 @@ export const trainridex: Theme = {
     landingVideo: `${A}/landing-v5.mp4`,
     playButton: `${A}/playbtn-v2.webp`,
     sceneIdle: `${A}/scene-idle-poster.webp`,
-    sceneCountdownVideo: `${A}/scene-countdown.mp4`, // train waiting + all-aboard, during the betting countdown
-    sceneIdleVideo: `${A}/scene-idle-loop.mp4`,      // the racing loop, plays straight from round start
+    sceneIdleVideo: `${A}/ride-intro.mp4`,     // plays through the countdown + first part of the ride (departs at zero)
+    sceneIdleLoopVideo: `${A}/ride-loop.mp4`,  // clip 2 takes over seamlessly, then loops while the round runs
     sceneLose: `${A}/derailment.webp`,
     sceneWin: `${A}/escape.webp`,
     icons: {
@@ -72,11 +72,14 @@ export const trainridex: Theme = {
     loseFlash: 'DERAILED!',
     landingAlt: 'TRAINRIDE X — Secure your fortune before the derailment.',
   },
-  // Two-stage idle pipeline (lightweight, fewer seams):
-  //   1. betting     → scene-countdown.mp4  (train waiting + all-aboard, end-aligned)
-  //   2. running     → scene-idle-loop.mp4  (the racing loop, native-looped, muted)
+  // Two-clip ride pipeline (one continuous film):
+  //   1. ride-intro plays right through the betting countdown (idleSyncCountdown)
+  //      so the train departs at zero, then keeps rolling for the first stretch
+  //   2. ride-loop takes over seamlessly and native-loops while the round runs
   ui: {
-    sceneLoop: true,       // the racing clip loops natively while the round runs
-    countdownSound: true,  // play the countdown clip's "all aboard"; the game's clock still ticks
+    sceneLoop: false,       // intro plays once, then hands off to the loop clip
+    idleSyncCountdown: true, // intro plays through the countdown (departs at zero)
+    idleSpeed: 1,           // full speed so the 5s of countdown lands the departure on zero
+    idleAudioNormal: true,  // play the intro clip's own audio (horn/steam/all-aboard), decoupled, in sync at 1x
   },
 };
