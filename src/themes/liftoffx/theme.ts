@@ -97,7 +97,7 @@ export const liftoffx: Theme = {
   // clip to match the 5s countdown). The old crash/win clips still need the
   // pillarbox zoom. Plays once, holds the last frame (rocket in space).
   ui: {
-    sceneSpeed: { lose: 1.0 }, // crash at full speed (no slow-mo); win full speed too
+    sceneSpeed: { lose: 1.5 }, // the crash clip is rendered in slow-mo — play it 1.5x to look normal speed
     sceneStartSec: { win: 1.5 }, // skip the eject clip's buildup — start just before the capsule comes loose
     sceneLoop: false,
     idleSyncCountdown: true,
