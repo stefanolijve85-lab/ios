@@ -26,6 +26,7 @@ export default function Vault() {
   const idleLoopRef = useRef<HTMLVideoElement | null>(null); // dedicated seamless idle loop clip
   const countdownRef = useRef<HTMLVideoElement | null>(null); // dedicated betting-countdown clip
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
+  const idleLoopAudioRef = useRef<HTMLAudioElement>(null); // decoupled loop-clip audio (keeps the train sound going)
   const seededRef = useRef<string | null>(null); // result clip whose start-point has been seeded this appearance
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
@@ -459,6 +460,21 @@ export default function Vault() {
     }
   }, [scene, activePlaying, idleLoopActive, idleAudioNormal]);
 
+  // Decoupled loop-clip audio: when clip 2 takes over, the clip 1 audio above
+  // stops — so play the loop clip's own track (looping) to keep the train sound
+  // going through the run.
+  useEffect(() => {
+    if (!idleAudioNormal || !idleLoopSrc) return;
+    const a = idleLoopAudioRef.current;
+    if (!a) return;
+    if (scene === 'idle' && idleLoopActive) {
+      a.playbackRate = 1;
+      if (a.paused) { try { a.currentTime = 0; } catch { /* not ready */ } a.play().catch(() => {}); }
+    } else if (!a.paused) {
+      a.pause();
+    }
+  }, [scene, idleLoopActive, idleAudioNormal, idleLoopSrc]);
+
   // Dedicated countdown clip. Two modes:
   //  - ambient (muted): native-loop it through the whole betting countdown.
   //  - own audio (countdownSound): hold frame 0; the rAF loop starts it
@@ -636,6 +652,12 @@ export default function Vault() {
         {idleAudioNormal && sceneVideoFor('idle') && (
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio ref={idleAudioRef} src={sceneVideoFor('idle')} preload="auto" />
+        )}
+        {/* decoupled loop-clip audio (loops) — keeps the train sound going once
+            clip 2 takes over from clip 1 */}
+        {idleAudioNormal && idleLoopSrc && (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <audio ref={idleLoopAudioRef} src={idleLoopSrc} preload="auto" loop />
         )}
         {/* brief darkening that masks the intro->loop hand-off jump */}
         {idleHandoffDip && <div className={`scene-dip${dipping ? ' on' : ''}`} aria-hidden />}
