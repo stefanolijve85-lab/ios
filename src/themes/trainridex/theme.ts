@@ -87,6 +87,7 @@ export const trainridex: Theme = {
     idleAudioMaxSec: 4.8,   // cut the intro audio just after "all aboard" so the scream right after it drops
     idleAudioVol: 0.5,      // the intro audio (incl. "all aboard") plays softer
     loseAudioNormal: true,  // play the derailment clip's own audio so the crash has sound
+    splitAudioNormal: true, // play the half-win clip's own audio/voice; suppress the crash alarm
     idleLoopTailSec: 2,     // loop only the loop clip's last 2s (the steady racing), not the whole clip
   },
 };

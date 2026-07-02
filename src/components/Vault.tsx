@@ -28,6 +28,7 @@ export default function Vault() {
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const idleLoopAudioRef = useRef<HTMLAudioElement>(null); // decoupled loop-clip audio (keeps the train sound going)
   const loseAudioRef = useRef<HTMLAudioElement>(null); // decoupled crash-clip audio (so the crash has sound on iOS)
+  const splitAudioRef = useRef<HTMLAudioElement>(null); // decoupled half-win clip audio/voice
   const seededRef = useRef<string | null>(null); // result clip whose start-point has been seeded this appearance
   const loopPrerolledRef = useRef(false); // loop clip already started (hidden) just before the hand-off, so it's warm
 
@@ -246,6 +247,7 @@ export default function Vault() {
   const idleAudioMaxSec = theme.ui?.idleAudioMaxSec ?? 0; // cut the decoupled idle audio after this many seconds
   const idleAudioVol = theme.ui?.idleAudioVol ?? 1; // volume for the decoupled idle audio
   const loseAudioNormal = !!theme.ui?.loseAudioNormal; // play the crash clip's own audio decoupled
+  const splitAudioNormal = !!theme.ui?.splitAudioNormal; // play the half-win clip's own audio/voice decoupled
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
@@ -532,6 +534,20 @@ export default function Vault() {
     }
   }, [scene, loseAudioNormal]);
 
+  // Decoupled half-win (split) clip audio/voice.
+  useEffect(() => {
+    if (!splitAudioNormal) return;
+    const a = splitAudioRef.current;
+    if (!a) return;
+    if (scene === 'split') {
+      a.playbackRate = 1;
+      if (a.paused) { try { a.currentTime = 0; } catch { /* not ready */ } a.play().catch(() => {}); }
+    } else if (!a.paused) {
+      a.pause();
+      try { a.currentTime = 0; } catch { /* not ready */ }
+    }
+  }, [scene, splitAudioNormal]);
+
   // Dedicated countdown clip. Two modes:
   //  - ambient (muted): native-loop it through the whole betting countdown.
   //  - own audio (countdownSound): hold frame 0; the rAF loop starts it
@@ -729,6 +745,11 @@ export default function Vault() {
         {loseAudioNormal && theme.assets.sceneLoseVideo && (
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio ref={loseAudioRef} src={theme.assets.sceneLoseVideo} preload="auto" />
+        )}
+        {/* decoupled half-win (split) clip audio/voice */}
+        {splitAudioNormal && theme.assets.sceneSplitVideo && (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <audio ref={splitAudioRef} src={theme.assets.sceneSplitVideo} preload="auto" />
         )}
         {/* decoupled loop-clip audio (loops) — keeps the train sound going once
             clip 2 takes over from clip 1 */}

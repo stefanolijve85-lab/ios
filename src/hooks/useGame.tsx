@@ -167,7 +167,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       // it with the game's crash voice/flash.
       const splitWithSound =
         alsoWon && stillHolding && !!t.assets.sceneSplitVideo &&
-        (!!t.ui?.sceneSound?.includes('split') || t.ui?.sceneVoice?.on === 'split');
+        (!!t.ui?.sceneSound?.includes('split') || t.ui?.sceneVoice?.on === 'split' || !!t.ui?.splitAudioNormal);
       // always stops the motif; alarm/voice + balloon only if YOU lost
       if (splitWithSound) {
         audio.crash(false);

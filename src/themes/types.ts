@@ -154,6 +154,9 @@ export interface ThemeUI {
   // Play the crash (lose) clip's own audio via a decoupled track, so the crash
   // has sound even when the muted video would claim the audio session on iOS.
   loseAudioNormal?: boolean;
+  // Same for the half-win (split) clip — play its own audio/voice decoupled, and
+  // suppress the game's crash alarm so the clip carries the moment.
+  splitAudioNormal?: boolean;
   // The dedicated countdown clip carries its OWN audio (e.g. an "all aboard"
   // callout): play it un-muted and end-aligned (once, so its climax lands at
   // zero). The game's tick clock still plays alongside it.
