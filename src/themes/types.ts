@@ -146,6 +146,12 @@ export interface ThemeUI {
   // Play the idle clip's audio at NORMAL speed, decoupled from the slow-mo
   // video (a separate audio element), so steam/horn aren't time-stretched.
   idleAudioNormal?: boolean;
+  // Stop the decoupled idle audio once it reaches this many seconds in (cut an
+  // unwanted tail — e.g. a scream right after the "all aboard").
+  idleAudioMaxSec?: number;
+  // Play the crash (lose) clip's own audio via a decoupled track, so the crash
+  // has sound even when the muted video would claim the audio session on iOS.
+  loseAudioNormal?: boolean;
   // The dedicated countdown clip carries its OWN audio (e.g. an "all aboard"
   // callout): play it un-muted and end-aligned (once, so its climax lands at
   // zero). The game's tick clock still plays alongside it.

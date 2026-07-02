@@ -27,6 +27,7 @@ export default function Vault() {
   const countdownRef = useRef<HTMLVideoElement | null>(null); // dedicated betting-countdown clip
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const idleLoopAudioRef = useRef<HTMLAudioElement>(null); // decoupled loop-clip audio (keeps the train sound going)
+  const loseAudioRef = useRef<HTMLAudioElement>(null); // decoupled crash-clip audio (so the crash has sound on iOS)
   const seededRef = useRef<string | null>(null); // result clip whose start-point has been seeded this appearance
   const loopPrerolledRef = useRef(false); // loop clip already started (hidden) just before the hand-off, so it's warm
 
@@ -242,6 +243,8 @@ export default function Vault() {
   const idleLoopTailSec = theme.ui?.idleLoopTailSec ?? 0; // loop only the loop clip's last N seconds
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
+  const idleAudioMaxSec = theme.ui?.idleAudioMaxSec ?? 0; // cut the decoupled idle audio after this many seconds
+  const loseAudioNormal = !!theme.ui?.loseAudioNormal; // play the crash clip's own audio decoupled
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
   const activeHasSound = soundScenes.includes(scene);
@@ -512,6 +515,21 @@ export default function Vault() {
     }
   }, [scene, idleLoopActive, idleAudioNormal, idleLoopSrc]);
 
+  // Decoupled crash-clip audio: play the lose clip's own track when the crash
+  // shows, so it has sound even when the muted video claims the iOS audio session.
+  useEffect(() => {
+    if (!loseAudioNormal) return;
+    const a = loseAudioRef.current;
+    if (!a) return;
+    if (scene === 'lose') {
+      a.playbackRate = 1;
+      if (a.paused) { try { a.currentTime = 0; } catch { /* not ready */ } a.play().catch(() => {}); }
+    } else if (!a.paused) {
+      a.pause();
+      try { a.currentTime = 0; } catch { /* not ready */ }
+    }
+  }, [scene, loseAudioNormal]);
+
   // Dedicated countdown clip. Two modes:
   //  - ambient (muted): native-loop it through the whole betting countdown.
   //  - own audio (countdownSound): hold frame 0; the rAF loop starts it
@@ -694,10 +712,21 @@ export default function Vault() {
             }}
           />
         )}
-        {/* decoupled idle audio (normal speed) — the muted clip handles visuals */}
+        {/* decoupled idle audio (normal speed) — the muted clip handles visuals;
+            optionally cut it after idleAudioMaxSec (drops an unwanted tail) */}
         {idleAudioNormal && sceneVideoFor('idle') && (
           // eslint-disable-next-line jsx-a11y/media-has-caption
-          <audio ref={idleAudioRef} src={sceneVideoFor('idle')} preload="auto" />
+          <audio
+            ref={idleAudioRef}
+            src={sceneVideoFor('idle')}
+            preload="auto"
+            onTimeUpdate={idleAudioMaxSec > 0 ? (e) => { if (e.currentTarget.currentTime >= idleAudioMaxSec) e.currentTarget.pause(); } : undefined}
+          />
+        )}
+        {/* decoupled crash-clip audio (the derailment) */}
+        {loseAudioNormal && theme.assets.sceneLoseVideo && (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <audio ref={loseAudioRef} src={theme.assets.sceneLoseVideo} preload="auto" />
         )}
         {/* decoupled loop-clip audio (loops) — keeps the train sound going once
             clip 2 takes over from clip 1 */}
