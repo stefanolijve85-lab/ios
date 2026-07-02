@@ -38,6 +38,7 @@ export const trainridex: Theme = {
     sceneLoseVideo: `${A}/derailment-v1.mp4`, // derailment crash clip (plays once, full speed)
     sceneWin: `${A}/escape.webp`,
     sceneWinVideo: `${A}/escape-v1.mp4`, // the escape/win clip (plays once, full speed)
+    sceneSplitVideo: `${A}/halfwin.mp4`,  // half-win (one bet won, one lost) — plays out fully
     icons: {
       home: `${A}/icons/home.webp`,
       history: `${A}/icons/history.webp`,

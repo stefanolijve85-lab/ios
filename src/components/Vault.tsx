@@ -247,10 +247,12 @@ export default function Vault() {
   const activeHasSound = soundScenes.includes(scene);
   const idleHasSound = soundScenes.includes('idle'); // the idle clip + its loop clip play their own audio
   const sceneVoiceCfg = theme.ui?.sceneVoice; // a timed spoken line over a (muted) result clip
-  // lock a result scene on as soon as it appears, so it plays out fully — either
-  // because it carries its own audio, or because it has a timed scene-voice
+  // lock a result scene on as soon as it appears, so it plays out fully — because
+  // it carries its own audio, has a timed scene-voice, or is the split clip
+  // (the half-win is always a "watch it out" moment)
   const lockable = activeScene !== 'idle' &&
-    (soundScenes.includes(activeScene) || sceneVoiceCfg?.on === activeScene);
+    (soundScenes.includes(activeScene) || sceneVoiceCfg?.on === activeScene ||
+      (activeScene === 'split' && !!theme.assets.sceneSplitVideo));
 
   // Warm every scene video once (briefly play muted, then pause to frame 0) so
   // even iOS — which won't buffer paused videos — has them ready to start
