@@ -140,7 +140,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const onRoundStart = () => {
       phaseRef.current = 'running';
       audio.stopTick();
-      audio.launch(themeRef.current.ui?.launchDelayMs ?? 0, themeRef.current.ui?.launchVol ?? 1.0); // callout (e.g. "ALL ABOARD!") — no-op until the theme has one
+      // callout (e.g. LIFTOFF's engine roar) at departure — unless the theme fires
+      // it mid-countdown instead (launchLeadMs, handled in Vault)
+      if (!themeRef.current.ui?.launchLeadMs) audio.launch(themeRef.current.ui?.launchDelayMs ?? 0, themeRef.current.ui?.launchVol ?? 1.0);
       audio.startMotif();
     };
     const onCrash = (s?: GameState) => {

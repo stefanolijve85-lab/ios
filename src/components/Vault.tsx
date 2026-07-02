@@ -71,8 +71,9 @@ export default function Vault() {
 
   useEffect(() => {
     let raf = 0;
-    let lastPhase = '', lastWarn = false, tickFired = false, cdStarted = false;
+    let lastPhase = '', lastWarn = false, tickFired = false, cdStarted = false, launchFired = false;
     const cdSound = !!theme.ui?.countdownSound; // countdown clip carries its own audio
+    const launchLead = theme.ui?.launchLeadMs ?? 0; // fire the callout mid-countdown when set
     const loop = () => {
       const s = stateRef.current;
       const m = liveMultiplier();
@@ -116,6 +117,12 @@ export default function Vault() {
           if (!lockedSceneRef.current) getAudio().tick(theme.ui?.tickLeadMs ?? 4600, theme.ui?.tickOffset);
           tickFired = true;
         }
+        // fire the launch callout ("ALL ABOARD!") mid-countdown when the theme
+        // asks for it (otherwise it plays at departure, from onRoundStart)
+        if (launchLead > 0 && !launchFired && remaining <= launchLead && remaining > 0) {
+          getAudio().launch(0, theme.ui?.launchVol ?? 1.0);
+          launchFired = true;
+        }
         // end-align the countdown clip (clock + "all aboard") so its climax lands
         // exactly at zero: start it `clipDuration` before the round begins
         if (cdSound && !cdStarted && remaining > 0) {
@@ -131,6 +138,7 @@ export default function Vault() {
       } else {
         tickFired = false;
         cdStarted = false;
+        launchFired = false;
       }
       if (timeRef.current) timeRef.current.textContent = text;
       if (w !== lastWarn) { setWarn(w); lastWarn = w; }

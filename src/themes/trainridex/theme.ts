@@ -54,7 +54,7 @@ export const trainridex: Theme = {
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/trainridex/audio/stash.mp3',
     crash: '/themes/trainridex/audio/crash.mp3',
-    launch: '/themes/trainridex/audio/all-aboard.mp3', // clean conductor "ALL ABOARD!" at departure (clip 1 audio is muted)
+    launch: '/themes/trainridex/audio/all-aboard-knox.mp3', // clean conductor "ALL ABOARD!" (Knox voice), mid-countdown
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-crash-${n}.mp3`),
@@ -82,7 +82,7 @@ export const trainridex: Theme = {
     sceneLoop: false,       // intro plays once, then hands off to the loop clip
     idleSyncCountdown: true, // intro plays through the countdown (departs at zero)
     idleSpeed: 1,           // full speed so the 5s of countdown lands the departure on zero
-    launchDelayMs: 0,       // fire the "ALL ABOARD!" callout right at departure
+    launchLeadMs: 2500,     // "ALL ABOARD!" ~2.5s into the countdown (before departure), not after
     launchVol: 0.6,         // ...softer
     loopAudioNormal: true,  // play the loop clip's own racing audio (clip 1 audio stays muted — no "ahhhh")
     loseAudioNormal: true,  // play the derailment clip's own audio so the crash has sound

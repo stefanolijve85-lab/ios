@@ -153,6 +153,10 @@ export interface ThemeUI {
   idleAudioVol?: number;
   // Volume (0–1) for the launch callout (audio.launch). Default 1.
   launchVol?: number;
+  // Fire the launch callout DURING the countdown, when the remaining betting time
+  // drops below this (ms) — e.g. the conductor calls "all aboard" mid-countdown.
+  // When unset, the callout fires at round start (departure) instead.
+  launchLeadMs?: number;
   // Play the loop clip's own audio (looping) via a decoupled track, independent
   // of idleAudioNormal — keeps the train sound going while the loop runs.
   loopAudioNormal?: boolean;
