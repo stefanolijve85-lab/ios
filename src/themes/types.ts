@@ -151,6 +151,11 @@ export interface ThemeUI {
   idleAudioMaxSec?: number;
   // Volume (0–1) for the decoupled idle audio track. Default 1.
   idleAudioVol?: number;
+  // Volume (0–1) for the launch callout (audio.launch). Default 1.
+  launchVol?: number;
+  // Play the loop clip's own audio (looping) via a decoupled track, independent
+  // of idleAudioNormal — keeps the train sound going while the loop runs.
+  loopAudioNormal?: boolean;
   // Play the crash (lose) clip's own audio via a decoupled track, so the crash
   // has sound even when the muted video would claim the audio session on iOS.
   loseAudioNormal?: boolean;

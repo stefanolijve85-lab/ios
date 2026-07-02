@@ -246,6 +246,7 @@ export default function Vault() {
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleAudioMaxSec = theme.ui?.idleAudioMaxSec ?? 0; // cut the decoupled idle audio after this many seconds
   const idleAudioVol = theme.ui?.idleAudioVol ?? 1; // volume for the decoupled idle audio
+  const loopAudioNormal = !!theme.ui?.loopAudioNormal; // play the loop clip's own audio decoupled (independent of idle audio)
   const loseAudioNormal = !!theme.ui?.loseAudioNormal; // play the crash clip's own audio decoupled
   const splitAudioNormal = !!theme.ui?.splitAudioNormal; // play the half-win clip's own audio/voice decoupled
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
@@ -508,7 +509,7 @@ export default function Vault() {
   // stops — so play the loop clip's own track (looping) to keep the train sound
   // going through the run.
   useEffect(() => {
-    if (!idleAudioNormal || !idleLoopSrc) return;
+    if (!loopAudioNormal || !idleLoopSrc) return;
     const a = idleLoopAudioRef.current;
     if (!a) return;
     if (scene === 'idle' && idleLoopActive) {
@@ -517,7 +518,7 @@ export default function Vault() {
     } else if (!a.paused) {
       a.pause();
     }
-  }, [scene, idleLoopActive, idleAudioNormal, idleLoopSrc]);
+  }, [scene, idleLoopActive, loopAudioNormal, idleLoopSrc]);
 
   // Decoupled crash-clip audio: play the lose clip's own track when the crash
   // shows, so it has sound even when the muted video claims the iOS audio session.
@@ -753,7 +754,7 @@ export default function Vault() {
         )}
         {/* decoupled loop-clip audio (loops) — keeps the train sound going once
             clip 2 takes over from clip 1 */}
-        {idleAudioNormal && idleLoopSrc && (
+        {loopAudioNormal && idleLoopSrc && (
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio ref={idleLoopAudioRef} src={idleLoopSrc} preload="auto" loop />
         )}

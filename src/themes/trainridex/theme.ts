@@ -54,8 +54,7 @@ export const trainridex: Theme = {
     motifHigh: '/themes/trainridex/audio/motif-high.mp3',
     stash: '/themes/trainridex/audio/stash.mp3',
     crash: '/themes/trainridex/audio/crash.mp3',
-    // no separate "ALL ABOARD!" callout — the countdown clip carries its own
-    // clock + all-aboard audio (see ui.countdownSound)
+    launch: '/themes/trainridex/audio/all-aboard.mp3', // clean conductor "ALL ABOARD!" at departure (clip 1 audio is muted)
     lobby: '/themes/trainridex/audio/lobby.mp3',
     tick: '/themes/trainridex/audio/tick.mp3',
     voiceCrash: [1, 2, 3, 4, 5].map((n) => `/themes/trainridex/audio/voice-crash-${n}.mp3`),
@@ -83,9 +82,9 @@ export const trainridex: Theme = {
     sceneLoop: false,       // intro plays once, then hands off to the loop clip
     idleSyncCountdown: true, // intro plays through the countdown (departs at zero)
     idleSpeed: 1,           // full speed so the 5s of countdown lands the departure on zero
-    idleAudioNormal: true,  // play the intro clip's own audio (horn/steam/all-aboard), decoupled, in sync at 1x
-    idleAudioMaxSec: 4.8,   // cut the intro audio just after "all aboard" so the scream right after it drops
-    idleAudioVol: 0.5,      // the intro audio (incl. "all aboard") plays softer
+    launchDelayMs: 0,       // fire the "ALL ABOARD!" callout right at departure
+    launchVol: 0.6,         // ...softer
+    loopAudioNormal: true,  // play the loop clip's own racing audio (clip 1 audio stays muted — no "ahhhh")
     loseAudioNormal: true,  // play the derailment clip's own audio so the crash has sound
     splitAudioNormal: true, // play the half-win clip's own audio/voice; suppress the crash alarm
     idleLoopTailSec: 2,     // loop only the loop clip's last 2s (the steady racing), not the whole clip

@@ -269,8 +269,8 @@ class TensionAudio {
 
   // Launch callout (e.g. "LIFTOFF!") fired when the round starts — no-op until a
   // theme provides audio.launch.
-  launch(delayMs = 0) {
-    this.oneShot(this.buffers.launch, 1.0, undefined, Math.max(0, delayMs) / 1000);
+  launch(delayMs = 0, vol = 1.0) {
+    this.oneShot(this.buffers.launch, vol, undefined, Math.max(0, delayMs) / 1000);
   }
 
   // Spoken line during a result scene, fired at a delay so it lands on a specific
