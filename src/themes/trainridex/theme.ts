@@ -35,6 +35,7 @@ export const trainridex: Theme = {
     sceneIdleVideo: `${A}/ride-intro.mp4`,     // plays through the countdown + first part of the ride (departs at zero)
     sceneIdleLoopVideo: `${A}/ride-loop.mp4`,  // clip 2 takes over seamlessly, then loops while the round runs
     sceneLose: `${A}/derailment.webp`,
+    sceneLoseVideo: `${A}/derailment-v1.mp4`, // derailment crash clip (plays once, full speed)
     sceneWin: `${A}/escape.webp`,
     icons: {
       home: `${A}/icons/home.webp`,
