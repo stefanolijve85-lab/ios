@@ -84,7 +84,8 @@ export const trainridex: Theme = {
     idleSyncCountdown: true, // intro plays through the countdown (departs at zero)
     idleSpeed: 1,           // full speed so the 5s of countdown lands the departure on zero
     idleAudioNormal: true,  // play the intro clip's own audio (horn/steam/all-aboard), decoupled, in sync at 1x
-    idleAudioMaxSec: 5.5,   // cut the intro audio just after "all aboard" so the scream right after it drops
+    idleAudioMaxSec: 4.8,   // cut the intro audio just after "all aboard" so the scream right after it drops
+    idleAudioVol: 0.5,      // the intro audio (incl. "all aboard") plays softer
     loseAudioNormal: true,  // play the derailment clip's own audio so the crash has sound
     idleLoopTailSec: 2,     // loop only the loop clip's last 2s (the steady racing), not the whole clip
   },

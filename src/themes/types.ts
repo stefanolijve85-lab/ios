@@ -149,6 +149,8 @@ export interface ThemeUI {
   // Stop the decoupled idle audio once it reaches this many seconds in (cut an
   // unwanted tail — e.g. a scream right after the "all aboard").
   idleAudioMaxSec?: number;
+  // Volume (0–1) for the decoupled idle audio track. Default 1.
+  idleAudioVol?: number;
   // Play the crash (lose) clip's own audio via a decoupled track, so the crash
   // has sound even when the muted video would claim the audio session on iOS.
   loseAudioNormal?: boolean;

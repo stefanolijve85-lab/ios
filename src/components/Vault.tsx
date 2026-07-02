@@ -244,6 +244,7 @@ export default function Vault() {
   const idleTailLoop = idleLoopSrc ? 0 : (theme.ui?.idleTailLoop ?? 0);
   const idleAudioNormal = !!theme.ui?.idleAudioNormal; // play the idle clip's audio at normal speed, decoupled from the slow-mo video
   const idleAudioMaxSec = theme.ui?.idleAudioMaxSec ?? 0; // cut the decoupled idle audio after this many seconds
+  const idleAudioVol = theme.ui?.idleAudioVol ?? 1; // volume for the decoupled idle audio
   const loseAudioNormal = !!theme.ui?.loseAudioNormal; // play the crash clip's own audio decoupled
   const idleFadeIn = !!theme.ui?.idleFadeIn; // linger on the station poster, then gently fade the clip in
   const sceneLoop = theme.ui?.sceneLoop ?? true;
@@ -494,11 +495,12 @@ export default function Vault() {
     const idleVideoPlaying = scene === 'idle' && activePlaying && !idleLoopActive;
     if (idleVideoPlaying) {
       a.playbackRate = 1;
+      a.volume = idleAudioVol;
       if (a.paused) { try { a.currentTime = 0; } catch { /* not ready */ } a.play().catch(() => {}); }
     } else if (!a.paused) {
       a.pause();
     }
-  }, [scene, activePlaying, idleLoopActive, idleAudioNormal]);
+  }, [scene, activePlaying, idleLoopActive, idleAudioNormal, idleAudioVol]);
 
   // Decoupled loop-clip audio: when clip 2 takes over, the clip 1 audio above
   // stops — so play the loop clip's own track (looping) to keep the train sound
