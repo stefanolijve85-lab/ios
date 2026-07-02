@@ -28,6 +28,7 @@ export default function Vault() {
   const idleAudioRef = useRef<HTMLAudioElement>(null); // decoupled idle audio (normal speed)
   const idleLoopAudioRef = useRef<HTMLAudioElement>(null); // decoupled loop-clip audio (keeps the train sound going)
   const seededRef = useRef<string | null>(null); // result clip whose start-point has been seeded this appearance
+  const loopPrerolledRef = useRef(false); // loop clip already started (hidden) just before the hand-off, so it's warm
 
   // DEEP DIVE twist: read the multiplier as ocean depth.
   const depthMeter = !!theme.ui?.depthMeter;
@@ -442,6 +443,40 @@ export default function Vault() {
     return () => { cancelled = true; cancelAnimationFrame(id); };
   }, [idleLoopTailSec]);
 
+  // Pre-roll the loop clip: start it playing (hidden) a hair before the main clip
+  // ends, so its decoder is already running when it's revealed at the hand-off —
+  // no decode-resume freeze. Trades the micro-freeze for a ~1-frame skip.
+  useEffect(() => {
+    if (!idleLoopSrc || phase !== 'running' || idleLoopActive) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const v = sceneRefs.current['idle'] as any;
+    const lv = idleLoopRef.current;
+    if (!v || !lv) return;
+    let id = 0;
+    let cancelled = false;
+    const preRoll = 0.12; // seconds before the main clip's end
+    const tick = (t: number) => {
+      const d = v.duration;
+      if (d && isFinite(d) && !loopPrerolledRef.current && !v.paused && t >= d - preRoll) {
+        loopPrerolledRef.current = true;
+        try { lv.currentTime = idleLoopStartSec; } catch { /* not seekable */ }
+        lv.muted = true;
+        lv.play().catch(() => {});
+      }
+    };
+    if (typeof v.requestVideoFrameCallback === 'function') {
+      const onFrame = (_now: number, meta: { mediaTime: number }) => {
+        tick(meta?.mediaTime ?? v.currentTime);
+        if (!cancelled && !loopPrerolledRef.current) id = v.requestVideoFrameCallback(onFrame);
+      };
+      id = v.requestVideoFrameCallback(onFrame);
+      return () => { cancelled = true; if (v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(id); };
+    }
+    const onRaf = () => { tick(v.currentTime); if (!cancelled && !loopPrerolledRef.current) id = requestAnimationFrame(onRaf); };
+    id = requestAnimationFrame(onRaf);
+    return () => { cancelled = true; cancelAnimationFrame(id); };
+  }, [idleLoopSrc, phase, idleLoopActive, idleLoopStartSec]);
+
   // Decoupled idle audio: play the idle clip's own track at NORMAL speed
   // (separate from the slow-mo video) so the steam/horn aren't time-stretched.
   // Tracks the idle VIDEO: it starts from 0 whenever the idle clip actually
@@ -501,17 +536,21 @@ export default function Vault() {
     if (!lv) return;
     if (scene === 'idle' && idleLoopActive) {
       lv.playbackRate = idleSpeed;
-      // start playing immediately from the hand-off frame (no static hold)
-      lv.muted = true;
-      try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
-      lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+      if (lv.paused) {
+        // start playing from the hand-off frame (no static hold)
+        lv.muted = true;
+        try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
+        lv.play().then(() => { if (idleHasSound) lv.muted = false; }).catch(() => {});
+      } else if (idleHasSound && lv.muted) {
+        lv.muted = false; // already pre-rolling — just un-mute, never re-seek (would re-freeze)
+      }
     } else {
       lv.pause();
       // hold on the hand-off frame (pre-decoded) so the next cut starts cleanly
       try { lv.currentTime = idleLoopStartSec; } catch { /* not ready */ }
     }
   }, [scene, idleLoopActive, idleSpeed, idleHasSound]);
-  useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); setDipping(false); } }, [scene]);
+  useEffect(() => { if (scene !== 'idle') { setIdleLoopActive(false); setIdleLoopEnded(false); setDipping(false); loopPrerolledRef.current = false; } }, [scene]);
 
   // lock a sound result scene on as soon as it appears (released on its 'ended')
   useEffect(() => { if (lockable) setLockedScene(activeScene); }, [lockable, activeScene]);
@@ -585,10 +624,15 @@ export default function Vault() {
                         setDipping(true);
                         setTimeout(() => setIdleLoopActive(true), 120);
                         setTimeout(() => setDipping(false), 320);
+                      } else if (loopPrerolledRef.current && lv) {
+                        // clip 2 is already pre-rolling (warm + moving) — just reveal
+                        // it, never re-seek (that would jump back + re-freeze)
+                        if (idleHasSound) lv.muted = false;
+                        setIdleLoopActive(true);
                       } else {
-                        // immediate hard cut (clips that line up): start clip 2
-                        // playing RIGHT NOW (not after a React render) so the train
-                        // never freezes on its first frame at the seam
+                        // hard cut (clips that line up): start clip 2 playing RIGHT
+                        // NOW (not after a React render) so it doesn't freeze on its
+                        // first frame at the seam
                         if (lv) {
                           try { lv.currentTime = idleLoopStartSec; } catch {}
                           lv.muted = true;
