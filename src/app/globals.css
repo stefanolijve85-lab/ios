@@ -476,9 +476,9 @@ input { font-family: inherit; }
 .xp-rtp-note { font-size: 12px; color: #8a857c !important; margin-top: 2px !important; }
 
 /* "why operators choose" checklist */
-.xp-checks { display: flex; flex-direction: column; gap: 10px; }
+.xp-checks { display: flex; flex-direction: column; gap: 10px; max-width: 640px; margin: 0 auto; }
 .xp-check {
-  display: flex; gap: 12px; align-items: flex-start;
+  display: flex; gap: 12px; align-items: center; justify-content: center; text-align: center;
   padding: 14px 16px; border-radius: 12px;
   background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
   font-size: 14px; line-height: 1.4; color: #d4cfc7;
@@ -486,7 +486,7 @@ input { font-family: inherit; }
 .xp-check::before { content: '✓'; color: var(--xorange); font-weight: 900; flex: 0 0 auto; }
 
 /* game spec table */
-.xp-specs { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+.xp-specs { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; max-width: 820px; margin: 0 auto; }
 .xp-spec-head, .xp-spec-row {
   display: grid; grid-template-columns: 1.6fr 0.8fr 1fr 1fr; gap: 6px; align-items: center;
   padding: 12px 14px; font-size: 13px;
@@ -496,7 +496,7 @@ input { font-family: inherit; }
 .xp-spec-name { font-family: 'Sora', sans-serif; font-weight: 800; color: #fff; font-size: 13px; }
 
 /* integration steps */
-.xp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.xp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px auto 0; max-width: 640px; }
 .xp-step {
   text-align: center; padding: 16px 8px; border-radius: 12px;
   background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
@@ -524,8 +524,9 @@ input { font-family: inherit; }
 }
 .xp-stat b { display: block; font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; color: #fff; }
 .xp-stat span { display: block; margin-top: 4px; font-size: 11px; letter-spacing: 0.5px; color: #9a958c; }
-.xp-block { padding: 22px 18px; }
+.xp-block { padding: 22px 18px; text-align: center; }
 .xp-block h2 { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+.xp-block > p { max-width: 620px; margin-left: auto; margin-right: auto; }
 .xp-feats { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .xp-feats { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 860px) { .xp-feats { grid-template-columns: repeat(3, 1fr); } }
@@ -539,9 +540,9 @@ input { font-family: inherit; }
 }
 .xp-feat b::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
 .xp-feat span { display: block; font-size: 13px; line-height: 1.45; color: #b9b5ad; }
-.xp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.xp-list li { position: relative; padding-left: 22px; font-size: 14px; line-height: 1.5; color: #c7c2ba; }
-.xp-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
+.xp-list { list-style: none; margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: 12px; max-width: 620px; }
+.xp-list li { font-size: 14px; line-height: 1.5; color: #c7c2ba; text-align: center; }
+.xp-list li::before { content: '✓'; margin-right: 7px; color: var(--xorange); font-weight: 900; }
 .xp-list li b { color: #f3f1ee; }
 .xp-demos { display: grid; gap: 10px; grid-template-columns: 1fr; max-width: 760px; margin-left: auto; margin-right: auto; }
 /* 2x2 to match the four games (no lone card on a second row) */
