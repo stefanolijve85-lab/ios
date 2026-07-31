@@ -1,30 +1,24 @@
-# ---- Build stage ----------------------------------------------------------
-FROM node:20-alpine AS build
+# Multi-stage build for the Civitas Next.js app.
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Install deps (cached unless package files change)
-COPY package.json package-lock.json* ./
-RUN npm ci || npm install
-
-# Build the Next.js app
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# ---- Runtime stage --------------------------------------------------------
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Copy only what we need to run the custom server.
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/package-lock.json* ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/server.js ./server.js
-COPY --from=build /app/server ./server
-COPY --from=build /app/next.config.js ./next.config.js
-
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

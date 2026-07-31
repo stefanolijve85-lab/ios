@@ -1,10 +1,22 @@
 {
-  "name": "BANKHEIST X",
-  "short_name": "BANKHEIST X",
-  "description": "Fill the vault. Secure your winnings. Or lose it all when the thieves break in.",
+  "name": "Civitas — Civic Participation Platform",
+  "short_name": "Civitas",
+  "description": "A modern, mobile-first platform for lawful civic participation, communities, local news, events and mutual aid.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#08080a",
-  "theme_color": "#08080a",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "background_color": "#080a12",
+  "theme_color": "#080a12",
+  "categories": ["social", "news", "lifestyle"],
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Home feed", "url": "/" },
+    { "name": "Communities", "url": "/communities" },
+    { "name": "Map", "url": "/map" },
+    { "name": "Events", "url": "/events" }
+  ]
 }

@@ -1,147 +1,121 @@
-# 🏦 STASH — the next-evolution crash game
+# Civitas — Civic Participation Platform
 
-> Fill the vault. **Lock your winnings.** Or lose it all when the thieves break in.
+A modern, mobile-first web platform where citizens connect, share information and
+organize around civic topics — immigration policy, public safety, democratic
+values and community engagement — through **lawful, respectful** participation.
 
-STASH takes the proven *crash* mechanic and disguises it inside a universally
-understood fantasy: **a vault is rapidly filling with money — secure it now, or
-risk everything for more.** Understandable in 3 seconds, impossible to put down.
+Built with **Next.js 15 (App Router), React 19, TypeScript, TailwindCSS and
+Framer Motion**, with a premium glassmorphism dark-mode UI and full PWA support.
 
-Built **mobile-first**, **multiplayer by default**, **server-authoritative**, and
-**white-label / RGS-ready** from day one.
-
----
-
-## ✨ What's in the MVP
-
-- **Server-authoritative crash engine** — provably-fair-style crash points, a
-  single shared multiplier curve, anti-cheat by design (clients never decide
-  outcomes).
-- **Real multiplayer** over **Socket.io** — live online count, live "still
-  holding" counter, live chat, live activity feed, all synced across players.
-- **The vault** — circular brass/gunmetal door, a money pile that grows in real
-  time, neon-green cash glow, gold reflections, the multiplier ladder.
-- **The STASH button** — massive, green, pulsing, context-aware (place bet →
-  STASH → result), with an optional **second bet panel**.
-- **Thief timer** that turns red, alarms that fire, and a fast **heist crash
-  animation**.
-- **Adaptive tension audio** (Web Audio API, no asset files) — one electronic
-  motif that climbs in pitch + tempo with the multiplier, glitches on crash.
-- **60fps** local animation driven from a server-synced clock (the server
-  doesn't stream every frame — it streams the truth, the client interpolates).
-- **iPhone Safari–first** layout: safe-area aware, one-thumb usable, no zoom.
+> **Core principles.** Civitas promotes lawful civic participation and respectful
+> discussion, supports freedom of expression within the law, and allows debate on
+> migration, integration and public policy. It never encourages violence,
+> harassment or discrimination. Every user follows the
+> [community guidelines](src/app/(app)/guidelines/page.tsx), and moderators have
+> transparent tools with an appeal process. See `/guidelines` in the app.
 
 ---
 
-## 🏗 Architecture (single origin)
+## ✨ What's built
 
-```
-Browser (Next.js / React / TS)  ──HTTP──┐
-                                        ├──►  server.js  (one Node process, one port)
-Browser  ◄──WebSocket (Socket.io)───────┘        ├── Next.js request handler
-                                                  └── Socket.io  + Game engine
-```
+The app runs **end-to-end today** on an in-memory seed layer — no external
+services or secrets required — so every screen is clickable and functional.
 
-The **same Node server** (`server.js`) serves the web app **and** the realtime
-socket layer. One origin, one port → trivial to deploy and zero cross-origin
-websocket pain on iOS Safari.
+| Area | Route | Status |
+| --- | --- | --- |
+| **Home feed** (For you / Latest / Trending / Nearby / Following) | `/` | ✅ Functional |
+| Post detail + comments + reactions | `/post/[id]` | ✅ |
+| **Communities** directory + detail (rules, pinned, mods, stats) | `/communities`, `/c/[slug]` | ✅ |
+| **News** (sources, fact-check, reading time, editor-verified) | `/news`, `/news/[id]` | ✅ |
+| **Events** (RSVP, capacity, calendar/QR/map affordances) | `/events`, `/events/[id]` | ✅ |
+| **Interactive map** (clustering-style markers, filters, search) | `/map` | ✅ |
+| **Help network** (requests/offers, matching, status) | `/help` | ✅ |
+| **Messaging** (DM + group, encrypted, image/voice affordances) | `/messages` | ✅ |
+| **Notifications** | `/notifications` | ✅ |
+| **Global search** (posts, users, communities, events, news) | `/search` | ✅ |
+| **Profiles** (bio, badges, roles, interests, privacy) | `/u/[handle]` | ✅ |
+| **Moderation** (queue, spam scores, audit log, appeals) | `/moderation` | ✅ role-gated |
+| **Admin** (analytics, users, feature flags, roles) | `/admin` | ✅ role-gated |
+| **Auth** (email, Google, Apple, passkey, 2FA UI) | `/signin`, `/signup` | ✅ UI |
+| **PWA** (manifest, service worker, offline page) | — | ✅ |
+| REST API routes | `/api/*` | ✅ |
 
-```
-.
-├─ server.js              # custom server: Next.js + Socket.io on one port
-├─ server/
-│  ├─ game.js             # server-authoritative round lifecycle + crash math
-│  ├─ bots.js             # crowd sim: live chat + activity feed
-│  └─ config.js           # single source of game tuning
-├─ src/
-│  ├─ app/                # Next.js App Router (layout, page, globals.css)
-│  ├─ components/         # Vault, BetPanel (STASH), ThiefTimer, chat, etc.
-│  ├─ hooks/useGame.tsx   # socket wiring, server-clock sync, 60fps multiplier
-│  └─ lib/                # types, constants (shared curve), audio, formatting
-├─ Dockerfile / .dockerignore
-└─ render.yaml
-```
-
-### Game loop
-1. **Vault open (betting, 5s)** — place one or two bets.
-2. **Vault closes, cash climbs** — multiplier accelerates (`m(t) = e^{0.21·t}`).
-3. **STASH** to lock `stake × multiplier`.
-4. Wait too long → **THIEVES BREAK IN** and everything in the vault is gone.
-5. New round starts within ~2.5s.
-
-Crash points use a `(1 − houseEdge) / (1 − r)` heavy-tailed distribution with a
-~3% instant-bust chance, capped to the 15s round window. Tune everything in
-`server/config.js`.
+The **production database** is fully specified in [`supabase/schema.sql`](supabase/schema.sql)
+(Postgres + PostGIS + Row Level Security), structurally mirroring the app types.
+`src/lib/db.ts` is the single seam to swap the mock layer for Supabase queries.
 
 ---
 
-## 🚀 Run locally
+## 🚀 Quick start
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000  (dev: Next + Socket.io)
+npm run dev        # http://localhost:3000
 ```
 
-Production mode:
+No environment variables are needed to run the demo. To connect real services,
+copy `.env.example` → `.env.local` and fill in Supabase / R2 / VAPID keys.
 
 ```bash
-npm run build
-npm start            # serves the built app + sockets on $PORT (default 3000)
-```
-
-Open the URL on your phone (same Wi-Fi: `http://<your-ip>:3000`) to feel it on
-real glass.
-
----
-
-## ☁️ Deploy to Render (recommended)
-
-The repo ships a **`render.yaml` Blueprint**.
-
-1. Push this code to GitHub.
-2. Render → **New +** → **Blueprint** → select the repo. The app is at the repo
-   root, so no Root Directory tweak is needed.
-3. Render runs `npm install && npm run build`, then `npm start`.
-4. Done — your public URL (e.g. `https://stash-crash-game.onrender.com`) is
-   playable on iPhone Safari immediately.
-
-> Render injects `PORT`; `server.js` already binds `0.0.0.0:$PORT`.
-> Websockets work out of the box on Render web services.
-
-### Railway
-
-1. New Project → Deploy from GitHub repo.
-2. Build `npm install && npm run build`, start `npm start`. Railway provides
-   `PORT` automatically.
-
-### Docker (anywhere)
-
-```bash
-docker build -t stash .
-docker run -p 3000:3000 stash
-# → http://localhost:3000
+npm run build      # production build
+npm run start      # serve the production build
+npm run lint       # eslint
+npm run typecheck  # tsc --noEmit
 ```
 
 ---
 
-## 🗺 Roadmap
+## 🧱 Tech stack
 
-| Phase | Scope |
-|------|-------|
-| 1 | **Demo (this MVP)** — playable, multiplayer, public URL |
-| 2 | Accounts + persistence |
-| 3 | RGS architecture (bet/settle, audit, provably-fair seeds exposed) |
-| 4 | Operator dashboard |
-| 5 | Aggregator integrations |
-| 6 | Certification |
+- **Next.js 15** App Router — RSC, streaming, route handlers, SSR + static.
+- **React 19** + **TypeScript** (strict).
+- **TailwindCSS** design system driven by CSS variables (light/dark themes).
+- **Framer Motion** for 60fps transitions (respects `prefers-reduced-motion`).
+- **Supabase** (Postgres + Auth + Realtime) — production data layer & RLS.
+- **Cloudflare R2** — S3-compatible media storage.
+- **PWA** — installable, offline app-shell caching, web-push ready.
+- Zero UI runtime dependencies beyond React/Framer: icons, charts and the map
+  are hand-built inline SVG (small bundle, no CDN, works offline).
 
-White-labelling: theme tokens live in `src/app/globals.css` (`:root`), game
-tuning in `server/config.js` — an operator can reskin without touching logic.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the folder structure and
+data-flow, [`docs/DATABASE.md`](docs/DATABASE.md) for the schema and seeding, and
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for shipping to Vercel.
 
 ---
 
-## ⚠️ Note
+## 👥 Example accounts, communities & content
 
-This is a **demo / entertainment build** using play-money balances held in
-memory. It is **not** a real-money gambling product and ships without accounts,
-KYC, RNG certification, or responsible-gaming controls — all of which are
-required (and scoped in the roadmap) before any real-money use.
+Seeded in [`src/data/seed.ts`](src/data/seed.ts):
+
+- **Users** across every role — `@amara` (administrator), `@daan` (moderator),
+  `@leyla` (editor / verified lawyer), `@marco` (volunteer), `@sanne` (editor /
+  press), `@youssef` (newcomer member).
+- **Communities** — Rotterdam West, Newcomers Network, Safe Streets,
+  Immigration & Policy, Volunteer NL.
+- Posts, news articles, events, help listings, conversations, notifications,
+  reports and an audit log — enough to make every screen feel alive.
+
+The signed-in demo user is **Amara** (administrator) so you can see the
+moderation and admin surfaces.
+
+---
+
+## 🔐 Roles
+
+`visitor → member → volunteer → moderator → editor → administrator → super_admin`
+
+Roles are ordered; `roleAtLeast()` gates navigation and (in production) RLS
+policies via `current_role_at_least()`.
+
+## 🛡️ Security & moderation
+
+OWASP-minded: strict security headers, input validation on API routes, RLS on
+every table, rate-limiting hooks, and an audit log. AI features (summaries, spam
+scoring, duplicate/translation) are **assistive only — humans make every final
+moderation call**, and members can appeal. See [`docs/SECURITY.md`](docs/SECURITY.md).
+
+---
+
+## 📄 License
+
+Provided as a reference implementation for civic-tech projects.

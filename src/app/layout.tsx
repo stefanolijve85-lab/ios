@@ -1,44 +1,53 @@
 import type { Metadata, Viewport } from 'next';
-import { headers } from 'next/headers';
 import './globals.css';
-import { GameProvider } from '@/hooks/useGame';
-import { ThemeProvider } from '@/hooks/useTheme';
-import { getTheme, themeKeyForHost } from '@/themes';
+import { AppProvider } from '@/context/AppProvider';
+import { ServiceWorker } from '@/components/ServiceWorker';
 
-export function generateMetadata(): Metadata {
-  const t = getTheme(themeKeyForHost(headers().get('host')));
-  return {
-    title: t.meta.title,
-    description: t.meta.description,
-    manifest: '/manifest.webmanifest',
-    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: t.name },
-  };
-}
+export const metadata: Metadata = {
+  metadataBase: new URL('https://civitas.example'),
+  title: {
+    default: 'Civitas — Civic participation, done well',
+    template: '%s · Civitas',
+  },
+  description:
+    'A modern, mobile-first platform for lawful civic participation: communities, local news, events, mutual aid and respectful discussion about migration, integration and public safety.',
+  applicationName: 'Civitas',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Civitas' },
+  openGraph: {
+    title: 'Civitas',
+    description: 'Civic participation, done well.',
+    type: 'website',
+  },
+  icons: {
+    icon: '/icons/icon.svg',
+    apple: '/icons/icon.svg',
+  },
+};
 
 export const viewport: Viewport = {
-  themeColor: '#0a0a0c',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#080a12' },
+    { media: '(prefers-color-scheme: light)', color: '#f4f6fc' },
+  ],
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
   viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Sora:wght@600;700;800&family=Oswald:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body>
-        <ThemeProvider>
-          <GameProvider>{children}</GameProvider>
-        </ThemeProvider>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-brand focus:px-3 focus:py-2 focus:text-white"
+        >
+          Skip to content
+        </a>
+        <AppProvider>{children}</AppProvider>
+        <ServiceWorker />
       </body>
     </html>
   );

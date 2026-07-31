@@ -1,25 +1,31 @@
 {
-  "name": "stash-crash-game",
+  "name": "civitas",
   "version": "1.0.0",
   "private": true,
-  "description": "STASH — a mobile-first multiplayer crash game disguised as a filling vault. Secure the cash or the thieves take everything.",
+  "description": "Civitas — a modern, mobile-first civic participation platform for lawful community organizing, discussion and mutual aid.",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development node server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "cross-env NODE_ENV=production node server.js",
-    "lint": "next lint"
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@types/node": "^20.14.10",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "cross-env": "^7.0.3",
-    "next": "^14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "socket.io": "^4.7.5",
-    "socket.io-client": "^4.7.5",
-    "typescript": "^5.5.3"
+    "framer-motion": "^11.11.0",
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "15.1.6",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=18.18.0"
