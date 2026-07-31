@@ -407,8 +407,10 @@ input { font-family: inherit; }
 .xgames-grid {
   display: grid; gap: 16px;
   grid-template-columns: 1fr;
+  max-width: 860px; margin-left: auto; margin-right: auto;  /* keep the 2x2 tidy + centred */
 }
-@media (min-width: 720px) { .xgames-grid { grid-template-columns: repeat(3, 1fr); } }
+/* 2x2 square grid on desktop (four games → two neat rows) */
+@media (min-width: 640px) { .xgames-grid { grid-template-columns: repeat(2, 1fr); } }
 .xgame {
   display: block; text-decoration: none; border-radius: 18px; overflow: hidden;
   border: 1px solid rgba(255,255,255,0.08);
@@ -507,7 +509,7 @@ input { font-family: inherit; }
 .xp-step span { display: block; font-size: 12px; color: #c7c2ba; }
 
 /* closing CTA band */
-.xp-cta { text-align: center; padding: 30px 18px; margin: 8px 14px 0; border-radius: 18px;
+.xp-cta { text-align: center; padding: 30px 18px; margin: 8px auto 0; max-width: 760px; border-radius: 18px;
   background: radial-gradient(120% 120% at 50% 0%, rgba(247,147,30,0.12), transparent 70%), rgba(255,255,255,0.02);
   border: 1px solid rgba(247,147,30,0.25); }
 .xp-cta h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; margin: 0 0 8px; }
@@ -541,8 +543,9 @@ input { font-family: inherit; }
 .xp-list li { position: relative; padding-left: 22px; font-size: 14px; line-height: 1.5; color: #c7c2ba; }
 .xp-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--xorange); font-weight: 900; }
 .xp-list li b { color: #f3f1ee; }
-.xp-demos { display: grid; gap: 10px; grid-template-columns: 1fr; }
-@media (min-width: 720px) { .xp-demos { grid-template-columns: repeat(3, 1fr); } }
+.xp-demos { display: grid; gap: 10px; grid-template-columns: 1fr; max-width: 760px; margin-left: auto; margin-right: auto; }
+/* 2x2 to match the four games (no lone card on a second row) */
+@media (min-width: 560px) { .xp-demos { grid-template-columns: repeat(2, 1fr); } }
 .xp-demo {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   text-decoration: none; padding: 15px 16px; border-radius: 12px;
