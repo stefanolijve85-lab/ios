@@ -1,0 +1,61 @@
+# Local / staging stack for QUANTUM SPIN (and the crash titles).
+#
+# The MVP runs on the app service alone (in-memory sessions + jackpot pools).
+# Postgres and Redis are here so the Phase-1 persistence work (see
+# docs/DEVELOPMENT_PLAN.md) drops in behind the existing session.js / pools.js
+# interfaces with no infra churn. Bring the whole thing up with:
+#
+#     docker compose up --build
+#
+# app → http://localhost:3000   postgres → :5432   redis → :6379
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Consumed once Phase-1 persistence lands (ignored by the MVP in-memory build):
+      DATABASE_URL: postgres://quantum:quantum@postgres:5432/quantum
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: quantum
+      POSTGRES_PASSWORD: quantum
+      POSTGRES_DB: quantum
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantum"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:

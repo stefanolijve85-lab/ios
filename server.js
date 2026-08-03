@@ -7,6 +7,8 @@ const next = require('next');
 const { Server } = require('socket.io');
 const { Game } = require('./server/game');
 const { configFor, games, DEFAULT_GAME_KEY } = require('./server/config');
+const { handleSlotApi } = require('./server/slot/api');
+const { pools } = require('./server/slot/pools');
 
 // Which game a socket belongs to: explicit ?game= from the client wins, else
 // infer from the hostname (bankheistx.com → bankheistx, liftoffx.com → liftoffx).
@@ -24,7 +26,17 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  const httpServer = createServer((req, res) => handle(req, res));
+  const httpServer = createServer((req, res) => {
+    // QUANTUM SPIN slot uses a plain HTTP API for spins (websockets are only
+    // for the live jackpot ticker). Let it claim its routes before Next.js.
+    if (req.url && req.url.startsWith('/api/slot/')) {
+      handleSlotApi(req, res).then((handled) => {
+        if (!handled) handle(req, res);
+      });
+      return;
+    }
+    handle(req, res);
+  });
 
   const io = new Server(httpServer, {
     path: '/socket.io',
@@ -58,6 +70,15 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => game.removePlayer(socket.id));
   });
+
+  // QUANTUM SPIN live progressive-jackpot ticker. Websockets are used ONLY to
+  // synchronise UI/status (the growing pool values) — never to decide outcomes,
+  // which stay server-authoritative over the HTTP spin API.
+  const jackpotNs = io.of('/quantum-jackpots');
+  jackpotNs.on('connection', (socket) => {
+    socket.emit('jackpots', pools.snapshot());
+  });
+  setInterval(() => jackpotNs.emit('jackpots', pools.snapshot()), 3000).unref?.();
 
   httpServer.listen(port, hostname, () => {
     // eslint-disable-next-line no-console

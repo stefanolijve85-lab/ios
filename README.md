@@ -32,6 +32,33 @@ Built **mobile-first**, **multiplayer by default**, **server-authoritative**, an
 
 ---
 
+## 🎰 QUANTUM SPIN — the video-slot title (`/quantum`)
+
+The repo also ships **QUANTUM SPIN**, a premium, mobile-first, **provably-fair
+cyberpunk video slot** built on the same single-origin server:
+
+- **Server-authoritative** 5×3 / 25-line engine tuned to **96% RTP** — weighted
+  reels, wilds, the **Quantum Portal** free-spins feature, **Quantum Reactor**
+  tumbles with a rising multiplier ladder, a **buy-feature**, and a four-tier
+  **Quantum Vault** progressive jackpot (Mini / Minor / Major / Grand) with live
+  pools over websockets.
+- **Provably fair** commit–reveal with a **trustless in-browser verifier**
+  (`/quantum/verify`) that re-derives any round — the client engine reproduces
+  server outcomes byte-for-byte (parity-tested).
+- **AssetManager** (avif/webp/png/svg + neon-glyph fallback) and a **Theme
+  Engine** so new skins are pure config. Adaptive Web Audio, zero asset files.
+
+```bash
+npm run dev          # play at http://localhost:3000/quantum
+npm run test:slot    # engine + fairness tests
+npm run sim          # RTP Monte-Carlo simulator
+```
+
+Full docs: **[`docs/QUANTUM_SPIN.md`](docs/QUANTUM_SPIN.md)** ·
+Roadmap: **[`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md)**
+
+---
+
 ## 🏗 Architecture (single origin)
 
 ```
