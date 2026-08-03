@@ -12,6 +12,7 @@ import FlashBanner from '@/components/FlashBanner';
 import Landing from '@/components/Landing';
 import RealityCheck from '@/components/RealityCheck';
 import ExcludedOverlay from '@/components/ExcludedOverlay';
+import AdRail from '@/components/AdRail';
 
 // The actual game screen. Rendered at /<game> (e.g. /bankheistx); the active
 // theme is resolved from that path segment by the ThemeProvider.
@@ -21,9 +22,18 @@ export default function GameScreen() {
   const [twoBets, setTwoBets] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  if (!started) return <Landing onPlay={() => setStarted(true)} />;
+  if (!started)
+    return (
+      <>
+        <AdRail side="left" />
+        <Landing onPlay={() => setStarted(true)} />
+        <AdRail side="right" />
+      </>
+    );
 
   return (
+    <>
+    <AdRail side="left" />
     <main className={`app${chatOpen ? ' chat-open' : ''}`}>
       {!connected && <div className="conn">Connecting…</div>}
 
@@ -60,5 +70,7 @@ export default function GameScreen() {
       <RealityCheck />
       <ExcludedOverlay />
     </main>
+    <AdRail side="right" />
+    </>
   );
 }

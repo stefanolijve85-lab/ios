@@ -1541,3 +1541,42 @@ input { font-family: inherit; }
   /* never stretch the landing art on a non-phone aspect — crop instead */
   .landing-img { object-fit: cover; }
 }
+
+/* ------------------------------------------- desktop advertising rails
+   Fill the empty space beside the centred game canvas with a banner ad slot
+   on each side. Desktop only (there's no room on a phone / narrow laptop);
+   ViewportScale reserves this width so the scaled canvas never overlaps them.
+   position: fixed keeps them out of flow so the canvas stays centred. */
+.ad-rail { display: none; }
+@media (min-width: 1200px) {
+  .ad-rail {
+    display: block;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 300px;
+    z-index: 4;
+  }
+  .ad-rail-left { left: 28px; }
+  .ad-rail-right { right: 28px; }
+  .ad-slot {
+    display: flex;
+    width: 300px;
+    height: min(600px, 84vh);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .ad-slot-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ad-slot-ph {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    border: 2px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    color: #6f6b63;
+    font-family: 'Sora', 'Montserrat', sans-serif;
+  }
+  .ad-slot-label { font-size: 12px; font-weight: 800; letter-spacing: 3px; }
+  .ad-slot-size { font-size: 11px; letter-spacing: 1px; color: #4c4842; }
+}

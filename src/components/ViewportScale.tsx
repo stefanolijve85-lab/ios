@@ -14,6 +14,13 @@ const BASE_W = 430;
 const BASE_H = 920;
 const PAD = 24; // breathing room around the frame on desktop
 const MIN_WIDE = 600; // below this we keep the fluid full-screen mobile layout
+// Side ad rails (see AdRail.tsx / globals.css). When shown we reserve their
+// width on both sides so the scaled canvas is centred BETWEEN the ads, never
+// overlapping them. Keep ADS_FROM in sync with the .ad-rail media query.
+const ADS_FROM = 1200;
+const AD_W = 300;
+const AD_EDGE = 28; // matches .ad-rail-left/right left/right
+const AD_CANVAS_GAP = 28; // min gap between an ad and the canvas
 
 export default function ViewportScale() {
   useEffect(() => {
@@ -26,7 +33,8 @@ export default function ViewportScale() {
         root.style.setProperty('--app-scale', '1');
         return;
       }
-      const s = Math.min((w - PAD) / BASE_W, (h - PAD) / BASE_H);
+      const reserved = w >= ADS_FROM ? 2 * (AD_W + AD_EDGE + AD_CANVAS_GAP) : 0;
+      const s = Math.min((w - reserved - PAD) / BASE_W, (h - PAD) / BASE_H);
       // clamp so it never collapses to nothing on tiny/odd windows
       root.style.setProperty('--app-scale', String(Math.max(0.3, s)));
     };
