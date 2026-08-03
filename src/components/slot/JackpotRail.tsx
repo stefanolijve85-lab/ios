@@ -49,9 +49,23 @@ function JackpotCell({ tier, value, theme }: { tier: JackpotTier; value: number;
     ['--jp-glow' as string]: c.glow,
   } as React.CSSProperties;
 
+  const badge = theme.ui?.jackpotBadges?.[tier];
+  const [imgOk, setImgOk] = React.useState(true);
+  const badgeUrl = badge ? `/themes/${theme.key}/${badge}` : null;
+
   return (
     <div className="qs-jp" style={style}>
-      <div className="qs-jp-label">{tier}</div>
+      {badgeUrl && imgOk ? (
+        <img
+          className="qs-jp-badge"
+          src={badgeUrl}
+          alt={tier}
+          onError={() => setImgOk(false)}
+          draggable={false}
+        />
+      ) : (
+        <div className="qs-jp-label">{tier}</div>
+      )}
       <div className="qs-jp-value">{money(display, undefined, '€')}</div>
     </div>
   );

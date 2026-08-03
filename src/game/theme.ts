@@ -46,6 +46,13 @@ export interface SlotTheme {
   jackpotColors: Record<string, { from: string; to: string; glow: string }>;
   background: BackgroundLayer[];
   symbols: Record<SymbolId, SymbolSkin>;
+  // Optional image art for HUD chrome (relative to /themes/<key>/). When a file
+  // is present the component uses it; otherwise it falls back to styled markup,
+  // so a skin without art still renders perfectly.
+  ui?: {
+    jackpotBadges?: Partial<Record<string, string>>;
+    spinButton?: string;
+  };
   copy: {
     spin: string;
     turbo: string;
@@ -120,6 +127,15 @@ export const quantumspin: SlotTheme = {
     featureIntro: 'QUANTUM PORTAL OPEN',
     featureName: 'QUANTUM PORTAL',
   },
+  ui: {
+    jackpotBadges: {
+      GRAND: 'ui/jp-grand.webp',
+      MAJOR: 'ui/jp-major.webp',
+      MINOR: 'ui/jp-minor.webp',
+      MINI: 'ui/jp-mini.webp',
+    },
+    spinButton: 'ui/spin.webp',
+  },
 };
 
 // A second ready-made skin proves the engine is theme-agnostic (used by the
@@ -147,6 +163,7 @@ export const neonsamurai: SlotTheme = {
     { css: 'radial-gradient(40% 30% at 25% 32%, rgba(255,176,32,0.3), transparent 70%)', depth: 0.25, blur: 20 },
   ],
   copy: { ...quantumspin.copy, featureName: 'BLADE STORM', featureIntro: 'BLADE STORM UNLEASHED' },
+  ui: undefined, // no bespoke art yet → falls back to styled badges/spin button
 };
 
 export const SLOT_THEMES: Record<string, SlotTheme> = {

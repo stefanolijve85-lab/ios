@@ -189,6 +189,14 @@
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
+.qs-jp-badge {
+  position: relative;
+  display: block;
+  height: 20px;
+  width: auto;
+  margin: 1px 0 2px;
+  filter: drop-shadow(0 0 6px var(--jp-glow));
+}
 
 /* ---- reel machine -------------------------------------------------------- */
 .qs-machine-wrap {
@@ -460,6 +468,14 @@
   border-top-color: var(--qs-neon);
   border-right-color: var(--qs-neon2);
 }
+.qs-spin.art { background: transparent; border: none; box-shadow: none; }
+.qs-spin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px var(--qs-neon2));
+}
+.qs-spin.busy .qs-spin-img { animation: qs-spin-rot 0.9s linear infinite; }
 .qs-spin.busy .qs-spin-ring { animation: qs-spin-rot 0.7s linear infinite; }
 @keyframes qs-spin-rot { to { transform: rotate(360deg); } }
 .qs-spin-auto-badge {

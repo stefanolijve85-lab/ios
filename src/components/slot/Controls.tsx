@@ -6,8 +6,11 @@ import { useSlot } from '@/hooks/useSlot';
 // TURBO · SPIN · AUTO. The spin button doubles as the busy indicator and the
 // autoplay counter. Long-press / tap AUTO opens a count picker.
 export function Controls() {
-  const { spin, turbo, toggleTurbo, spinning, phase, autoRemaining, startAuto, stopAuto, session, totalBet } = useSlot();
+  const { spin, turbo, toggleTurbo, spinning, phase, autoRemaining, startAuto, stopAuto, session, totalBet, theme } = useSlot();
   const [autoOpen, setAutoOpen] = useState(false);
+  const [spinImg, setSpinImg] = useState<string | null>(
+    theme.ui?.spinButton ? `/themes/${theme.key}/${theme.ui.spinButton}` : null,
+  );
   const inFeature = session?.freeSpins.active;
   const busy = spinning || phase === 'presenting' || autoRemaining > 0 || !!inFeature;
   const broke = (session?.balance ?? 0) < totalBet && !inFeature;
@@ -19,13 +22,17 @@ export function Controls() {
       </button>
 
       <button
-        className={`qs-spin${busy ? ' busy' : ''}`}
+        className={`qs-spin${busy ? ' busy' : ''}${spinImg ? ' art' : ''}`}
         onClick={spin}
         disabled={busy || broke}
         aria-label="spin"
       >
         <span className="qs-spin-ring" />
-        <span aria-hidden>{inFeature ? '★' : '⟳'}</span>
+        {spinImg ? (
+          <img className="qs-spin-img" src={spinImg} alt="" draggable={false} onError={() => setSpinImg(null)} />
+        ) : (
+          <span aria-hidden>{inFeature ? '★' : '⟳'}</span>
+        )}
         {autoRemaining > 0 && <span className="qs-spin-auto-badge">{autoRemaining}</span>}
       </button>
 

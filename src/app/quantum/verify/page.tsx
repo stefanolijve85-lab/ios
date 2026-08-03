@@ -8,6 +8,7 @@ import { spin as clientSpin, outcomeHash } from '@/game/engine';
 import { commitment } from '@/game/fairness';
 import { makeConfig } from '@/game/config';
 import { getSlotTheme } from '@/game/theme';
+import { assets } from '@/game/assets';
 import { SymbolTile } from '@/components/slot/SymbolTile';
 import { money } from '@/game/format';
 import type { SpinResult } from '@/game/types';
@@ -25,6 +26,7 @@ import type { SpinResult } from '@/game/types';
 // ---------------------------------------------------------------------------
 
 const theme = getSlotTheme('quantumspin');
+if (typeof window !== 'undefined') assets.configure(theme.key);
 
 function rootVars(): React.CSSProperties {
   return {
