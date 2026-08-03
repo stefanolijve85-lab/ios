@@ -1542,9 +1542,9 @@ input { font-family: inherit; }
   .landing-img { object-fit: cover; }
 }
 
-/* --------------------------------------- desktop spinning-roulette backdrop
-   Ambient wheel that slowly turns behind the game canvas + ad rails. Desktop
-   only; dimmed so it never fights the game. Honours reduced-motion. */
+/* --------------------------------------- desktop roulette photo backdrop
+   The roulette photo, static and full-bleed behind the game canvas + ad rails.
+   Desktop only. A subtle dark scrim keeps the game + ad text readable. */
 .roulette-bg { display: none; }
 @media (min-width: 1000px) {
   .roulette-bg {
@@ -1555,30 +1555,14 @@ input { font-family: inherit; }
     pointer-events: none;
     overflow: hidden;
   }
-  .roulette-bg .roulette-spin {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 150vmin;
-    height: 150vmin;
-    opacity: 0.28;
-    filter: blur(0.5px);
-    transform-origin: center center;
-    animation: rouletteSpin 60s linear infinite;
-  }
-  /* the user's roulette photo, cropped to a circle so it reads as a wheel */
   .roulette-bg .roulette-photo {
-    border-radius: 50%;
-    background-image: url('/roulette-bg.jpeg');
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(5, 5, 7, 0.42), rgba(5, 5, 7, 0.42)),
+      url('/roulette-bg.jpeg');
     background-size: cover;
-    background-position: center 46%; /* centre on the wheel (spindle sits high) */
-  }
-  @keyframes rouletteSpin {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to   { transform: translate(-50%, -50%) rotate(360deg); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .roulette-bg .roulette-spin { animation: none; transform: translate(-50%, -50%); }
+    background-position: center center;
   }
   /* keep the game canvas above the backdrop */
   .app { z-index: 1; }
