@@ -1496,56 +1496,48 @@ input { font-family: inherit; }
 }
 
 /* ----------------------------------------------- desktop / wide screens
-   The game is mobile-first: its UI is authored for a tall phone viewport.
-   On a wide (or short-and-wide) desktop window it would otherwise stretch —
-   the .app column grows to the full viewport height and the landing image is
-   forced to fill. Instead we present the whole thing inside a centred,
-   phone-shaped frame with a backdrop around it (the way mobile-first casino
-   titles show on desktop). --phone-h caps the frame height; width is derived
-   from a 9:19.5 phone aspect so nothing is ever distorted. */
+   The game is mobile-first: its UI is authored for a tall phone canvas. On a
+   wide (or short-and-wide) desktop window it would otherwise stretch — the
+   .app column grows to the full viewport height and reflows badly. Instead we
+   fix the app to a reference phone canvas and scale the WHOLE thing uniformly
+   with transform: scale(). --app-scale is computed live in JS (ViewportScale)
+   as min(availW/BASE_W, availH/BASE_H) so it always fits any screen exactly,
+   pixel-for-pixel identical to mobile — never distorted, never stretched. */
+:root { --app-scale: 1; }
+
 @media (min-width: 600px) {
-  :root { --phone-h: min(100dvh, 960px); }
-
-  .app {
-    height: var(--phone-h);
-    width: calc(var(--phone-h) * 0.462);   /* 9 / 19.5 phone aspect ratio */
-    max-width: none;
-    margin: 0 auto;                         /* horizontal centre (fallback) */
-    border-radius: 26px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
-  }
-
-  .landing {
-    position: fixed;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    inset: auto;
-    height: var(--phone-h);
-    width: calc(var(--phone-h) * 0.462);
-    border-radius: 26px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
-  }
-  /* never stretch the landing art on a non-phone aspect — crop instead */
-  .landing-img { object-fit: cover; }
-
-  /* Modern browsers: centre the phone frame vertically and paint a backdrop
-     around it. Scoped with :has so the wide hub/partner pages are untouched.
-     Where :has is unsupported the frame still shows (top-aligned) via the
-     rules above — it just isn't vertically centred. */
+  /* centre the scaled canvas and paint a backdrop around it. Scoped with :has
+     so the wide hub/partner pages are untouched. */
   body:has(.app),
   body:has(.landing) {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100dvh;
+    overflow: hidden;
     background:
-      radial-gradient(65% 55% at 50% 28%, rgba(var(--accent-rgb, 47, 208, 230), 0.07), transparent 70%),
-      radial-gradient(120% 60% at 50% 120%, rgba(230, 184, 77, 0.04), transparent 60%),
+      radial-gradient(70% 55% at 50% 26%, rgba(var(--accent-rgb, 47, 208, 230), 0.08), transparent 72%),
+      radial-gradient(120% 60% at 50% 122%, rgba(230, 184, 77, 0.045), transparent 60%),
       #050507;
   }
-  body:has(.landing) .landing {
-    position: relative;
-    top: auto; left: auto; transform: none;
+
+  /* the reference phone canvas — the UI lays out here, then scales as one */
+  .app,
+  .landing {
+    flex: 0 0 auto;
+    width: 430px;
+    height: 920px;
+    max-width: none;
+    margin: 0;
+    transform: scale(var(--app-scale));
+    transform-origin: center center;
+    border-radius: 30px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.72);
   }
-  body:has(.app) .app { margin: 0; }
+  .app { border: 1px solid rgba(255, 255, 255, 0.06); }
+  .landing {
+    position: relative; inset: auto;   /* out of fixed, so flexbox centres it */
+  }
+  /* never stretch the landing art on a non-phone aspect — crop instead */
+  .landing-img { object-fit: cover; }
 }

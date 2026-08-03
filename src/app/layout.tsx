@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import './globals.css';
 import { GameProvider } from '@/hooks/useGame';
 import { ThemeProvider } from '@/hooks/useTheme';
+import ViewportScale from '@/components/ViewportScale';
 import { getTheme, themeKeyForHost } from '@/themes';
 
 export function generateMetadata(): Metadata {
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <ViewportScale />
         <ThemeProvider>
           <GameProvider>{children}</GameProvider>
         </ThemeProvider>
