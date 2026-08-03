@@ -13,6 +13,7 @@ import Landing from '@/components/Landing';
 import RealityCheck from '@/components/RealityCheck';
 import ExcludedOverlay from '@/components/ExcludedOverlay';
 import AdRail from '@/components/AdRail';
+import RouletteBackdrop from '@/components/RouletteBackdrop';
 
 // The actual game screen. Rendered at /<game> (e.g. /bankheistx); the active
 // theme is resolved from that path segment by the ThemeProvider.
@@ -25,6 +26,7 @@ export default function GameScreen() {
   if (!started)
     return (
       <>
+        <RouletteBackdrop />
         <AdRail side="left" />
         <Landing onPlay={() => setStarted(true)} />
         <AdRail side="right" />
@@ -33,6 +35,7 @@ export default function GameScreen() {
 
   return (
     <>
+    <RouletteBackdrop />
     <AdRail side="left" />
     <main className={`app${chatOpen ? ' chat-open' : ''}`}>
       {!connected && <div className="conn">Connecting…</div>}

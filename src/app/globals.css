@@ -1542,6 +1542,41 @@ input { font-family: inherit; }
   .landing-img { object-fit: cover; }
 }
 
+/* --------------------------------------- desktop spinning-roulette backdrop
+   Ambient wheel that slowly turns behind the game canvas + ad rails. Desktop
+   only; dimmed so it never fights the game. Honours reduced-motion. */
+.roulette-bg { display: none; }
+@media (min-width: 1000px) {
+  .roulette-bg {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .roulette-bg .roulette-spin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150vmin;
+    height: 150vmin;
+    opacity: 0.20;
+    filter: blur(0.5px);
+    transform-origin: center center;
+    animation: rouletteSpin 60s linear infinite;
+  }
+  @keyframes rouletteSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .roulette-bg .roulette-spin { animation: none; transform: translate(-50%, -50%); }
+  }
+  /* keep the game canvas above the backdrop */
+  .app { z-index: 1; }
+}
+
 /* ------------------------------------------- desktop advertising rails
    Fill the empty space beside the centred game canvas with a banner ad slot
    on each side. Desktop only (there's no room on a phone / narrow laptop);
