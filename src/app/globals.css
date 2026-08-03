@@ -1561,10 +1561,17 @@ input { font-family: inherit; }
     left: 50%;
     width: 150vmin;
     height: 150vmin;
-    opacity: 0.20;
+    opacity: 0.28;
     filter: blur(0.5px);
     transform-origin: center center;
     animation: rouletteSpin 60s linear infinite;
+  }
+  /* the user's roulette photo, cropped to a circle so it reads as a wheel */
+  .roulette-bg .roulette-photo {
+    border-radius: 50%;
+    background-image: url('/roulette-bg.jpeg');
+    background-size: cover;
+    background-position: center 46%; /* centre on the wheel (spindle sits high) */
   }
   @keyframes rouletteSpin {
     from { transform: translate(-50%, -50%) rotate(0deg); }
