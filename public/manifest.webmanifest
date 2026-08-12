@@ -1,10 +1,16 @@
 {
-  "name": "BANKHEIST X",
-  "short_name": "BANKHEIST X",
-  "description": "Fill the vault. Secure your winnings. Or lose it all when the thieves break in.",
+  "name": "Huis Verlichting",
+  "short_name": "Verlichting",
+  "description": "Bedien je MiBoxer- en Hue-verlichting in het hele huis en de tuin.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#08080a",
-  "theme_color": "#08080a",
-  "orientation": "portrait"
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ]
 }

@@ -1,24 +1,23 @@
 {
-  "name": "stash-crash-game",
-  "version": "1.0.0",
+  "name": "huis-verlichting",
+  "version": "0.1.0",
   "private": true,
-  "description": "STASH — a mobile-first multiplayer crash game disguised as a filling vault. Secure the cash or the thieves take everything.",
+  "description": "Apple-style verlichtingsapp voor MiBoxer (Tuya) en Philips Hue — kamers, kleuren, helderheid en scènes voor het hele huis en de tuin.",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development node server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "cross-env NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
     "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "cross-env": "^7.0.3",
-    "next": "^14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "socket.io": "^4.7.5",
-    "socket.io-client": "^4.7.5",
     "typescript": "^5.5.3"
   },
   "engines": {

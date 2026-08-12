@@ -1,22 +1,17 @@
 import type { Metadata, Viewport } from 'next';
-import { headers } from 'next/headers';
 import './globals.css';
-import { GameProvider } from '@/hooks/useGame';
-import { ThemeProvider } from '@/hooks/useTheme';
-import { getTheme, themeKeyForHost } from '@/themes';
+import { StoreProvider } from '@/lib/store';
 
-export function generateMetadata(): Metadata {
-  const t = getTheme(themeKeyForHost(headers().get('host')));
-  return {
-    title: t.meta.title,
-    description: t.meta.description,
-    manifest: '/manifest.webmanifest',
-    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: t.name },
-  };
-}
+export const metadata: Metadata = {
+  title: 'Huis Verlichting',
+  description: 'Bedien je MiBoxer- en Hue-verlichting in het hele huis en de tuin.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Verlichting' },
+  icons: { apple: '/apple-touch-icon.png', icon: '/icon.svg' },
+};
 
 export const viewport: Viewport = {
-  themeColor: '#0a0a0c',
+  themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -26,19 +21,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Sora:wght@600;700;800&family=Oswald:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="nl">
       <body>
-        <ThemeProvider>
-          <GameProvider>{children}</GameProvider>
-        </ThemeProvider>
+        <StoreProvider>{children}</StoreProvider>
       </body>
     </html>
   );

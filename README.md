@@ -1,147 +1,134 @@
-# 🏦 STASH — the next-evolution crash game
+# 💡 Huis Verlichting
 
-> Fill the vault. **Lock your winnings.** Or lose it all when the thieves break in.
+Een Apple-Home-achtige web-app (PWA) om je **MiBoxer**- (via Tuya) en
+**Philips Hue**-verlichting in het hele huis en de tuin te bedienen: kleuren,
+helderheid, kleurtemperatuur en scènes — met eigen namen en kamers in plaats
+van "Zone 5".
 
-STASH takes the proven *crash* mechanic and disguises it inside a universally
-understood fantasy: **a vault is rapidly filling with money — secure it now, or
-risk everything for more.** Understandable in 3 seconds, impossible to put down.
+De app werkt **direct in demo-modus** zodat je alles kunt uitproberen. Zodra je
+je Tuya- en/of Hue-gegevens invult (Instellingen ⚙️) stuurt hij je échte lampen
+aan.
 
-Built **mobile-first**, **multiplayer by default**, **server-authoritative**, and
-**white-label / RGS-ready** from day one.
-
----
-
-## ✨ What's in the MVP
-
-- **Server-authoritative crash engine** — provably-fair-style crash points, a
-  single shared multiplier curve, anti-cheat by design (clients never decide
-  outcomes).
-- **Real multiplayer** over **Socket.io** — live online count, live "still
-  holding" counter, live chat, live activity feed, all synced across players.
-- **The vault** — circular brass/gunmetal door, a money pile that grows in real
-  time, neon-green cash glow, gold reflections, the multiplier ladder.
-- **The STASH button** — massive, green, pulsing, context-aware (place bet →
-  STASH → result), with an optional **second bet panel**.
-- **Thief timer** that turns red, alarms that fire, and a fast **heist crash
-  animation**.
-- **Adaptive tension audio** (Web Audio API, no asset files) — one electronic
-  motif that climbs in pitch + tempo with the multiplier, glitches on crash.
-- **60fps** local animation driven from a server-synced clock (the server
-  doesn't stream every frame — it streams the truth, the client interpolates).
-- **iPhone Safari–first** layout: safe-area aware, one-thumb usable, no zoom.
+![voorbeeld](public/icon.svg)
 
 ---
 
-## 🏗 Architecture (single origin)
+## Wat kan de app
 
-```
-Browser (Next.js / React / TS)  ──HTTP──┐
-                                        ├──►  server.js  (one Node process, one port)
-Browser  ◄──WebSocket (Socket.io)───────┘        ├── Next.js request handler
-                                                  └── Socket.io  + Game engine
-```
-
-The **same Node server** (`server.js`) serves the web app **and** the realtime
-socket layer. One origin, one port → trivial to deploy and zero cross-origin
-websocket pain on iOS Safari.
-
-```
-.
-├─ server.js              # custom server: Next.js + Socket.io on one port
-├─ server/
-│  ├─ game.js             # server-authoritative round lifecycle + crash math
-│  ├─ bots.js             # crowd sim: live chat + activity feed
-│  └─ config.js           # single source of game tuning
-├─ src/
-│  ├─ app/                # Next.js App Router (layout, page, globals.css)
-│  ├─ components/         # Vault, BetPanel (STASH), ThiefTimer, chat, etc.
-│  ├─ hooks/useGame.tsx   # socket wiring, server-clock sync, 60fps multiplier
-│  └─ lib/                # types, constants (shared curve), audio, formatting
-├─ Dockerfile / .dockerignore
-└─ render.yaml
-```
-
-### Game loop
-1. **Vault open (betting, 5s)** — place one or two bets.
-2. **Vault closes, cash climbs** — multiplier accelerates (`m(t) = e^{0.21·t}`).
-3. **STASH** to lock `stake × multiplier`.
-4. Wait too long → **THIEVES BREAK IN** and everything in the vault is gone.
-5. New round starts within ~2.5s.
-
-Crash points use a `(1 − houseEdge) / (1 − r)` heavy-tailed distribution with a
-~3% instant-bust chance, capped to the 15s round window. Tune everything in
-`server/config.js`.
+- 🎨 **Kleur, helderheid en kleurtemperatuur** per lamp via een Apple-stijl
+  kleurenwiel en sliders.
+- 🏠 **Kamers en eigen namen** — noem een zone "Sfeer achter TV" in plaats van
+  "Zone 2".
+- 🎬 **Scènes** — bijv. *Avond*, *Film*, *Tuin aan*, *Alles uit*.
+- 🔌 **MiBoxer (Tuya)** én **Philips Hue** in dezelfde app.
+- 📱 **Installeerbaar** op je iPhone-beginscherm (fullscreen, voelt als een app).
 
 ---
 
-## 🚀 Run locally
+## Belangrijk om te weten (hardware)
+
+- Je MiBoxer-**gateway is een Tuya-apparaat** (de device-id's beginnen met `bf`).
+  We besturen hem daarom via **Tuya**, niet via het oude MiLight-protocol.
+- De **max. 8 zones** en "geen losse lampen" zijn een beperking van het
+  **2,4 GHz-systeem van MiBoxer zelf**. Alle lampen die op dezelfde zone gekoppeld
+  zijn, doen exact hetzelfde. Losse aansturing kan alleen als elke lamp een eigen
+  zone krijgt (max. 8 per FUT089-gateway). Deze app kan dat niet omzeilen — wél
+  kan hij zones nette namen geven en overzichtelijk maken.
+- **Philips Hue** kan wél per lamp individueel (via de Hue Bridge).
+
+---
+
+## Snel starten (ontwikkelen)
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000  (dev: Next + Socket.io)
+npm run dev        # http://localhost:3000
 ```
 
-Production mode:
+Productie:
 
 ```bash
-npm run build
-npm start            # serves the built app + sockets on $PORT (default 3000)
+npm run build && npm start
 ```
 
-Open the URL on your phone (same Wi-Fi: `http://<your-ip>:3000`) to feel it on
-real glass.
+> **Waar hosten?** Voor **Hue** moet de app op je **thuisnetwerk** draaien
+> (bijv. een Raspberry Pi, oude laptop of NAS), omdat de Hue Bridge alleen
+> lokaal bereikbaar is. **MiBoxer/Tuya** werkt óók vanuit de cloud.
+> Een praktische opzet: draai de app op een klein apparaatje thuis en zet 'm op
+> je iPhone-beginscherm.
+
+### Op je iPhone zetten
+
+1. Open het adres van de app in **Safari**.
+2. Deel-knop → **Zet op beginscherm**.
+3. Open 'm vanaf het beginscherm — hij draait fullscreen.
 
 ---
 
-## ☁️ Deploy to Render (recommended)
+## MiBoxer koppelen (Tuya Cloud)
 
-The repo ships a **`render.yaml` Blueprint**.
+Eenmalig instellen:
 
-1. Push this code to GitHub.
-2. Render → **New +** → **Blueprint** → select the repo. The app is at the repo
-   root, so no Root Directory tweak is needed.
-3. Render runs `npm install && npm run build`, then `npm start`.
-4. Done — your public URL (e.g. `https://stash-crash-game.onrender.com`) is
-   playable on iPhone Safari immediately.
+1. Ga naar **[iot.tuya.com](https://iot.tuya.com)** en maak een gratis account.
+2. **Cloud → Development → Create Cloud Project** (kies je regio, bijv. *Central
+   Europe*). Noteer de **Access ID** en **Access Secret**.
+3. Ga in het project naar **Devices → Link App Account** en scan de QR-code met
+   je **Smart Life / MiBoxer / Tuya**-app. Nu ziet het project je apparaten.
+4. **Cloud → Service API**: voeg *IoT Core* toe (meestal standaard actief).
+5. Open in de app **Instellingen ⚙️ → MiBoxer**, kies je regio, plak **Access
+   ID** en **Access Secret**, en tik **Verbinding testen**. Je ziet dan je
+   apparaten verschijnen.
+6. Zet **Demo-modus uit** om echt te sturen.
 
-> Render injects `PORT`; `server.js` already binds `0.0.0.0:$PORT`.
-> Websockets work out of the box on Render web services.
+**Zones/lampen koppelen.** Elke lamp in de app verwijst naar een Tuya
+`device-id` (+ evt. een zone 1–8). Bij *Verbinding testen* zie je de juiste
+device-id's. Voeg lampen toe via de **+** naast een kamer, of pas de
+voorbeeldlampen aan.
 
-### Railway
+> **DP-codes.** De app gebruikt de standaard Tuya-lichtcodes (`switch_led`,
+> `work_mode`, `bright_value_v2`, `temp_value_v2`, `colour_data_v2`). Reageert
+> een apparaat niet zoals verwacht, dan kun je de exacte codes opzoeken via
+> *Instellingen → Verbinding testen* (specificaties) en per lamp overschrijven
+> in `ref.dp`.
 
-1. New Project → Deploy from GitHub repo.
-2. Build `npm install && npm run build`, start `npm start`. Railway provides
-   `PORT` automatically.
+---
 
-### Docker (anywhere)
+## Philips Hue koppelen
 
-```bash
-docker build -t stash .
-docker run -p 3000:3000 stash
-# → http://localhost:3000
+1. Zorg dat de app op je thuisnetwerk draait.
+2. **Instellingen ⚙️ → Philips Hue → Zoek** (vindt de Bridge automatisch), of
+   vul het IP handmatig in.
+3. Druk op de **ronde link-knop** boven op de Hue Bridge en tik binnen 30
+   seconden op **Koppel**.
+4. Tik **Hue-lampen importeren** — al je Hue-lampen komen in de kamer *Hue* en
+   je kunt ze verslepen/hernoemen.
+
+---
+
+## Techniek
+
+- **Next.js 14** (App Router) + React, TypeScript.
+- Alle bediening loopt via eigen **API-routes** (`/api/tuya/*`, `/api/hue/*`).
+  De Tuya-verzoeken worden server-side ondertekend (HMAC-SHA256); Hue gebruikt de
+  lokale Bridge-API (v1).
+- Kamers, lampen, scènes en instellingen worden **lokaal** op je apparaat
+  bewaard (localStorage). Je Tuya/Hue-sleutels blijven op je eigen
+  apparaat/server.
+
+```
+src/
+  app/            pagina + API-routes
+  components/     UI (tegels, kleurenwiel, sliders, sheets)
+  lib/            datamodel, kleur-utils, store, backend-adapters
+  lib/server/     Tuya-ondertekening + Hue-client
 ```
 
 ---
 
-## 🗺 Roadmap
+## Roadmap-ideeën
 
-| Phase | Scope |
-|------|-------|
-| 1 | **Demo (this MVP)** — playable, multiplayer, public URL |
-| 2 | Accounts + persistence |
-| 3 | RGS architecture (bet/settle, audit, provably-fair seeds exposed) |
-| 4 | Operator dashboard |
-| 5 | Aggregator integrations |
-| 6 | Certification |
-
-White-labelling: theme tokens live in `src/app/globals.css` (`:root`), game
-tuning in `server/config.js` — an operator can reskin without touching logic.
-
----
-
-## ⚠️ Note
-
-This is a **demo / entertainment build** using play-money balances held in
-memory. It is **not** a real-money gambling product and ships without accounts,
-KYC, RNG certification, or responsible-gaming controls — all of which are
-required (and scoped in the roadmap) before any real-money use.
+- Live status ophalen (nu stuurt de app; terugkoppeling van de echte stand kan
+  erbij).
+- Lampen slepen tussen kamers, kamer-iconen kiezen in de UI.
+- Widgets/scènes op tijd (timers), en groepen over kamers heen.
+- Optioneel lokale Tuya-besturing (LocalTuya) voor snelheid zonder cloud.
