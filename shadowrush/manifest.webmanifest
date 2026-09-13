@@ -1,0 +1,13 @@
+{
+  "name": "Shadow Rush — Chase & Survive",
+  "short_name": "Shadow Rush",
+  "description": "A premium mobile-first action runner: sprint, shoot, dodge and ride escalating casino-style multipliers.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#07000f",
+  "theme_color": "#0a0014",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
