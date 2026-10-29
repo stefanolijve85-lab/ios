@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { DEFAULT_STATE, Light } from '@/lib/types';
 import Sheet from './Sheet';
+import TuyaImport from './TuyaImport';
 
 const TUYA_ENDPOINTS = [
   { label: 'Europa', value: 'https://openapi.tuyaeu.com' },
@@ -29,7 +30,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 export default function Settings({ onClose }: { onClose: () => void }) {
   const store = useStore();
-  const { config, setConfig, addRoom, addLight, resetAll, rooms } = store;
+  const { config, setConfig, addRoom, addLight, resetAll, startOver, rooms } = store;
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -141,6 +142,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
       <input className="field" placeholder="Access Secret" value={tSecret} onChange={(e) => setTSecret(e.target.value)} type="password" autoCapitalize="none" autoCorrect="off" />
       <button className="btn" disabled={busy === 'tuya'} onClick={testTuya}>{busy === 'tuya' ? 'Testen…' : 'Opslaan & verbinding testen'}</button>
 
+      <div className="section-title" style={{ margin: '18px 4px 6px' }}>Tuya-apparaten importeren</div>
+      <p className="hint">Haalt je live apparatenlijst op. Kies per apparaat de kamer en tik op +. Lampen (RGB/CCT) en stekkers (aan/uit) worden automatisch herkend.</p>
+      <TuyaImport creds={{ endpoint: tEndpoint, accessId: tId.trim(), accessSecret: tSecret.trim() }} onBeforeFetch={saveTuya} />
+
       {/* Hue */}
       <div className="section-title" style={{ margin: '20px 4px 6px' }}>Philips Hue</div>
       <p className="hint">De app moet op je thuisnetwerk draaien om de Bridge te bereiken. Zoek de Bridge, druk op de ronde link-knop en koppel.</p>
@@ -163,8 +168,12 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
       {msg && <p className="hint" style={{ color: msg.startsWith('❌') ? '#ff453a' : '#30d158' }}>{msg}</p>}
 
-      <button className="btn danger" style={{ marginTop: 18 }} onClick={() => { if (confirm('Alles terugzetten naar de startopstelling?')) { resetAll(); onClose(); } }}>
-        Alles resetten
+      <button className="btn danger" style={{ marginTop: 18 }} onClick={() => { if (confirm('Opnieuw beginnen? Alle lampen, kamers en scènes worden teruggezet naar de lege startopstelling. Je Tuya/Hue-login blijft bewaard.')) { startOver(); onClose(); } }}>
+        Begin opnieuw
+      </button>
+      <p className="hint" style={{ textAlign: 'center', marginTop: -2 }}>Lege kamers, standaardscènes — Access ID/Secret en Hue-koppeling blijven staan.</p>
+      <button className="btn secondary" style={{ marginTop: 8, color: '#ff453a' }} onClick={() => { if (confirm('Alles wissen, inclusief je Tuya- en Hue-login?')) { resetAll(); onClose(); } }}>
+        Alles wissen (ook login)
       </button>
       <p className="hint" style={{ textAlign: 'center' }}>Gegevens worden lokaal op dit apparaat bewaard.</p>
     </Sheet>

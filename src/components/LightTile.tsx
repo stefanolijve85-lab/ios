@@ -17,7 +17,9 @@ export default function LightTile({
   const rgb = lightColor(state);
   const status = !state.on
     ? 'Uit'
-    : state.mode === 'color'
+    : light.kind === 'onoff'
+      ? 'Aan'
+      : state.mode === 'color'
       ? `${state.brightness}% · Kleur`
       : `${state.brightness}% · ${state.kelvin}K`;
 

@@ -32,11 +32,20 @@ export function OutdoorIcon({ size = 22 }: { size?: number }) {
   );
 }
 
+export function PlugIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0Z" /><path d="M12 17v5" />
+    </svg>
+  );
+}
+
 export function iconFor(key?: string, size = 22) {
   switch (key) {
     case 'strip': return <StripIcon size={size} />;
     case 'ceiling': return <CeilingIcon size={size} />;
     case 'outdoor': return <OutdoorIcon size={size} />;
+    case 'plug': return <PlugIcon size={size} />;
     case 'pendant':
     case 'lamp':
     default: return <BulbIcon size={size} />;

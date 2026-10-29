@@ -10,7 +10,7 @@ import { VBrightness, HSlider } from './Sliders';
 import { PowerIcon } from './icons';
 
 export default function LightDetail({ light, onClose }: { light: Light; onClose: () => void }) {
-  const { setLightState, toggleLight, renameLight, removeLight, rooms } = useStore();
+  const { setLightState, toggleLight, renameLight, removeLight, moveLight, rooms } = useStore();
   const s = light.state;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(light.name);
@@ -40,12 +40,18 @@ export default function LightDetail({ light, onClose }: { light: Light; onClose:
         {light.ref.zone ? ` · Zone ${light.ref.zone}` : ''}
       </div>
 
-      {/* Helderheid */}
-      <VBrightness
-        value={s.brightness}
-        color={s.on ? rgbCss(color) : 'rgba(120,120,128,0.5)'}
-        onChange={(v) => setLightState(light.id, { brightness: v, on: true })}
-      />
+      {/* Helderheid (stekkers/schakelaars kennen alleen aan/uit) */}
+      {light.kind === 'onoff' ? (
+        <button className="btn" style={s.on ? undefined : { background: 'var(--bg-elev)', color: 'var(--text)' }} onClick={() => toggleLight(light.id)}>
+          {s.on ? 'Aan — tik om uit te zetten' : 'Uit — tik om aan te zetten'}
+        </button>
+      ) : (
+        <VBrightness
+          value={s.brightness}
+          color={s.on ? rgbCss(color) : 'rgba(120,120,128,0.5)'}
+          onChange={(v) => setLightState(light.id, { brightness: v, on: true })}
+        />
+      )}
 
       {/* Wit / Kleur */}
       {isColor && (
@@ -77,6 +83,24 @@ export default function LightDetail({ light, onClose }: { light: Light; onClose:
           />
         </div>
       ) : null}
+
+      {/* Kamer */}
+      <div className="list">
+        <div className="item">
+          <div className="k">Kamer</div>
+          <select
+            className="v"
+            style={{ background: 'transparent' }}
+            value={light.roomId}
+            onChange={(e) => moveLight(light.id, e.target.value)}
+            aria-label="Verplaats naar kamer"
+          >
+            {[...rooms].sort((a, b) => a.order - b.order).map((r) => (
+              <option key={r.id} value={r.id} style={{ background: '#1c1c1e' }}>{r.icon} {r.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Naam / beheer */}
       {editing ? (

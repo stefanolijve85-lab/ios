@@ -18,13 +18,17 @@ interface Store extends AppData {
   updateLight: (id: string, patch: Partial<Light>) => void;
   addLight: (light: Light) => void;
   removeLight: (id: string) => void;
+  moveLight: (id: string, roomId: string) => void;
   addRoom: (room: Room) => void;
   renameRoom: (id: string, name: string, icon?: string) => void;
   removeRoom: (id: string) => void;
   saveScene: (scene: Scene) => void;
   removeScene: (id: string) => void;
   setConfig: (patch: Partial<AppConfig>) => void;
+  /** alles wissen, inclusief Tuya/Hue-login */
   resetAll: () => void;
+  /** lampen/kamers/scènes terug naar de startopstelling, login blijft bewaard */
+  startOver: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -115,7 +119,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const scene = d.scenes.find((s) => s.id === sceneId);
         if (!scene) return d;
         const lights = d.lights.map((l) => {
-          const target = scene.targets[l.id];
+          const target = scene.targets[l.id] ?? scene.all;
           if (!target) return l;
           const next = { ...l.state, ...target };
           dispatch(l, next);
@@ -136,11 +140,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addLight = useCallback((light: Light) => {
-    setData((d) => ({ ...d, lights: [...d.lights, light] }));
+    setData((d) => (d.lights.some((l) => l.id === light.id) ? d : { ...d, lights: [...d.lights, light] }));
   }, []);
 
   const removeLight = useCallback((id: string) => {
     setData((d) => ({ ...d, lights: d.lights.filter((l) => l.id !== id) }));
+  }, []);
+
+  const moveLight = useCallback((id: string, roomId: string) => {
+    setData((d) => ({ ...d, lights: d.lights.map((l) => (l.id === id ? { ...l, roomId } : l)) }));
   }, []);
 
   const addRoom = useCallback((r: Room) => setData((d) => ({ ...d, rooms: [...d.rooms, r] })), []);
@@ -168,6 +176,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setData(SEED);
   }, []);
 
+  const startOver = useCallback(() => {
+    setData((d) => ({ ...SEED, config: d.config }));
+  }, []);
+
   const value = useMemo<Store>(
     () => ({
       ...data,
@@ -181,6 +193,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateLight,
       addLight,
       removeLight,
+      moveLight,
       addRoom,
       renameRoom,
       removeRoom,
@@ -188,8 +201,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       removeScene,
       setConfig,
       resetAll,
+      startOver,
     }),
-    [data, ready, error, setLightState, toggleLight, toggleRoom, applyScene, renameLight, updateLight, addLight, removeLight, addRoom, renameRoom, removeRoom, saveScene, removeScene, setConfig, resetAll],
+    [data, ready, error, setLightState, toggleLight, toggleRoom, applyScene, renameLight, updateLight, addLight, removeLight, moveLight, addRoom, renameRoom, removeRoom, saveScene, removeScene, setConfig, resetAll, startOver],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

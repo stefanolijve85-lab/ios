@@ -59,6 +59,8 @@ export interface Scene {
   icon: string;
   /** per light-id een (gedeeltelijke) doelstand */
   targets: Record<string, Partial<LightState>>;
+  /** doelstand voor elke lamp zonder eigen target (bijv. "Alles uit") */
+  all?: Partial<LightState>;
 }
 
 export interface TuyaConfig {

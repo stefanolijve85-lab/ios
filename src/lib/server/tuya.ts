@@ -108,8 +108,17 @@ export async function sendCommands(creds: TuyaCreds, deviceId: string, commands:
 }
 
 export async function listDevices(creds: TuyaCreds) {
-  // Apparaten gekoppeld aan de app-account in dit cloud-project.
-  return tuyaRequest(creds, 'GET', '/v1.0/iot-01/associated-users/devices?size=100');
+  // Apparaten gekoppeld aan de app-account in dit cloud-project (alle pagina's).
+  const devices: any[] = [];
+  let lastRowKey = '';
+  for (let page = 0; page < 20; page++) {
+    const q = lastRowKey ? `&last_row_key=${encodeURIComponent(lastRowKey)}` : '';
+    const res = await tuyaRequest(creds, 'GET', `/v1.0/iot-01/associated-users/devices?size=100${q}`);
+    devices.push(...(res?.devices || []));
+    if (!res?.has_more || !res?.last_row_key) break;
+    lastRowKey = res.last_row_key;
+  }
+  return { devices };
 }
 
 export async function deviceStatus(creds: TuyaCreds, deviceId: string) {

@@ -8,18 +8,30 @@ function tuyaCommands(light: Light, s: LightState) {
   const dp = light.ref.dp || {};
   const cmds: { code: string; value: unknown }[] = [];
   cmds.push({ code: dp.switch || 'switch_led', value: s.on });
-  if (!s.on) return cmds;
-  cmds.push({ code: dp.mode || 'work_mode', value: s.mode === 'color' ? 'colour' : 'white' });
-  // Tuya helderheid: 10..1000
-  const bright = Math.round(10 + (s.brightness / 100) * 990);
-  cmds.push({ code: dp.bright || 'bright_value_v2', value: bright });
-  if (s.mode === 'white') {
-    // 2700K..6500K -> 0..1000 (0 = warm, 1000 = koud)
-    const temp = Math.round(Math.max(0, Math.min(1, (s.kelvin - 2700) / (6500 - 2700))) * 1000);
-    cmds.push({ code: dp.temp || 'temp_value_v2', value: temp });
-  } else {
-    const v = { h: Math.round(s.hue), s: Math.round(s.saturation * 10), v: Math.round(s.brightness * 10) };
-    cmds.push({ code: dp.colour || 'colour_data_v2', value: v });
+  // Stekkers/schakelaars kennen alleen aan/uit.
+  if (!s.on || light.kind === 'onoff') return cmds;
+
+  const brightCode = dp.bright || 'bright_value_v2';
+  const v2 = (code: string) => code.endsWith('_v2');
+  const useColour = light.kind === 'rgbcct' && s.mode === 'color';
+  if (light.kind === 'rgbcct') {
+    cmds.push({ code: dp.mode || 'work_mode', value: useColour ? 'colour' : 'white' });
+  }
+  // Tuya helderheid: v2 = 10..1000, v1 = 25..255
+  const bright = v2(brightCode) ? Math.round(10 + (s.brightness / 100) * 990) : Math.round(25 + (s.brightness / 100) * 230);
+  cmds.push({ code: brightCode, value: bright });
+  if (light.kind === 'rgbcct' || light.kind === 'cct') {
+    if (!useColour) {
+      // 2700K..6500K -> 0..1000 (v1: 0..255), 0 = warm
+      const tempCode = dp.temp || 'temp_value_v2';
+      const frac = Math.max(0, Math.min(1, (s.kelvin - 2700) / (6500 - 2700)));
+      cmds.push({ code: tempCode, value: Math.round(frac * (v2(tempCode) ? 1000 : 255)) });
+    } else {
+      const colourCode = dp.colour || 'colour_data_v2';
+      const scale = v2(colourCode) ? 10 : 2.55;
+      const v = { h: Math.round(s.hue), s: Math.round(s.saturation * scale), v: Math.round(s.brightness * scale) };
+      cmds.push({ code: colourCode, value: v });
+    }
   }
   return cmds;
 }
