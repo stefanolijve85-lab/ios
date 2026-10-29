@@ -2,22 +2,9 @@
 
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { DEFAULT_STATE, Light, Room, TuyaConfig } from '@/lib/types';
+import { DEFAULT_STATE, Light, TuyaConfig } from '@/lib/types';
 import { detectTuya, KIND_LABEL, TuyaDevice } from '@/lib/tuyaDetect';
-
-// Raadt een kamer op basis van de apparaatnaam; je kunt hem altijd wijzigen.
-const ROOM_HINTS: [RegExp, string][] = [
-  [/tuin|buiten|terras|kerst|rookhok|schuur|vijver|veranda|oprit/i, 'tuin'],
-  [/bad|douche|nis|toilet|wc/i, 'badkamer'],
-  [/keuken|kook|werkblad/i, 'keuken'],
-  [/slaap|bed|nacht/i, 'slaapkamer'],
-  [/woon|tv|bank|eettafel|lounge/i, 'woonkamer'],
-];
-
-function guessRoom(name: string, rooms: Room[]): string {
-  for (const [re, id] of ROOM_HINTS) if (re.test(name) && rooms.some((r) => r.id === id)) return id;
-  return rooms[0]?.id || '';
-}
+import ImportRow, { guessRoom } from './ImportRow';
 
 export default function TuyaImport({ creds, onBeforeFetch }: { creds: TuyaConfig; onBeforeFetch: () => void }) {
   const { rooms, lights, addLight, config } = useStore();
@@ -83,36 +70,17 @@ export default function TuyaImport({ creds, onBeforeFetch }: { creds: TuyaConfig
             const existing = lights.find((l) => l.backend === 'tuya' && l.ref.deviceId === dev.id && !l.ref.zone);
             const existingRoom = existing && rooms.find((r) => r.id === existing.roomId);
             return (
-              <div className="item" key={dev.id} style={{ gap: 10 }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="k" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {det.isPlug ? '🔌' : '💡'} {dev.name}
-                  </div>
-                  <div className="v" style={{ fontSize: 13 }}>
-                    {det.label} · {KIND_LABEL[det.kind]}{dev.online === false ? ' · offline' : ''}
-                  </div>
-                </div>
-                {existing ? (
-                  <span className="v" style={{ fontSize: 13, color: '#30d158', whiteSpace: 'nowrap' }}>✓ {existingRoom?.name || 'Toegevoegd'}</span>
-                ) : (
-                  <>
-                    <select
-                      className="v"
-                      style={{ background: 'transparent', maxWidth: 120 }}
-                      value={choice[dev.id] || ''}
-                      onChange={(e) => setChoice((c) => ({ ...c, [dev.id]: e.target.value }))}
-                      aria-label={`Kamer voor ${dev.name}`}
-                    >
-                      {sortedRooms.map((r) => <option key={r.id} value={r.id} style={{ background: '#1c1c1e' }}>{r.name}</option>)}
-                    </select>
-                    <button
-                      onClick={() => add(dev)}
-                      aria-label={`${dev.name} toevoegen`}
-                      style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--accent)', color: '#fff', fontSize: 22, lineHeight: '32px', flexShrink: 0 }}
-                    >+</button>
-                  </>
-                )}
-              </div>
+              <ImportRow
+                key={dev.id}
+                emoji={det.isPlug ? '🔌' : '💡'}
+                name={dev.name}
+                sub={`${det.label} · ${KIND_LABEL[det.kind]}${dev.online === false ? ' · offline' : ''}`}
+                rooms={sortedRooms}
+                existingRoom={existing ? existingRoom?.name || null : undefined}
+                room={choice[dev.id] || ''}
+                onRoom={(roomId) => setChoice((c) => ({ ...c, [dev.id]: roomId }))}
+                onAdd={() => add(dev)}
+              />
             );
           })}
         </div>

@@ -62,7 +62,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [data, ready]);
 
   const dispatch = useCallback((light: Light, next: LightState) => {
-    applyToDevice(light, next, configRef.current).catch((e) => {
+    const onConfig = (patch: Partial<AppConfig>) => setData((d) => ({ ...d, config: { ...d.config, ...patch } }));
+    applyToDevice(light, next, configRef.current, onConfig).catch((e) => {
       setError(e?.message || 'Kon apparaat niet bereiken');
       setTimeout(() => setError(null), 4000);
     });

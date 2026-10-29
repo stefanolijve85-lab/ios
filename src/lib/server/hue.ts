@@ -2,7 +2,7 @@
 // Let op: de server moet op hetzelfde netwerk als de Bridge draaien om het
 // lokale IP te kunnen bereiken (dus de app thuis hosten, niet in de cloud).
 
-import { LightState } from '@/lib/types';
+import { LightKind, LightState } from '@/lib/types';
 
 export interface HueCreds {
   bridgeIp: string;
@@ -26,10 +26,13 @@ export async function hueListLights(c: HueCreds) {
   return hueFetch(`${base(c)}/lights`);
 }
 
-export function stateToHue(s: LightState): Record<string, unknown> {
+export function stateToHue(s: LightState, kind?: LightKind): Record<string, unknown> {
   if (!s.on) return { on: false };
+  // Hue-stekkers kennen geen helderheid/kleur; die velden geven dan een fout.
+  if (kind === 'onoff') return { on: true };
   const body: Record<string, unknown> = { on: true, bri: Math.max(1, Math.round((s.brightness / 100) * 253) + 1) };
-  if (s.mode === 'color') {
+  if (kind === 'dimmable') return body;
+  if (s.mode === 'color' && kind !== 'cct') {
     body.hue = Math.round((s.hue / 360) * 65535);
     body.sat = Math.round((s.saturation / 100) * 254);
   } else {
@@ -38,11 +41,11 @@ export function stateToHue(s: LightState): Record<string, unknown> {
   return body;
 }
 
-export async function hueSetLight(c: HueCreds, hueId: string, s: LightState) {
+export async function hueSetLight(c: HueCreds, hueId: string, s: LightState, kind?: LightKind) {
   return hueFetch(`${base(c)}/lights/${hueId}/state`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(stateToHue(s)),
+    body: JSON.stringify(stateToHue(s, kind)),
   });
 }
 

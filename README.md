@@ -51,11 +51,9 @@ Productie:
 npm run build && npm start
 ```
 
-> **Waar hosten?** Voor **Hue** moet de app op je **thuisnetwerk** draaien
-> (bijv. een Raspberry Pi, oude laptop of NAS), omdat de Hue Bridge alleen
-> lokaal bereikbaar is. **MiBoxer/Tuya** werkt óók vanuit de cloud.
-> Een praktische opzet: draai de app op een klein apparaatje thuis en zet 'm op
-> je iPhone-beginscherm.
+> **Waar hosten?** Gewoon op **Vercel**: MiBoxer/Tuya en Hue (via de
+> Hue-cloud) werken allebei vanuit de cloud. Alleen de optionele *lokale*
+> Hue-koppeling vereist dat de app op je thuisnetwerk draait.
 
 ### Op je iPhone zetten
 
@@ -93,15 +91,20 @@ voorbeeldlampen aan.
 
 ---
 
-## Philips Hue koppelen
+## Philips Hue koppelen (Hue-cloud, werkt ook op Vercel)
 
-1. Zorg dat de app op je thuisnetwerk draait.
-2. **Instellingen ⚙️ → Philips Hue → Zoek** (vindt de Bridge automatisch), of
-   vul het IP handmatig in.
-3. Druk op de **ronde link-knop** boven op de Hue Bridge en tik binnen 30
-   seconden op **Koppel**.
-4. Tik **Hue-lampen importeren** — al je Hue-lampen komen in de kamer *Hue* en
-   je kunt ze verslepen/hernoemen.
+1. Log in op [developers.meethue.com](https://developers.meethue.com/my-apps/)
+   (gratis account) → **My Apps → Add new Hue Remote API app**.
+2. Vul als **Callback URL** het adres in dat de app toont onder
+   **Instellingen ⚙️ → Philips Hue** (`https://<jouw-domein>/hue-callback`).
+3. Plak de **ClientId** en **ClientSecret** in de app en tik **Inloggen met
+   Hue**. Log in met je Hue-account en geef toegang.
+4. Kom je terug in Safari met een code (iOS opent de login soms buiten de
+   beginscherm-app)? Kopieer de code en plak hem bij **Code → Koppel**.
+5. Tik **Hue-lampen importeren**, kies per lamp de kamer en tik **+**.
+
+Lokaal (alleen als de app thuis draait): klap *Lokale Bridge* open, tik
+**Zoek**, druk op de link-knop op de Bridge en tik **Koppel**.
 
 ---
 

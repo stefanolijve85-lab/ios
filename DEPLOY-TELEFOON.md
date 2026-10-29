@@ -65,16 +65,10 @@ Vraag gerust of ik je hier stap voor stap doorheen praat.
 
 ## En Philips Hue?
 
-Hue kan alleen lokaal (de Bridge is niet vanaf internet bereikbaar). Opties
-voor later:
-
-- Draai deze app op een klein apparaat thuis (Raspberry Pi / oude laptop / NAS)
-  in plaats van op Vercel — dan werkt Hue én MiBoxer.
-- Of we voegen later Hue's cloud-koppeling toe (vereist een aparte Hue
-  developer-registratie).
-
-Voor nu: MiBoxer via Vercel lost je grootste probleem op. Hue pakken we erbij
-zodra je wilt.
+Hue werkt via de Hue-cloud, dus ook gewoon op Vercel. Zie **Philips Hue
+koppelen** in de README: eenmalig een gratis app aanmaken op
+developers.meethue.com, Client ID/Secret plakken in Instellingen en
+**Inloggen met Hue**.
 
 ---
 

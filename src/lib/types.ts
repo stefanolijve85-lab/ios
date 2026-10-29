@@ -77,9 +77,24 @@ export interface HueConfig {
   appKey: string;
 }
 
+export interface HueCloudConfig {
+  /** van je app op developers.meethue.com */
+  clientId: string;
+  clientSecret: string;
+  accessToken?: string;
+  refreshToken?: string;
+  /** epoch ms */
+  expiresAt?: number;
+  /** app-sleutel op je Bridge, aangemaakt via de cloud */
+  username?: string;
+}
+
 export interface AppConfig {
   tuya?: TuyaConfig;
+  /** lokale Bridge (alleen als de app thuis draait) */
   hue?: HueConfig;
+  /** Hue Remote API (werkt overal, ook vanaf Vercel) */
+  hueCloud?: HueCloudConfig;
   /** demo blijft aan tot een echte backend is gekoppeld */
   demoMode: boolean;
 }

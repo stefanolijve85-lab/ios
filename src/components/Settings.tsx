@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store';
 import { DEFAULT_STATE, Light } from '@/lib/types';
 import Sheet from './Sheet';
 import TuyaImport from './TuyaImport';
+import HueCloud, { hueKind } from './HueCloud';
 
 const TUYA_ENDPOINTS = [
   { label: 'Europa', value: 'https://openapi.tuyaeu.com' },
@@ -101,7 +102,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
       const lights = res.lights || {};
       let count = 0;
       Object.entries<any>(lights).forEach(([hueId, l]) => {
-        const kind = l.state?.hue !== undefined ? 'rgbcct' : l.state?.ct !== undefined ? 'cct' : 'dimmable';
+        const kind = hueKind(l);
         const light: Light = {
           id: `hue-${hueId}`, name: l.name || `Hue ${hueId}`, roomId: roomId!, backend: 'hue',
           kind, icon: 'lamp', ref: { hueId }, state: { ...DEFAULT_STATE, on: !!l.state?.on },
@@ -148,13 +149,17 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
       {/* Hue */}
       <div className="section-title" style={{ margin: '20px 4px 6px' }}>Philips Hue</div>
-      <p className="hint">De app moet op je thuisnetwerk draaien om de Bridge te bereiken. Zoek de Bridge, druk op de ronde link-knop en koppel.</p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input className="field" placeholder="Bridge-IP (bijv. 192.168.1.23)" value={hueIp} onChange={(e) => setHueIp(e.target.value)} style={{ flex: 1 }} />
-        <button className="btn secondary" style={{ width: 'auto', padding: '13px 16px', margin: '6px 0' }} disabled={busy === 'hue-d'} onClick={discoverHue}>Zoek</button>
-      </div>
-      <button className="btn secondary" disabled={busy === 'hue-p' || !hueIp} onClick={pairHue}>{busy === 'hue-p' ? 'Koppelen…' : 'Koppel (druk eerst op link-knop)'}</button>
-      <button className="btn secondary" disabled={busy === 'hue-i' || !config.hue} onClick={importHue}>{busy === 'hue-i' ? 'Importeren…' : 'Hue-lampen importeren'}</button>
+      <HueCloud />
+      <details style={{ margin: '4px 4px 0' }}>
+        <summary className="hint" style={{ cursor: 'pointer' }}>Lokale Bridge (alleen als de app thuis draait, niet via Vercel)</summary>
+        <p className="hint">De app moet op je thuisnetwerk draaien om de Bridge te bereiken. Zoek de Bridge, druk op de ronde link-knop en koppel.</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input className="field" placeholder="Bridge-IP (bijv. 192.168.1.23)" value={hueIp} onChange={(e) => setHueIp(e.target.value)} style={{ flex: 1 }} />
+          <button className="btn secondary" style={{ width: 'auto', padding: '13px 16px', margin: '6px 0' }} disabled={busy === 'hue-d'} onClick={discoverHue}>Zoek</button>
+        </div>
+        <button className="btn secondary" disabled={busy === 'hue-p' || !hueIp} onClick={pairHue}>{busy === 'hue-p' ? 'Koppelen…' : 'Koppel (druk eerst op link-knop)'}</button>
+        <button className="btn secondary" disabled={busy === 'hue-i' || !config.hue} onClick={importHue}>{busy === 'hue-i' ? 'Importeren…' : 'Hue-lampen importeren'}</button>
+      </details>
 
       {/* Kamer toevoegen */}
       <div className="section-title" style={{ margin: '20px 4px 6px' }}>Kamers</div>

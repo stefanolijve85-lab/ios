@@ -2,7 +2,7 @@
 // die naar onze eigen API-routes. Draait de app in demo-modus (of mist de
 // backend-config), dan gebeurt er niets op afstand en blijft alles lokaal.
 
-import { AppConfig, Light, LightState } from './types';
+import { AppConfig, HueCloudConfig, Light, LightState } from './types';
 
 function tuyaCommands(light: Light, s: LightState) {
   const dp = light.ref.dp || {};
@@ -49,7 +49,58 @@ async function post(url: string, body: unknown) {
   return json;
 }
 
-export async function applyToDevice(light: Light, next: LightState, config: AppConfig): Promise<void> {
+// --- Hue-cloud -------------------------------------------------------------
+
+// Laatst ververste tokens; de store krijgt ze via onConfig, maar tot die
+// bijgewerkt is komen er nog aanroepen met de oude config binnen.
+let freshHue: HueCloudConfig | null = null;
+let refreshing: Promise<HueCloudConfig> | null = null;
+
+export async function hueCloudConfig(cfg: HueCloudConfig, onConfig?: (patch: Partial<AppConfig>) => void): Promise<HueCloudConfig> {
+  if (freshHue && freshHue.clientId === cfg.clientId && (freshHue.expiresAt || 0) > (cfg.expiresAt || 0)) cfg = freshHue;
+  if (!cfg.refreshToken || (cfg.expiresAt || 0) - Date.now() > 5 * 60_000) return cfg;
+  if (!refreshing) {
+    const base = cfg;
+    refreshing = post('/api/hue/cloud', {
+      action: 'refresh', clientId: base.clientId, clientSecret: base.clientSecret, refreshToken: base.refreshToken,
+    })
+      .then((res) => {
+        freshHue = { ...base, ...res.tokens };
+        onConfig?.({ hueCloud: freshHue! });
+        return freshHue!;
+      })
+      .finally(() => { refreshing = null; });
+  }
+  return refreshing;
+}
+
+// Per lamp hooguit één verzoek tegelijk; tussentijdse standen (slepen met een
+// schuifregelaar) worden overgeslagen en alleen de laatste wordt verstuurd.
+const pending = new Map<string, () => Promise<unknown>>();
+const running = new Set<string>();
+
+async function sendLatest(key: string, send: () => Promise<unknown>): Promise<void> {
+  pending.set(key, send);
+  if (running.has(key)) return;
+  running.add(key);
+  try {
+    while (pending.has(key)) {
+      const next = pending.get(key)!;
+      pending.delete(key);
+      await next();
+    }
+  } finally {
+    running.delete(key);
+    pending.delete(key);
+  }
+}
+
+export async function applyToDevice(
+  light: Light,
+  next: LightState,
+  config: AppConfig,
+  onConfig?: (patch: Partial<AppConfig>) => void,
+): Promise<void> {
   if (config.demoMode) return;
 
   if (light.backend === 'tuya') {
@@ -64,11 +115,26 @@ export async function applyToDevice(light: Light, next: LightState, config: AppC
   }
 
   if (light.backend === 'hue') {
+    const cloud = config.hueCloud;
+    if (cloud?.username && cloud.accessToken) {
+      await sendLatest(light.id, async () => {
+        const c = await hueCloudConfig(cloud, onConfig);
+        await post('/api/hue/cloud', {
+          action: 'set',
+          config: { accessToken: c.accessToken, username: c.username },
+          hueId: light.ref.hueId,
+          state: next,
+          kind: light.kind,
+        });
+      });
+      return;
+    }
     if (!config.hue) throw new Error('Hue niet gekoppeld');
     await post('/api/hue/light', {
       config: config.hue,
       hueId: light.ref.hueId,
       state: next,
+      kind: light.kind,
     });
     return;
   }
