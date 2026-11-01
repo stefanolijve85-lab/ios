@@ -202,7 +202,7 @@ export class Match {
         else this.toast(`AI ${KIND_LABEL[u.kind]} · ${u.state}`, 'info');
       }
     } else if (p.type === 'store') {
-      if (isDef) { this.view.selectedStore = this.view.selectedStore === p.idx ? -1 : p.idx; }
+      if (isDef) { this.view.selectedStore = this.view.selectedStore === p.idx ? -1 : p.idx; if (this.view.selectedStore >= 0) this.infoCollapsed = false; }
       else {
         const sel = [...this.view.selected].filter((id) => g.unit(id)?.state === 'approach');
         if (sel.length) { if (g.retarget(sel, p.idx).ok) this.sfx.play('click'); }
@@ -391,9 +391,12 @@ export class Match {
     return s || '<div class="muted">Tap a unit or store for details.</div>';
   }
 
+  infoCollapsed = window.innerWidth < 700 || window.innerHeight > window.innerWidth;
+
   private renderInfo() {
     const g = this.game; const i = this.el.info;
-    let html = `<div data-dyn>${this.dynInfo()}</div>`;
+    i.classList.toggle('collapsed', this.infoCollapsed);
+    let html = `<button class="infotoggle" data-tog>${this.infoCollapsed ? 'Details & upgrades ▾' : 'Hide ▴'}</button><div data-dyn>${this.dynInfo()}</div>`;
     if (this.side === 'defence') {
       const si = this.view.selectedStore;
       if (si >= 0) {
@@ -419,6 +422,7 @@ export class Match {
       if (tg) html += `<div class="upg"><small>TARGET STORE</small><div>${tg.name}: structure ${Math.ceil(tg.structure)}/${tg.maxStructure} · stock ${tg.stock}</div></div>`;
     }
     i.innerHTML = html;
+    i.querySelector('[data-tog]')!.addEventListener('click', () => { this.infoCollapsed = !this.infoCollapsed; this.renderInfo(); });
     i.querySelectorAll<HTMLButtonElement>('[data-u]').forEach((b) => b.addEventListener('click', () => {
       const u = b.dataset.u!; let r;
       if (u === 'shutter') r = g.upgradeShutter(this.view.selectedStore);

@@ -101,6 +101,7 @@ export class MatchView {
     });
     this.bindInput();
     this.resize();
+    if (container.clientWidth < container.clientHeight) this.dist = Math.min(this.maxDist, map.camera.dist * 1.7);
     window.addEventListener('resize', this.resize);
   }
 
