@@ -383,15 +383,20 @@ function fountainWaterFor(model: THREE.Object3D, parent: THREE.Group, outerR: nu
   const upper = pts.filter(([, y]) => y > top * 0.5 && y < top * 0.85);
   const bowlR = upper.reduce((a, [r]) => Math.max(a, r), 0.6); const bowlY = upper.filter(([r]) => r > bowlR * 0.9).reduce((a, [, y]) => Math.max(a, y), top * 0.7);
   const animated: Scroll[] = [];
-  const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.015, vy: 0.01 });
+  const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.06, vy: 0.045 });
   const water = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.78, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: rip, color: 0x6f8f8a, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55, depthWrite: false, emissive: 0x2e4440, emissiveIntensity: 0.5 }));
   water.position.y = waterY; parent.add(water);
   const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,220,150,0.26)', 'rgba(255,200,120,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.3; const d = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20).rotateX(-Math.PI / 2), glow); d.position.set(Math.cos(a) * outerR * 0.58, waterY + 0.01, Math.sin(a) * outerR * 0.58); parent.add(d); }
-  if (!reducedFx && bowlY > waterY + 0.3) {
-    const ft = fallingWaterTexture().clone(); ft.repeat.set(14, 1); ft.needsUpdate = true; animated.push({ tex: ft, vx: 0, vy: 0.9 });
-    const h = bowlY - waterY; const sheet = new THREE.Mesh(new THREE.CylinderGeometry(bowlR + 0.04, bowlR + 0.18, h, 40, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xf4fbff, opacity: 0.35 }));
+  void reducedFx; // the falling sheet is one cheap mesh: shown on phones too, so the water visibly moves everywhere
+  if (bowlY > waterY + 0.3) {
+    const ft = fallingWaterTexture().clone(); ft.repeat.set(14, 1); ft.needsUpdate = true; animated.push({ tex: ft, vx: 0, vy: 1.4 });
+    const h = bowlY - waterY; const sheet = new THREE.Mesh(new THREE.CylinderGeometry(bowlR + 0.04, bowlR + 0.18, h, 40, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xf4fbff, opacity: 0.45 }));
     sheet.position.y = waterY + h / 2; parent.add(sheet);
+    // splash ring where the sheet meets the basin
+    const ring = rippleTexture().clone(); ring.repeat.set(6, 1); ring.needsUpdate = true; animated.push({ tex: ring, vx: 0.25, vy: 0 });
+    const splash = new THREE.Mesh(new THREE.RingGeometry(bowlR * 0.9, bowlR + 0.6, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: ring, color: 0xe8f6ff, transparent: true, opacity: 0.35, depthWrite: false }));
+    splash.position.y = waterY + 0.02; parent.add(splash);
   }
   return animated;
 }

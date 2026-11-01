@@ -14,6 +14,24 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris: the user's Higgsfield characters in the game
+
+- Seven auto-rigged figures from the user's Higgsfield account are installed as final models:
+  - `char.security`: male officer
+  - `char.shield`: female officer
+  - `char.firefighter`
+  - `char.civilian`: blue jacket
+  - `char.runner`: hooded figure
+  - `char.carrier`: olive jacket with backpack
+  - `char.heavy`: puffer jacket
+- Each has about 7.7k triangles, a 24-bone skeleton and one photo texture (about 1.1 MB per file).
+- Only the male officer has more than an idle clip: run, push and kneel. These are kept as animation-only files (`anim.run`, `anim.push`, `anim.kneel`, 50–155 KB, made with `tools/strip_glb_to_anims.py`). At load time every auto-rigged character takes the clips it lacks from them (rotations and hip motion only, so no other body's bone lengths are applied). Meshy clip names are mapped to the game's names, and missing states use the nearest clip: walk, flee and carry use the run cycle slowed down.
+- A final class model wins over the temporary outfit placeholders. Civilians and café guests alternate between the three street figures. Units without a carry node get a cardboard box at chest height when they carry loot. The textures get a little self-light so the figures stay readable at night.
+- Still placeholders: vandal, thrower, shopkeeper and helper. The shield team has no shield in its hands yet.
+- Phone emulation: 385 draw calls, about 5 ms per frame. Download size grows by about 8 MB of character models.
+- Fountain water now moves on phones too: faster ripples, the falling sheet from the bowl, and a splash ring.
+- Comparison: `docs/screenshots/paris_concept03_vs_glb_characters.jpg`.
+
 ## Paris fountain: first AI-generated final model
 
 - `prop.fountain` is now a final GLB made with Higgsfield SAM-3D (1 credit) from a crop of concept image 03 (`assets/model_refs/fountain_from_03.png`). It has 14k triangles and one 1.2 MB colour texture, 1.6 MB in total.

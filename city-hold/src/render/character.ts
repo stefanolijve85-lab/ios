@@ -3,7 +3,7 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import type { UnitKind } from '../config/balance';
 import { THROW_RELEASE, animate, buildHumanoid, type AnyKind, contactShadow, outfitFor, CASUAL_LEGS, CASUAL_TOPS, SKIN_TONES, type Humanoid, type Pose } from './humans';
 import { iconTexture } from './textures';
-import { getModel } from './assets';
+import { getModel, slotStatus } from './assets';
 import { buildIncendiary } from './thrown';
 
 /** What the match view needs from any character visual (procedural or loaded from a GLB file). */
@@ -115,6 +115,10 @@ class GltfCharacter implements CharacterVisual {
       const mats = Array.isArray(m.material) ? m.material : [m.material];
       const out = mats.map((mm) => {
         const n = mm.name;
+        if (model.getObjectByName('Hips') && (mm as THREE.MeshStandardMaterial).map) {
+          // auto-rigged photo-textured model: a little self-light keeps it readable on the night street
+          const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0; return c;
+        }
         if (n === 'skin' || n === 'top' || n === 'legs') { const c = (mm as THREE.MeshStandardMaterial).clone(); c.color.setHex(n === 'skin' ? skin : n === 'top' ? top : legs); return c; }
         return mm;
       });
@@ -123,6 +127,11 @@ class GltfCharacter implements CharacterVisual {
     model.scale.setScalar(0.95 + r() * 0.08);
     this.root.add(model);
     this.carry = model.getObjectByName('carry') ?? null;
+    if (!this.carry && model.getObjectByName('Hips')) {
+      // auto-rigged models have no carry node: a cardboard box held at chest height shows the loot
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 }));
+      box.position.set(0, 1.08, 0.32); box.castShadow = true; box.name = 'carry'; this.root.add(box); this.carry = box;
+    }
     this.held = new HeldObject(model.getObjectByName('hand_socket'));
     if (this.carry) this.carry.visible = false;
     this.mixer = new THREE.AnimationMixer(model);
@@ -185,7 +194,11 @@ class ProcCharacter implements CharacterVisual {
 
 /** Use the GLB in the unit's slot when it is loaded, otherwise fall back to the procedural figure. */
 export function createCharacter(kind: AnyKind, variant: number): CharacterVisual {
-  const m = getModel(characterSlot(kind, variant)) ?? getModel(`char.${kind}`);
+  // a final model for the unit class wins over a temporary outfit placeholder; civilians alternate between the final street figures
+  const own = characterSlot(kind, variant);
+  const civ = kind === 'civilian' ? ['char.civilian', 'char.carrier', 'char.heavy'].filter((sl) => slotStatus(sl) === 'final') : [];
+  const slot = civ.length ? civ[variant % civ.length] : slotStatus(own) === 'final' ? own : slotStatus(`char.${kind}`) === 'final' ? `char.${kind}` : own;
+  const m = getModel(slot) ?? getModel(`char.${kind}`);
   if (m) return new GltfCharacter(kind, variant, m.scene, m.animations);
   return new ProcCharacter(buildHumanoid(kind, variant));
 }

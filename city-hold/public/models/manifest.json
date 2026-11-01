@@ -5,34 +5,34 @@
   "forward": "+Z",
   "slots": {
     "char.security": {
-      "file": "placeholder/char_security.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.security.glb",
+      "status": "final",
+      "note": "Higgsfield rigged security officer (idle)"
     },
     "char.shield": {
-      "file": "placeholder/char_shield.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.shield.glb",
+      "status": "final",
+      "note": "Higgsfield rigged security officer, female (idle)"
     },
     "char.firefighter": {
-      "file": "placeholder/char_firefighter.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.firefighter.glb",
+      "status": "final",
+      "note": "Higgsfield rigged firefighter (idle)"
     },
     "char.runner": {
-      "file": "placeholder/char_runner.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.runner.glb",
+      "status": "final",
+      "note": "Higgsfield rigged hooded figure (idle)"
     },
     "char.carrier": {
-      "file": "placeholder/char_carrier.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.carrier.glb",
+      "status": "final",
+      "note": "Higgsfield rigged olive jacket, backpack (idle)"
     },
     "char.heavy": {
-      "file": "placeholder/char_heavy.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.heavy.glb",
+      "status": "final",
+      "note": "Higgsfield rigged puffer jacket (idle)"
     },
     "char.vandal": {
       "file": "placeholder/char_vandal.glb",
@@ -195,9 +195,9 @@
       "note": "temporary model generated from the procedural figure; replace with a final asset"
     },
     "char.civilian": {
-      "file": "placeholder/char_civilian.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.civilian.glb",
+      "status": "final",
+      "note": "Higgsfield rigged civilian, blue jacket (idle)"
     },
     "char.shopkeeper": {
       "file": "placeholder/char_shopkeeper.glb",
@@ -213,6 +213,21 @@
       "file": "final/prop.fountain.glb",
       "status": "final",
       "note": "Higgsfield SAM-3D from concept 03 crop (1 credit), raw"
+    },
+    "anim.run": {
+      "file": "final/anim.run.glb",
+      "status": "final",
+      "note": "run clip donor (security officer rig)"
+    },
+    "anim.push": {
+      "file": "final/anim.push.glb",
+      "status": "final",
+      "note": "push clip donor"
+    },
+    "anim.kneel": {
+      "file": "final/anim.kneel.glb",
+      "status": "final",
+      "note": "kneel clip donor"
     }
   }
 }
