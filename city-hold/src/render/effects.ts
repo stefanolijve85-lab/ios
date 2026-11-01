@@ -24,7 +24,7 @@ const PRESETS: Record<FxKind, Preset> = {
 };
 export const PARTICLE_CAP = { mobile: 64, desktop: 160 };
 
-interface P { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; s0: number; s1: number; rot: number; vr: number; op: number }
+interface P { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; s0: number; s1: number; rot: number; vr: number; op: number; off: number }
 
 const loader = new THREE.TextureLoader();
 const loaded = new Map<string, Promise<THREE.Texture>>();
@@ -40,25 +40,30 @@ function bindSprite(uniform: { value: THREE.Texture }, name: string | null) {
 class Field {
   readonly points: THREE.Points;
   parts: P[] = [];
-  private pos: Float32Array; private size: Float32Array; private alpha: Float32Array; private rot: Float32Array;
-  constructor(readonly kind: FxKind, readonly cap: number, tex: THREE.Texture, tint: number, sprite: string | null = null) {
-    this.pos = new Float32Array(cap * 3); this.size = new Float32Array(cap); this.alpha = new Float32Array(cap); this.rot = new Float32Array(cap);
+  private pos: Float32Array; private size: Float32Array; private alpha: Float32Array; private rot: Float32Array; private frame: Float32Array;
+  /** 4x4 flipbook (tools/make_flipbooks.py) when available: 16 looping frames */
+  private atlas = false;
+  constructor(readonly kind: FxKind, readonly cap: number, tex: THREE.Texture, tint: number, sprite: string | null = null, atlas: string | null = null) {
+    this.pos = new Float32Array(cap * 3); this.size = new Float32Array(cap); this.alpha = new Float32Array(cap); this.rot = new Float32Array(cap); this.frame = new Float32Array(cap);
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
     g.setAttribute('psize', new THREE.BufferAttribute(this.size, 1));
     g.setAttribute('palpha', new THREE.BufferAttribute(this.alpha, 1));
     g.setAttribute('prot', new THREE.BufferAttribute(this.rot, 1));
+    g.setAttribute('pframe', new THREE.BufferAttribute(this.frame, 1));
     const add = PRESETS[kind].blend === 'add';
     const m = new THREE.ShaderMaterial({
-      uniforms: { map: { value: tex }, tint: { value: new THREE.Color(tint) }, scale: { value: 400 } },
-      vertexShader: `attribute float psize; attribute float palpha; attribute float prot; varying float va; varying float vr; uniform float scale;
-        void main(){ va = palpha; vr = prot; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
-      fragmentShader: `uniform sampler2D map; uniform vec3 tint; varying float va; varying float vr;
+      uniforms: { map: { value: tex }, tint: { value: new THREE.Color(tint) }, scale: { value: 400 }, useAtlas: { value: 0 } },
+      vertexShader: `attribute float psize; attribute float palpha; attribute float prot; attribute float pframe; varying float va; varying float vr; varying float vf; uniform float scale;
+        void main(){ va = palpha; vr = prot; vf = pframe; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float useAtlas; varying float va; varying float vr; varying float vf;
         void main(){
           vec2 c = gl_PointCoord - 0.5; float cs = cos(vr), sn = sin(vr);
           vec2 uv = vec2(cs * c.x - sn * c.y, sn * c.x + cs * c.y) + 0.5;
           if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) discard;
-          vec4 t = texture2D(map, vec2(uv.x, 1.0 - uv.y));
+          vec2 st = vec2(uv.x, 1.0 - uv.y);
+          if (useAtlas > 0.5) { st = clamp(st, 0.006, 0.994); float c = mod(vf, 4.0), r = floor(vf / 4.0); st = vec2((c + st.x) / 4.0, (3.0 - r + st.y) / 4.0); }
+          vec4 t = texture2D(map, st);
           float a = t.a * va; if (a < 0.004) discard;
           ${add ? 'gl_FragColor = vec4(t.rgb * tint * a, a);' : 'gl_FragColor = vec4(t.rgb * tint, a);'}
         }`,
@@ -67,7 +72,9 @@ class Field {
     });
     this.points = new THREE.Points(g, m); this.points.frustumCulled = false;
     this.points.renderOrder = add ? 6 : 5;
-    bindSprite(m.uniforms.map as { value: THREE.Texture }, sprite);
+    if (atlas) {
+      loader.loadAsync(`fx/${atlas}_atlas.png`).then((t) => { t.colorSpace = THREE.SRGBColorSpace; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; /* no bleeding between frames */ m.uniforms.map.value = t; m.uniforms.useAtlas.value = 1; this.atlas = true; }).catch(() => bindSprite(m.uniforms.map as { value: THREE.Texture }, sprite));
+    } else bindSprite(m.uniforms.map as { value: THREE.Texture }, sprite);
   }
   // pixels per metre at distance 1 for the ~36-40° camera: h / (2 tan(fov/2))
   setScale(h: number) { (this.points.material as THREE.ShaderMaterial).uniforms.scale.value = h * 1.45; }
@@ -86,10 +93,11 @@ class Field {
       this.pos[i * 3] = p.x; this.pos[i * 3 + 1] = p.y; this.pos[i * 3 + 2] = p.z;
       this.size[i] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) * (1 - t));
       this.alpha[i] = p.op * Math.min(1, t / 0.15) * Math.pow(1 - t, k === 'smoke' || k === 'tear_gas' ? 1.2 : 0.8);
-      this.rot[i] = p.rot;
+      this.rot[i] = this.atlas ? p.rot * 0.15 : p.rot; // flipbooks stay mostly upright
+      this.frame[i] = Math.floor(p.life * 20 + p.off) % 16;
     }
     const g = this.points.geometry;
-    for (const a of ['position', 'psize', 'palpha', 'prot']) (g.attributes[a] as THREE.BufferAttribute).needsUpdate = true;
+    for (const a of ['position', 'psize', 'palpha', 'prot', 'pframe']) (g.attributes[a] as THREE.BufferAttribute).needsUpdate = true;
     g.setDrawRange(0, n);
     this.points.visible = n > 0;
   }
@@ -120,11 +128,11 @@ export class Effects {
     const share: Record<FxKind, number> = { fire: 0.22, smoke: 0.24, sparks: 0.12, explosion: 0.05, tear_gas: 0.1, spray: 0.17, flare: 0.1 };
     const n = (k: FxKind, min: number) => Math.max(min, Math.floor(c * share[k]));
     this.fields = {
-      fire: new Field('fire', n('fire', 6), flameTexture(), 0xffffff, 'fire'),
-      smoke: new Field('smoke', n('smoke', 6), smokeTexture(), 0xa8a8b0, 'smoke'),
+      fire: new Field('fire', n('fire', 6), flameTexture(), 0xffffff, 'fire', 'fire'),
+      smoke: new Field('smoke', n('smoke', 6), smokeTexture(), 0xa8a8b0, 'smoke', 'smoke'),
       sparks: new Field('sparks', n('sparks', 4), flameTexture(), 0xffffff, 'sparks'),
       explosion: new Field('explosion', n('explosion', 2), flameTexture(), 0xffffff, 'explosion'),
-      tear_gas: new Field('tear_gas', n('tear_gas', 4), smokeTexture(), 0xf2f0ea, 'tear_gas'),
+      tear_gas: new Field('tear_gas', n('tear_gas', 4), smokeTexture(), 0xf2f0ea, 'tear_gas', 'tear_gas'),
       spray: new Field('spray', n('spray', 4), smokeTexture(), 0xeaf6ff, 'tear_gas'),
       flare: new Field('flare', n('flare', 4), flameTexture(), 0x9feaff),
     };
@@ -146,7 +154,7 @@ export class Effects {
     f.parts.push({
       x: x + (rnd() - 0.5) * spread, y, z: z + (rnd() - 0.5) * spread * 0.7,
       vx: o.vx ?? Math.cos(a) * pr.drift * rnd(), vy: o.vy ?? range(pr.rise), vz: o.vz ?? Math.sin(a) * pr.drift * rnd(),
-      life: 0, max: range(pr.life), s0: pr.scale[0] * sm, s1: pr.scale[1] * sm, rot: rnd() * Math.PI * 2, vr: (rnd() - 0.5) * pr.spin * 2, op: pr.opacity,
+      life: 0, max: range(pr.life), s0: pr.scale[0] * sm, s1: pr.scale[1] * sm, rot: rnd() * Math.PI * 2, vr: (rnd() - 0.5) * pr.spin * 2, op: pr.opacity, off: Math.floor(rnd() * 16),
     });
   }
 
