@@ -99,6 +99,14 @@ export function waveComposition(wave: number): AttKind[] {
   return list;
 }
 
+export type Difficulty = 'normal' | 'hard' | 'expert';
+/** mission difficulty: defence waves grow, looter-mode AI defence gets more income and guards */
+export const DIFFICULTY: Record<Difficulty, { waveMul: number; aiIncomeMul: number; aiExtraSecurity: number }> = {
+  normal: { waveMul: 1, aiIncomeMul: 1, aiExtraSecurity: 0 },
+  hard: { waveMul: 1.3, aiIncomeMul: 1.5, aiExtraSecurity: 1 },
+  expert: { waveMul: 1.6, aiIncomeMul: 2, aiExtraSecurity: 2 },
+};
+
 export const KIND_LABEL: Record<UnitKind, string> = {
   security: 'Security team',
   shield: 'Shield team',

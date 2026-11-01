@@ -54,7 +54,7 @@ export const AMSTERDAM: MapDef = {
     { id: 'L3', x: 0, z: 18, size: 'large', rot: 0 },
   ],
   van: { x: 26, z: -10, rot: 90 }, defenderSpawn: { x: 21, z: -8 },
-  lowSight: [], camera: { x: 0, z: -3, dist: 54 }, playable: true,
+  lowSight: [], camera: { x: 0, z: -3, dist: 54 }, playable: false, // Paris first: this city waits for its own asset pack
   notes: 'Canal is impassable; only the two bridges connect the banks. Blocking both bridges is refused.',
 };
 
@@ -105,7 +105,7 @@ export const LONDON: MapDef = {
     { id: 'L1', x: 14, z: -10, size: 'large', rot: 0 }, { id: 'L2', x: 19, z: 1, size: 'large', rot: 90 }, { id: 'L3', x: -27, z: -2, size: 'large', rot: 90 },
   ],
   van: { x: 26, z: 0.5, rot: 90 }, defenderSpawn: { x: 21, z: 2 },
-  lowSight: [{ x0: 12, z0: -28, x1: 16, z1: -12 }], camera: { x: -2, z: -6, dist: 54 }, playable: true,
+  lowSight: [{ x0: 12, z0: -28, x1: 16, z1: -12 }], camera: { x: -2, z: -6, dist: 54 }, playable: false, // Paris first: this city waits for its own asset pack
   notes: 'Two surface streets plus the covered passage give separate approaches; the underground stairs are a marked spawn.',
 };
 
@@ -148,7 +148,7 @@ export const MILAN: MapDef = {
     { id: 'L1', x: 22, z: -24, size: 'large', rot: 0 }, { id: 'L2', x: 0, z: 18, size: 'large', rot: 0 }, { id: 'L3', x: -24, z: 13, size: 'large', rot: 90 },
   ],
   van: { x: -20, z: 2, rot: 0 }, defenderSpawn: { x: -17, z: 3 },
-  lowSight: [{ x0: 18.2, z0: -30, x1: 26, z1: 16 }], camera: { x: 4, z: -4, dist: 56 }, playable: true,
+  lowSight: [{ x0: 18.2, z0: -30, x1: 26, z1: 16 }], camera: { x: 4, z: -4, dist: 56 }, playable: false, // Paris first: this city waits for its own asset pack
   notes: 'Arcade is walkable underneath; columns block. Detection is halved under the arcade roof.',
 };
 
@@ -190,7 +190,7 @@ export const BERLIN: MapDef = {
     { id: 'L1', x: 0, z: -12.5, size: 'large', rot: 0 }, { id: 'L2', x: -26, z: -7, size: 'large', rot: 90 }, { id: 'L3', x: 0, z: 13, size: 'large', rot: 0 },
   ],
   van: { x: 24, z: 7, rot: 90 }, defenderSpawn: { x: 19, z: 5 },
-  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -16, dist: 64 }, playable: true,
+  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -16, dist: 64 }, playable: false, // Paris first: this city waits for its own asset pack
   notes: 'The courtyard is a real navigable area reached only through the archway; walls are solid.',
 };
 
@@ -235,6 +235,6 @@ export const SAOPAULO: MapDef = {
   lowSight: [],
   loadingLane: { x0: 20.2, z0: -28, x1: 25.8, z1: -14 },
   supply: { route: [{ x: 23, z: 23 }, { x: 23, z: -21 }, { x: 23, z: -35 }], loadIndex: 1 },
-  camera: { x: 0, z: -6, dist: 56 }, playable: true,
+  camera: { x: 0, z: -6, dist: 56 }, playable: false, // Paris first: this city waits for its own asset pack
   notes: 'Rear service lane doubles as the supply-truck route; the truck stops for anyone in front and pays once.',
 };

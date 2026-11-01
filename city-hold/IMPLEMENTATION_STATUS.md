@@ -14,6 +14,17 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## RIOTS menu (RIOTS_UI_Package, references 01–04)
+
+- Game is now called **RIOTS** (page title, HUD, menu). The save key `cityhold.progress.v1` is unchanged, so existing progress stays.
+- Start screen (02), city select (03) and side select (04) are real HTML/CSS (`src/ui/menu.ts`, `src/ui/menu.css`). Only text-free crops of the references are used as images (`tools/prepare_menu_art.py` → `public/menu/`); no mockup is shown as a background and no text sits on baked labels.
+- Flow: SPELEN → city → VERDER → side + difficulty → START MISSIE. VOORTGANG = campaign + research, INSTELLINGEN = sound, language (menus NL/EN), graphics, tips and a reset that needs a second confirmation. TERUG and Escape go back. After a match you return to the side screen.
+- Difficulty (Normaal/Moeilijk/Expert) really changes the match (`DIFFICULTY` in `src/config/balance.ts`); Normaal is identical to the old balance.
+- **Paris only for now:** the other five cities are shown with a lock and "Nog niet speelbaar" until their asset packs arrive (their old prototype maps are kept, `playable: false`).
+- Fonts: the generated lettering in the references is replaced by **Anton** (titles, with a grunge mask), **Barlow Condensed** (buttons/labels) and **Barlow** (body), all SIL OFL via `@fontsource`, bundled locally.
+- Known deviations from the references: the Paris hero is a crop of 03 and slightly upscaled; the side-select backdrop is a blurred lower part of the cover (the reference backdrop sits behind baked UI); the HUD in the match is still English; the other cities' heroes are concept maps, not the 03 artwork.
+- Checked in headless Chromium at 1672×941 (reference ratio), 1440×900, 390×844 and 844×390: no horizontal scroll, no console errors; screenshots in `docs/screenshots/menu/`. Not tested on a physical phone.
+
 ## Asset upgrades: rig, people, flipbooks, PBR, HDRI, templates
 
 - Character GLBs are auto-rigged skinned meshes (`src/render/rig.ts`); verified in the browser (skinned meshes animate, throw clip with hand socket).

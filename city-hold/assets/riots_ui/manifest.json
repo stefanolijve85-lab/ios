@@ -1,0 +1,45 @@
+{
+  "title": "RIOTS",
+  "assets": [
+    {
+      "id": "01_cover",
+      "path": "references/01_cover.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "type": "raster_design_reference",
+      "sha256": "c4238a9407548cdfc711bc7d5461f4c6b2d37e480906aeeecc9233bc090995ea"
+    },
+    {
+      "id": "02_main_menu",
+      "path": "references/02_main_menu.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "type": "raster_design_reference",
+      "sha256": "bfe3bb1b922ee6035d68b5dfd1005344f07d2479923e60097deb397e4e20cfca"
+    },
+    {
+      "id": "03_city_selection",
+      "path": "references/03_city_selection.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "type": "raster_design_reference",
+      "sha256": "3fa66e2fb92a415e699e8282ea570942277019abb630ae7b66d3e9719254ce8e"
+    },
+    {
+      "id": "04_side_selection",
+      "path": "references/04_side_selection.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "type": "raster_design_reference",
+      "sha256": "bea6d70a3a12ba7dbdc660a4edd95c4702f637544a813d71baf36e78255e395c"
+    }
+  ]
+}

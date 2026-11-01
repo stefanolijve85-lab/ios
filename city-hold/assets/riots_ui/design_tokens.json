@@ -1,0 +1,32 @@
+{
+  "status": "proposed_values_sampled_by_visual_judgment_not_exact_pixel_measurements",
+  "colors": {
+    "background": "#10151c",
+    "surface": "#17202a",
+    "text": "#f1ecdf",
+    "muted": "#b9bdc2",
+    "accent": "#ff961d",
+    "accent_dark_text": "#16120d",
+    "selected_border": "#ffa727"
+  },
+  "font_style": "heavy condensed weathered display headings; readable sans body",
+  "spacing_px": [
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "minimum_touch_target_css_px": 44,
+  "screens": [
+    "main_menu",
+    "city_selection",
+    "side_selection",
+    "progress",
+    "settings"
+  ],
+  "reference_width": 1672,
+  "reference_height": 941
+}

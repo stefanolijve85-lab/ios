@@ -11,11 +11,16 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
   const errs = []; p.on('pageerror', (e) => errs.push(String(e))); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
   await p.goto(url); await p.waitForTimeout(800);
-  if (city !== 'paris') await p.evaluate((c) => { const k = 'cityhold.progress.v1'; const pr = JSON.parse(localStorage.getItem(k) || 'null') || { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0, reducedFx: false, showHints: true } }; pr.unlocked = ['paris', 'amsterdam', 'london', 'milan', 'berlin', 'saopaulo']; pr.tutorialDone = true; localStorage.setItem(k, JSON.stringify(pr)); }, city), await p.reload(), await p.waitForTimeout(600), await p.click(`[data-city="${city}"]`);
+  if (city !== 'paris') await p.evaluate((c) => { const k = 'cityhold.progress.v1'; const pr = JSON.parse(localStorage.getItem(k) || 'null') || { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0, reducedFx: false, showHints: true } }; pr.unlocked = ['paris', 'amsterdam', 'london', 'milan', 'berlin', 'saopaulo']; pr.tutorialDone = true; localStorage.setItem(k, JSON.stringify(pr)); }, city), await p.reload(), await p.waitForTimeout(600);
   const ff = (sec) => p.evaluate((s) => { const g = window.__match.game; for (let i = 0; i < s * 30 && !g.over; i++) g.step(1 / 30); }, sec);
   const scr = (x, y, z) => p.evaluate(([x, y, z]) => { const v = window.__match.view; const s = v.toScreen(x, y, z); const r = v.renderer.domElement.getBoundingClientRect(); return { x: s.x + r.left, y: s.y + r.top }; }, [x, y, z]);
+  const play = async (side) => {
+    if (!(await p.$('main.rm-side'))) { if (await p.$('main.rm-main')) await p.click('.rm-cta'); await p.click(`[data-city="${city}"]`); await p.click('[data-next]'); }
+    await p.click(`[data-side="${side}"]`); await p.click('[data-start]');
+    await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
+  };
   // ---------------- defence
-  await p.click('[data-side="defence"]'); await p.click('[data-act="play"]'); await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
+  await play('defence');
   let st = await p.evaluate(() => ({ budget: window.__match.game.budget, canvases: document.querySelectorAll('canvas').length }));
   assert(st.budget >= 1500 && st.canvases === 1, 'defence match starts with budget ' + st.budget);
   // barrier via card + socket tap
@@ -78,7 +83,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_result.png` });
   await p.click('[data-r="menu"]'); await p.waitForTimeout(500);
   // ---------------- looters
-  await p.click('[data-side="looters"]'); await p.click('[data-act="play"]'); await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
+  await play('looters');
   await p.click('.store-label >> nth=2'); await p.waitForTimeout(200);
   const tsel = await p.evaluate(() => window.__match.game.looterTarget);
   assert(tsel === 2, 'tapping a store label sets the looter target');
@@ -132,12 +137,24 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   const rp = await p.evaluate(() => JSON.parse(localStorage.getItem('cityhold.progress.v1')).research);
   await p.reload(); await p.waitForTimeout(800);
   const rp2 = await p.evaluate(() => JSON.parse(localStorage.getItem('cityhold.progress.v1')).research);
-  const btn = await p.textContent('[data-act="research"]');
+  await p.click('[data-go="progress"]'); await p.waitForTimeout(200);
+  const btn = await p.textContent('.rm-panels');
+  await p.click('[data-back]'); await p.waitForTimeout(200);
   assert(rp > 0 && rp === rp2 && btn.includes(String(rp2)), `progress persists across reload (${rp2} RP)`);
+  // menu: Escape goes back; reset needs an explicit second confirmation
+  await p.click('.rm-cta'); await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+  assert(!!(await p.$('main.rm-main')), 'Escape returns from city select to the start screen');
+  if (city === 'paris') {
+    await p.click('[data-go="settings"]'); await p.click('.rm-danger summary'); await p.click('[data-reset]');
+    const still = await p.evaluate(() => JSON.parse(localStorage.getItem('cityhold.progress.v1')).research);
+    await p.click('[data-reset-yes]'); await p.waitForTimeout(150);
+    const after = await p.evaluate(() => JSON.parse(localStorage.getItem('cityhold.progress.v1')).research);
+    assert(still === rp2 && after === 0 && !!(await p.$('main.rm-main')), `reset only after confirmation (${still} -> ${after} RP)`);
+  }
   // portrait layout
   await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_menu_portrait.png` });
-  await p.click('[data-side="defence"]'); await p.click('[data-act="play"]'); await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
+  await play('defence');
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_portrait.png` });
   const small = await p.evaluate(() => [...document.querySelectorAll('.hud button')].filter((b) => b.offsetParent && (b.getBoundingClientRect().height < 28)).length);
   assert(small === 0, 'no visible HUD button smaller than 28 px in portrait');

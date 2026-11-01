@@ -14,6 +14,9 @@
     "e2e:mobile": "node tools/e2e-mobile.cjs http://localhost:5173/ test-output"
   },
   "dependencies": {
+    "@fontsource/anton": "5.3.0",
+    "@fontsource/barlow": "5.3.0",
+    "@fontsource/barlow-condensed": "5.3.0",
     "three": "0.187.0"
   },
   "devDependencies": {

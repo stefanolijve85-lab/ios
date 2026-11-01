@@ -1,4 +1,4 @@
-# CITY HOLD — starten (Parijse straat)
+# RIOTS — starten (Parijse straat)
 
 Benodigd: Node.js 20 of nieuwer.
 

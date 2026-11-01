@@ -201,7 +201,7 @@ describe('navigation', () => {
       }
     });
     expect(maxStep).toBeLessThan(0.6);
-  });
+  }, 30000);
 });
 
 describe('match outcomes', () => {

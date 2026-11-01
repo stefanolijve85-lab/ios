@@ -1,4 +1,4 @@
-import { BALANCE, type AttKind, type DefKind, type UnitKind, waveComposition } from '../config/balance';
+import { BALANCE, DIFFICULTY, type Difficulty, type AttKind, type DefKind, type UnitKind, waveComposition } from '../config/balance';
 import type { MapDef, Rect, SocketDef, Vec2 } from '../maps/types';
 import { storeDoor } from '../maps/types';
 import { NavGrid, barrierRect } from './nav';
@@ -99,6 +99,7 @@ export interface GameOptions {
   seed?: number;
   perks?: string[];
   mobile?: boolean;
+  difficulty?: Difficulty;
 }
 
 export interface ActionResult { ok: boolean; reason?: string }
@@ -119,6 +120,7 @@ export class Game {
   fires: Fire[] = [];
   projectiles: Projectile[] = [];
   npcs: Npc[] = [];
+  readonly difficulty: Difficulty;
   /** separate random stream: neutral people must never change the course of the game */
   private npcRng!: Rng;
   maxCivilians: number = BALANCE.npc.civilians.desktop;
@@ -162,6 +164,7 @@ export class Game {
     this.nav = new NavGrid(map);
     this.rng = new Rng(opts.seed ?? 12345);
     this.perks = new Set(opts.perks ?? []);
+    this.difficulty = opts.difficulty ?? 'normal';
     if (opts.mobile) this.maxProjectiles = BALANCE.throw.maxActive.mobile;
     this.maxCivilians = opts.mobile ? BALANCE.npc.civilians.mobile : BALANCE.npc.civilians.desktop;
     const bonus = this.perks.has('budget') ? 100 : 0;
@@ -522,6 +525,8 @@ export class Game {
 
   planWave() {
     const kinds = waveComposition(this.wave);
+    const extra = Math.round(kinds.length * (DIFFICULTY[this.difficulty].waveMul - 1));
+    for (let i = 0; i < extra; i++) kinds.push(i % 3 === 2 ? 'runner' : 'carrier');
     for (let i = kinds.length - 1; i > 0; i--) { const j = this.rng.int(i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
     const spawns = this.map.entries.filter((e) => e.spawn).map((e) => e.id);
     const count = Math.min(spawns.length, this.wave < 3 ? 1 : this.wave < 7 ? 2 : 3);
@@ -654,7 +659,7 @@ export class Game {
     const guardPos = (s: Store, dist: number) => { const sd = m.stores[s.idx]; return { x: s.door.x + sd.normal.x * dist, z: s.door.z + sd.normal.z * dist }; };
     const s0 = this.stores[0], s2 = this.stores[this.stores.length - 1];
     const ai = BALANCE.looters.ai;
-    for (let i = 0; i < ai.security; i++) { const st = [s0, s2, mid][i % 3]; const a = this.spawnDefender('security', guardPos(st, 7)); a.home = { x: a.x, z: a.z }; }
+    for (let i = 0; i < ai.security + DIFFICULTY[this.difficulty].aiExtraSecurity; i++) { const st = [s0, s2, mid][i % 3]; const a = this.spawnDefender('security', guardPos(st, 7)); a.home = { x: a.x, z: a.z }; }
     for (let i = 0; i < ai.shield; i++) { const c = this.spawnDefender('shield', guardPos(mid, 2.2)); c.home = { x: c.x, z: c.z }; }
     const f = this.spawnDefender('firefighter', m.defenderSpawn); f.home = { x: f.x, z: f.z };
     // one camera on the socket closest to the middle store
@@ -665,7 +670,7 @@ export class Game {
 
   private stepAiDefence(dt: number) {
     this.aiIncomeT += dt; this.aiThinkT += dt;
-    if (this.aiIncomeT >= BALANCE.looters.ai.incomeEvery) { this.aiIncomeT = 0; this.aiBudget += BALANCE.looters.ai.income; }
+    if (this.aiIncomeT >= BALANCE.looters.ai.incomeEvery) { this.aiIncomeT = 0; this.aiBudget += Math.round(BALANCE.looters.ai.income * DIFFICULTY[this.difficulty].aiIncomeMul); }
     if (this.aiThinkT < 2) return;
     this.aiThinkT = 0;
     // threat per store = approaching attackers

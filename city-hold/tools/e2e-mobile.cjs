@@ -13,7 +13,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.goto(url); await p.waitForTimeout(800);
   const coarse = await p.evaluate(() => matchMedia('(pointer: coarse)').matches);
   assert(coarse, 'phone emulation reports a coarse (touch) pointer');
-  await p.tap('[data-side="defence"]'); await p.tap('[data-act="play"]');
+  await p.tap('.rm-cta'); await p.tap('[data-next]'); await p.tap('[data-side="defence"]'); await p.tap('[data-start]');
   await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 120000 }); await p.waitForTimeout(1500);
   const q = await p.evaluate(() => ({ fx: window.__match.view.reducedFx, shadows: window.__match.view.renderer.shadowMap.enabled, dpr: window.__match.view.renderer.getPixelRatio() }));
   assert(q.fx && !q.shadows, `mobile quality is the default on touch devices (pixel ratio ${q.dpr})`);

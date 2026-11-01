@@ -48,7 +48,7 @@ export class Match {
 
   constructor(private host: HTMLElement, readonly map: MapDef, readonly side: Side, private settings: Settings, private perks: string[], private tutorial: boolean,
     private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void) {
-    this.game = new Game(map, side, { seed: (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx });
+    this.game = new Game(map, side, { seed: (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty });
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
@@ -89,7 +89,7 @@ export class Match {
     const h = document.createElement('div'); h.className = 'hud ' + (isDef ? 'side-def' : 'side-att');
     h.innerHTML = `
       <div class="topbar">
-        <div class="brand"><b>CITY HOLD</b><span>${this.map.city.toUpperCase()} / ${this.map.district.toUpperCase()}</span></div>
+        <div class="brand"><b>RIOTS</b><span>${this.map.city.toUpperCase()} / ${this.map.district.toUpperCase()}</span></div>
         <div class="badge">${isDef ? '🛡 DEFENCE' : '📦 LOOTERS'}</div>
         <div class="stat"><small>BUDGET</small><b data-k="budget"></b></div>
         <div class="stat"><small>${isDef ? 'WAVE' : 'TIME LEFT'}</small><b data-k="wave"></b></div>
