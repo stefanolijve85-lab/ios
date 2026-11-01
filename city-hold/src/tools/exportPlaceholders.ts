@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { buildHumanoid, STREETWEAR } from '../render/humans';
 import { bakeClips } from '../render/character';
+import { rigCharacter } from '../render/rig';
 import { buildBarrierModel, buildCar, buildMastModel, buildProp, buildVan } from '../render/world';
 import { buildBusShelter, buildDeliveryVan } from '../render/streetProps';
 import type { UnitKind } from '../config/balance';
@@ -44,7 +45,8 @@ async function run(): Promise<Record<string, string>> {
     const h = buildHumanoid(kind, 7, { outfit, exportMode: true });
     const clips = bakeClips(h);
     h.carry.visible = true; // visibility is driven by the game; export the carried goods visible
-    files[slot] = await glb(h.root, clips);
+    // auto-rigged: skeleton + skinned meshes, clips drive the bones
+    files[slot] = await glb(rigCharacter(h.root), clips);
   }
   const props: PropType[] = ['lamp', 'tree', 'planter', 'bench', 'bollard', 'umbrella'];
   for (const t of props) files[`prop.${t}`] = await glb(single((g) => buildProp({ type: t, x: 0, z: 0 }, g, 1, new Map(), [])));
