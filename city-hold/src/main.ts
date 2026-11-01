@@ -4,6 +4,7 @@ import { Match, type MatchResult } from './ui/match';
 import { loadProgress, recordResult, resetProgress, saveProgress, type Progress } from './save';
 import { BALANCE } from './config/balance';
 import type { Side } from './sim/game';
+import { loadAssets, SLOTS, slotStatus } from './render/assets';
 
 const app = document.getElementById('app')!;
 let progress: Progress = loadProgress();
@@ -16,6 +17,7 @@ function cityUnlocked(id: string) { return progress.unlocked.includes(id) || (pr
 
 function menu() {
   match?.dispose(); match = null;
+  (window as unknown as { __match: Match | null }).__match = null;
   const bg = CITY_INFO[chosenCity]?.image ?? 'ui/01_map_clean.jpg';
   app.innerHTML = `
   <div class="menu" style="background-image:linear-gradient(180deg,rgba(6,10,20,.55),rgba(6,10,20,.9)),url(${bg})">
@@ -42,15 +44,17 @@ function menu() {
       <button class="primary big" data-act="play">Play ${CITY_INFO[chosenCity].label} · ${chosenSide === 'defence' ? 'Defence' : 'Looters'}</button>
       <button data-act="research">Research (${progress.research} RP)</button>
       <button data-act="settings">Settings</button>
+      <button data-act="assets">3D assets</button>
       <button data-act="reset" class="danger">Reset progress</button>
     </div>
     <footer class="muted">Images in this game's menus and cards are the supplied concept references. The 3D district, units and effects are built procedurally.</footer>
   </div>`;
   app.querySelectorAll<HTMLButtonElement>('[data-side]').forEach((b) => b.addEventListener('click', () => { chosenSide = b.dataset.side as Side; menu(); }));
   app.querySelectorAll<HTMLButtonElement>('[data-city]').forEach((b) => b.addEventListener('click', () => { chosenCity = b.dataset.city!; menu(); }));
-  app.querySelector('[data-act="play"]')!.addEventListener('click', () => start());
+  app.querySelector('[data-act="play"]')!.addEventListener('click', () => void start());
   app.querySelector('[data-act="research"]')!.addEventListener('click', research);
   app.querySelector('[data-act="settings"]')!.addEventListener('click', settings);
+  app.querySelector('[data-act="assets"]')!.addEventListener('click', () => void assetsPanel());
   app.querySelector('[data-act="reset"]')!.addEventListener('click', () => {
     if (confirm('Reset all progress, research and settings?')) { progress = resetProgress(); chosenCity = 'paris'; menu(); }
   });
@@ -72,6 +76,14 @@ function research() {
   }));
 }
 
+async function assetsPanel() {
+  await loadAssets('models/');
+  const rows = SLOTS.map((d) => { const st = slotStatus(d.slot); return `<tr class="st-${st}"><td>${d.label}</td><td><code>${d.slot}</code></td><td>${st === 'final' ? '✔ final' : st === 'placeholder' ? '◐ temporary' : '○ built in code'}</td></tr>`; }).join('');
+  const missing = SLOTS.filter((d) => slotStatus(d.slot) !== 'final').length;
+  modal(`<h2>3D assets</h2><p>${missing} of ${SLOTS.length} model slots still use temporary models. Drop a final GLB into <code>public/models/</code> and point its slot to it in <code>manifest.json</code> (status "final"). Buildings, shopfronts and the fountain are still generated in code. See <code>ASSETS_TODO.md</code>.</p>
+    <div class="assettable"><table><tr><th>Asset</th><th>Slot</th><th>Status</th></tr>${rows}</table></div>`);
+}
+
 function settings() {
   const s = progress.settings;
   const m = modal(`<h2>Settings</h2>
@@ -83,11 +95,14 @@ function settings() {
   m.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { s.showHints = (e.target as HTMLInputElement).checked; saveProgress(progress); });
 }
 
-function start() {
+async function start() {
   const map = MAPS[chosenCity];
   if (!map || !map.playable) return;
+  match?.dispose(); match = null;
+  (window as unknown as { __match: Match | null }).__match = null;
+  app.innerHTML = '<div class="loading"><b>CITY HOLD</b><span data-l>Loading 3D models…</span></div>';
+  await loadAssets('models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `Loading 3D models… ${d}/${t}`; });
   app.innerHTML = '';
-  match?.dispose();
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);
   match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action));
   match.onSettings = () => saveProgress(progress);
@@ -104,11 +119,11 @@ function start() {
 }
 
 function onExit(_r: MatchResult | null, action: 'menu' | 'restart' | 'next') {
-  if (action === 'restart') { start(); return; }
+  if (action === 'restart') { void start(); return; }
   if (action === 'next') {
     const i = CITY_ORDER.indexOf(chosenCity);
     const nxt = CITY_ORDER.slice(i + 1).find((id) => cityPlayable(id) && progress.unlocked.includes(id));
-    if (nxt) { chosenCity = nxt; start(); return; }
+    if (nxt) { chosenCity = nxt; void start(); return; }
   }
   menu();
 }

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
+import { cloneModel } from './assets';
 import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
@@ -236,6 +237,12 @@ export function buildCar(color: number, burned: boolean): THREE.Group {
   return g;
 }
 
+function beaconsOf(o: THREE.Object3D): THREE.Mesh[] {
+  const out: THREE.Mesh[] = [];
+  o.traverse((c) => { if (c.name.startsWith('beacon') && (c as THREE.Mesh).isMesh) { const m = c as THREE.Mesh; m.material = (m.material as THREE.Material).clone(); out.push(m); } });
+  return out;
+}
+
 export function buildVan(): { g: THREE.Group; lights: THREE.Mesh[] } {
   const g = new THREE.Group();
   mesh(box, mat(0xf2f3f5, 0.35, 0.2), g, 0, 1.25, 0, 2.1, 1.9, VAN.len);
@@ -243,7 +250,7 @@ export function buildVan(): { g: THREE.Group; lights: THREE.Mesh[] } {
   mesh(box, new THREE.MeshStandardMaterial({ color: 0x18222c, roughness: 0.1, metalness: 0.6 }), g, 0, 1.6, VAN.len / 2 - 0.4, 1.9, 0.7, 0.8);
   for (const [x, z] of [[-0.95, 1.8], [0.95, 1.8], [-0.95, -1.8], [0.95, -1.8]]) { const wh = mesh(cyl, mat(0x141414, 0.9), g, x, 0.36, z, 0.36, 0.24, 0.36); wh.rotation.z = Math.PI / 2; }
   const lights: THREE.Mesh[] = [];
-  for (const x of [-0.45, 0.45]) lights.push(mesh(box, new THREE.MeshBasicMaterial({ color: 0x2a5cff }), g, x, 2.28, VAN.len / 2 - 0.9, 0.7, 0.14, 0.25, false));
+  for (const x of [-0.45, 0.45]) { const l = mesh(box, new THREE.MeshBasicMaterial({ color: 0x2a5cff }), g, x, 2.28, VAN.len / 2 - 0.9, 0.7, 0.14, 0.25, false); l.name = 'beacon'; lights.push(l); }
   return { g, lights };
 }
 
@@ -267,8 +274,12 @@ function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number
   if (seed % 2 === 0) for (let k = 0; k < 5; k++) { const a = k * 1.3 + seed; mesh(new THREE.SphereGeometry(0.05, 5, 4), mat([0xd8c060, 0xe0e0d0, 0xc06050][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.6, y + r * 0.95, z + Math.sin(a) * r * 0.6, 1, 1, 1, false); }
 }
 
-function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandles['cars'], lamps: THREE.Vector3[]) {
+export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandles['cars'], lamps: THREE.Vector3[]) {
   const g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.rotation.y = ((p.rot ?? 0) * Math.PI) / 180; parent.add(g);
+  // a loaded GLB in the prop's slot replaces the procedural placeholder
+  const slotType = p.type === 'palm' ? null : p.type;
+  const glb = slotType && p.type !== 'car' ? cloneModel('prop.' + slotType) : null;
+  if (glb) { g.add(glb); if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, 4.3, p.z)); return; }
   switch (p.type) {
     case 'lamp': {
       // Parisian-style cast-iron lamppost with a glowing lantern
@@ -276,7 +287,7 @@ function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandle
       mesh(cyl, iron, g, 0, 0.25, 0, 0.16, 0.5, 0.16);
       mesh(new THREE.CylinderGeometry(0.05, 0.08, 3.6, 8), iron, g, 0, 2.2, 0);
       mesh(cyl, iron, g, 0, 4.0, 0, 0.09, 0.12, 0.09);
-      const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(5) });
+      const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(5) }); glow.name = 'glow';
       mesh(new THREE.CylinderGeometry(0.2, 0.13, 0.5, 6), glow, g, 0, 4.35, 0, 1, 1, 1, false);
       mesh(new THREE.ConeGeometry(0.3, 0.28, 6), iron, g, 0, 4.74, 0);
       mesh(new THREE.SphereGeometry(0.05, 6, 4), iron, g, 0, 4.92, 0);
@@ -313,8 +324,8 @@ function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandle
     case 'phonebox': mesh(box, mat(0x9a1a1a, 0.5), g, 0, 1.25, 0, 0.9, 2.5, 0.9); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), g, 0, 1.4, 0.46, 0.6, 1.2, 0.02, false); break;
     case 'column': mesh(cyl, mat(0xd9c8a4, 0.8), g, 0, 2.5, 0, p.r ?? 0.35, 5, p.r ?? 0.35); break;
     case 'car': {
-      const intact = buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
-      const burned = buildCar(0, true); burned.visible = false;
+      const intact = (cloneModel('prop.car') as THREE.Group | null) ?? buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
+      const burned = (cloneModel('prop.car_burned') as THREE.Group | null) ?? buildCar(0, true); burned.visible = false;
       g.add(intact, burned); cars.set(i, { intact, burned });
       g.rotation.y = p.rot === 90 ? 0 : Math.PI / 2;
       break;
@@ -454,7 +465,8 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     pm.position.set(s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4); group.add(pm);
   }
   // support van (staging point)
-  const { g: van, lights: vanLights } = buildVan();
+  const vanGlb = cloneModel('prop.van') as THREE.Group | null;
+  const { g: van, lights: vanLights } = vanGlb ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
   van.position.set(map.van.x, 0, map.van.z); van.rotation.y = (map.van.rot * Math.PI) / 180; group.add(van);
   // loading lane markings
   if (map.loadingLane) {
@@ -472,3 +484,37 @@ export function skyTexture(): THREE.Texture {
   g.fillStyle = grd; g.fillRect(0, 0, 4, 256);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
+
+// ---- placeholder builders shared by the game (fallback) and the GLB export tool
+export function buildBarrierModel(size: 'small' | 'large'): THREE.Group {
+    const g = new THREE.Group();
+    if (size === 'small') {
+      const metal = mat(0xb9bec4, 0.35, 0.8);
+      const bar = new THREE.BoxGeometry(1, 1, 1);
+      const add = (x: number, y: number, z: number, sx: number, sy: number, sz: number) => { const m = new THREE.Mesh(bar, metal); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); };
+      add(0, 1.05, 0, 2.5, 0.05, 0.05); add(0, 0.25, 0, 2.5, 0.05, 0.05);
+      for (let i = 0; i <= 12; i++) add(-1.25 + i * (2.5 / 12), 0.65, 0, 0.025, 0.8, 0.025);
+      add(-1.25, 0.55, 0, 0.05, 1.1, 0.05); add(1.25, 0.55, 0, 0.05, 1.1, 0.05);
+      add(-1.15, 0.02, 0, 0.05, 0.04, 0.7); add(1.15, 0.02, 0, 0.05, 0.04, 0.7);
+    } else {
+      const conc = mat(0xa8a49c, 0.9);
+      const shape = new THREE.Shape(); shape.moveTo(-0.4, 0); shape.lineTo(0.4, 0); shape.lineTo(0.15, 0.3); shape.lineTo(0.1, 0.85); shape.lineTo(-0.1, 0.85); shape.lineTo(-0.15, 0.3); shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 1.45, bevelEnabled: false }).translate(0, 0, -0.725).rotateY(Math.PI / 2);
+      for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(geo, conc); m.position.x = -1.5 + i * 1.5; m.castShadow = true; m.receiveShadow = true; g.add(m); }
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.32), mat(0xe0b020, 0.6)); stripe.position.set(2.15, 0.45, 0); g.add(stripe);
+    }
+    return g;
+  }
+
+export function buildMastModel(): THREE.Group {
+    const g = new THREE.Group(); const metal = mat(0x9aa0a6, 0.4, 0.7);
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 5, 8), metal); p.position.y = 2.5; p.castShadow = true; g.add(p);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.9), mat(0x7a7a7a, 0.9)); base.position.y = 0.15; g.add(base);
+    const boxM = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 0.2), mat(0x3a4a6a, 0.6)); boxM.position.set(0, 1.6, 0.14); g.add(boxM);
+    for (const s of [-1, 1]) {
+      const cam = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.45), mat(0xeeeeee, 0.4)); cam.position.set(s * 0.3, 4.9, 0.1); cam.rotation.y = s * 0.6; g.add(cam);
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff2222 })); led.position.set(s * 0.3, 4.9, 0.34); g.add(led);
+    }
+    return g;
+  }
+

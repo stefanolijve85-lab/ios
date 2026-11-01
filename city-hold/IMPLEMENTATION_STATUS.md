@@ -14,6 +14,12 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris-street milestone: temporary 3D models and the complete loop
+
+- Characters and props are loaded from **model slots** (`src/render/assets.ts`, `public/models/manifest.json`). All 29 slots are filled with temporary GLB models generated from the procedural figures (`npm run placeholders`), including 14 baked animation clips per character. Final GLBs replace them without code changes; the menu **3D assets** and `ASSETS_TODO.md` list what is still missing. If a model cannot be loaded the game falls back to the procedural figure.
+- The full loop is shown in-game as a checklist and verified both in logic tests (`tests/cycle.test.ts`) and through the real UI (`tools/e2e.cjs`): defence — place defences → start wave → protect → intercept → +350 reward → upgrade bought from that reward; looters — recruit → dispatch → loot → extract → +25/stock reward → upgrade. (In the browser test the looter budget is topped up to 300 only if the extraction reward alone is short, so the upgrade button can be exercised; the logic test covers a reward-funded upgrade.)
+- Dutch start instructions: `STARTEN.md`.
+
 ## What is playable
 
 All six campaign districts can be played from both sides against AI:

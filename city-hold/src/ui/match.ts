@@ -53,6 +53,7 @@ export class Match {
     host.appendChild(this.root);
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx);
     this.buildHud();
+    this.renderCycle();
     this.setupHints();
     this.refreshHud(true);
     this.last = performance.now();
@@ -101,6 +102,7 @@ export class Match {
         </div>
       </div>
       <div class="hint" data-k="hint"><b></b><p></p><button data-a="skiphint">Skip tips</button></div>
+      <div class="cycle" data-k="cycle"></div>
       <div class="toasts" data-k="toasts"></div>
       <div class="info" data-k="info"></div>
       <div class="bottom">
@@ -236,8 +238,37 @@ export class Match {
   }
 
   // ------------------------------------------------------------------ events
+  /** the core loop, ticked off as it happens: build -> start -> protect/plunder -> intercept/extract -> reward -> upgrade */
+  cycle = [false, false, false, false, false, false];
+  private cycleLabels() {
+    return this.side === 'defence'
+      ? ['Place defences', 'Start a wave', 'Protect a store', 'Intercept loot', 'Wave reward', 'Buy an upgrade']
+      : ['Recruit a group', 'Dispatch', 'Loot a store', 'Extract the loot', 'Extraction reward', 'Buy an upgrade'];
+  }
+  private markCycle(i: number) { if (!this.cycle[i]) { this.cycle[i] = true; this.renderCycle(); } }
+  renderCycle() {
+    const done = this.cycle.filter(Boolean).length;
+    this.el.cycle.innerHTML = `<small>GAME LOOP ${done}/6</small>` + this.cycleLabels().map((l, i) => `<div class="${this.cycle[i] ? 'done' : ''}">${this.cycle[i] ? '✔' : '○'} ${l}</div>`).join('');
+    this.el.cycle.classList.toggle('complete', done === 6);
+  }
+
+  private trackCycle(e: GameEvent) {
+    const d = this.side === 'defence';
+    switch (e.type) {
+      case 'purchase': this.markCycle(0); break;
+      case 'waveStart': case 'dispatch': this.markCycle(1); break;
+      case 'held': case 'intercept': if (d) this.markCycle(2); if (d && e.type === 'intercept') this.markCycle(3); break;
+      case 'collect': case 'breach': if (!d) this.markCycle(2); break;
+      case 'recovered': if (d) this.markCycle(3); break;
+      case 'extract': if (!d) { this.markCycle(3); this.markCycle(4); } break;
+      case 'waveEnd': if (d) this.markCycle(4); break;
+      case 'upgrade': this.markCycle(5); break;
+    }
+  }
+
   private handleEvents(evs: GameEvent[]) {
     for (const e of evs) {
+      this.trackCycle(e);
       switch (e.type) {
         case 'denied': this.toast(e.text, 'bad'); this.sfx.play('deny'); break;
         case 'intercept': this.sfx.play('intercept'); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;

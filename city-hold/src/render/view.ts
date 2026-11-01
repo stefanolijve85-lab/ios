@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Game, Unit } from '../sim/game';
 import type { MapDef, Vec2 } from '../maps/types';
-import { buildWorld, buildTruck, skyTexture, updateStoreVisual, type WorldHandles } from './world';
-import { animate, buildHumanoid, mat, type Humanoid, type Pose } from './humans';
+import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, updateStoreVisual, type WorldHandles } from './world';
+import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
+import { cloneModel } from './assets';
+import { createCharacter, type CharacterVisual } from './character';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
@@ -35,9 +37,9 @@ export class MatchView {
   target = new THREE.Vector2();
   dist = 50;
   private minDist = 13; private maxDist = 78;
-  private humans = new Map<number, Humanoid>();
+  private humans = new Map<number, CharacterVisual>();
   private barriers = new Map<number, THREE.Group>();
-  private masts = new Map<number, THREE.Group>();
+  private masts = new Map<number, THREE.Object3D>();
   private dropMarkers = new Map<number, THREE.Group>();
   private truck: THREE.Group | null = null;
   private rings = new Map<number, THREE.Mesh>();
@@ -349,13 +351,13 @@ export class MatchView {
     for (const u of g.units) {
       seen.add(u.id);
       let h = this.humans.get(u.id);
-      if (!h) { h = buildHumanoid(u.kind, u.variant); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
+      if (!h) { h = createCharacter(u.kind, u.variant); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
       h.root.position.x += (u.x - h.root.position.x) * k; h.root.position.z += (u.z - h.root.position.z) * k;
       let df = u.facing - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       h.root.rotation.y += df * Math.min(1, dt * 12);
-      animate(h, this.poseOf(u), u.moving, u.speedNow, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1));
+      h.update(this.poseOf(u), u.moving, u.speedNow, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1));
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)
       const det = u.side === 'att' ? g.isDetected(u) : true;
       (h.icon.material as THREE.SpriteMaterial).opacity = det ? 1 : 0.35;
@@ -397,7 +399,7 @@ export class MatchView {
     for (const b of g.barriers) {
       bseen.add(b.id);
       let m = this.barriers.get(b.id);
-      if (!m) { m = this.buildBarrier(b.size); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
+      if (!m) { m = (cloneModel(b.size === 'small' ? 'prop.barrier' : 'prop.concrete') as THREE.Group | null) ?? buildBarrierModel(b.size); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
       if (b.broken) { m.rotation.z = Math.min(1.45, b.brokenT * 4) * (b.size === 'small' ? 1 : 0.15); m.position.y = b.size === 'small' ? 0.05 : 0; if (b.size === 'large') m.children.forEach((c, i) => { c.rotation.y = i * 0.4; c.position.z = (i % 2) * 0.8; }); }
       else if (b.hp < b.maxHp) this.bar('b' + b.id, b.x, 1.6, b.z, b.hp / b.maxHp, '#e0e0e0');
     }
@@ -405,7 +407,7 @@ export class MatchView {
     // camera masts + coverage
     for (const c of g.cameras) {
       if (this.masts.has(c.id)) continue;
-      const m = this.buildMast(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
+      const m = cloneModel('prop.camera_mast') ?? buildMastModel(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
     }
     this.coverage.clear();
     if (isDef || this.reducedFx === false) {
@@ -497,35 +499,4 @@ export class MatchView {
     }
   }
 
-  private buildBarrier(size: 'small' | 'large'): THREE.Group {
-    const g = new THREE.Group();
-    if (size === 'small') {
-      const metal = mat(0xb9bec4, 0.35, 0.8);
-      const bar = new THREE.BoxGeometry(1, 1, 1);
-      const add = (x: number, y: number, z: number, sx: number, sy: number, sz: number) => { const m = new THREE.Mesh(bar, metal); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); };
-      add(0, 1.05, 0, 2.5, 0.05, 0.05); add(0, 0.25, 0, 2.5, 0.05, 0.05);
-      for (let i = 0; i <= 12; i++) add(-1.25 + i * (2.5 / 12), 0.65, 0, 0.025, 0.8, 0.025);
-      add(-1.25, 0.55, 0, 0.05, 1.1, 0.05); add(1.25, 0.55, 0, 0.05, 1.1, 0.05);
-      add(-1.15, 0.02, 0, 0.05, 0.04, 0.7); add(1.15, 0.02, 0, 0.05, 0.04, 0.7);
-    } else {
-      const conc = mat(0xa8a49c, 0.9);
-      const shape = new THREE.Shape(); shape.moveTo(-0.4, 0); shape.lineTo(0.4, 0); shape.lineTo(0.15, 0.3); shape.lineTo(0.1, 0.85); shape.lineTo(-0.1, 0.85); shape.lineTo(-0.15, 0.3); shape.closePath();
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: 1.45, bevelEnabled: false }).translate(0, 0, -0.725).rotateY(Math.PI / 2);
-      for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(geo, conc); m.position.x = -1.5 + i * 1.5; m.castShadow = true; m.receiveShadow = true; g.add(m); }
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.32), mat(0xe0b020, 0.6)); stripe.position.set(2.15, 0.45, 0); g.add(stripe);
-    }
-    return g;
-  }
-
-  private buildMast(): THREE.Group {
-    const g = new THREE.Group(); const metal = mat(0x9aa0a6, 0.4, 0.7);
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 5, 8), metal); p.position.y = 2.5; p.castShadow = true; g.add(p);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.9), mat(0x7a7a7a, 0.9)); base.position.y = 0.15; g.add(base);
-    const boxM = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 0.2), mat(0x3a4a6a, 0.6)); boxM.position.set(0, 1.6, 0.14); g.add(boxM);
-    for (const s of [-1, 1]) {
-      const cam = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.45), mat(0xeeeeee, 0.4)); cam.position.set(s * 0.3, 4.9, 0.1); cam.rotation.y = s * 0.6; g.add(cam);
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff2222 })); led.position.set(s * 0.3, 4.9, 0.34); g.add(led);
-    }
-    return g;
-  }
 }

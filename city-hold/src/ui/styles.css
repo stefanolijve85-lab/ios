@@ -139,3 +139,15 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
   .card { width: 82px; grid-template-rows: 34px auto auto; } .card img { height: 34px; } .card .cn { display: none; }
   .info { max-height: calc(100% - 170px); width: 230px; }
 }
+
+.loading { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; text-align: center; background: #070b14; }
+.loading b { font-size: 32px; letter-spacing: 0.1em; }
+.assettable { max-height: 55vh; overflow: auto; }
+.assettable table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.assettable td, .assettable th { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+.assettable .st-placeholder td:last-child { color: #ffcf6a; } .assettable .st-final td:last-child { color: var(--good); } .assettable .st-procedural td:last-child { color: var(--muted); }
+
+.cycle { position: absolute; left: 10px; bottom: 160px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; line-height: 1.55; pointer-events: none; }
+.cycle .done { color: var(--good); }
+.cycle.complete { border-color: var(--good); }
+@media (max-width: 900px), (orientation: portrait) { .cycle { bottom: auto; top: 200px; font-size: 10px; padding: 4px 6px; } }

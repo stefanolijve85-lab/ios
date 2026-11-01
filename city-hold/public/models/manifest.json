@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "units": "metres",
+  "up": "Y",
+  "forward": "+Z",
+  "slots": {
+    "char.security": {
+      "file": "placeholder/char_security.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.shield": {
+      "file": "placeholder/char_shield.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.firefighter": {
+      "file": "placeholder/char_firefighter.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.runner": {
+      "file": "placeholder/char_runner.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.carrier": {
+      "file": "placeholder/char_carrier.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.heavy": {
+      "file": "placeholder/char_heavy.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.vandal": {
+      "file": "placeholder/char_vandal.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.01_tracksuit_arms_spread": {
+      "file": "placeholder/char_looter_01_tracksuit_arms_spread.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.02_puffer_large_box": {
+      "file": "placeholder/char_looter_02_puffer_large_box.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.03_runner_backpack": {
+      "file": "placeholder/char_looter_03_runner_backpack.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.04_vest_shopping_bags": {
+      "file": "placeholder/char_looter_04_vest_shopping_bags.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.05_hoodie_backpack_walking": {
+      "file": "placeholder/char_looter_05_hoodie_backpack_walking.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.06_puffer_electronics_box": {
+      "file": "placeholder/char_looter_06_puffer_electronics_box.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.07_navy_runner": {
+      "file": "placeholder/char_looter_07_navy_runner.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.08_padded_vest_bags": {
+      "file": "placeholder/char_looter_08_padded_vest_bags.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.09_large_backpack": {
+      "file": "placeholder/char_looter_09_large_backpack.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.10_windbreaker_small_box": {
+      "file": "placeholder/char_looter_10_windbreaker_small_box.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.lamp": {
+      "file": "placeholder/prop_lamp.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.tree": {
+      "file": "placeholder/prop_tree.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.planter": {
+      "file": "placeholder/prop_planter.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.bench": {
+      "file": "placeholder/prop_bench.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.bollard": {
+      "file": "placeholder/prop_bollard.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.umbrella": {
+      "file": "placeholder/prop_umbrella.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.car": {
+      "file": "placeholder/prop_car.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.car_burned": {
+      "file": "placeholder/prop_car_burned.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.van": {
+      "file": "placeholder/prop_van.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.barrier": {
+      "file": "placeholder/prop_barrier.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.concrete": {
+      "file": "placeholder/prop_concrete.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.camera_mast": {
+      "file": "placeholder/prop_camera_mast.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    }
+  }
+}

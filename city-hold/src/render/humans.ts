@@ -55,6 +55,7 @@ function blob(): THREE.Texture {
   const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32); grd.addColorStop(0, 'rgba(0,0,0,0.55)'); grd.addColorStop(0.6, 'rgba(0,0,0,0.25)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = grd; g.fillRect(0, 0, 64, 64); blobTex = new THREE.CanvasTexture(c); return blobTex;
 }
+export function contactShadow(): THREE.Mesh { const sh = new THREE.Mesh(blobGeo, new THREE.MeshBasicMaterial({ map: blob(), transparent: true, depthWrite: false })); sh.position.y = 0.02; sh.renderOrder = 2; return sh; }
 const blobGeo = new THREE.PlaneGeometry(0.95, 0.95).rotateX(-Math.PI / 2);
 
 
@@ -104,6 +105,10 @@ export const STREETWEAR: Outfit[] = [
   { ref: '10_windbreaker_small_box', top: 0x2e3034, legs: 0x333439, shoes: 0x999ca2, layer: 'windbreaker', stripe: 0x52555b, pack: 0, carry: 'smallbox', kinds: ['runner', 'vandal'] },
 ];
 
+export const SKIN_TONES = SKIN;
+export const CASUAL_TOPS = HOODIES;
+export const CASUAL_LEGS = JEANS;
+
 export function outfitFor(kind: UnitKind, variant: number): Outfit | null {
   if (kind === 'security' || kind === 'shield' || kind === 'firefighter') return null;
   if (variant % 5 === 4) return null; // one in five keeps the earlier casual clothing (images 13, 14, 26-28)
@@ -111,10 +116,14 @@ export function outfitFor(kind: UnitKind, variant: number): Outfit | null {
   return list[Math.floor(variant / 5) % list.length];
 }
 
-export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
+export interface BuildOpts { outfit?: Outfit | null; exportMode?: boolean }
+
+export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts = {}): Humanoid {
   const r = rng(variant + 17);
   const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
-  const skin = mat(pick(SKIN), 0.7);
+  // in export mode the tintable materials are unique and named so the game can recolour them per unit
+  const named = (color: number, rough: number, name: string) => { const mm = new THREE.MeshStandardMaterial({ color, roughness: rough }); mm.name = name; return mm; };
+  const skin = opts.exportMode ? named(pick(SKIN), 0.7, 'skin') : mat(pick(SKIN), 0.7);
   const hairM = mat(pick(HAIR), 0.9);
   const female = r() < 0.45; // presentation only
   const isDef = kind === 'security' || kind === 'shield' || kind === 'firefighter';
@@ -123,22 +132,24 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   else if (kind === 'shield') { top = 0x232b3c; legsC = 0x1f2633; }
   else if (kind === 'firefighter') { top = 0x2a2a28; legsC = 0x2a2a28; }
   else { top = pick(HOODIES); legsC = pick(JEANS); shoes = pick([0xdedede, 0x2a2a2a, 0x8a8a8a, 0xc9c0b0]); }
-  const outfit = outfitFor(kind, variant);
+  const outfit = opts.outfit !== undefined ? opts.outfit : outfitFor(kind, variant);
   if (outfit) { top = outfit.top; legsC = outfit.legs; shoes = outfit.shoes; }
   // nylon / puffer fabric catches the street light (glossier than cotton)
-  const topM = mat(top, outfit && (outfit.layer === 'puffer' || outfit.layer === 'windbreaker') ? 0.45 : 0.75), legM = mat(legsC, 0.8), shoeM = mat(shoes, 0.6);
+  const topRough = outfit && (outfit.layer === 'puffer' || outfit.layer === 'windbreaker') ? 0.45 : 0.75;
+  const tintable = opts.exportMode && !isDef && !outfit; // casual looter clothing is recoloured per unit
+  const topM = tintable ? named(top, topRough, 'top') : mat(top, topRough), legM = tintable ? named(legsC, 0.8, 'legs') : mat(legsC, 0.8), shoeM = mat(shoes, 0.6);
 
-  const root = new THREE.Group();
-  const body = new THREE.Group(); root.add(body);
+  const root = new THREE.Group(); root.name = 'character';
+  const body = new THREE.Group(); body.name = 'body'; root.add(body);
   const scale = (kind === 'heavy' ? 1.05 : 0.95) + r() * 0.08 - (female ? 0.04 : 0);
   body.scale.setScalar(scale);
-  const hips = new THREE.Group(); hips.position.y = 0.95; body.add(hips);
+  const hips = new THREE.Group(); hips.name = 'hips'; hips.position.y = 0.95; body.add(hips);
   m(geo.pelvis, legM, hips, 0, 0, 0);
   const legs: THREE.Group[] = [], knees: THREE.Group[] = [];
   for (const sx of [-1, 1]) {
-    const leg = new THREE.Group(); leg.position.set(sx * 0.1, -0.02, 0); hips.add(leg);
+    const leg = new THREE.Group(); leg.name = sx < 0 ? 'legL' : 'legR'; leg.position.set(sx * 0.1, -0.02, 0); hips.add(leg);
     m(geo.thigh, legM, leg);
-    const knee = new THREE.Group(); knee.position.y = -0.46; leg.add(knee);
+    const knee = new THREE.Group(); knee.name = sx < 0 ? 'kneeL' : 'kneeR'; knee.position.y = -0.46; leg.add(knee);
     m(geo.shin, legM, knee);
     const foot = m(geo.foot, shoeM, knee, 0, -0.46, 0);
     if (kind === 'firefighter') { const st = m(geo.stripe, mat(0xd8e04a, 0.4), knee, 0, -0.3, 0); st.scale.set(0.38, 1, 0.6); }
@@ -146,7 +157,7 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
     void foot;
     legs.push(leg); knees.push(knee);
   }
-  const torso = new THREE.Group(); torso.position.y = 0.06; hips.add(torso);
+  const torso = new THREE.Group(); torso.name = 'torso'; torso.position.y = 0.06; hips.add(torso);
   const torsoMesh = m(geo.torso, topM, torso);
   if (kind === 'heavy') torsoMesh.scale.set(1.15, 1, 1.2);
   if (female) torsoMesh.scale.x *= 0.92;
@@ -169,7 +180,7 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   } else if (!isDef && r() < 0.6) m(geo.backpack, mat(pick([0x222222, 0x3a3020, 0x2a3a2a]), 0.8), torso);
   m(geo.neck, skin, torso, 0, 0.6, 0);
   if (!isDef) m(geo.collar, topM, torso, 0, 0.6, 0);
-  const head = new THREE.Group(); head.position.y = 0.66; torso.add(head);
+  const head = new THREE.Group(); head.name = 'head'; head.position.y = 0.66; torso.add(head);
   m(geo.head, skin, head, 0, 0.1, 0);
   // head wear
   if (kind === 'security') {
@@ -193,19 +204,19 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
 
   const arms: THREE.Group[] = [], elbows: THREE.Group[] = [];
   for (const sx of [-1, 1]) {
-    const arm = new THREE.Group(); arm.position.set(sx * 0.245, 0.54, 0); torso.add(arm);
+    const arm = new THREE.Group(); arm.name = sx < 0 ? 'armL' : 'armR'; arm.position.set(sx * 0.245, 0.54, 0); torso.add(arm);
     const up = m(geo.upper, topM, arm); if (outfit?.layer === 'puffer') up.scale.set(1.35, 1, 1.35);
-    const el = new THREE.Group(); el.position.y = -0.3; arm.add(el);
+    const el = new THREE.Group(); el.name = sx < 0 ? 'elbowL' : 'elbowR'; el.position.y = -0.3; arm.add(el);
     const fo = m(geo.fore, kind === 'firefighter' || kind === 'shield' || outfit ? topM : (r() < 0.5 ? topM : skin), el); if (outfit?.layer === 'puffer') fo.scale.set(1.3, 1, 1.3);
     m(geo.hand, skin, el, 0, -0.29, 0);
     arms.push(arm); elbows.push(el);
   }
   // carried goods: cardboard box (sized by class) or shopping bags (carrier variant, as in image 27)
-  const carry = new THREE.Group(); carry.visible = false; torso.add(carry);
+  const carry = new THREE.Group(); carry.name = 'carry'; carry.visible = false; torso.add(carry);
   let bags: THREE.Group | null = null;
   const carryKind: Carry = outfit ? outfit.carry : kind === 'carrier' && r() < 0.35 ? 'bags' : kind === 'heavy' ? 'bigbox' : kind === 'runner' || kind === 'vandal' ? 'smallbox' : 'box';
   if (carryKind === 'bags') {
-    bags = new THREE.Group();
+    bags = new THREE.Group(); bags.name = 'bags';
     const bagM = outfit ? mat(0x111113, 0.55) : mat(pick([0xb08a5a, 0xd8d0c0, 0x8a6a4a]), 0.9);
     for (const sx of [-1, 1]) { const b = m(geo.bag, bagM, bags, sx * 0.3, 0.12, 0.02); b.rotation.y = 0.2 * sx; b.scale.set(1.5, 1.6, 1.3); }
     carry.add(bags);
@@ -221,12 +232,13 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   let shield: THREE.Mesh | null = null, ext: THREE.Mesh | null = null;
   if (kind === 'shield') {
     shield = new THREE.Mesh(geo.shield, new THREE.MeshStandardMaterial({ color: 0xbfd3e6, transparent: true, opacity: 0.38, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide }));
-    shield.position.set(-0.05, 0.25, 0.36); torso.add(shield);
+    shield.name = 'shield'; shield.position.set(-0.05, 0.25, 0.36); torso.add(shield);
     const rim = new THREE.Mesh(new THREE.EdgesGeometry(geo.shield), new THREE.LineBasicMaterial({ color: 0x222831 }));
     shield.add(rim);
   }
   if (kind === 'firefighter') { ext = m(geo.ext, mat(0xc0201a, 0.4), elbows[1], 0, -0.32, 0.05); }
 
+  if (opts.exportMode) return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon: new THREE.Sprite(), phase: 0, recoil: 0, kind };
   const shadow = new THREE.Mesh(blobGeo, new THREE.MeshBasicMaterial({ map: blob(), transparent: true, depthWrite: false }));
   shadow.position.y = 0.02; shadow.renderOrder = 2; root.add(shadow);
 
