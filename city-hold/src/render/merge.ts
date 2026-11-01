@@ -8,6 +8,8 @@ export function mergeStatic(root: THREE.Object3D) {
   const remove: THREE.Object3D[] = [];
   root.traverse((o) => {
     const m = o as THREE.Mesh;
+    let skip = false; for (let q: THREE.Object3D | null = o; q && q !== root; q = q.parent) if (q.userData.noMerge) { skip = true; break; }
+    if (skip) return;
     if (!m.isMesh || (m as unknown as THREE.InstancedMesh).isInstancedMesh || Array.isArray(m.material) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh) return;
     let g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
     g.applyMatrix4(m.matrixWorld);

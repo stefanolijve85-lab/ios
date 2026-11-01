@@ -36,7 +36,10 @@ export const SLOTS: SlotDef[] = [
   { slot: 'prop.van', group: 'prop', label: 'Support van (image 17)', spec: 'Static GLB, 2.1 × 5.6 m, long axis on Z. Light-bar meshes named "beacon" flash in game.' },
   { slot: 'prop.barrier', group: 'prop', label: 'Crowd barrier (image 15)', spec: 'Static GLB, 2.6 m long on X.' },
   { slot: 'prop.concrete', group: 'prop', label: 'Concrete barrier row (image 31)', spec: 'Static GLB, 4.6 m long on X.' },
-  { slot: 'prop.camera_mast', group: 'prop', label: 'Camera mast (image 16)', spec: 'Static GLB, ~5 m tall.' },
+  { slot: 'prop.camera_mast', group: 'prop', label: 'Camera mast (image 16, street-props camera_mast)', spec: 'GLB ~5.5 m, trailer base 1.8 x 1.8 m. Nodes cam_pivot_1..3 are turned slowly by the game; detection range comes from the rules.' },
+  { slot: 'prop.shelter', group: 'prop', label: 'Bus shelter (street-props bus_shelter)', spec: 'GLB 4 x 2.6 x 1.6 m, open front +Z. Glass separate; material "ad_panel" swappable. Collision: rear and sides only.' },
+  { slot: 'prop.delivery_van', group: 'prop', label: 'Delivery van, unbranded (street-props delivery_van)', spec: 'GLB 2 x 2.5 x 5.2 m, long axis Z, front +Z. Nodes wheel_fl/fr/rl/rr and mirror_left/right separate.' },
+  { slot: 'prop.fountain', group: 'prop', optional: true, label: 'Octagonal fountain (street-props fountain)', spec: 'GLB ~8 m across for the Paris square (scaled to the map circle). Basin, pedestal, bowls and water as separate meshes.' },
 ];
 
 const loaded = new Map<string, { scene: THREE.Object3D; animations: THREE.AnimationClip[] }>();

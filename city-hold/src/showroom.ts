@@ -10,6 +10,7 @@ import { loadAssets } from './render/assets';
 import { buildHaussmann } from './render/haussmann';
 import type { MapDef } from './maps/types';
 import { PARIS } from './maps/paris';
+import { buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter } from './render/streetProps';
 
 // Developer showroom (open with  #showroom ): the six Paris shops side by side under identical light, with
 // adjustable damage, stock, boards, breach, shutter level and quality. Not reachable from the player UI.
@@ -29,7 +30,7 @@ export async function showroom(app: HTMLElement) {
       <label>Shutter level <select data-k="level"><option>1</option><option>2</option><option>3</option></select></label>
       <label>Quality <select data-k="quality"><option value="desktop">desktop</option><option value="mobile">mobile</option></select></label>
       <div class="sr-row"><button data-p="intact">Intact</button><button data-p="boarded">Boarded</button><button data-p="damaged">Damaged</button><button data-p="looted">Looted</button><button data-p="emptyIntact">Empty intact</button><button data-p="fullDamaged">Full + damaged</button></div>
-      <div class="sr-row"><button data-c="near">Near</button><button data-c="mid">Mid</button><button data-c="far">Far</button><button data-c="game">Game camera</button></div>
+      <div class="sr-row"><button data-c="near">Near</button><button data-c="mid">Mid</button><button data-c="far">Far</button><button data-c="game">Game camera</button><button data-c="props">Street props</button><button data-c="fountain">Fountain</button></div>
       <pre data-k="stats"></pre>
     </div></div>`;
   const canvas = app.querySelector('canvas')!;
@@ -58,6 +59,18 @@ export async function showroom(app: HTMLElement) {
   const fakeMap: MapDef = { ...PARIS, id: 'showroom', bounds: { x0: -40, z0: -2, x1: 40, z1: 30 }, buildings: [block], stores: defs, decorShops: [] };
   const kit = new THREE.Group(); scene.add(kit);
   buildHaussmann(block, fakeMap, kit, { stores: defs, mobile: false, index: 3 });
+  // street-props row in front of the shops and the fountain on the square
+  const props = new THREE.Group(); scene.add(props);
+  const place = (o: THREE.Object3D, x: number, z: number, ry = 0) => { o.position.set(x, 0, z); o.rotation.y = ry; props.add(o); return o; };
+  const holder = () => new THREE.Group();
+  { const g = holder(); buildStreetLamp(g); place(g, -22, 3.2); }
+  { const g = holder(); buildStreetBench(g); place(g, -16, 3.6, Math.PI); }
+  { const g = holder(); buildTreePlanter(g, 2); place(g, -10, 4); }
+  { const g = holder(); buildBusShelter(g); place(g, -2, 4.2, Math.PI); }
+  place(buildCrowdBarrier(2.5), 6, 4);
+  place(buildCameraMast(), 12, 4.5);
+  place(buildDeliveryVan(), 20, 6, Math.PI / 2);
+  buildOctagonFountain({ x: 0, z: 26, r: 5 }, props, false);
   let shops: ShopModule[] = [];
   const build = (quality: Quality) => {
     for (const s of shops) scene.remove(s.group);
@@ -80,7 +93,7 @@ export async function showroom(app: HTMLElement) {
   panel.querySelectorAll<HTMLButtonElement>('[data-p]').forEach((b) => b.addEventListener('click', () => {
     const [d, st, bo, br] = presets[b.dataset.p!]; val('damage').value = String(d); val('stock').value = String(st); val('boards').value = String(bo); val('breach').checked = br; apply();
   }));
-  const cams: Record<string, [number, number, number, number, number, number]> = { near: [0, 1.9, 7, 0, 1.8, -1], mid: [0, 4, 22, 0, 2, 0], far: [0, 12, 55, 0, 2, 0], game: [0, 42, 30, 0, 0, -2] };
+  const cams: Record<string, [number, number, number, number, number, number]> = { props: [0, 7, 19, 0, 1.2, 4], fountain: [0, 9, 38, 0, 1.5, 26], near: [0, 1.9, 7, 0, 1.8, -1], mid: [0, 4, 22, 0, 2, 0], far: [0, 12, 55, 0, 2, 0], game: [0, 42, 30, 0, 0, -2] };
   const setCam = (k: string) => { const c = cams[k]; camera.position.set(c[0], c[1], c[2]); controls.target.set(c[3], c[4], c[5]); controls.update(); };
   panel.querySelectorAll<HTMLButtonElement>('[data-c]').forEach((b) => b.addEventListener('click', () => setCam(b.dataset.c!)));
   setCam('mid');

@@ -148,6 +148,16 @@
       "file": "placeholder/prop_camera_mast.glb",
       "status": "placeholder",
       "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.shelter": {
+      "file": "placeholder/prop_shelter.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.delivery_van": {
+      "file": "placeholder/prop_delivery_van.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
     }
   }
 }

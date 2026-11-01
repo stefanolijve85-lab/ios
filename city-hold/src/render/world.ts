@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
-import { cloneModel } from './assets';
+import { cloneModel, slotStatus } from './assets';
+import { buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y } from './streetProps';
 import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
@@ -293,22 +294,38 @@ function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number
   if (seed % 2 === 0) for (let k = 0; k < 5; k++) { const a = k * 1.3 + seed; mesh(new THREE.SphereGeometry(0.05, 5, 4), mat([0xd8c060, 0xe0e0d0, 0xc06050][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.6, y + r * 0.95, z + Math.sin(a) * r * 0.6, 1, 1, 1, false); }
 }
 
+/** occluders (tree crowns, shelter roofs) registered while props are built, turned into fadeables afterwards */
+const pendingFades: { meshes: THREE.Mesh[]; root: THREE.Object3D }[] = [];
+
 export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandles['cars'], lamps: THREE.Vector3[]) {
   const g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.rotation.y = ((p.rot ?? 0) * Math.PI) / 180; parent.add(g);
   // a loaded GLB in the prop's slot replaces the procedural placeholder
   const slotType = p.type === 'palm' ? null : p.type;
-  const glb = slotType && p.type !== 'car' ? cloneModel('prop.' + slotType) : null;
-  if (glb) { g.add(glb); if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, 4.3, p.z)); return; }
+  const finalProp = (slot: string) => (slotStatus(slot) === 'final' ? cloneModel(slot) : null); // placeholders come from this same code
+  const glb = slotType && p.type !== 'car' ? finalProp('prop.' + slotType) : null;
+  if (glb) { g.add(glb); if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, LAMP_LIGHT_Y, p.z)); return; }
   switch (p.type) {
     case 'lamp': {
-      buildLamp(g);
-      lamps.push(new THREE.Vector3(p.x, 4.3, p.z));
+      buildStreetLamp(g);
+      lamps.push(new THREE.Vector3(p.x, LAMP_LIGHT_Y, p.z));
       break;
     }
+    case 'shelter': {
+      const sh = buildBusShelter(g);
+      for (const r of sh.roof) r.userData.noMerge = true;
+      pendingFades.push({ meshes: sh.roof, root: sh.group });
+      break;
+    }
+    case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
     case 'tree': case 'palm': {
       if (p.type === 'palm') {
         const tr = mesh(cyl, mat(0x6a5440, 0.9), g, 0, 2.6, 0, 0.14, 5.2, 0.14); tr.rotation.z = 0.08;
         for (let k = 0; k < 7; k++) { const f = mesh(new THREE.ConeGeometry(0.3, 2.6, 4), mat(0x2f5a2a, 0.8), g, Math.cos(k) * 0.9, 5.0, Math.sin(k) * 0.9); f.rotation.set(Math.sin(k) * 1.2, 0, -Math.cos(k) * 1.2); }
+      } else if (p.type === 'tree') {
+        // Versailles planter with tapering trunk and a LOD leaf crown that fades when it hides the action
+        const t = buildTreePlanter(g, i);
+        t.crown.userData.noMerge = true;
+        pendingFades.push({ meshes: t.crownMeshes, root: t.crown });
       } else {
         mesh(new THREE.CylinderGeometry(0.09, 0.15, 3.0, 7), mat(0x3e3226, 0.9), g, 0, 1.5, 0);
         // autumn crown built from several leaf clusters (green to ochre, as in the Paris concepts)
@@ -323,7 +340,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'planter': mesh(box, mat(0x2e3034, 0.6, 0.2), g, 0, 0.35, 0, 1.4, 0.7, 1.4); bush(g, 0, 0.75, 0, 0.62, i); break;
-    case 'bench': buildBench(g); break;
+    case 'bench': buildStreetBench(g); break;
     case 'bollard': mesh(cyl, mat(0x202226, 0.6, 0.3), g, 0, 0.45, 0, 0.12, 0.9, 0.12); break;
     case 'umbrella': {
       mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 1.2, 0, 0.04, 2.4, 0.04);
@@ -335,8 +352,8 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
     case 'phonebox': mesh(box, mat(0x9a1a1a, 0.5), g, 0, 1.25, 0, 0.9, 2.5, 0.9); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), g, 0, 1.4, 0.46, 0.6, 1.2, 0.02, false); break;
     case 'column': mesh(cyl, mat(0xd9c8a4, 0.8), g, 0, 2.5, 0, p.r ?? 0.35, 5, p.r ?? 0.35); break;
     case 'car': {
-      const intact = (cloneModel('prop.car') as THREE.Group | null) ?? buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
-      const burned = (cloneModel('prop.car_burned') as THREE.Group | null) ?? buildCar(0, true); burned.visible = false;
+      const intact = (finalProp('prop.car') as THREE.Group | null) ?? buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
+      const burned = (finalProp('prop.car_burned') as THREE.Group | null) ?? buildCar(0, true); burned.visible = false;
       g.add(intact, burned); cars.set(i, { intact, burned });
       g.rotation.y = p.rot === 90 ? 0 : Math.PI / 2;
       break;
@@ -435,7 +452,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const animated: Scroll[] = [];
   if (map.fountain) {
     const f = map.fountain;
-    const fh = buildFountain(f, group, reducedFx);
+    const fh = buildOctagonFountain(f, group, reducedFx);
     animated.push(...fh.animated); fountainWater = fh.spray;
     // ring of planters with benches between them, all inside the fountain's collision circle
     for (let k = 0; k < 8; k++) {
@@ -451,8 +468,14 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const lampPos: THREE.Vector3[] = [];
   // static props are merged per material after building (cars stay separate: they can catch fire)
   const propGroup = new THREE.Group(); group.add(propGroup);
+  pendingFades.length = 0;
   map.props.forEach((p, i) => buildProp(p, p.type === 'car' ? group : propGroup, i, cars, lampPos));
   mergeStatic(propGroup);
+  group.updateMatrixWorld(true);
+  for (const pf of pendingFades) {
+    for (const m of pf.meshes) { m.material = (m.material as THREE.Material).clone(); (m.material as THREE.Material).transparent = true; }
+    fadeables.push({ meshes: pf.meshes, box: new THREE.Box3().setFromObject(pf.root), opacity: 1 });
+  }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
   const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.32)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
@@ -467,7 +490,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // support van (staging point)
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
-  const { g: van, lights: vanLights } = vanGlb ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
+  const { g: van, lights: vanLights } = vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
   van.position.set(map.van.x, 0, map.van.z); van.rotation.y = (map.van.rot * Math.PI) / 180; group.add(van);
   // loading lane markings
   if (map.loadingLane) {
@@ -509,14 +532,5 @@ export function buildBarrierModel(size: 'small' | 'large'): THREE.Group {
   }
 
 export function buildMastModel(): THREE.Group {
-    const g = new THREE.Group(); const metal = mat(0x9aa0a6, 0.4, 0.7);
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 5, 8), metal); p.position.y = 2.5; p.castShadow = true; g.add(p);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.9), mat(0x7a7a7a, 0.9)); base.position.y = 0.15; g.add(base);
-    const boxM = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 0.2), mat(0x3a4a6a, 0.6)); boxM.position.set(0, 1.6, 0.14); g.add(boxM);
-    for (const s of [-1, 1]) {
-      const cam = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.45), mat(0xeeeeee, 0.4)); cam.position.set(s * 0.3, 4.9, 0.1); cam.rotation.y = s * 0.6; g.add(cam);
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff2222 })); led.position.set(s * 0.3, 4.9, 0.34); g.add(led);
-    }
-    return g;
-  }
-
+  return buildCameraMast();
+}

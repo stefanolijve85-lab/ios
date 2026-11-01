@@ -33,7 +33,11 @@ const props: PropDef[] = [
   // benches around the fountain are part of the fountain obstacle ring
   // parked cars in the side streets (can be set alight by vandals)
   { type: 'car', x: -23.2, z: -27.2, rot: 90, collide: true, burnable: true },
-  { type: 'car', x: 23.2, z: -24, rot: 90, collide: true, burnable: true },
+  // street-props pack: generic delivery van, bus shelter on the foreground pavement, benches at the kerb
+  { type: 'delivery_van', x: 23.0, z: -24, rot: 0, collide: true },
+  { type: 'shelter', x: -16, z: 14.05, rot: 180, collide: true },
+  { type: 'bench', x: -23.9, z: -13, rot: 90, collide: true, r: 0.75 },
+  { type: 'bench', x: 23.9, z: -13, rot: -90, collide: true, r: 0.75 },
 ];
 
 export const PARIS: MapDef = {

@@ -23,6 +23,21 @@ export function staticObstacles(map: MapDef): StaticObstacleSet {
   if (map.fountain) circles.push(map.fountain);
   for (const p of map.props) {
     if (!p.collide) continue;
+    if (p.type === 'shelter') {
+      // bus shelter: rear wall and sides only; the open front stays walkable
+      const rot = (((p.rot ?? 0) % 360) + 360) % 360; const c = Math.cos((rot * Math.PI) / 180), sn = Math.sin((rot * Math.PI) / 180);
+      for (const r of [{ x0: -2.05, z0: -0.85, x1: 2.05, z1: -0.7 }, { x0: -2.1, z0: -0.85, x1: -1.95, z1: 0.8 }, { x0: 1.95, z0: -0.85, x1: 2.1, z1: 0.8 }]) {
+        const pts = [[r.x0, r.z0], [r.x1, r.z0], [r.x0, r.z1], [r.x1, r.z1]].map(([x, z]) => [p.x + x * c + z * sn, p.z - x * sn + z * c]);
+        rects.push({ x0: Math.min(...pts.map((q) => q[0])), z0: Math.min(...pts.map((q) => q[1])), x1: Math.max(...pts.map((q) => q[0])), z1: Math.max(...pts.map((q) => q[1])) });
+      }
+      continue;
+    }
+    if (p.type === 'delivery_van') {
+      const alongZ = ((p.rot ?? 0) % 180) === 0;
+      const hx = alongZ ? 1.0 : 2.6, hz = alongZ ? 2.6 : 1.0;
+      rects.push({ x0: p.x - hx, z0: p.z - hz, x1: p.x + hx, z1: p.z + hz });
+      continue;
+    }
     if (p.type === 'car') {
       const vert = p.rot === 90;
       const hl = (vert ? CAR.wid : CAR.len) / 2, hw = (vert ? CAR.len : CAR.wid) / 2;

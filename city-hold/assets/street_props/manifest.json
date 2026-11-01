@@ -1,0 +1,285 @@
+{
+  "version": 1,
+  "units": "meters",
+  "dimensions_are": "game_design_targets_not_measured_objects",
+  "assets": [
+    {
+      "id": "fountain",
+      "name_nl": "Fontein",
+      "reference": "references/fountain.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1312,
+        1199
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "a4c83b3cda64e2b156363adcd7c73b95890d55ea9ba01a8d139ee4bcc1460bcf",
+      "target_size_m_xyz": [
+        4.8,
+        3.6,
+        4.8
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "cylinder",
+        "radius": 2.4,
+        "height": 1
+      },
+      "build_note": "Maak basin, pedestal, bowls en water afzonderlijk; decoratieve wateranimatie los van collision.",
+      "future_glb": {
+        "path": "models/props/fountain.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "street_lamp",
+      "name_nl": "Lantaarn",
+      "reference": "references/street_lamp.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "4584407ae8a4866521570250ffaa811339f5cb889b7ff07d9498e98cd98ca37a",
+      "target_size_m_xyz": [
+        0.65,
+        3.8,
+        0.65
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "cylinder",
+        "radius": 0.22,
+        "height": 3.8
+      },
+      "build_note": "Emissive lantern apart; deel materiaal en geometrie bij herhaling.",
+      "future_glb": {
+        "path": "models/props/street_lamp.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "bench",
+      "name_nl": "Bankje",
+      "reference": "references/bench.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "fc27608d3df28a6d9d460adbb62c932318a8bf858b40b94911c8ef2481fbbd1a",
+      "target_size_m_xyz": [
+        1.8,
+        0.85,
+        0.65
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "box",
+        "size_m": [
+          1.8,
+          0.85,
+          0.65
+        ]
+      },
+      "build_note": "Collision als eenvoudige box; latten instanti\u00ebren of in \u00e9\u00e9n mesh samenvoegen.",
+      "future_glb": {
+        "path": "models/props/bench.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "tree_planter",
+      "name_nl": "Boom in plantenbak",
+      "reference": "references/tree_planter.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "2373393317af6bbac413be171799bc49450df5816cf231cc86b1da8ad541aed6",
+      "target_size_m_xyz": [
+        2.8,
+        4.5,
+        2.8
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "box",
+        "size_m": [
+          1.2,
+          1.2,
+          1.2
+        ]
+      },
+      "build_note": "Afmetingen inclusief kroon; collision alleen planter/stam. Kroon met LOD en alpha-overdraw beperken.",
+      "future_glb": {
+        "path": "models/props/tree_planter.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "bus_shelter",
+      "name_nl": "Bushokje",
+      "reference": "references/bus_shelter.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "b698659dd17fab645fccd094db29b64763e1ffb71fffd72991763a0cb5b34d49",
+      "target_size_m_xyz": [
+        4,
+        2.6,
+        1.6
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "compound_boxes",
+        "note": "Only frame, rear glass, side glass and bench; open front stays traversable."
+      },
+      "build_note": "Glas afzonderlijk; adpaneel materiaal verwisselbaar; houd loopruimte vrij.",
+      "future_glb": {
+        "path": "models/props/bus_shelter.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "crowd_barrier",
+      "name_nl": "Dranghek",
+      "reference": "references/crowd_barrier.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "1bbc166adb1cfb4fe4f47ec1e3ef3785d5b674c5703484ec011196c78eb3d5fa",
+      "target_size_m_xyz": [
+        2.3,
+        1.1,
+        0.55
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "box",
+        "size_m": [
+          2.3,
+          1.1,
+          0.55
+        ]
+      },
+      "build_note": "Dunne visuele stangen, aparte simpele collider en snap-punten op uiteinden.",
+      "future_glb": {
+        "path": "models/props/crowd_barrier.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "camera_mast",
+      "name_nl": "Cameramast",
+      "reference": "references/camera_mast.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "dd27cb907ed24f355f6e67df561a442e6cf2c071d2cb17a7e195d7685a1a0222",
+      "target_size_m_xyz": [
+        1.8,
+        5.5,
+        1.8
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "box",
+        "size_m": [
+          1.8,
+          1.1,
+          1.8
+        ]
+      },
+      "build_note": "Camera pivots afzonderlijk; zichtbereik volgt spelregels, nooit afleiden uit decoratieve lensrichting.",
+      "future_glb": {
+        "path": "models/props/camera_mast.glb",
+        "included": false
+      }
+    },
+    {
+      "id": "delivery_van",
+      "name_nl": "Bestelbus",
+      "reference": "references/delivery_van.png",
+      "kind": "visual_reference_not_3d_model",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "24e67c0b4cd29853c7149992d7ced9d103b804ee38906e04eebdadca2bf99dac",
+      "target_size_m_xyz": [
+        2,
+        2.5,
+        5.2
+      ],
+      "pivot": "base_center",
+      "front": "+Z",
+      "up": "+Y",
+      "collision_proposal": {
+        "shape": "box",
+        "size_m": [
+          2,
+          2.5,
+          5.2
+        ]
+      },
+      "build_note": "Pivot midden op wegdek; +Z is voorkant. Wielen/deuren aparte nodes voor toekomstige animatie.",
+      "future_glb": {
+        "path": "models/props/delivery_van.glb",
+        "included": false
+      }
+    }
+  ]
+}

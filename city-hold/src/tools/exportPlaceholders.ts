@@ -3,6 +3,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { buildHumanoid, STREETWEAR } from '../render/humans';
 import { bakeClips } from '../render/character';
 import { buildBarrierModel, buildCar, buildMastModel, buildProp, buildVan } from '../render/world';
+import { buildBusShelter, buildDeliveryVan } from '../render/streetProps';
 import type { UnitKind } from '../config/balance';
 import type { PropType } from '../maps/types';
 
@@ -53,6 +54,8 @@ async function run(): Promise<Record<string, string>> {
   files['prop.barrier'] = await glb(buildBarrierModel('small'));
   files['prop.concrete'] = await glb(buildBarrierModel('large'));
   files['prop.camera_mast'] = await glb(buildMastModel());
+  { const g = new THREE.Group(); buildBusShelter(g); files['prop.shelter'] = await glb(g); }
+  files['prop.delivery_van'] = await glb(buildDeliveryVan());
   return files;
 }
 

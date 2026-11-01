@@ -89,3 +89,23 @@ describe('boards and repair in the simulation', () => {
     for (const d of PARIS.decorShops ?? []) { const p = { x: d.front.x + d.normal.x * 1.5, z: d.front.z + d.normal.z * 1.5 }; expect(g.nav.walkable(p.x, p.z), d.brand).toBe(true); }
   });
 });
+
+describe('street props (street-props pack)', () => {
+  test('bus shelter: open front walkable, rear wall solid; van blocks only its own footprint', () => {
+    const g = new Game(PARIS, 'defence');
+    const sh = PARIS.props.find((p) => p.type === 'shelter')!;
+    expect(g.nav.walkable(sh.x, sh.z)).toBe(true);           // inside, under the roof
+    expect(g.nav.walkable(sh.x, sh.z - 1.2)).toBe(true);     // in front (rot 180: front faces -Z)
+    expect(g.nav.walkable(sh.x, sh.z + 0.78)).toBe(false);   // rear glass wall
+    const van = PARIS.props.find((p) => p.type === 'delivery_van')!;
+    expect(g.nav.walkable(van.x, van.z)).toBe(false);
+    expect(mapReachability(PARIS)).toEqual([]);
+  });
+  test('crowd barriers never cut every route', () => {
+    const g = new Game(PARIS, 'defence'); g.budget = 1e6;
+    let placed = 0;
+    for (const s of PARIS.sockets) if (g.place(s.size === 'large' ? 'concrete' : 'barrier', s.id).ok) placed++;
+    expect(placed).toBeGreaterThan(0);
+    expect(g.routesOpenWith(null)).toBe(true);
+  });
+});

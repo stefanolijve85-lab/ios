@@ -6,7 +6,7 @@ import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, 
 import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
-import { cloneModel } from './assets';
+import { cloneModel, slotStatus } from './assets';
 import { createCharacter, type CharacterVisual } from './character';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
@@ -412,7 +412,7 @@ export class MatchView {
     for (const b of g.barriers) {
       bseen.add(b.id);
       let m = this.barriers.get(b.id);
-      if (!m) { m = (cloneModel(b.size === 'small' ? 'prop.barrier' : 'prop.concrete') as THREE.Group | null) ?? buildBarrierModel(b.size); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
+      if (!m) { const slot = b.size === 'small' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.size); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
       if (b.broken) { m.rotation.z = Math.min(1.45, b.brokenT * 4) * (b.size === 'small' ? 1 : 0.15); m.position.y = b.size === 'small' ? 0.05 : 0; if (b.size === 'large') m.children.forEach((c, i) => { c.rotation.y = i * 0.4; c.position.z = (i % 2) * 0.8; }); }
       else if (b.hp < b.maxHp) this.bar('b' + b.id, b.x, 1.6, b.z, b.hp / b.maxHp, '#e0e0e0');
     }
@@ -420,7 +420,7 @@ export class MatchView {
     // camera masts + coverage
     for (const c of g.cameras) {
       if (this.masts.has(c.id)) continue;
-      const m = cloneModel('prop.camera_mast') ?? buildMastModel(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
+      const m = (slotStatus('prop.camera_mast') === 'final' ? cloneModel('prop.camera_mast') : null) ?? buildMastModel(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
     }
     this.coverage.clear();
     if (isDef || this.reducedFx === false) {
@@ -466,6 +466,8 @@ export class MatchView {
     this.world.vanLights.forEach((l, i) => ((l.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(this.time * 9 + i * Math.PI) > 0 ? 0x3a6aff : 0x0a1440)));
     // shop detail levels by camera distance (decoration only; gameplay objects are unaffected)
     for (const sh of [...this.world.stores, ...this.world.decorShops]) if (sh.setLod && sh.group) sh.setLod(this.camera.position.distanceTo(sh.group.position));
+    // camera heads turn slowly on their pivots (decorative; detection range comes from the rules)
+    for (const [id, mst] of this.masts) for (let k = 1; k <= 3; k++) { const pv = mst.getObjectByName(`cam_pivot_${k}`); if (pv) pv.rotation.y = Math.sin(this.time * 0.35 + k * 2 + id) * 0.7; }
     for (const sc of this.world.animated) { sc.tex.offset.x += sc.vx * dt; sc.tex.offset.y += sc.vy * dt; }
     // fountain spray
     if (this.world.fountainWater) {
