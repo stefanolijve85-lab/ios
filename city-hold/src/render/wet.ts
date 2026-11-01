@@ -8,7 +8,7 @@ const WetShader = {
   name: 'WetStreet',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 0.55 },
+    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 0.85 },
   },
   vertexShader: `uniform mat4 textureMatrix; uniform vec2 repeat; varying vec4 vR; varying vec2 vUv; varying vec2 vBig;
     void main(){ vR = textureMatrix * vec4(position, 1.0); vUv = uv * repeat; vBig = uv * 3.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -23,14 +23,14 @@ const WetShader = {
       float jit = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
       for (int i = 0; i < 8; i++) {
         float k = (float(i) + jit) / 8.0;
-        vec4 p = vR; p.xy += (dist + vec2((jit - 0.5) * 0.004, -k * 0.05)) * p.w;
+        vec4 p = vR; p.xy += (dist + vec2((jit - 0.5) * 0.004, -k * 0.13)) * p.w; // long vertical smear: the golden streaks of images 01-03
         float w = 1.0 - k * 0.75;
         acc += texture2DProj(tDiffuse, p).rgb * w; wsum += w;
       }
       acc /= wsum;
       // keep mostly the bright light sources: dull facades should not wash the street out
       float peak = max(acc.r, max(acc.g, acc.b));
-      acc *= smoothstep(0.12, 0.9, peak) * 1.15;
+      acc *= smoothstep(0.08, 0.85, peak) * 1.3;
       acc = min(acc, vec3(0.9)); // controlled highlights: no blown-out puddles
       float puddle = smoothstep(-0.2, 0.6, n2(vBig * 2.0));
       float wet = strength * mix(0.35, 1.0, puddle) * mix(1.0, 0.55, smoothstep(0.25, 0.6, lum));
@@ -43,7 +43,7 @@ const WetShader = {
 export function buildWetStreet(bounds: Rect, stone: THREE.Texture, pixelW: number, pixelH: number): Reflector {
   const w = bounds.x1 - bounds.x0 + 80, d = bounds.z1 - bounds.z0 + 80;
   const r = new Reflector(new THREE.PlaneGeometry(w, d), {
-    textureWidth: Math.round(pixelW * 0.5), textureHeight: Math.round(pixelH * 0.5), color: 0xb8c4d8, multisample: 0, shader: WetShader,
+    textureWidth: Math.round(pixelW * 0.5), textureHeight: Math.round(pixelH * 0.5), color: 0xe0cfb4, multisample: 0, shader: WetShader,
   });
   const m = r.material as THREE.ShaderMaterial;
   m.uniforms.tStone.value = stone; m.uniforms.repeat.value.set(w / 3.5, d / 3.5);

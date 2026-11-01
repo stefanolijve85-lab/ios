@@ -84,6 +84,19 @@ export function buildStreetBench(parent: THREE.Object3D, len = 1.8): THREE.Group
 
 // ---------------------------------------------------------------- 4. tree in a Versailles planter (LOD crown)
 export interface TreeHandles { group: THREE.Group; crown: THREE.LOD; crownMeshes: THREE.Mesh[] }
+/** canvas texture of a leafy clump in autumn olive/ochre/rust, with alpha, for the crown cards */
+function leafTexture(variant: number): THREE.Texture {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d')!; const r = seeded(variant * 131 + 7);
+  const pal = [['#6f7a32', '#8c8a3a', '#a8893a', '#b99a42', '#c27a2e'], ['#7a8236', '#9a903c', '#b8a248', '#c9862e', '#8a6a2a'], ['#5f6e2c', '#7f8a38', '#a07f34', '#c4a24a', '#b35f26']][variant % 3];
+  for (let i = 0; i < 420; i++) {
+    const a = r() * Math.PI * 2, d = Math.pow(r(), 0.6) * 112; const x = 128 + Math.cos(a) * d, y = 128 + Math.sin(a) * d * 0.9;
+    g.save(); g.translate(x, y); g.rotate(r() * Math.PI); g.fillStyle = pal[Math.floor(r() * pal.length)];
+    g.globalAlpha = 0.85 + r() * 0.15; g.beginPath(); g.ellipse(0, 0, 5 + r() * 5, 2.5 + r() * 2.5, 0, 0, Math.PI * 2); g.fill(); g.restore();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const leafCardMat = (v: number) => M('leafCard' + v, () => new THREE.MeshStandardMaterial({ map: leafTexture(v), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.85, emissive: 0x2a2010, emissiveIntensity: 0.6 }));
+
 export function buildTreePlanter(parent: THREE.Object3D, seed: number): TreeHandles {
   const g = new THREE.Group(); parent.add(g);
   const rnd = seeded(seed * 97 + 13);
@@ -108,11 +121,15 @@ export function buildTreePlanter(parent: THREE.Object3D, seed: number): TreeHand
   const near: THREE.BufferGeometry[] = [], far: THREE.BufferGeometry[] = [];
   const centres: [number, number, number][] = [];
   for (let k = 0; k < 14; k++) { const a = rnd() * Math.PI * 2, r = 0.3 + rnd() * 0.85; centres.push([Math.cos(a) * r, S + 2.3 + rnd() * 1.2, Math.sin(a) * r]); }
-  centres.forEach(([x, y, z], k) => near.push(new THREE.IcosahedronGeometry(0.42 + rnd() * 0.25, 1).translate(x, y, z).scale(1, k % 3 ? 0.85 : 1, 1)));
+  // airy autumn crown (images 01-03): three crossed leaf cards per cluster instead of solid blobs
+  centres.forEach(([x, y, z]) => {
+    const sz = 0.95 + rnd() * 0.5;
+    for (let c = 0; c < 3; c++) { const q = new THREE.PlaneGeometry(sz, sz * 0.85); q.rotateY((c * Math.PI) / 3 + rnd()); q.rotateX((rnd() - 0.5) * 0.6); q.translate(x, y, z); near.push(q); }
+  });
   for (const [x, y, z] of [[0, S + 2.8, 0], [0.5, S + 2.6, 0.3], [-0.45, S + 2.7, -0.3]] as [number, number, number][]) far.push(new THREE.IcosahedronGeometry(0.85, 0).translate(x, y, z));
   const leaf = leafMats[seed % leafMats.length];
   const crown = new THREE.LOD();
-  const nearMesh = new THREE.Mesh(mergeGeometries(near)!, leaf.clone()); nearMesh.castShadow = true;
+  const nearMesh = new THREE.Mesh(mergeGeometries(near)!, leafCardMat(seed % 3)); nearMesh.castShadow = false;
   const farMesh = new THREE.Mesh(mergeGeometries(far)!, leaf.clone());
   crown.addLevel(nearMesh, 0); crown.addLevel(farMesh, 55);
   g.add(crown);

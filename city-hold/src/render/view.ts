@@ -82,7 +82,7 @@ export class MatchView {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.3;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
@@ -99,7 +99,7 @@ export class MatchView {
     }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
-    this.scene.add(new THREE.HemisphereLight(0x8592bc, 0x6a4626, 0.95));
+    this.scene.add(new THREE.HemisphereLight(0x7d86a6, 0x7a5430, 0.85));
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
     moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);

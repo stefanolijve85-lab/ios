@@ -247,8 +247,8 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   const zt = T.zinc.clone(); zt.repeat.set(Math.max(1, (r.x1 - r.x0) / 4), Math.max(1, (r.z1 - r.z0) / 4)); zt.needsUpdate = true;
   const sl = pbr('slate', Math.max(1, (r.x1 - r.x0) / 3), Math.max(1, (r.z1 - r.z0) / 3));
   // blue-grey slate on the steep lower slope, pale zinc on the shallow top deck (images 01-03); a little metalness so the blue-hour sky reads on it
-  const slate = new THREE.MeshStandardMaterial({ ...sl, color: 0xc4ccd8, roughness: 0.62, metalness: 0.35, envMapIntensity: 1.4 });
-  const zincTop = new THREE.MeshStandardMaterial({ map: zt, color: 0xb4bcc6, roughness: 0.45, metalness: 0.6, envMapIntensity: 1.5 });
+  const slate = new THREE.MeshStandardMaterial({ ...sl, color: 0xa9b1bc, roughness: 0.7, metalness: 0.12, envMapIntensity: 0.9, emissive: 0x2a2f38, emissiveIntensity: 1 }); // faint city glow on the slate
+  const zincTop = new THREE.MeshStandardMaterial({ map: zt, color: 0xaab2ba, roughness: 0.55, metalness: 0.3, envMapIntensity: 0.9, emissive: 0x23272e, emissiveIntensity: 1 });
   const frustum = new THREE.CylinderGeometry(Math.SQRT1_2 * 0.8, Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
   const roof = new THREE.Mesh(frustum, [slate, zincTop, slate]); roof.position.set((r.x0 + r.x1) / 2, H + roofH / 2, (r.z0 + r.z1) / 2); roof.scale.set(r.x1 - r.x0 + 0.3, roofH, r.z1 - r.z0 + 0.3);
   roof.castShadow = true; roof.receiveShadow = true; g.add(roof); meshes.push(roof);

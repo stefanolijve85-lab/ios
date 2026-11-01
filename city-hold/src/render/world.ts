@@ -417,7 +417,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const gn = groundNormal(map.ground).clone(); gn.repeat.copy(gt.repeat); gn.needsUpdate = true;
   // puddles: the wet-setts roughness map (tools/make_pbr.py) on top of the fan-pattern setts
   const wet = pbr('setts', W / 9, D / 9).roughnessMap;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.75, metalness: 0.2, envMapIntensity: 0.9 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, color: 0xe6d8c4, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.75, metalness: 0.2, envMapIntensity: 0.9 }));
   ground.rotation.x = -Math.PI / 2; ground.position.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2); ground.receiveShadow = true; group.add(ground);
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
