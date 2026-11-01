@@ -18,32 +18,44 @@ export function mat(color: number, rough = 0.8, metal = 0): THREE.MeshStandardMa
   return m;
 }
 
+const cap = (r: number, len: number, rs = 10) => new THREE.CapsuleGeometry(r, len, 4, rs);
 const geo = {
-  thigh: new THREE.BoxGeometry(0.15, 0.46, 0.16).translate(0, -0.23, 0),
-  shin: new THREE.BoxGeometry(0.12, 0.46, 0.13).translate(0, -0.23, 0),
-  foot: new THREE.BoxGeometry(0.11, 0.08, 0.26).translate(0, -0.04, 0.05),
-  torso: new THREE.BoxGeometry(0.38, 0.56, 0.22).translate(0, 0.28, 0),
-  pelvis: new THREE.BoxGeometry(0.36, 0.16, 0.2),
-  vest: new THREE.BoxGeometry(0.41, 0.4, 0.26).translate(0, 0.3, 0),
-  upper: new THREE.BoxGeometry(0.1, 0.3, 0.11).translate(0, -0.15, 0),
-  fore: new THREE.BoxGeometry(0.09, 0.27, 0.09).translate(0, -0.135, 0),
-  hand: new THREE.SphereGeometry(0.05, 6, 5),
-  head: new THREE.SphereGeometry(0.11, 10, 8).scale(1, 1.15, 1.05),
-  neck: new THREE.CylinderGeometry(0.05, 0.06, 0.08, 6),
-  hair: new THREE.SphereGeometry(0.118, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55),
-  hairLong: new THREE.BoxGeometry(0.22, 0.28, 0.08).translate(0, -0.08, -0.09),
-  cap: new THREE.CylinderGeometry(0.12, 0.12, 0.07, 10),
-  brim: new THREE.BoxGeometry(0.18, 0.015, 0.1).translate(0, 0, 0.12),
-  helmet: new THREE.SphereGeometry(0.14, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.6),
-  visor: new THREE.BoxGeometry(0.22, 0.12, 0.02),
-  hood: new THREE.SphereGeometry(0.135, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.62),
+  thigh: cap(0.078, 0.32).translate(0, -0.23, 0),
+  shin: cap(0.06, 0.34).translate(0, -0.23, 0),
+  foot: cap(0.052, 0.16, 8).rotateX(Math.PI / 2).scale(1, 0.75, 1).translate(0, -0.035, 0.06),
+  torso: cap(0.165, 0.28, 14).scale(1.05, 1, 0.66).translate(0, 0.3, 0),
+  pelvis: new THREE.SphereGeometry(0.17, 12, 8).scale(1.05, 0.62, 0.72),
+  vest: cap(0.175, 0.22, 14).scale(1.08, 1, 0.74).translate(0, 0.32, 0),
+  upper: cap(0.052, 0.21).translate(0, -0.15, 0),
+  fore: cap(0.044, 0.19).translate(0, -0.135, 0),
+  hand: new THREE.SphereGeometry(0.048, 8, 6).scale(0.9, 1.2, 0.7),
+  head: new THREE.SphereGeometry(0.105, 16, 12).scale(0.92, 1.12, 1.0),
+  neck: new THREE.CylinderGeometry(0.045, 0.055, 0.1, 10),
+  hair: new THREE.SphereGeometry(0.113, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+  hairLong: cap(0.09, 0.14, 10).scale(1.15, 1, 0.5).translate(0, -0.1, -0.07),
+  cap: new THREE.CylinderGeometry(0.115, 0.118, 0.07, 14),
+  brim: new THREE.BoxGeometry(0.17, 0.012, 0.1).translate(0, 0, 0.11),
+  helmet: new THREE.SphereGeometry(0.135, 14, 9, 0, Math.PI * 2, 0, Math.PI * 0.6),
+  visor: new THREE.BoxGeometry(0.21, 0.11, 0.015),
+  hood: new THREE.SphereGeometry(0.13, 14, 9, 0, Math.PI * 2, 0, Math.PI * 0.62),
   box: new THREE.BoxGeometry(1, 1, 1),
   shield: new THREE.BoxGeometry(0.55, 1.0, 0.025),
-  ext: new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8),
-  backpack: new THREE.BoxGeometry(0.28, 0.32, 0.12).translate(0, 0.3, -0.16),
-  stripe: new THREE.BoxGeometry(0.4, 0.035, 0.24),
+  ext: new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10),
+  backpack: cap(0.11, 0.12, 10).scale(1.2, 1, 0.6).translate(0, 0.32, -0.15),
+  stripe: new THREE.CylinderGeometry(0.17, 0.17, 0.035, 14).scale(1.05, 1, 0.68),
   bag: new THREE.BoxGeometry(0.16, 0.2, 0.06),
+  collar: new THREE.TorusGeometry(0.075, 0.025, 6, 12).rotateX(Math.PI / 2),
 };
+
+let blobTex: THREE.Texture | null = null;
+function blob(): THREE.Texture {
+  if (blobTex) return blobTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32); grd.addColorStop(0, 'rgba(0,0,0,0.55)'); grd.addColorStop(0.6, 'rgba(0,0,0,0.25)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 64, 64); blobTex = new THREE.CanvasTexture(c); return blobTex;
+}
+const blobGeo = new THREE.PlaneGeometry(0.95, 0.95).rotateX(-Math.PI / 2);
+
 
 export interface Humanoid {
   root: THREE.Group;
@@ -113,6 +125,7 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   if (kind === 'firefighter') { for (const y of [0.16, 0.4]) m(geo.stripe, mat(0xd8e04a, 0.35), torso, 0, y, 0); }
   if (!isDef && r() < 0.6) m(geo.backpack, mat(pick([0x222222, 0x3a3020, 0x2a3a2a]), 0.8), torso);
   m(geo.neck, skin, torso, 0, 0.6, 0);
+  if (!isDef) m(geo.collar, topM, torso, 0, 0.6, 0);
   const head = new THREE.Group(); head.position.y = 0.66; torso.add(head);
   m(geo.head, skin, head, 0, 0.1, 0);
   // head wear
@@ -161,6 +174,9 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
     shield.add(rim);
   }
   if (kind === 'firefighter') { ext = m(geo.ext, mat(0xc0201a, 0.4), elbows[1], 0, -0.32, 0.05); }
+
+  const shadow = new THREE.Mesh(blobGeo, new THREE.MeshBasicMaterial({ map: blob(), transparent: true, depthWrite: false }));
+  shadow.position.y = 0.02; shadow.renderOrder = 2; root.add(shadow);
 
   const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTexture(kind, isDef ? '#36e0ff' : '#ff9a2e'), depthTest: false, transparent: true }));
   icon.scale.set(0.42, 0.42, 1); icon.position.y = 2.15; icon.renderOrder = 10; root.add(icon);

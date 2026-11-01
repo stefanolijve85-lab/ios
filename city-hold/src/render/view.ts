@@ -5,6 +5,10 @@ import type { MapDef, Vec2 } from '../maps/types';
 import { buildWorld, buildTruck, skyTexture, updateStoreVisual, type WorldHandles } from './world';
 import { animate, buildHumanoid, mat, type Humanoid, type Pose } from './humans';
 import { Effects } from './effects';
+import { Post } from './post';
+import { buildWetStreet } from './wet';
+import { groundTexture } from './textures';
+import type { Reflector } from 'three/addons/objects/Reflector.js';
 import { arrowTexture } from './textures';
 import { BALANCE } from '../config/balance';
 
@@ -61,13 +65,15 @@ export class MatchView {
   highlightStore = -1;
   showSockets: null | ((id: string) => boolean) = null;
   private disposed = false;
+  private post: Post | null = null;
+  private wet: Reflector | null = null;
   private keys = new Set<string>();
 
   constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean) {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
@@ -77,13 +83,18 @@ export class MatchView {
     this.scene.environment = env; this.scene.environmentIntensity = 0.25;
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
-    this.scene.add(new THREE.HemisphereLight(0x6b7fb8, 0x2a2018, 1.1));
-    const moon = new THREE.DirectionalLight(0xa9bcff, 1.2);
+    this.scene.add(new THREE.HemisphereLight(0x6f84c0, 0x5a3a20, 0.75));
+    const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
     moon.castShadow = !reducedFx; moon.shadow.mapSize.set(2048, 2048);
     const sc = moon.shadow.camera; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50; sc.near = 10; sc.far = 160; moon.shadow.bias = -0.0005;
     this.scene.add(moon, moon.target);
     this.world = buildWorld(map, this.scene, reducedFx);
+    if (!reducedFx) {
+      this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
+      this.scene.add(this.wet);
+      this.post = new Post(this.renderer, this.scene, this.camera);
+    }
     this.fx = new Effects(this.scene, reducedFx);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));
     this.destMarker.position.y = 0.05; this.scene.add(this.destMarker);
@@ -108,6 +119,9 @@ export class MatchView {
   resize = () => {
     const w = this.container.clientWidth, h = this.container.clientHeight;
     this.renderer.setSize(w, h, false);
+    const pr = this.renderer.getPixelRatio();
+    this.post?.setSize(w, h, pr);
+    this.wet?.getRenderTarget().setSize(Math.round(w * pr * 0.5), Math.round(h * pr * 0.5));
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
     this.maxDist = w < h ? 110 : 78;
     this.fx.setViewport(h);
@@ -117,6 +131,7 @@ export class MatchView {
     this.disposed = true;
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown); window.removeEventListener('keyup', this.onKeyUp);
+    this.post?.dispose(); this.wet?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove(); this.overlay.remove();
   }
@@ -458,7 +473,7 @@ export class MatchView {
     }
     this.floaters = this.floaters.filter((f) => { if (f.t > 1.8) { f.el.remove(); return false; } return true; });
     for (const [k, el] of this.bars) { if (el.dataset.seen !== '1') { el.remove(); this.bars.delete(k); } else el.dataset.seen = '0'; }
-    this.renderer.render(this.scene, this.camera);
+    if (this.post) this.post.render(this.time); else this.renderer.render(this.scene, this.camera);
   }
 
   private fadeOccluders(g: Game) {

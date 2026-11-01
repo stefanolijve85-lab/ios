@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
-import { crackTexture, facadeTexture, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
+import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
   group: THREE.Group;
@@ -41,15 +41,33 @@ function mesh(g: THREE.BufferGeometry, m: THREE.Material, parent: THREE.Object3D
   o.castShadow = shadow; o.receiveShadow = true; parent.add(o); return o;
 }
 
+/** darker upper storeys and a warm glow from the street on the lower floors (as in the blue-hour concepts) */
+export function heightGrade(m: THREE.MeshStandardMaterial, strength = 1) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = 'varying float vWY;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\n  vWY = (modelMatrix * vec4(transformed, 1.0)).y;');
+    sh.fragmentShader = 'varying float vWY;\n' + sh.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>\n  diffuseColor.rgb *= mix(1.0, 0.62, smoothstep(5.0, 22.0, vWY) * ${strength.toFixed(2)});`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(1.0, 0.6, 0.3) * 0.16 * ${strength.toFixed(2)} * smoothstep(7.5, 0.0, vWY) * diffuseColor.rgb;`);
+  };
+  m.customProgramCacheKey = () => 'hgrade' + strength;
+  return m;
+}
+
 function facadeMat(b: BuildingDef, width: number, variant: number): THREE.MeshStandardMaterial {
-  const t = facadeTexture(b.style, variant).clone();
   const cols = b.style === 'canal' ? 2 : b.style === 'modern' ? 4 : 3;
   const floors = b.style === 'haussmann' || b.style === 'berlin' ? 6 : 5;
-  t.repeat.set(Math.max(1, Math.round(width / (cols * 2))), b.height / (floors * 3.2));
-  t.offset.y = 1 - (b.height / (floors * 3.2)) % 1;
-  t.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({ map: t, roughness: 0.85, transparent: false });
+  const prep = (src: THREE.Texture) => {
+    const t = src.clone();
+    t.repeat.set(Math.max(1, Math.round(width / (cols * 2))), b.height / (floors * 3.2));
+    t.offset.y = 1 - (b.height / (floors * 3.2)) % 1;
+    t.needsUpdate = true; return t;
+  };
+  const m = new THREE.MeshStandardMaterial({ map: prep(facadeTexture(b.style, variant)), emissiveMap: prep(facadeEmissive(b.style, variant)), emissive: 0xffc080, emissiveIntensity: 1.05, roughness: 0.85 });
+  return heightGrade(m);
 }
+
+/** chimney row sits near the street-facing (south) edge so it reads from the camera */
+function side0(r: { z0: number; z1: number }, idx: number) { const c = (r.z0 + r.z1) / 2; return c > 0 ? r.z0 + 2.2 + (idx % 2) * 1.5 : r.z1 - 2.2 - (idx % 2) * 1.5; }
 
 function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeables: Fadeable[]) {
   const r = b.rect; const w = r.x1 - r.x0, d = r.z1 - r.z0; const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
@@ -82,7 +100,8 @@ function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeabl
     void glow;
   }
   // roof
-  const slate = new THREE.MeshStandardMaterial({ map: roofTexture(b.style), roughness: 0.6, metalness: 0.15 });
+  const rt = roofTexture(b.style).clone(); rt.repeat.set(Math.max(1, w / 5), Math.max(1, d / 5)); rt.needsUpdate = true;
+  const slate = new THREE.MeshStandardMaterial({ map: rt, color: 0xa8a49e, roughness: 0.55, metalness: 0.1 });
   if (b.style === 'haussmann' || b.style === 'berlin') {
     const roofH = 3.4;
     const frustum = new THREE.CylinderGeometry(Math.SQRT1_2 * 0.82, Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
@@ -97,7 +116,13 @@ function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeabl
         meshes.push(mesh(box, dm, g, x, b.height + 1.4, z, 1.2, 1.6, 1.0));
         if (Math.sin(x * 3.1 + idx) > -0.2) meshes.push(mesh(box, win, g, x, b.height + 1.3, z + side * 0.51, 0.6, 0.9, 0.02, false));
       }
-      if (i % 3 === 1) meshes.push(mesh(box, mat(0x8a6f5a, 0.9), g, x + 1.5, b.height + 4.2, cz, 0.9, 1.8, 2.2));
+      if (i % 3 === 1) {
+        // limestone chimney stack with terracotta pots
+        const cxp = x + 1.5, czp = side0(r, idx);
+        meshes.push(mesh(box, mat(0x9a8c74, 0.9), g, cxp, b.height + 3.6, czp, 2.4, 2.2, 0.9));
+        meshes.push(mesh(box, mat(0xd4c4a4, 0.9), g, cxp, b.height + 4.75, czp, 2.6, 0.15, 1.05));
+        for (let k = 0; k < 4; k++) meshes.push(mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.45, 7), mat(0xa5532e, 0.8), g, cxp - 0.9 + k * 0.6, b.height + 5.05, czp));
+      }
     }
   } else if (b.style === 'canal' || b.style === 'brick') {
     // row of gables / pitched roofs
@@ -196,7 +221,7 @@ export function updateStoreVisual(v: StoreVisual, structureRatio: number, stockR
     for (const w of v.windows) (w.material as THREE.MeshBasicMaterial).map = interiorTexture(v.def.kind, stockRatio);
   }
   const dim = breached ? 0.55 : 1;
-  for (const w of v.windows) (w.material as THREE.MeshBasicMaterial).color.setScalar(dim * (w === v.windows[2] ? 0.75 : 1));
+  for (const w of v.windows) (w.material as THREE.MeshBasicMaterial).color.setScalar(1.05 * dim * (w === v.windows[2] ? 0.75 : 1)); // >1 so bright shop interiors bloom
 }
 
 export function buildCar(color: number, burned: boolean): THREE.Group {
@@ -232,14 +257,30 @@ export function buildTruck(): THREE.Group {
   return g;
 }
 
+/** clipped shrub: a few overlapping rounded clusters with small blossoms */
+function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number, seed: number) {
+  const greens = [0x2f4a26, 0x3a5a2c, 0x34522a];
+  for (let k = 0; k < 4; k++) {
+    const a = k * 2.2 + seed; const rr = k === 0 ? 0 : r * 0.45;
+    mesh(new THREE.IcosahedronGeometry(r * (k === 0 ? 0.85 : 0.6), 1), mat(greens[(seed + k) % 3], 0.9), parent, x + Math.cos(a) * rr, y + r * 0.45 + (k === 0 ? 0.1 : 0), z + Math.sin(a) * rr);
+  }
+  if (seed % 2 === 0) for (let k = 0; k < 5; k++) { const a = k * 1.3 + seed; mesh(new THREE.SphereGeometry(0.05, 5, 4), mat([0xd8c060, 0xe0e0d0, 0xc06050][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.6, y + r * 0.95, z + Math.sin(a) * r * 0.6, 1, 1, 1, false); }
+}
+
 function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandles['cars'], lamps: THREE.Vector3[]) {
   const g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.rotation.y = ((p.rot ?? 0) * Math.PI) / 180; parent.add(g);
   switch (p.type) {
     case 'lamp': {
-      mesh(cyl, mat(0x1b1d22, 0.5, 0.6), g, 0, 2.1, 0, 0.07, 4.2, 0.07);
-      mesh(box, new THREE.MeshBasicMaterial({ color: 0xffd28a }), g, 0, 4.3, 0, 0.32, 0.45, 0.32, false);
-      mesh(box, mat(0x1b1d22, 0.5, 0.6), g, 0, 4.6, 0, 0.42, 0.08, 0.42);
-      lamps.push(new THREE.Vector3(p.x, 4.2, p.z));
+      // Parisian-style cast-iron lamppost with a glowing lantern
+      const iron = mat(0x16181c, 0.45, 0.7);
+      mesh(cyl, iron, g, 0, 0.25, 0, 0.16, 0.5, 0.16);
+      mesh(new THREE.CylinderGeometry(0.05, 0.08, 3.6, 8), iron, g, 0, 2.2, 0);
+      mesh(cyl, iron, g, 0, 4.0, 0, 0.09, 0.12, 0.09);
+      const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(5) });
+      mesh(new THREE.CylinderGeometry(0.2, 0.13, 0.5, 6), glow, g, 0, 4.35, 0, 1, 1, 1, false);
+      mesh(new THREE.ConeGeometry(0.3, 0.28, 6), iron, g, 0, 4.74, 0);
+      mesh(new THREE.SphereGeometry(0.05, 6, 4), iron, g, 0, 4.92, 0);
+      lamps.push(new THREE.Vector3(p.x, 4.3, p.z));
       break;
     }
     case 'tree': case 'palm': {
@@ -247,15 +288,19 @@ function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandle
         const tr = mesh(cyl, mat(0x6a5440, 0.9), g, 0, 2.6, 0, 0.14, 5.2, 0.14); tr.rotation.z = 0.08;
         for (let k = 0; k < 7; k++) { const f = mesh(new THREE.ConeGeometry(0.3, 2.6, 4), mat(0x2f5a2a, 0.8), g, Math.cos(k) * 0.9, 5.0, Math.sin(k) * 0.9); f.rotation.set(Math.sin(k) * 1.2, 0, -Math.cos(k) * 1.2); }
       } else {
-        mesh(cyl, mat(0x4a3a2a, 0.9), g, 0, 1.3, 0, 0.12, 2.6, 0.12);
-        const leaf = mat([0x3d5a2a, 0x5a6a2a, 0x7a6a2a][i % 3], 0.9);
-        mesh(new THREE.IcosahedronGeometry(1.3, 0), leaf, g, 0, 3.3, 0);
-        mesh(new THREE.IcosahedronGeometry(0.9, 0), leaf, g, 0.4, 4.1, 0.2);
+        mesh(new THREE.CylinderGeometry(0.09, 0.15, 3.0, 7), mat(0x3e3226, 0.9), g, 0, 1.5, 0);
+        // autumn crown built from several leaf clusters (green to ochre, as in the Paris concepts)
+        const pal = [0x6f7a2a, 0x9a8a2c, 0xb98a2e, 0x5f6e2a, 0xa27a28];
+        for (let k = 0; k < 7; k++) {
+          const a = k * 2.4 + i, rr = k === 0 ? 0 : 0.75 + (k % 2) * 0.25;
+          const leaf = mat(pal[(i + k) % pal.length], 0.85);
+          mesh(new THREE.IcosahedronGeometry(k === 0 ? 1.15 : 0.75 + (k % 3) * 0.12, 1), leaf, g, Math.cos(a) * rr, 3.6 + (k % 3) * 0.45 - (k === 0 ? 0 : 0.3), Math.sin(a) * rr);
+        }
         mesh(box, mat(0x5a5048, 0.9), g, 0, 0.2, 0, 1.4, 0.4, 1.4);
       }
       break;
     }
-    case 'planter': mesh(box, mat(0x3a3a3c, 0.8), g, 0, 0.35, 0, 1.4, 0.7, 1.4); mesh(new THREE.IcosahedronGeometry(0.75, 0), mat(0x3a5a2a, 0.9), g, 0, 1.1, 0); break;
+    case 'planter': mesh(box, mat(0x2e3034, 0.6, 0.2), g, 0, 0.35, 0, 1.4, 0.7, 1.4); bush(g, 0, 0.75, 0, 0.62, i); break;
     case 'bench': mesh(box, mat(0x5a3a22, 0.8), g, 0, 0.45, 0, 1.8, 0.08, 0.5); mesh(box, mat(0x5a3a22, 0.8), g, 0, 0.75, -0.22, 1.8, 0.5, 0.06); break;
     case 'bollard': mesh(cyl, mat(0x202226, 0.6, 0.3), g, 0, 0.45, 0, 0.12, 0.9, 0.12); break;
     case 'umbrella': {
@@ -281,13 +326,21 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const group = new THREE.Group(); scene.add(group);
   const b = map.bounds; const W = b.x1 - b.x0 + 80, D = b.z1 - b.z0 + 80;
   const gt = groundTexture(map.ground).clone(); gt.repeat.set(W / 3.5, D / 3.5); gt.needsUpdate = true;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, roughness: 0.32, metalness: 0.25, envMapIntensity: 0.6 }));
+  const gn = groundNormal(map.ground).clone(); gn.repeat.copy(gt.repeat); gn.needsUpdate = true;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 0.28, metalness: 0.2, envMapIntensity: 0.6 }));
   ground.rotation.x = -Math.PI / 2; ground.position.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2); ground.receiveShadow = true; group.add(ground);
   // kerbs/pavement bands along every building
-  const pave = new THREE.MeshStandardMaterial({ map: groundTexture('stone'), roughness: 0.4, metalness: 0.15, polygonOffset: true, polygonOffsetFactor: -1 });
   for (const bd of map.buildings) {
-    const r = bd.rect; const m = new THREE.Mesh(new THREE.PlaneGeometry(r.x1 - r.x0 + 3.2, r.z1 - r.z0 + 3.2), pave);
+    const r = bd.rect;
+    const pt = groundTexture('stone').clone(); pt.repeat.set((r.x1 - r.x0 + 3.2) / 2.4, (r.z1 - r.z0 + 3.2) / 2.4); pt.needsUpdate = true;
+    const pn = groundNormal('stone').clone(); pn.repeat.copy(pt.repeat); pn.needsUpdate = true;
+    const pave = new THREE.MeshStandardMaterial({ map: pt, normalMap: pn, normalScale: new THREE.Vector2(0.5, 0.5), color: 0x8a8378, roughness: 0.3, metalness: 0.15, polygonOffset: true, polygonOffsetFactor: -1 });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(r.x1 - r.x0 + 3.2, r.z1 - r.z0 + 3.2), pave);
     m.rotation.x = -Math.PI / 2; m.position.set((r.x0 + r.x1) / 2, 0.015, (r.z0 + r.z1) / 2); m.receiveShadow = true; group.add(m);
+    const kerb = mat(0xb5ab98, 0.6);
+    const kx = (r.x0 + r.x1) / 2, kz = (r.z0 + r.z1) / 2, kw = r.x1 - r.x0 + 3.2, kd = r.z1 - r.z0 + 3.2;
+    mesh(box, kerb, group, kx, 0.06, kz + kd / 2, kw, 0.12, 0.18, false); mesh(box, kerb, group, kx, 0.06, kz - kd / 2, kw, 0.12, 0.18, false);
+    mesh(box, kerb, group, kx + kw / 2, 0.06, kz, 0.18, 0.12, kd, false); mesh(box, kerb, group, kx - kw / 2, 0.06, kz, 0.18, 0.12, kd, false);
   }
   const fadeables: Fadeable[] = [];
   map.buildings.forEach((bd, i) => buildBuilding(bd, group, i, fadeables));
@@ -295,26 +348,39 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   // walls / railings / quays
   for (const w of map.walls) {
     const h = w.h ?? 2.6;
-    mesh(box, h <= 1.2 ? mat(0x1c1d20, 0.5, 0.6) : mat(0xb8ab92, 0.85), group, (w.x0 + w.x1) / 2, h / 2, (w.z0 + w.z1) / 2, w.x1 - w.x0, h, w.z1 - w.z0);
+    const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2, lx = w.x1 - w.x0, lz = w.z1 - w.z0;
+    if (h <= 1.2) {
+      // iron railing on a stone kerb: top rail, posts and balusters (the collision footprint is unchanged)
+      const iron = mat(0x18191c, 0.45, 0.7);
+      mesh(box, mat(0x8f8576, 0.85), group, cx, 0.12, cz, lx, 0.24, lz);
+      mesh(box, iron, group, cx, h, cz, Math.max(lx, 0.06), 0.06, Math.max(lz, 0.06));
+      mesh(box, iron, group, cx, 0.32, cz, Math.max(lx, 0.04), 0.04, Math.max(lz, 0.04));
+      const along = lx > lz; const len = along ? lx : lz; const n = Math.max(1, Math.round(len / 0.25));
+      for (let k = 0; k <= n; k++) {
+        const t = -len / 2 + (k * len) / n; const post = k % 8 === 0;
+        mesh(box, iron, group, along ? cx + t : cx, (h + 0.24) / 2, along ? cz : cz + t, post ? 0.07 : 0.025, h - 0.24, post ? 0.07 : 0.025, post);
+      }
+    } else mesh(box, mat(0xb8ab92, 0.85), group, cx, h / 2, cz, lx, h, lz);
   }
   // water with quay walls and bridges
   const water: THREE.Mesh[] = [];
   for (const wr of map.water) {
     const wt = waterTexture().clone(); wt.repeat.set((wr.x1 - wr.x0) / 8, (wr.z1 - wr.z0) / 8); wt.needsUpdate = true;
-    const wm = new THREE.Mesh(new THREE.PlaneGeometry(wr.x1 - wr.x0, wr.z1 - wr.z0), new THREE.MeshStandardMaterial({ map: wt, color: 0x9fc0d0, roughness: 0.12, metalness: 0.15, emissive: 0x0d2a38, emissiveIntensity: 1.0, envMapIntensity: 1.5 }));
+    const wm = new THREE.Mesh(new THREE.PlaneGeometry(wr.x1 - wr.x0, wr.z1 - wr.z0), new THREE.MeshStandardMaterial({ map: wt, emissiveMap: wt, color: 0x4a6470, roughness: 0.1, metalness: 0.3, emissive: 0x5a4a38, emissiveIntensity: 0.55, envMapIntensity: 1.2 }));
     wm.rotation.x = -Math.PI / 2; wm.position.set((wr.x0 + wr.x1) / 2, -0.9, (wr.z0 + wr.z1) / 2); group.add(wm); water.push(wm);
     // dark pit walls so the canal reads as a cut below street level
     const quay = mat(0x6a5a48, 0.9);
     mesh(box, quay, group, (wr.x0 + wr.x1) / 2, 0.08, wr.z0 + 0.15, wr.x1 - wr.x0, 0.16, 0.3, false);
     mesh(box, quay, group, (wr.x0 + wr.x1) / 2, 0.08, wr.z1 - 0.15, wr.x1 - wr.x0, 0.16, 0.3, false);
     // water surface drawn just above street level (the quay edge and railings mark the drop)
-    wm.position.y = 0.03;
+    wm.position.y = 0.008; // below the wet-street reflection layer
   }
   for (const br of map.bridges) {
-    const deck = mesh(box, mat(0x8a7560, 0.85), group, (br.x0 + br.x1) / 2, 0.06, (br.z0 + br.z1) / 2, br.x1 - br.x0, 0.12, br.z1 - br.z0);
+    const bt = groundTexture('brick').clone(); bt.repeat.set((br.x1 - br.x0) / 3, (br.z1 - br.z0) / 3); bt.needsUpdate = true;
+    const deck = mesh(box, new THREE.MeshStandardMaterial({ map: bt, color: 0xb09a88, roughness: 0.35, metalness: 0.1 }), group, (br.x0 + br.x1) / 2, 0.06, (br.z0 + br.z1) / 2, br.x1 - br.x0, 0.12, br.z1 - br.z0);
     void deck;
     const along = br.z1 - br.z0 > br.x1 - br.x0;
-    const arch = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 16, 1, true, 0, Math.PI), mat(0x6a5a48, 0.9));
+    const arch = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 16, 1, true, 0, Math.PI), mat(0x7a3e2c, 0.9));
     if (along) { arch.rotation.z = Math.PI / 2; arch.scale.set(0.8, br.x1 - br.x0, (br.z1 - br.z0) * 0.35); }
     else { arch.rotation.x = Math.PI / 2; arch.rotation.z = 0; arch.scale.set((br.x1 - br.x0) * 0.35, br.z1 - br.z0, 0.8); }
     arch.position.set((br.x0 + br.x1) / 2, 0.05, (br.z0 + br.z1) / 2); group.add(arch);
@@ -345,7 +411,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     mesh(new THREE.CylinderGeometry(f.r * 0.86, f.r * 0.88, 0.7, 40, 1, true), stone, fg, 0, 0.35, 0);
     mesh(new THREE.TorusGeometry(f.r * 0.87, 0.16, 8, 48).rotateX(Math.PI / 2), stone, fg, 0, 0.7, 0);
     mesh(new THREE.CylinderGeometry(f.r * 1.0, f.r * 1.0, 0.08, 40), mat(0x8f8676, 0.85), fg, 0, 0.04, 0);
-    const wmat = new THREE.MeshStandardMaterial({ color: 0x1d4656, roughness: 0.05, metalness: 0.5, emissive: 0x0a2430, emissiveIntensity: 0.6 });
+    const wmat = new THREE.MeshStandardMaterial({ color: 0x1f4a50, roughness: 0.04, metalness: 0.45, emissive: 0x0a2c32, emissiveIntensity: 0.7 });
     mesh(new THREE.CylinderGeometry(f.r * 0.84, f.r * 0.84, 0.05, 40), wmat, fg, 0, 0.6, 0);
     mesh(new THREE.CylinderGeometry(0.5, 0.7, 1.8, 12), stone, fg, 0, 1.3, 0);
     mesh(new THREE.CylinderGeometry(1.6, 0.4, 0.35, 20), mat(0xa89a80, 0.8), fg, 0, 2.2, 0);
@@ -353,11 +419,16 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     mesh(new THREE.CylinderGeometry(0.25, 0.35, 1.1, 10), stone, fg, 0, 2.9, 0);
     mesh(new THREE.CylinderGeometry(0.85, 0.25, 0.25, 16), stone, fg, 0, 3.45, 0);
     mesh(new THREE.SphereGeometry(0.3, 10, 8), mat(0xb8a27a, 0.6, 0.3), fg, 0, 3.85, 0);
-    const lightRing = new THREE.MeshBasicMaterial({ color: 0xffe2a8 });
+    const lightRing = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2a8).multiplyScalar(4) });
     for (let k = 0; k < 8; k++) {
       const a = (k / 8) * Math.PI * 2;
       mesh(box, mat(0x3a3a3c, 0.8), fg, Math.cos(a) * (f.r - 0.35), 0.35, Math.sin(a) * (f.r - 0.35), 1.0, 0.7, 1.0).rotation.y = -a;
-      mesh(new THREE.IcosahedronGeometry(0.55, 0), mat(0x3a5a2a, 0.9), fg, Math.cos(a) * (f.r - 0.35), 1.0, Math.sin(a) * (f.r - 0.35));
+      bush(fg, Math.cos(a) * (f.r - 0.35), 0.7, Math.sin(a) * (f.r - 0.35), 0.5, k);
+      // bench between planters, facing out to the square
+      const ab = a + Math.PI / 8; const bg = new THREE.Group(); bg.position.set(Math.cos(ab) * (f.r - 0.3), 0, Math.sin(ab) * (f.r - 0.3)); bg.rotation.y = -ab + Math.PI / 2; fg.add(bg);
+      const wood = mat(0x5a3a22, 0.8), iron = mat(0x1a1a1c, 0.5, 0.6);
+      mesh(box, wood, bg, 0, 0.45, 0.05, 1.5, 0.06, 0.45); mesh(box, wood, bg, 0, 0.75, -0.17, 1.5, 0.4, 0.05);
+      for (const sx of [-0.65, 0.65]) mesh(box, iron, bg, sx, 0.22, 0, 0.06, 0.44, 0.45);
       mesh(box, lightRing, fg, Math.cos(a + 0.4) * f.r * 0.86, 0.72, Math.sin(a + 0.4) * f.r * 0.86, 0.15, 0.06, 0.15, false);
     }
     if (!reducedFx) {
@@ -371,11 +442,11 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const lampPos: THREE.Vector3[] = [];
   map.props.forEach((p, i) => buildProp(p, group, i, cars, lampPos));
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
-  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.55)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.32)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   lampPos.forEach((lp, i) => {
-    const pm = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
-    if (!reducedFx && i < 4) { const l = new THREE.PointLight(0xffc27a, 18, 12, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
+    if (!reducedFx && i < 7) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) {
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(s.width + 2, 5), pool); pm.rotation.x = -Math.PI / 2;
