@@ -22,6 +22,13 @@ const props: PropDef[] = [
     .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
   ...([[-24.1, -21.5], [24.1, -19], [-24.1, -36.5], [24.1, -36.5], [-24.1, -52], [24.1, -52]] as const)
     .map(([x, z]) => ({ type: 'tree' as const, x, z, collide: true, r: 0.7 })),
+  // trees and double lamps in front of and beside the fountain, as in images 01/02
+  { type: 'tree', x: -7.2, z: 5.2, collide: true, r: 0.8 },
+  { type: 'tree', x: 7.2, z: 5.2, collide: true, r: 0.8 },
+  { type: 'lamp', x: -4.6, z: 7.2, collide: true, r: 0.25 },
+  { type: 'lamp', x: 4.6, z: 7.2, collide: true, r: 0.25 },
+  { type: 'tree', x: -11.5, z: -2.5, collide: true, r: 0.8 },
+  { type: 'tree', x: 11.5, z: -2.5, collide: true, r: 0.8 },
   // planters with small trees
   { type: 'planter', x: -5, z: -13.1, collide: true, r: 0.7 },
   { type: 'planter', x: 5, z: -13.1, collide: true, r: 0.7 },
@@ -71,7 +78,7 @@ export const PARIS: MapDef = {
   bounds: { x0: -32, z0: -30, x1: 32, z1: 24 },
   ground: 'cobble',
   buildings: [
-    { rect: { x0: -17, z0: -40, x1: 17, z1: -14 }, height: 19, style: 'haussmann' },
+    { rect: { x0: -14.6, z0: -40, x1: 14.6, z1: -14 }, height: 14.6, style: 'haussmann' }, // proportions of images 01-03: shops + 3 floors + mansard
     { rect: { x0: -44, z0: -40, x1: -25, z1: 3 }, height: 14, style: 'haussmann' },
     { rect: { x0: 25, z0: -40, x1: 44, z1: 3 }, height: 14, style: 'haussmann' },
     // backdrop beyond the play area: the side streets run on past a cross street, as in images 01/02 (outside the nav bounds)
@@ -124,6 +131,8 @@ export const PARIS: MapDef = {
   van: { x: 24.5, z: 9, rot: 90 },
   defenderSpawn: { x: 19.5, z: 9 },
   lowSight: [],
+  // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
+  facadeDecals: [{ texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75 }],
   ambient: {
     // guests standing or sitting at the terrace tables (first ones are kept on phones)
     patrons: [
@@ -140,7 +149,7 @@ export const PARIS: MapDef = {
       { x: -20.5, z: -5.4 }, { x: 0, z: 13 },
     ],
   },
-  camera: { x: 0, z: -1.5, dist: 44 },
+  camera: { x: 0, z: -2, dist: 46 },
   playable: true,
   notes: 'Tutorial district. Four attacker approaches; the east service road is the defenders\' staging lane.',
 };

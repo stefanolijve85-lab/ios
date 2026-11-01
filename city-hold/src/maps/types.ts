@@ -57,6 +57,9 @@ export interface SupplyDef { route: Vec2[]; loadIndex: number }
 
 export interface Spot { x: number; z: number; facing: number }
 
+/** a painted facade from the concept art laid over a building front (x0..x1 along the face, y0..y1 height, at depth z) */
+export interface FacadeDecal { texture: string; x0: number; x1: number; y0: number; y1: number; z: number }
+
 export interface MapDef {
   id: string;
   city: string;
@@ -82,6 +85,7 @@ export interface MapDef {
   decorShops?: StoreDef[];
   /** ambient life (no gameplay effect): café guests at terrace tables, a decorative police line, points where passers-by stop */
   ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
+  facadeDecals?: FacadeDecal[];
   entries: EntryDef[];
   sockets: SocketDef[];
   van: { x: number; z: number; rot: number };

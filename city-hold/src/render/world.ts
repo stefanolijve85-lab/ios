@@ -569,6 +569,14 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 1.6, 7);
   if (pools.length) group.add(new THREE.Mesh(mergeGeometries(pools)!, pool));
   if (streaks.length) { const sm = new THREE.Mesh(mergeGeometries(streaks)!, streak); sm.renderOrder = 2; group.add(sm); }
+  // painted facades from the concept art (front faces facing +z), slightly self-lit because the painting carries its own light
+  for (const fd of map.facadeDecals ?? []) {
+    new THREE.TextureLoader().loadAsync(fd.texture).then((t) => {
+      t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(fd.x1 - fd.x0, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7, roughness: 0.7 }));
+      m.position.set((fd.x0 + fd.x1) / 2, (fd.y0 + fd.y1) / 2, fd.z); m.receiveShadow = true; group.add(m);
+    }).catch(() => { /* keep the built facade */ });
+  }
   // support van (staging point)
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
   const { g: van, lights: vanLights } = vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();

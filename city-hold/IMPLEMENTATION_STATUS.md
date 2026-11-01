@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris: painted main facade and concept proportions
+
+- The shop building now has the proportions of concepts 01-03: 29.2 m wide (was 34 m) and 14.6 m to the cornice (shops plus 3 floors, was 19 m), under the mansard. The side streets are about 10 m wide.
+- Its three upper floors use the painting from concept 01 as a facade decal (`facadeDecals` in the map, `public/textures/facades/paris_main.jpg`). It sits just in front of the balconies and is slightly self-lit.
+- The square has two trees and two double lamps in front of the fountain and two trees beside it.
+- Default camera: target z −2, distance 46. Zoomed out it frames like concept 02. Further out, the staging team would sit under the HUD panel.
+- Comparison: `docs/screenshots/paris_concept02_vs_painted_facade.jpg`.
+
 ## Paris shopfronts from concept 03
 
 - The three shopfronts in concept 03 were cropped, and the shield badges and the two officers in front of the electronics window were retouched out (OpenCV inpainting). Results: `assets/model_refs/shop_*_clean.png`, `public/textures/shopfronts/*.jpg`, about 90 KB each.
