@@ -91,7 +91,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await ff(14); await p.waitForTimeout(300);
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_looters_mid.png` });
   // run until the first extraction, then spend the reward on the group upgrade through the UI
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 90; i++) { // the browser match uses a time-based seed: allow enough attempts
     const ex = await p.evaluate(() => {
       const g = window.__match.game;
       if (!g.over && g.attackers().length + g.dispatchQueue.length === 0) {

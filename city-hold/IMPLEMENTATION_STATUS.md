@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Asset upgrades: rig, people, flipbooks, PBR, HDRI, templates
+
+- Character GLBs are auto-rigged skinned meshes (`src/render/rig.ts`); verified in the browser (skinned meshes animate, throw clip with hand socket).
+- Neutral shopkeepers, civilians and a helper (separate random stream, no gameplay effect, mobile cap 3 / desktop 6).
+- Fire/smoke/gas flipbook atlases; generated PBR sets on ground (puddle roughness), roofs (slate) and facade cores (limestone); generated blue-hour HDRI as environment.
+- Artist templates in `assets/model_templates`. The network policy of this environment blocked api.polyhaven.com / dl.polyhaven.org, so no photographic CC0 materials or HDRI could be fetched.
+- Measured (software rendering, iPhone emulation, mobile quality): ~15 ms per frame, ~390 draw calls in the play scene. The pack target of ≤ 150 draw calls on mobile is still not met.
+
 ## Thrower unit (throw-pose packs)
 
 - New looter class **Thrower** (card; also in defence waves from wave 4). Outfits rebuilt from `assets/throw_poses` (masked 1–3, thrower 1–3). It throws a fictional incendiary game object (procedural exterior only: bottle, cloth, small flame) at its target store or at marked burnable cars — never at people.

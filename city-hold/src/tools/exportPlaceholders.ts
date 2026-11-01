@@ -82,3 +82,37 @@ async function run(): Promise<Record<string, string>> {
   return res;
 };
 document.getElementById('status')!.textContent = 'ready';
+
+/** GLB templates for artists: same names, groups, sockets and sizes the game expects (not loaded by the game) */
+(window as unknown as { __exportTemplates: () => Promise<Record<string, string>> }).__exportTemplates = async () => {
+  const { ShopModule, SHOP_TYPES } = await import('../render/shopModule');
+  const sp = await import('../render/streetProps');
+  const { buildHaussmann } = await import('../render/haussmann');
+  const { PARIS } = await import('../maps/paris');
+  const { pbr, pbrReady } = await import('../render/pbr');
+  for (const n of ['limestone', 'setts', 'slate'] as const) pbr(n, 1, 1);
+  await pbrReady();
+  const out: Record<string, string> = {};
+  const kinds: Record<string, string> = { electronics: 'electronics', fashion: 'fashion', jewelry: 'jewellery', grocery: 'grocery', cafe: 'cafe', sneakers: 'sneakers' };
+  for (const id of Object.keys(SHOP_TYPES)) {
+    const m = new ShopModule({ name: id, kind: kinds[id] as never, color: 0, front: { x: 0, z: 0 }, normal: { x: 0, z: 1 }, width: 8 }, 0, { quality: 'desktop', seed: 1, withLight: false });
+    m.update(0.1, 1, 3, true, 1); // every group populated
+    for (const g of Object.values(m.groups)) g.visible = true;
+    out[`shop_${id}`] = await glb(m.group);
+  }
+  const holder = (fn: (g: THREE.Group) => unknown) => { const g = new THREE.Group(); fn(g); return g; };
+  out['prop_lamp'] = await glb(holder((g) => sp.buildStreetLamp(g)));
+  out['prop_bench'] = await glb(holder((g) => sp.buildStreetBench(g)));
+  out['prop_tree'] = await glb(holder((g) => sp.buildTreePlanter(g, 1)));
+  out['prop_shelter'] = await glb(holder((g) => sp.buildBusShelter(g)));
+  out['prop_barrier'] = await glb(sp.buildCrowdBarrier(2.5));
+  out['prop_camera_mast'] = await glb(sp.buildCameraMast());
+  out['prop_delivery_van'] = await glb(sp.buildDeliveryVan());
+  out['prop_extinguisher'] = await glb(sp.buildExtinguisher());
+  out['prop_fountain'] = await glb(holder((g) => sp.buildOctagonFountain({ x: 0, z: 0, r: 5 }, g, false)));
+  // one Haussmann house (3 bays) with a shop opening: the reference block for a modular facade kit
+  const block = { rect: { x0: -7, z0: -14, x1: 7, z1: 0 }, height: 19, style: 'haussmann' as const };
+  const map = { ...PARIS, buildings: [block], stores: [{ name: 's', kind: 'electronics' as const, color: 0, front: { x: 0, z: 0 }, normal: { x: 0, z: 1 }, width: 8 }], decorShops: [] };
+  out['facade_haussmann_block'] = await glb(holder((g) => buildHaussmann(block, map, g, { stores: map.stores, mobile: false, index: 1 })));
+  return out;
+};

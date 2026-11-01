@@ -7,6 +7,7 @@ import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier,
 import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
+import { pbr } from './pbr';
 import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
 import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
@@ -366,7 +367,9 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const b = map.bounds; const W = b.x1 - b.x0 + 80, D = b.z1 - b.z0 + 80;
   const gt = groundTexture(map.ground).clone(); gt.repeat.set(W / 3.5, D / 3.5); gt.needsUpdate = true;
   const gn = groundNormal(map.ground).clone(); gn.repeat.copy(gt.repeat); gn.needsUpdate = true;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 0.28, metalness: 0.2, envMapIntensity: 0.6 }));
+  // puddles: the wet-setts roughness map (tools/make_pbr.py) on top of the fan-pattern setts
+  const wet = pbr('setts', W / 9, D / 9).roughnessMap;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.75, metalness: 0.2, envMapIntensity: 0.9 }));
   ground.rotation.x = -Math.PI / 2; ground.position.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2); ground.receiveShadow = true; group.add(ground);
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {

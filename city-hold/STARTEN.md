@@ -33,3 +33,9 @@ Welke definitieve 3D-assets nog ontbreken en hoe je ze aanlevert: zie **ASSETS_T
 - `http://localhost:5173/#showroom` — de zes winkels naast elkaar met schuifjes voor schade, voorraad, planken en kwaliteit, plus de straatobjecten en de fontein.
 - `http://localhost:5173/#fxroom` — alle effecten op lichte en donkere ondergrond, met stresstest en pauze.
 - `node tools/fx-check.cjs http://localhost:5173/ fx.png mobile` — controleert particlelimiet, pauze en opruimen van brand.
+
+## Hulpmiddelen voor assets (vereisen Python 3 met numpy en Pillow, of Playwright)
+- `python3 tools/make_pbr.py` — PBR-texturen (kalksteen, natte kasseien, leisteen) in `public/textures`.
+- `python3 tools/make_hdri.py` — blauwuur-HDRI in `public/env`.
+- `python3 tools/make_flipbooks.py` — animatie-atlassen voor vuur, rook en gas in `public/fx`.
+- `node tools/make-templates.cjs http://localhost:5173/` — GLB-sjablonen voor een 3D-artiest in `assets/model_templates`.

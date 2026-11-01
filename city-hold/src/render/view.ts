@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import type { Game, Unit } from '../sim/game';
 import type { MapDef, Vec2 } from '../maps/types';
 import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, type WorldHandles } from './world';
@@ -89,6 +90,13 @@ export class MatchView {
     const pm = new THREE.PMREMGenerator(this.renderer);
     const env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene.environment = env; this.scene.environmentIntensity = 0.25;
+    // blue-hour HDRI (tools/make_hdri.py) replaces the neutral room environment once loaded
+    new HDRLoader().loadAsync('env/blue_hour.hdr').then((hdr) => {
+      if (this.disposed) return;
+      hdr.mapping = THREE.EquirectangularReflectionMapping;
+      const t = pm.fromEquirectangular(hdr).texture; hdr.dispose();
+      this.scene.environment = t; this.scene.environmentIntensity = 0.55;
+    }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
     this.scene.add(new THREE.HemisphereLight(0x6f84c0, 0x5a3a20, 0.75));

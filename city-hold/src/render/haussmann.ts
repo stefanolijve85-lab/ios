@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { BuildingDef, MapDef, Rect, StoreDef } from '../maps/types';
 import { rectContains } from '../maps/types';
 import { roofTexture } from './textures';
+import { pbr } from './pbr';
 
 // Modular Haussmann facade kit. Facades are assembled from real geometry (piers, spandrels, recessed windows,
 // frames, stone surrounds, string courses, cornice, wrought-iron balconies) instead of painted textures.
@@ -147,7 +148,8 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   const coreBox = (y0: number, y1: number, ground: boolean) => {
     // faces: 0 south (z1), 1 north (z0), 2 east (x1), 3 west (x0)
     const x0 = r.x0 + inset(3, ground), x1 = r.x1 - inset(2, ground), z0 = r.z0 + inset(1, ground), z1 = r.z1 - inset(0, ground);
-    const m = new THREE.Mesh(BOX, new THREE.MeshStandardMaterial({ map: T.stone, color: 0xc9b896, roughness: 0.9 }));
+    const ls = pbr('limestone', Math.max(1, (x1 - x0) / 4), Math.max(1, (y1 - y0) / 4));
+    const m = new THREE.Mesh(BOX, new THREE.MeshStandardMaterial({ ...ls, color: 0xe2d6bc, roughness: 1 }));
     m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.scale.set(x1 - x0, y1 - y0, z1 - z0);
     m.castShadow = true; m.receiveShadow = true; g.add(m); meshes.push(m);
   };
@@ -243,7 +245,8 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   // ---- mansard roof: slate/zinc slopes, lit dormers, chimney stacks with pots
   const roofH = 3.6;
   const zt = T.zinc.clone(); zt.repeat.set(Math.max(1, (r.x1 - r.x0) / 4), Math.max(1, (r.z1 - r.z0) / 4)); zt.needsUpdate = true;
-  const slate = new THREE.MeshStandardMaterial({ map: zt, color: 0x8f949c, roughness: 0.5, metalness: 0.25 });
+  const sl = pbr('slate', Math.max(1, (r.x1 - r.x0) / 3), Math.max(1, (r.z1 - r.z0) / 3)); void zt;
+  const slate = new THREE.MeshStandardMaterial({ ...sl, color: 0xb8bcc4, roughness: 1, metalness: 0.15 });
   const frustum = new THREE.CylinderGeometry(Math.SQRT1_2 * 0.86, Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
   const roof = new THREE.Mesh(frustum, slate); roof.position.set((r.x0 + r.x1) / 2, H + roofH / 2, (r.z0 + r.z1) / 2); roof.scale.set(r.x1 - r.x0 + 0.3, roofH, r.z1 - r.z0 + 0.3);
   roof.castShadow = true; roof.receiveShadow = true; g.add(roof); meshes.push(roof);

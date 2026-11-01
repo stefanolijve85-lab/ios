@@ -69,6 +69,24 @@ three-bowl fountain, extinguisher. Slots: `prop.lamp`, `prop.bench`, `prop.tree`
 The five PNGs are used as particle sprites (`public/fx`, made by `tools/prepare_fx.py`); motion is pooled particles.
 **Missing:** flipbook/atlas animations for fire, smoke and gas, and a soft-particle depth fade.
 
+### Done since the last list (procedural, made in this repository)
+- **Rigged characters:** every `char.*` GLB is now a real skinned character (skeleton + one SkinnedMesh per
+  material, `src/render/rig.ts`) with 17 clips including `throw`, `guide`, `flee`. Auto-rigged low-poly figures,
+  weights 1.0 per joint — not artist-made, no faces or cloth simulation.
+- **Civilian, shopkeeper, helper** now have roles (neutral; `tests/npc.test.ts`) and rigged slots.
+- **Flipbooks:** fire, smoke and tear gas play 16-frame atlases (`tools/make_flipbooks.py`).
+- **PBR + HDRI:** generated tileable sets for limestone, wet setts (puddle roughness) and slate
+  (`tools/make_pbr.py`) and a blue-hour HDRI (`tools/make_hdri.py`, used for reflections and ambient light).
+  These are generated, not scanned/photographed: replace with real CC0/licensed sets when available.
+- **GLB templates for artists:** `assets/model_templates/*.glb` (`tools/make-templates.cjs`): the six shops with
+  all named groups and sockets, the street props, and one Haussmann block — same names and sizes the game expects.
+
+### Still needed from an artist or a library
+- Final shop GLBs, street-prop GLBs and a modular facade kit (use the templates above as the contract).
+- Hand-made rigged characters with faces/hands and real cloth, and hand-animated clips.
+- Photographic/scanned PBR sets and a real blue-hour HDRI (the network policy blocked Poly Haven here).
+- Hand-painted or simulated VFX flipbooks.
+
 ### Characters
 The supplied figure PNGs (firefighter, firefighter with hose, shield officer, civilian, shopkeeper, helper) are used
 as card portraits and as build references. **Missing:** rigged, skinned GLB characters for every `char.*` slot with
