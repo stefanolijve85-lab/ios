@@ -43,7 +43,7 @@ describe('neutral people', () => {
     const g = new Game(PARIS, 'defence', { seed: 4 });
     const patrons = g.npcs.filter((n) => n.role === 'patron'), police = g.npcs.filter((n) => n.role === 'police');
     expect(patrons.length).toBe(BALANCE.npc.patrons.desktop);
-    expect(police.length).toBe(3);
+    expect(police.length).toBe(PARIS.ambient!.police.length);
     expect(new Game(PARIS, 'defence', { seed: 4, mobile: true }).npcs.filter((n) => n.role === 'patron').length).toBe(BALANCE.npc.patrons.mobile);
     for (const n of [...patrons, ...police]) expect(g.nav.walkable(n.x, n.z)).toBe(true);
     const guest = patrons[0];

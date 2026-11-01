@@ -47,7 +47,7 @@ export interface EntryDef {
 
 export interface SocketDef { id: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90 }
 
-export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table';
+export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table' | 'police_van' | 'barricade_fire';
 
 export interface PropDef { type: PropType; x: number; z: number; rot?: number; collide?: boolean; r?: number; burnable?: boolean }
 

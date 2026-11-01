@@ -490,7 +490,9 @@ export class MatchView {
       if (f.progress > 0) this.bar('f' + f.id, f.x, 2.8, f.z, f.progress, '#9fe3ff', 'EXTINGUISHING');
       else this.bar('f' + f.id, f.x, 2.8, f.z, 1, '#ff5a2a', f.ttl >= 0 ? 'FIRE (burns out)' : '🔥 FIRE — send firefighter');
     }
-    this.fx.setFireLights(activeFires, this.time);
+    // decorative fires (burning barricade far up the side street): flames, smoke and flicker, never part of the game
+    this.world.ambientFires.forEach((f, i) => { this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); });
+    this.fx.setFireLights([...activeFires, ...this.world.ambientFires], this.time);
     for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }
     (window as unknown as { __fx?: unknown }).__fx = this.fx;
     // dropped goods markers
@@ -515,6 +517,8 @@ export class MatchView {
     }
     // van lights flash
     this.world.vanLights.forEach((l, i) => ((l.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(this.time * 9 + i * Math.PI) > 0 ? 0x3a6aff : 0x0a1440)));
+    this.world.fireGlows.forEach((gl, i) => { const k = 1 + Math.sin(this.time * 17 + i) * 0.08 + Math.sin(this.time * 5.3) * 0.06; gl.scale.set(7 * k, 7 * k, 1); });
+    this.world.policeLights.forEach((l, i) => { (l.material as THREE.MeshBasicMaterial).opacity = Math.sin(this.time * 9 + i) > 0 ? 1 : 0.15; });
     // shop detail levels by camera distance (decoration only; gameplay objects are unaffected)
     for (const sh of [...this.world.stores, ...this.world.decorShops]) if (sh.setLod && sh.group) sh.setLod(this.camera.position.distanceTo(sh.group.position));
     // camera heads turn slowly on their pivots (decorative; detection range comes from the rules)

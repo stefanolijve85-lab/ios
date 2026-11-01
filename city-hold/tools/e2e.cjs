@@ -9,6 +9,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   require('fs').mkdirSync(out, { recursive: true });
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+  // a new match builds a new renderer and recompiles every shader: ~37 s in software rendering (known issue, see ASSET_AUDIT.md)
+  p.setDefaultTimeout(120000);
   const errs = []; p.on('pageerror', (e) => errs.push(String(e))); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
   await p.goto(url); await p.waitForTimeout(800);
   if (city !== 'paris') await p.evaluate((c) => { const k = 'cityhold.progress.v1'; const pr = JSON.parse(localStorage.getItem(k) || 'null') || { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0, reducedFx: false, showHints: true } }; pr.unlocked = ['paris', 'amsterdam', 'london', 'milan', 'berlin', 'saopaulo']; pr.tutorialDone = true; localStorage.setItem(k, JSON.stringify(pr)); }, city), await p.reload(), await p.waitForTimeout(600);

@@ -47,10 +47,14 @@ const props: PropDef[] = [
   // bollards along the foreground pavement (gaps are walkable)
   ...[-9, -7, -3.4, 3.4, 7, 9, -13, 13].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
   // crowd-control fences against the side facades, as in images 02/03 (decor, off the walking lines)
-  { type: 'fence', x: 24.1, z: -9.6, rot: 90, collide: true, r: 0.5 },
+  { type: 'fence', x: 21.7, z: -12.6, rot: 90, collide: true, r: 0.5 },
   // parasols over the CAFE RIVE terrace
   { type: 'umbrella', x: -21.6, z: -8.2, collide: true, r: 0.3 },
   { type: 'umbrella', x: -21.6, z: -2.8, collide: true, r: 0.3 },
+  // police van with flashing lights at the crowd fence by the east side street, and a burning barricade far up the
+  // north-west side street (both decorative, as in image 02)
+  { type: 'police_van', x: 23.2, z: -12.6, rot: 0, collide: true },
+  { type: 'barricade_fire', x: -20.5, z: -33 },
   // police line in front of the staging van (decor, as in images 02/03)
   { type: 'fence', x: 25.6, z: 5.3, rot: 0, collide: true, r: 0.5 },
   // café terraces: tables in front of CAFE RIVE and around the foreground umbrellas
@@ -141,7 +145,7 @@ export const PARIS: MapDef = {
       { x: -22.9, z: -8.7, facing: 0.8 }, { x: -19.4, z: 9.1, facing: 0.8 },
     ],
     // decorative police line behind the fence at the staging van, facing the square
-    police: [{ x: 24.0, z: 6.3, facing: Math.PI }, { x: 25.6, z: 6.4, facing: Math.PI }, { x: 27.2, z: 6.3, facing: Math.PI }],
+    police: [{ x: 24.0, z: 6.3, facing: Math.PI }, { x: 25.6, z: 6.4, facing: Math.PI }, { x: 27.2, z: 6.3, facing: Math.PI }, { x: 20.7, z: -11.4, facing: -Math.PI / 2 }, { x: 20.7, z: -13.8, facing: -Math.PI / 2 }],
     // where passers-by stop: shop windows, the fountain rim, the café
     browse: [
       { x: -12, z: -11.6 }, { x: -8, z: -11.6 }, { x: -1.8, z: -11.6 }, { x: 1.8, z: -11.6 }, { x: 8, z: -11.6 }, { x: 12, z: -11.6 },

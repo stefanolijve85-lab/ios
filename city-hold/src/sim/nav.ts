@@ -32,7 +32,7 @@ export function staticObstacles(map: MapDef): StaticObstacleSet {
       }
       continue;
     }
-    if (p.type === 'delivery_van') {
+    if (p.type === 'delivery_van' || p.type === 'police_van') {
       const alongZ = ((p.rot ?? 0) % 180) === 0;
       const hx = alongZ ? 1.0 : 2.6, hz = alongZ ? 2.6 : 1.0;
       rects.push({ x0: p.x - hx, z0: p.z - hz, x1: p.x + hx, z1: p.z + hz });

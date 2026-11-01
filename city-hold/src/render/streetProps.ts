@@ -347,3 +347,45 @@ export function buildBistroSet(parent: THREE.Object3D, chairs = 2, seed = 1): TH
   }
   return g;
 }
+
+// ---------------------------------------------------------------- police van (images 02/03): white van, blue band, light bar
+export function buildPoliceVan(): { group: THREE.Group; beacons: THREE.Mesh[] } {
+  const g = buildDeliveryVan();
+  const blue = M('polBlue', () => new THREE.MeshStandardMaterial({ color: 0x1d3f9a, roughness: 0.4 }));
+  const yellow = M('polYellow', () => new THREE.MeshStandardMaterial({ color: 0xf2c230, roughness: 0.5, emissive: 0x3a2a00, emissiveIntensity: 0.4 }));
+  for (const sx of [-1, 1]) {
+    add(box(0.02, 0.34, 4.9), blue, g, sx * 1.012, 0.95, -0.2, false);
+    add(box(0.02, 0.06, 4.9), yellow, g, sx * 1.012, 1.16, -0.2, false);
+    // "POLICE" lettering on both sides
+    const t = policeText(); const pl = add(new THREE.PlaneGeometry(1.6, 0.36), M('polText', () => new THREE.MeshBasicMaterial({ map: t, transparent: true })), g, sx * 1.025, 1.55, -0.8, false);
+    pl.rotation.y = sx * Math.PI / 2;
+  }
+  // light bar on the cab roof with two blue beacons (flashed by the view)
+  add(box(1.3, 0.08, 0.3), darkSteel(), g, 0, 2.2, 1.0);
+  const beacons: THREE.Mesh[] = [];
+  for (const x of [-0.4, 0.4]) { const b = add(box(0.42, 0.13, 0.26), new THREE.MeshBasicMaterial({ color: 0x2a5cff }), g, x, 2.31, 1.0, false); b.name = 'beacon'; beacons.push(b); }
+  return { group: g, beacons };
+}
+let polTex: THREE.Texture | null = null;
+function policeText(): THREE.Texture {
+  if (polTex) return polTex;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d')!;
+  x.fillStyle = '#1d3f9a'; x.font = 'bold 46px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('POLICE', 128, 34);
+  polTex = new THREE.CanvasTexture(c); polTex.colorSpace = THREE.SRGBColorSpace; return polTex;
+}
+
+// ---------------------------------------------------------------- burning street barricade (image 02, far end of the side street)
+export function buildBarricade(seed = 1): THREE.Group {
+  const g = new THREE.Group(); const r = seeded(seed * 31 + 7);
+  const wood = M('palletWood', () => new THREE.MeshStandardMaterial({ color: 0x3a2a1c, roughness: 0.95 }));
+  const char = M('charred', () => new THREE.MeshStandardMaterial({ color: 0x141210, roughness: 1 }));
+  const rubber = M('tyre', () => new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.85 }));
+  const bin = M('binGreen', () => new THREE.MeshStandardMaterial({ color: 0x24402c, roughness: 0.6 }));
+  for (let k = 0; k < 4; k++) { const p = add(box(1.2, 0.14, 0.8), k % 2 ? char : wood, g, (r() - 0.5) * 1.2, 0.08 + k * 0.15, (r() - 0.5) * 0.8); p.rotation.y = r() * Math.PI; p.rotation.z = (r() - 0.5) * 0.4; }
+  for (let k = 0; k < 3; k++) { const t = add(new THREE.TorusGeometry(0.32, 0.12, 8, 16), rubber, g, (r() - 0.5) * 1.6, 0.14 + k * 0.05, (r() - 0.5) * 1.2); t.rotation.x = Math.PI / 2 + (r() - 0.5) * 0.5; }
+  const b = add(cyl(0.32, 0.28, 0.95, 12), bin, g, 0.9, 0.35, 0.4); b.rotation.z = 1.25; // knocked-over bin
+  // scorched ground
+  const soot = add(new THREE.CircleGeometry(2.2, 24).rotateX(-Math.PI / 2), M('sootGround', () => new THREE.MeshBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.6, depthWrite: false })), g, 0, 0.03, 0, false);
+  soot.renderOrder = 1;
+  return g;
+}

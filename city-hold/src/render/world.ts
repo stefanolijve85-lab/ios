@@ -4,7 +4,7 @@ import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
 import { cloneModel, slotStatus } from './assets';
-import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y, buildBistroSet } from './streetProps';
+import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y, buildBistroSet, buildPoliceVan, buildBarricade } from './streetProps';
 import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
@@ -44,6 +44,10 @@ export interface WorldHandles {
   animated: Scroll[];
   decorShops: ShopModule[];
   lampLights: THREE.PointLight[];
+  /** decorative police van lights (flashing) and decorative fires (barricades) */
+  policeLights: THREE.Mesh[];
+  ambientFires: { x: number; z: number }[];
+  fireGlows: THREE.Sprite[];
 }
 
 const box = new THREE.BoxGeometry(1, 1, 1);
@@ -299,6 +303,9 @@ function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number
 /** occluders (tree crowns, shelter roofs) registered while props are built, turned into fadeables afterwards */
 const pendingFades: { meshes: THREE.Mesh[]; root: THREE.Object3D }[] = [];
 
+/** filled while props are built: decorative police beacons and fires the view animates */
+const policeBeacons: THREE.Mesh[] = []; const policeSpots: THREE.Vector3[] = []; const ambientFires: { x: number; z: number }[] = [];
+
 export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: WorldHandles['cars'], lamps: THREE.Vector3[]) {
   const g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.rotation.y = ((p.rot ?? 0) * Math.PI) / 180; parent.add(g);
   // a loaded GLB in the prop's slot replaces the procedural placeholder
@@ -319,6 +326,8 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
+    case 'police_van': { const pv = buildPoliceVan(); pv.group.children.slice().forEach((c) => g.add(c)); for (const b of pv.beacons) { b.userData.noMerge = true; policeBeacons.push(b); } policeSpots.push(new THREE.Vector3(p.x, 2.6, p.z)); break; }
+    case 'barricade_fire': buildBarricade(i).children.slice().forEach((c) => g.add(c)); ambientFires.push({ x: p.x, z: p.z }); break;
     case 'cafe_table': buildBistroSet(g, 2 + (i % 2), i); break;
     case 'fence': for (const dx of [-1.27, 1.27]) { const b = buildCrowdBarrier(2.5); b.position.x = dx; g.add(b); } break;
     case 'tree': case 'palm': {
@@ -544,6 +553,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   // static props are merged per material after building (cars stay separate: they can catch fire)
   const propGroup = new THREE.Group(); group.add(propGroup);
   pendingFades.length = 0;
+  policeBeacons.length = 0; policeSpots.length = 0; ambientFires.length = 0;
   map.props.forEach((p, i) => buildProp(p, p.type === 'car' ? group : propGroup, i, cars, lampPos));
   mergeStatic(propGroup);
   group.updateMatrixWorld(true);
@@ -590,7 +600,23 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     lm.rotation.x = -Math.PI / 2; lm.position.set((r.x0 + r.x1) / 2, 0.04, (r.z0 + r.z1) / 2); group.add(lm);
   }
   buildStreetDetails(map, group);
-  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated, decorShops };
+  // police van beacons flash with the staging van's; on desktop a blue light sweeps over the wet street
+  vanLights.push(...policeBeacons);
+  // flashing blue pool on the wet street instead of a real light: an extra light would recompile every shader
+  const policeLights: THREE.Mesh[] = [];
+  for (const sp of policeSpots) {
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(9, 9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(70,120,255,0.55)', 'rgba(40,80,255,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    pm.position.set(sp.x - 2.2, 0.05, sp.z); group.add(pm); policeLights.push(pm);
+  }
+  // a warm additive glow over each decorative fire so the blaze reads from the square, as in image 02
+  const fireGlows: THREE.Sprite[] = [];
+  for (const f of ambientFires) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture('rgba(255,150,50,0.75)', 'rgba(255,90,20,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    sp.position.set(f.x, 1.8, f.z); sp.scale.set(7, 7, 1); group.add(sp); fireGlows.push(sp);
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(12, 12).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,120,40,0.5)', 'rgba(255,90,20,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    pool.position.set(f.x, 0.04, f.z + 2); group.add(pool);
+  }
+  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated, decorShops, policeLights, ambientFires: ambientFires.slice(), fireGlows };
 }
 
 export function skyTexture(): THREE.Texture {

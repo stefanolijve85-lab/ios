@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris: police van and burning barricade (decor)
+
+- Police van (`police_van` prop, `buildPoliceVan`) by the crowd fence in the east side street: white van, blue band with a yellow line, POLICE lettering, light bar with flashing blue beacons and a flashing blue pool on the wet street. There is no real light, because an extra light would recompile every shader. Two decorative officers stand by the fence. It uses the delivery van's navigation footprint.
+- Burning barricade (`barricade_fire`, `buildBarricade`) far up the north-west side street, outside the play area: pallets, tyres, a knocked-over bin and scorched ground. It has flames and smoke from the effects system, a flickering warm glow and one of the fire lights. Decor only: it is never a game fire and cannot be extinguished.
+- Known (both existed before this change):
+  - A new match recompiles every shader on a new renderer: about 37 s in software rendering. `tools/e2e.cjs` now waits up to 120 s.
+  - The e2e looter step fails for about 4 in 25 seeds, because the looters lose before their first extraction. This rate is the same with and without the van.
+
 ## Paris: painted main facade and concept proportions
 
 - The shop building now has the proportions of concepts 01-03: 29.2 m wide (was 34 m) and 14.6 m to the cornice (shops plus 3 floors, was 19 m), under the mansard. The side streets are about 10 m wide.
