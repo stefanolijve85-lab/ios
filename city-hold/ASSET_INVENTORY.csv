@@ -1,0 +1,382 @@
+stad,categorie,id,pad,formaat,status,gebruikslocatie,duplicaten,bron
+alle,animatie,clip.brace/block,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.carry_idle,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.carry_walk,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.collect/pickup,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.escorted,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.extinguish,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.flee,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.guide,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.throw (lege hand + socket-event),-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,clip.walk,-,animatie op 24-bot rig,ONTBREEKT,nu vervangen door run/idle/push/kneel,,code
+alle,animatie,procedurele clips (17),city-hold/src/render/humans.ts animate() + character.ts bakeClips(),keyframes op eigen 10-gewrichtsskelet,TIJDELIJKE/PROCEDURELE VERVANGING,"idle, walk, run, carry_idle, carry_walk, breach, collect, held, restrained, escorted, restrain, escort, brace, extinguish, throw, guide, flee (alleen placeholder-figuren)",,code
+alle,animatie,rig-clips idle/run/push/kneel,city-hold/public/models/final/anim.*.glb + idle per figuur,"Meshy-rig, 24 botten",INGEBOUWD EN GECONTROLEERD,assets.ts shareCharacterClips(); walk/flee/carry = run vertraagd; overige = idle-vervanger,,code
+alle,effect,fx.dust, -,-,ONTBREEKT,geen stof-effect,,code
+alle,effect,fx.explosion,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.fire,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.flare,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.glass,"city-hold/src/render/effects.ts event(""glass"")",particles,INGEBOUWD EN GECONTROLEERD,bij breken van ruit (view.ts),,code
+alle,effect,fx.smoke,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.sparks,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.spray (blusnevel),city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.tear_gas,city-hold/src/render/effects.ts + public/fx/*.png,particles + flipbook-atlassen,INGEBOUWD EN GECONTROLEERD,Effects.emit/burn/event; mobiele limiet gecontroleerd met tools/fx-check.cjs,,code
+alle,effect,fx.wet_street,city-hold/src/render/wet.ts + lichtvlekken/strepen in world.ts,reflector + additieve decals,INGEBOUWD EN GECONTROLEERD,reflectie alleen in pc-kwaliteit,,code
+alle,figuur,char.helper (final),-,geriggede GLB,ONTBREEKT,nu placeholder/procedureel of hergebruik van ander model,,code
+alle,figuur,char.police_officer (eigen model),-,geriggede GLB,ONTBREEKT,nu placeholder/procedureel of hergebruik van ander model,,code
+alle,figuur,char.shopkeeper (final),-,geriggede GLB,ONTBREEKT,nu placeholder/procedureel of hergebruik van ander model,,code
+alle,figuur,"char.thrower (final, met hand_socket)",-,geriggede GLB,ONTBREEKT,nu placeholder/procedureel of hergebruik van ander model,,code
+alle,figuur,char.vandal (final),-,geriggede GLB,ONTBREEKT,nu placeholder/procedureel of hergebruik van ander model,,code
+alle,voertuig,bezorgscooter (São Paulo),-,GLB,ONTBREEKT,niet aanwezig,,code
+alle,voertuig,civiele auto's per stad,-,GLB,ONTBREEKT,niet aanwezig,,code
+alle,voertuig,delivery_van beschadigd/uitgebrand,-,GLB,ONTBREEKT,niet aanwezig,,code
+alle,voertuig,fire_truck,-,GLB,ONTBREEKT,niet aanwezig,,code
+alle,voertuig,police_van (model),-,GLB,ONTBREEKT,niet aanwezig,,code
+alle,voertuig,tram (Milaan),-,GLB,ONTBREEKT,niet aanwezig,,code
+alle/Parijs-basis,animatie,anim.kneel,city-hold/public/models/final/anim.kneel.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot anim.kneel via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,animatie,anim.push,city-hold/public/models/final/anim.push.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot anim.push via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,animatie,anim.run,city-hold/public/models/final/anim.run.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot anim.run via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,animatie-referentie,37_run_cycle_reference,city-hold/assets/action_references/37_run_cycle_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,animatie-referentie,38_collect_loot_reference,city-hold/assets/action_references/38_collect_loot_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,animatie-referentie,41_interception_reference,city-hold/assets/action_references/41_interception_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,animatie-referentie,42_drop_loot_reference,city-hold/assets/action_references/42_drop_loot_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,configuratie,manifest,city-hold/public/models/manifest.json,json,INGEBOUWD EN GECONTROLEERD,src/render/assets.ts (manifest),,repo
+alle/Parijs-basis,effect,29_firefighter,city-hold/assets/units/29_firefighter.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,evacuating_civilian,city-hold/assets/effects_characters/figures/evacuating_civilian.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,explosion,city-hold/assets/effects_characters/effects/explosion.png,png 1374x1145,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,extinguisher,city-hold/assets/effects_characters/props/extinguisher.png,png 1024x1536,ALLEEN PNG-REFERENTIE,vormreferentie voor buildExtinguisher() in src/render/streetProps.ts (procedureel),,repo
+alle/Parijs-basis,effect,fire,city-hold/assets/effects_characters/effects/fire.png,png 1312x1199,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,firefighter,city-hold/assets/effects_characters/figures/firefighter.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,firefighter_hose,city-hold/assets/effects_characters/figures/firefighter_hose.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,helper,city-hold/assets/effects_characters/figures/helper.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,shield_officer,city-hold/assets/effects_characters/figures/shield_officer.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,smoke,city-hold/assets/effects_characters/effects/smoke.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,sparks,city-hold/assets/effects_characters/effects/sparks.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,effect,tear_gas,city-hold/assets/effects_characters/effects/tear_gas.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,01_tracksuit_arms_spread,city-hold/assets/units/extra_streetwear/01_tracksuit_arms_spread.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,02_puffer_large_box,city-hold/assets/units/extra_streetwear/02_puffer_large_box.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,03_runner_backpack,city-hold/assets/units/extra_streetwear/03_runner_backpack.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,05_hoodie_backpack_walking,city-hold/assets/units/extra_streetwear/05_hoodie_backpack_walking.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,06_puffer_electronics_box,city-hold/assets/units/extra_streetwear/06_puffer_electronics_box.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,07_navy_runner,city-hold/assets/units/extra_streetwear/07_navy_runner.png,png 1306x1204,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,08_padded_vest_bags,city-hold/assets/units/extra_streetwear/08_padded_vest_bags.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,09_large_backpack,city-hold/assets/units/extra_streetwear/09_large_backpack.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,10_security_officer,city-hold/assets/units/10_security_officer.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,10_windbreaker_small_box,city-hold/assets/units/extra_streetwear/10_windbreaker_small_box.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,11_security_officer_b,city-hold/assets/units/11_security_officer_b.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,12_shield_officer,city-hold/assets/units/12_shield_officer.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,13_looter_box,city-hold/assets/units/13_looter_box.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,14_looter_box_b,city-hold/assets/units/14_looter_box_b.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,26_runner,city-hold/assets/units/26_runner.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,27_carrier_woman,city-hold/assets/units/27_carrier_woman.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,28_heavy_carrier,city-hold/assets/units/28_heavy_carrier.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,39_shield_contact_reference,city-hold/assets/action_references/39_shield_contact_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,char.carrier,city-hold/public/models/placeholder/char_carrier.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.carrier) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.carrier,city-hold/public/models/final/char.carrier.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.carrier via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.civilian,city-hold/public/models/placeholder/char_civilian.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.civilian) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.civilian,city-hold/public/models/final/char.civilian.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.civilian via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.firefighter,city-hold/public/models/placeholder/char_firefighter.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.firefighter) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.firefighter,city-hold/public/models/final/char.firefighter.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.firefighter via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.heavy,city-hold/public/models/placeholder/char_heavy.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.heavy) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.heavy,city-hold/public/models/final/char.heavy.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.heavy via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.helper,city-hold/public/models/placeholder/char_helper.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.helper (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.01_tracksuit_arms_spread,city-hold/public/models/placeholder/char_looter_01_tracksuit_arms_spread.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.01_tracksuit_arms_spread (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.02_puffer_large_box,city-hold/public/models/placeholder/char_looter_02_puffer_large_box.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.02_puffer_large_box (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.03_runner_backpack,city-hold/public/models/placeholder/char_looter_03_runner_backpack.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.03_runner_backpack (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.04_vest_shopping_bags,city-hold/public/models/placeholder/char_looter_04_vest_shopping_bags.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.04_vest_shopping_bags (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.05_hoodie_backpack_walking,city-hold/public/models/placeholder/char_looter_05_hoodie_backpack_walking.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.05_hoodie_backpack_walking (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.06_puffer_electronics_box,city-hold/public/models/placeholder/char_looter_06_puffer_electronics_box.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.06_puffer_electronics_box (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.07_navy_runner,city-hold/public/models/placeholder/char_looter_07_navy_runner.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.07_navy_runner (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.08_padded_vest_bags,city-hold/public/models/placeholder/char_looter_08_padded_vest_bags.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.08_padded_vest_bags (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.09_large_backpack,city-hold/public/models/placeholder/char_looter_09_large_backpack.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.09_large_backpack (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.10_windbreaker_small_box,city-hold/public/models/placeholder/char_looter_10_windbreaker_small_box.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.10_windbreaker_small_box (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.masked_1,city-hold/public/models/placeholder/char_looter_masked_1.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.masked_1 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.masked_2,city-hold/public/models/placeholder/char_looter_masked_2.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.masked_2 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.masked_3,city-hold/public/models/placeholder/char_looter_masked_3.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.masked_3 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.thrower_1,city-hold/public/models/placeholder/char_looter_thrower_1.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.thrower_1 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.thrower_2,city-hold/public/models/placeholder/char_looter_thrower_2.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.thrower_2 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.looter.thrower_3,city-hold/public/models/placeholder/char_looter_thrower_3.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.looter.thrower_3 (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.runner,city-hold/public/models/placeholder/char_runner.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.runner) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.runner,city-hold/public/models/final/char.runner.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.runner via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.security,city-hold/public/models/placeholder/char_security.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.security) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.security,city-hold/public/models/final/char.security.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.security via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.shield,city-hold/public/models/placeholder/char_shield.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT",vervangen door final/ GLB (slot char.shield) in public/models/manifest.json,,repo
+alle/Parijs-basis,figuur,char.shield,city-hold/public/models/final/char.shield.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot char.shield via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,figuur,char.shopkeeper,city-hold/public/models/placeholder/char_shopkeeper.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.shopkeeper (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.thrower,city-hold/public/models/placeholder/char_thrower.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.thrower (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,char.vandal,city-hold/public/models/placeholder/char_vandal.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot char.vandal (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,figuur,masked_1,city-hold/assets/throw_poses/CITY_HOLD_Masked_Throw_Poses/masked_1.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,masked_2,city-hold/assets/throw_poses/CITY_HOLD_Masked_Throw_Poses/masked_2.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,masked_3,city-hold/assets/throw_poses/CITY_HOLD_Masked_Throw_Poses/masked_3.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,sheet,city-hold/assets/throw_poses/sheet.jpg,jpg 1280x690,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,thrower_1,city-hold/assets/throw_poses/CITY_HOLD_Throw_Poses/thrower_1.png,png 1629x965,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,thrower_2,city-hold/assets/throw_poses/CITY_HOLD_Throw_Poses/thrower_2.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,figuur,thrower_3,city-hold/assets/throw_poses/CITY_HOLD_Throw_Poses/thrower_3.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,01_map_clean,city-hold/public/ui/01_map_clean.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/index.ts:11; src/maps/paris.ts:80,,repo
+alle/Parijs-basis,gebouw/winkel,01_tracksuit_arms_spread,city-hold/public/ui/01_tracksuit_arms_spread.webp,webp 130x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:24,,repo
+alle/Parijs-basis,gebouw/winkel,02_map_defence,city-hold/public/ui/02_map_defence.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,02_puffer_large_box,city-hold/public/ui/02_puffer_large_box.webp,webp 96x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,03_map_zoom,city-hold/public/ui/03_map_zoom.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,03_runner_backpack,city-hold/public/ui/03_runner_backpack.webp,webp 99x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,04_store_intact,city-hold/public/ui/04_store_intact.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,04_store_intact,city-hold/assets/maps/04_store_intact.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,04_vest_shopping_bags,city-hold/public/ui/04_vest_shopping_bags.webp,webp 107x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,04_vest_shopping_bags,city-hold/assets/units/extra_streetwear/04_vest_shopping_bags.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,05_hoodie_backpack_walking,city-hold/public/ui/05_hoodie_backpack_walking.webp,webp 80x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,05_map_damaged,city-hold/public/ui/05_map_damaged.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/paris.ts:81,,repo
+alle/Parijs-basis,gebouw/winkel,06_puffer_electronics_box,city-hold/public/ui/06_puffer_electronics_box.webp,webp 91x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:21,,repo
+alle/Parijs-basis,gebouw/winkel,06_store_looted,city-hold/public/ui/06_store_looted.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,06_store_looted,city-hold/assets/maps/06_store_looted.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,07_map_heavy_damage,city-hold/public/ui/07_map_heavy_damage.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,07_navy_runner,city-hold/public/ui/07_navy_runner.webp,webp 96x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,08_padded_vest_bags,city-hold/public/ui/08_padded_vest_bags.webp,webp 114x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,09_large_backpack,city-hold/public/ui/09_large_backpack.webp,webp 76x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,10_security_officer,city-hold/public/ui/10_security_officer.webp,webp 81x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:11,,repo
+alle/Parijs-basis,gebouw/winkel,10_windbreaker_small_box,city-hold/public/ui/10_windbreaker_small_box.webp,webp 84x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,11_security_officer_b,city-hold/public/ui/11_security_officer_b.webp,webp 73x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,12_shield_officer,city-hold/public/ui/12_shield_officer.webp,webp 73x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,13_looter_box,city-hold/public/ui/13_looter_box.webp,webp 89x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,14_looter_box_b,city-hold/public/ui/14_looter_box_b.webp,webp 76x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,15_barrier,city-hold/public/ui/15_barrier.webp,webp 192x142,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:13,,repo
+alle/Parijs-basis,gebouw/winkel,16_camera_mast,city-hold/public/ui/16_camera_mast.webp,webp 79x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:15,,repo
+alle/Parijs-basis,gebouw/winkel,17_police_van,city-hold/public/ui/17_police_van.webp,webp 192x139,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,18_car_intact,city-hold/public/ui/18_car_intact.webp,webp 192x120,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,19_car_burned,city-hold/public/ui/19_car_burned.webp,webp 192x123,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,26_runner,city-hold/public/ui/26_runner.webp,webp 85x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:20,,repo
+alle/Parijs-basis,gebouw/winkel,27_carrier_woman,city-hold/public/ui/27_carrier_woman.webp,webp 95x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,28_heavy_carrier,city-hold/public/ui/28_heavy_carrier.webp,webp 99x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:22,,repo
+alle/Parijs-basis,gebouw/winkel,29_firefighter,city-hold/public/ui/29_firefighter.webp,webp 79x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,30_supply_truck,city-hold/public/ui/30_supply_truck.webp,webp 192x151,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,31_concrete_barriers,city-hold/public/ui/31_concrete_barriers.webp,webp 192x124,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:14,,repo
+alle/Parijs-basis,gebouw/winkel,blue_hour,city-hold/public/env/blue_hour.hdr,hdr,INGEBOUWD EN GECONTROLEERD,src/render/view.ts:94,,repo
+alle/Parijs-basis,gebouw/winkel,cover,city-hold/public/menu/cover.jpg,jpg 1280x720,INGEBOUWD EN GECONTROLEERD,index.html:9; src/ui/menu.css:130,,repo
+alle/Parijs-basis,gebouw/winkel,electronics,city-hold/public/textures/shopfronts/electronics.jpg,jpg 1024x452,INGEBOUWD EN GECONTROLEERD,"src/render/world.ts (shop facade skin, Paris)",,repo
+alle/Parijs-basis,gebouw/winkel,explosion,city-hold/public/fx/explosion.png,png 256x256,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,fashion,city-hold/public/textures/shopfronts/fashion.jpg,jpg 1024x900,INGEBOUWD EN GECONTROLEERD,"src/render/world.ts (shop facade skin, Paris)",,repo
+alle/Parijs-basis,gebouw/winkel,fire,city-hold/public/fx/fire.png,png 256x256,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,fire_atlas,city-hold/public/fx/fire_atlas.png,png 512x512,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,fx_evacuating_civilian,city-hold/public/ui/fx_evacuating_civilian.webp,webp 75x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,fx_firefighter,city-hold/public/ui/fx_firefighter.webp,webp 76x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,fx_firefighter_hose,city-hold/public/ui/fx_firefighter_hose.webp,webp 125x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:16,,repo
+alle/Parijs-basis,gebouw/winkel,fx_helper,city-hold/public/ui/fx_helper.webp,webp 110x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,fx_shield_officer,city-hold/public/ui/fx_shield_officer.webp,webp 81x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:12,,repo
+alle/Parijs-basis,gebouw/winkel,fx_shopkeeper,city-hold/public/ui/fx_shopkeeper.webp,webp 63x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,grunge,city-hold/public/menu/grunge.png,png 512x256,INGEBOUWD EN GECONTROLEERD,src/ui/menu.css:23; src/ui/menu.css:27,,repo
+alle/Parijs-basis,gebouw/winkel,jewelry,city-hold/public/textures/shopfronts/jewelry.jpg,jpg 1024x682,INGEBOUWD EN GECONTROLEERD,"src/render/world.ts (shop facade skin, Paris)",,repo
+alle/Parijs-basis,gebouw/winkel,limestone_albedo,city-hold/public/textures/limestone_albedo.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,limestone_normal,city-hold/public/textures/limestone_normal.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,limestone_rough,city-hold/public/textures/limestone_rough.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,setts_albedo,city-hold/public/textures/setts_albedo.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,setts_normal,city-hold/public/textures/setts_normal.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,setts_rough,city-hold/public/textures/setts_rough.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,shop_electronics_clean,city-hold/assets/model_refs/shop_electronics_clean.png,png 1024x452,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,shop_fashion_clean,city-hold/assets/model_refs/shop_fashion_clean.png,png 1024x900,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,shop_jewelry_clean,city-hold/assets/model_refs/shop_jewelry_clean.png,png 1024x682,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,shopkeeper,city-hold/assets/effects_characters/figures/shopkeeper.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,side_bg,city-hold/public/menu/side_bg.jpg,jpg 1254x447,INGEBOUWD EN GECONTROLEERD,src/ui/menu.css:80,,repo
+alle/Parijs-basis,gebouw/winkel,side_defence,city-hold/public/menu/side_defence.jpg,jpg 700x357,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,side_looters,city-hold/public/menu/side_looters.jpg,jpg 699x357,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,slate_albedo,city-hold/public/textures/slate_albedo.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,slate_normal,city-hold/public/textures/slate_normal.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,slate_rough,city-hold/public/textures/slate_rough.jpg,jpg 512x512,INGEBOUWD EN GECONTROLEERD,src/render/pbr.ts,,repo
+alle/Parijs-basis,gebouw/winkel,smoke,city-hold/public/fx/smoke.png,png 256x256,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,smoke_atlas,city-hold/public/fx/smoke_atlas.png,png 512x512,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,sparks,city-hold/public/fx/sparks.png,png 256x256,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,street,city-hold/public/menu/street.jpg,jpg 1032x941,INGEBOUWD EN GECONTROLEERD,src/ui/menu.css:40,,repo
+alle/Parijs-basis,gebouw/winkel,tear_gas,city-hold/public/fx/tear_gas.png,png 256x256,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,tear_gas_atlas,city-hold/public/fx/tear_gas_atlas.png,png 512x512,INGEBOUWD EN GECONTROLEERD,src/render/effects.ts,,repo
+alle/Parijs-basis,gebouw/winkel,thr_masked_1,city-hold/public/ui/thr_masked_1.webp,webp 105x192,INGEBOUWD EN GECONTROLEERD,src/ui/match.ts:23,,repo
+alle/Parijs-basis,gebouw/winkel,thr_masked_2,city-hold/public/ui/thr_masked_2.webp,webp 108x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,thr_masked_3,city-hold/public/ui/thr_masked_3.webp,webp 102x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,thr_thrower_1,city-hold/public/ui/thr_thrower_1.webp,webp 110x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,thr_thrower_2,city-hold/public/ui/thr_thrower_2.webp,webp 99x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,gebouw/winkel,thr_thrower_3,city-hold/public/ui/thr_thrower_3.webp,webp 104x192,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+alle/Parijs-basis,object,02_main_menu,city-hold/assets/riots_ui/references/02_main_menu.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,03_city_selection,city-hold/assets/riots_ui/references/03_city_selection.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,15_barrier,city-hold/assets/props/15_barrier.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,16_camera_mast,city-hold/assets/props/16_camera_mast.png,png 1145x1374,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,31_concrete_barriers,city-hold/assets/props/31_concrete_barriers.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,bench,city-hold/assets/street_props/references/bench.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,bus_shelter,city-hold/assets/street_props/references/bus_shelter.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,camera_mast,city-hold/assets/street_props/references/camera_mast.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,crowd_barrier,city-hold/assets/street_props/references/crowd_barrier.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,fountain,city-hold/assets/street_props/references/fountain.png,png 1312x1199,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,fountain_from_03,city-hold/assets/model_refs/fountain_from_03.png,png 1032x888,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,gameplay_mockup_28s,ZIP CITY_HOLD_Project_deel_1_van_4/CITY_HOLD_Project/references/gameplay_mockup_28s.mp4,mp4,"BESTAND AANWEZIG, NIET GEBRUIKT","niet in de repo, niet geladen",,zip
+alle/Parijs-basis,object,prop.barricade_fire,city-hold/src/render/streetProps.ts buildBarricade(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() decor-brand,,code
+alle/Parijs-basis,object,prop.bistro_set,city-hold/src/render/streetProps.ts buildBistroSet(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() caféterras,,code
+alle/Parijs-basis,object,prop.bus_shelter,city-hold/src/render/streetProps.ts buildBusShelter(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() ,,code
+alle/Parijs-basis,object,prop.camera_mast,city-hold/src/render/streetProps.ts buildCameraMast(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() ,,code
+alle/Parijs-basis,object,prop.crowd_barrier,city-hold/src/render/streetProps.ts buildCrowdBarrier(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() dranghek,,code
+alle/Parijs-basis,object,prop.delivery_van,city-hold/src/render/streetProps.ts buildDeliveryVan(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() ,,code
+alle/Parijs-basis,object,prop.extinguisher,city-hold/src/render/streetProps.ts buildExtinguisher(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() ,,code
+alle/Parijs-basis,object,prop.fountain_proc,city-hold/src/render/streetProps.ts buildOctagonFountain(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() in Parijs vervangen door final GLB,,code
+alle/Parijs-basis,object,prop.police_van,city-hold/src/render/streetProps.ts buildPoliceVan(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,"world.ts buildProp() geen modelslot, decor",,code
+alle/Parijs-basis,object,prop.street_bench,city-hold/src/render/streetProps.ts buildStreetBench(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() ,,code
+alle/Parijs-basis,object,prop.street_lamp,city-hold/src/render/streetProps.ts buildStreetLamp(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() dubbele lantaarn,,code
+alle/Parijs-basis,object,prop.tree_planter,city-hold/src/render/streetProps.ts buildTreePlanter(),procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts buildProp() LOD-kroon,,code
+alle/Parijs-basis,object,street_lamp,city-hold/assets/street_props/references/street_lamp.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object,tree_planter,city-hold/assets/street_props/references/tree_planter.png,png 1024x1536,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,object/3D,facade_haussmann_block,city-hold/assets/model_templates/facade_haussmann_block.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,prop.barrier,city-hold/public/models/placeholder/prop_barrier.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.barrier (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.bench,city-hold/public/models/placeholder/prop_bench.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.bench (placeholder, gegenereerd uit procedurele figuur/object)",assets/model_templates/prop_bench.glb,repo
+alle/Parijs-basis,object/3D,prop.bollard,city-hold/public/models/placeholder/prop_bollard.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.bollard (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.camera_mast,city-hold/public/models/placeholder/prop_camera_mast.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.camera_mast (placeholder, gegenereerd uit procedurele figuur/object)",assets/model_templates/prop_camera_mast.glb,repo
+alle/Parijs-basis,object/3D,prop.car,city-hold/public/models/placeholder/prop_car.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.car (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.car_burned,city-hold/public/models/placeholder/prop_car_burned.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.car_burned (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.concrete,city-hold/public/models/placeholder/prop_concrete.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.concrete (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.delivery_van,city-hold/public/models/placeholder/prop_delivery_van.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.delivery_van (placeholder, gegenereerd uit procedurele figuur/object)",assets/model_templates/prop_delivery_van.glb,repo
+alle/Parijs-basis,object/3D,prop.fountain,city-hold/public/models/final/prop.fountain.glb,glb,INGEBOUWD EN GECONTROLEERD,model slot prop.fountain via public/models/manifest.json -> src/render/assets.ts,,repo
+alle/Parijs-basis,object/3D,prop.lamp,city-hold/public/models/placeholder/prop_lamp.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.lamp (placeholder, gegenereerd uit procedurele figuur/object)",assets/model_templates/prop_lamp.glb,repo
+alle/Parijs-basis,object/3D,prop.planter,city-hold/public/models/placeholder/prop_planter.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.planter (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.shelter,city-hold/public/models/placeholder/prop_shelter.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.shelter (placeholder, gegenereerd uit procedurele figuur/object)",assets/model_templates/prop_shelter.glb,repo
+alle/Parijs-basis,object/3D,prop.tree,city-hold/public/models/placeholder/prop_tree.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.tree (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.umbrella,city-hold/public/models/placeholder/prop_umbrella.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.umbrella (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop.van,city-hold/public/models/placeholder/prop_van.glb,glb,TIJDELIJKE/PROCEDURELE VERVANGING,"slot prop.van (placeholder, gegenereerd uit procedurele figuur/object)",,repo
+alle/Parijs-basis,object/3D,prop_barrier,city-hold/assets/model_templates/prop_barrier.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,prop_bench,city-hold/assets/model_templates/prop_bench.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",public/models/placeholder/prop_bench.glb,repo
+alle/Parijs-basis,object/3D,prop_camera_mast,city-hold/assets/model_templates/prop_camera_mast.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",public/models/placeholder/prop_camera_mast.glb,repo
+alle/Parijs-basis,object/3D,prop_delivery_van,city-hold/assets/model_templates/prop_delivery_van.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",public/models/placeholder/prop_delivery_van.glb,repo
+alle/Parijs-basis,object/3D,prop_extinguisher,city-hold/assets/model_templates/prop_extinguisher.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,prop_fountain,city-hold/assets/model_templates/prop_fountain.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,prop_lamp,city-hold/assets/model_templates/prop_lamp.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",public/models/placeholder/prop_lamp.glb,repo
+alle/Parijs-basis,object/3D,prop_shelter,city-hold/assets/model_templates/prop_shelter.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",public/models/placeholder/prop_shelter.glb,repo
+alle/Parijs-basis,object/3D,prop_tree,city-hold/assets/model_templates/prop_tree.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_cafe,city-hold/assets/model_templates/shop_cafe.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_electronics,city-hold/assets/model_templates/shop_electronics.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_fashion,city-hold/assets/model_templates/shop_fashion.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_grocery,city-hold/assets/model_templates/shop_grocery.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_jewelry,city-hold/assets/model_templates/shop_jewelry.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,object/3D,shop_sneakers,city-hold/assets/model_templates/shop_sneakers.glb,glb,"BESTAND AANWEZIG, NIET GEBRUIKT","GLB-sjabloon voor 3D-artiest (tools/make-templates.cjs), niet in de game",,repo
+alle/Parijs-basis,stad/UI-beeld,01_cover,city-hold/assets/riots_ui/references/01_cover.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,01_map_clean,city-hold/assets/maps/01_map_clean.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,02_map_defence,city-hold/assets/maps/02_map_defence.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,03_map_zoom,city-hold/assets/maps/03_map_zoom.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,04_side_selection,city-hold/assets/riots_ui/references/04_side_selection.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,05_map_damaged,city-hold/assets/maps/05_map_damaged.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,stad/UI-beeld,07_map_heavy_damage,city-hold/assets/maps/07_map_heavy_damage.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,17_police_van,city-hold/assets/props/17_police_van.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,18_car_intact,city-hold/assets/props/18_car_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,19_car_burned,city-hold/assets/props/19_car_burned.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,30_supply_truck,city-hold/assets/props/30_supply_truck.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,40_police_advance_reference,city-hold/assets/action_references/40_police_advance_reference.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,car / car_burned,city-hold/src/render/world.ts buildCar(),procedureel + placeholder GLB,TIJDELIJKE/PROCEDURELE VERVANGING,brandbare auto; intact/uitgebrand,,code
+alle/Parijs-basis,voertuig,delivery_van,city-hold/assets/street_props/references/delivery_van.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+alle/Parijs-basis,voertuig,prop.van (inzetbusje),city-hold/src/render/world.ts buildVan(),procedureel,TIJDELIJKE/PROCEDURELE VERVANGING,"opstelplaats verdedigers, knipperende zwaailichten",,code
+amsterdam,figuur,cycle_courier,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/cycle_courier.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw,building.canal,city-hold/src/render/world.ts buildBuilding() + textures.ts facadeTexture(),kubus met getegelde canvastextuur,TIJDELIJKE/PROCEDURELE VERVANGING,"src/maps/cities.ts; geen geveldiepte, geen echte ramen/deuren/daken (visueel gecontroleerd met testscreenshot)",,code
+amsterdam,gebouw/winkel,21_amsterdam_canals,city-hold/public/ui/21_amsterdam_canals.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:13; src/maps/index.ts:12; src/ui/menu.ts:51,,repo
+amsterdam,gebouw/winkel,32_amsterdam_disorder,city-hold/public/ui/32_amsterdam_disorder.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:13,,repo
+amsterdam,gebouw/winkel,BLAD 3D-pand,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+amsterdam,gebouw/winkel,KADE hoekcafé 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+amsterdam,gebouw/winkel,NOORD winkel 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+amsterdam,gebouw/winkel,blad_boarded,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/blad_boarded.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,blad_damaged,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/blad_damaged.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,blad_looted,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/blad_looted.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,canal_shop,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/canal_shop.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,card_amsterdam,city-hold/public/menu/card_amsterdam.jpg,jpg 244x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:51,,repo
+amsterdam,gebouw/winkel,corner_cafe,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/corner_cafe.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,damaged_shop,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/damaged_shop.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,gebouw/winkel,store.amsterdam,city-hold/src/render/world.ts buildStore()/updateStoreVisual(),procedurele pui (shopfront.ts),TIJDELIJKE/PROCEDURELE VERVANGING,alleen schadestadia 0-3; planken en roet niet zichtbaar; geen ShopModule-interieur,,code
+amsterdam,object,bicycle_rack,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/bicycle_rack.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,object,bollard,ZIP RIOTS_Amsterdam_BLAD_CityPack/references/bollard.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+amsterdam,referentie,"Amsterdam afvalcontainer, agent, winkelier (tweede set)",-,PNG,ONTBREEKT (niet ontvangen),"genoemd in pakketteksten, niet in de ontvangen ZIP's",,code
+amsterdam,referentie,Amsterdam brug/kade-set,-,PNG,ONTBREEKT (niet ontvangen),"genoemd in pakketteksten, niet in de ontvangen ZIP's",,code
+amsterdam,stad/UI-beeld,21_amsterdam_canals,city-hold/assets/maps/21_amsterdam_canals.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+amsterdam,stad/UI-beeld,32_amsterdam_disorder,city-hold/assets/maps/32_amsterdam_disorder.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+berlin,gebouw,building.berlin,city-hold/src/render/world.ts buildBuilding() + textures.ts facadeTexture(),kubus met getegelde canvastextuur,TIJDELIJKE/PROCEDURELE VERVANGING,"src/maps/cities.ts; geen geveldiepte, geen echte ramen/deuren/daken (visueel gecontroleerd met testscreenshot)",,code
+berlin,gebouw/winkel,24_berlin_courtyards,city-hold/public/ui/24_berlin_courtyards.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:158; src/maps/index.ts:15; src/ui/menu.ts:54,,repo
+berlin,gebouw/winkel,24_berlin_courtyards,city-hold/assets/maps/24_berlin_courtyards.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+berlin,gebouw/winkel,35_berlin_disorder,city-hold/public/ui/35_berlin_disorder.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:158,,repo
+berlin,gebouw/winkel,KANTE 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+berlin,gebouw/winkel,card_berlin,city-hold/public/menu/card_berlin.jpg,jpg 245x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:54,,repo
+berlin,gebouw/winkel,courtyard_building,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/berlin/courtyard_building.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+berlin,gebouw/winkel,store.berlin,city-hold/src/render/world.ts buildStore()/updateStoreVisual(),procedurele pui (shopfront.ts),TIJDELIJKE/PROCEDURELE VERVANGING,alleen schadestadia 0-3; planken en roet niet zichtbaar; geen ShopModule-interieur,,code
+berlin,object,recycling_bins,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/berlin/recycling_bins.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+berlin,referentie,Berlijn KANTE boarded/damaged/looted,-,PNG,ONTBREEKT (niet ontvangen),"genoemd in pakketteksten, niet in de ontvangen ZIP's",,code
+berlin,stad/UI-beeld,35_berlin_disorder,city-hold/assets/maps/35_berlin_disorder.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+london,effect,05_london_firefighter,ZIP RIOTS_London_Starter_6/references/05_london_firefighter.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,figuur,06_london_shield_officer,ZIP RIOTS_London_Starter_6/references/06_london_shield_officer.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,gebouw,building.brick,city-hold/src/render/world.ts buildBuilding() + textures.ts facadeTexture(),kubus met getegelde canvastextuur,TIJDELIJKE/PROCEDURELE VERVANGING,"src/maps/cities.ts; geen geveldiepte, geen echte ramen/deuren/daken (visueel gecontroleerd met testscreenshot)",,code
+london,gebouw/winkel,01_london_brick_shop,ZIP RIOTS_London_Starter_6/references/01_london_brick_shop.png,png 1024x1536,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,gebouw/winkel,02_london_corner_pub,ZIP RIOTS_London_Starter_6/references/02_london_corner_pub.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,gebouw/winkel,03_london_damaged_shop,ZIP RIOTS_London_Starter_6/references/03_london_damaged_shop.png,png 1318x1193,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,gebouw/winkel,22_london_high_street,city-hold/public/ui/22_london_high_street.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:64; src/maps/index.ts:13; src/ui/menu.ts:52,,repo
+london,gebouw/winkel,33_london_disorder,city-hold/public/ui/33_london_disorder.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:64,,repo
+london,gebouw/winkel,ALDER 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+london,gebouw/winkel,CIRCUIT 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+london,gebouw/winkel,THE LANTERN hoekpub 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+london,gebouw/winkel,card_london,city-hold/public/menu/card_london.jpg,jpg 245x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:52,,repo
+london,gebouw/winkel,store.london,city-hold/src/render/world.ts buildStore()/updateStoreVisual(),procedurele pui (shopfront.ts),TIJDELIJKE/PROCEDURELE VERVANGING,alleen schadestadia 0-3; planken en roet niet zichtbaar; geen ShopModule-interieur,,code
+london,object,04_london_bus_shelter,ZIP RIOTS_London_Starter_6/references/04_london_bus_shelter.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+london,referentie,Londen ALDER boarded/damaged/looted,-,PNG,ONTBREEKT (niet ontvangen),"genoemd in pakketteksten, niet in de ontvangen ZIP's",,code
+london,stad/UI-beeld,22_london_high_street,city-hold/assets/maps/22_london_high_street.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+london,stad/UI-beeld,33_london_disorder,city-hold/assets/maps/33_london_disorder.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+milan,gebouw,building.italian,city-hold/src/render/world.ts buildBuilding() + textures.ts facadeTexture(),kubus met getegelde canvastextuur,TIJDELIJKE/PROCEDURELE VERVANGING,"src/maps/cities.ts; geen geveldiepte, geen echte ramen/deuren/daken (visueel gecontroleerd met testscreenshot)",,code
+milan,gebouw/winkel,23_milan_arcade,city-hold/public/ui/23_milan_arcade.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:116; src/maps/index.ts:14; src/ui/menu.ts:53,,repo
+milan,gebouw/winkel,23_milan_arcade,city-hold/assets/maps/23_milan_arcade.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+milan,gebouw/winkel,34_milan_disorder,city-hold/public/ui/34_milan_disorder.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:116,,repo
+milan,gebouw/winkel,VETRO 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+milan,gebouw/winkel,arcade_shop,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/milan/arcade_shop.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",RIOTS_Milan_VETRO_4_States/references/vetro_intact.png,zip
+milan,gebouw/winkel,card_milan,city-hold/public/menu/card_milan.jpg,jpg 245x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:53,,repo
+milan,gebouw/winkel,store.milan,city-hold/src/render/world.ts buildStore()/updateStoreVisual(),procedurele pui (shopfront.ts),TIJDELIJKE/PROCEDURELE VERVANGING,alleen schadestadia 0-3; planken en roet niet zichtbaar; geen ShopModule-interieur,,code
+milan,gebouw/winkel,vetro_boarded,ZIP RIOTS_Milan_VETRO_4_States/references/vetro_boarded.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+milan,gebouw/winkel,vetro_damaged,ZIP RIOTS_Milan_VETRO_4_States/references/vetro_damaged.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+milan,gebouw/winkel,vetro_looted,ZIP RIOTS_Milan_VETRO_4_States/references/vetro_looted.png,png 1312x1199,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+milan,object,tram_stop,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/milan/tram_stop.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+milan,stad/UI-beeld,34_milan_disorder,city-hold/assets/maps/34_milan_disorder.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,effect,fx.fountain_water,city-hold/src/render/world.ts fountainWaterFor(),scrollende texturen,INGEBOUWD EN GECONTROLEERD,"rimpels, waterval, spatring",,code
+paris,effect,fx.soot,city-hold/src/render/shopModule.ts setScorched(),canvas-decal,INGEBOUWD EN GECONTROLEERD,alleen Parijs; andere steden tonen geen roet,,code
+paris,gebouw,facade_decal.paris_main,city-hold/public/textures/facades/paris_main.jpg,JPG uitsnede concept 01 (1286x560),INGEBOUWD EN GECONTROLEERD,map.facadeDecals -> world.ts; platte afbeelding vóór de 3D-gevel (3 verdiepingen),,code
+paris,gebouw,haussmann_block,city-hold/src/render/haussmann.ts buildHaussmann(),instanced modules op kubusvolume,TIJDELIJKE/PROCEDURELE VERVANGING,"alleen straatzijden (faceVisible); geen achtergevels/binnenplaatsen; mansarddak, dakkapellen, schoorstenen",,code
+paris,gebouw/winkel,20_paris_boulevard,city-hold/public/ui/20_paris_boulevard.jpg,jpg 1279x720,"BESTAND AANWEZIG, NIET GEBRUIKT",niet geladen door de game,,repo
+paris,gebouw/winkel,cafe_boarded,city-hold/assets/paris_realism/references/shops/cafe_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,cafe_damaged,city-hold/assets/paris_realism/references/shops/cafe_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,cafe_intact,city-hold/assets/paris_realism/references/shops/cafe_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,cafe_looted,city-hold/assets/paris_realism/references/shops/cafe_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,card_paris,city-hold/public/menu/card_paris.jpg,jpg 244x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:50,,repo
+paris,gebouw/winkel,electronics_boarded,city-hold/assets/paris_realism/references/shops/electronics_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,electronics_damaged,city-hold/assets/paris_realism/references/shops/electronics_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,electronics_intact,city-hold/assets/paris_realism/references/shops/electronics_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,electronics_looted,city-hold/assets/paris_realism/references/shops/electronics_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,fashion_boarded,city-hold/assets/paris_realism/references/shops/fashion_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,fashion_damaged,city-hold/assets/paris_realism/references/shops/fashion_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,fashion_intact,city-hold/assets/paris_realism/references/shops/fashion_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,fashion_looted,city-hold/assets/paris_realism/references/shops/fashion_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,grocery_boarded,city-hold/assets/paris_realism/references/shops/grocery_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,grocery_damaged,city-hold/assets/paris_realism/references/shops/grocery_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,grocery_intact,city-hold/assets/paris_realism/references/shops/grocery_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,grocery_looted,city-hold/assets/paris_realism/references/shops/grocery_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,hero_paris,city-hold/public/menu/hero_paris.jpg,jpg 1112x427,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:50,,repo
+paris,gebouw/winkel,jewelry_boarded,city-hold/assets/paris_realism/references/shops/jewelry_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,jewelry_damaged,city-hold/assets/paris_realism/references/shops/jewelry_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,jewelry_intact,city-hold/assets/paris_realism/references/shops/jewelry_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,jewelry_looted,city-hold/assets/paris_realism/references/shops/jewelry_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,mission_paris,city-hold/public/menu/mission_paris.jpg,jpg 358x145,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:156,,repo
+paris,gebouw/winkel,paris_main,city-hold/public/textures/facades/paris_main.jpg,jpg 1286x560,INGEBOUWD EN GECONTROLEERD,src/maps/paris.ts:139,,repo
+paris,gebouw/winkel,shop.cafe,city-hold/src/render/shopModule.ts,procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,"decor-winkels (map.decorShops), geen gameplay-voorraad",,code
+paris,gebouw/winkel,shop.electronics,city-hold/src/render/shopModule.ts (ShopModule),procedurele three.js-geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts -> ShopModule; groepen shell/interior/fixtures/stock/glass_intact/glass_broken/boards/shutter/debris; toestanden via shopVisualState.ts,,code
+paris,gebouw/winkel,shop.electronics.facade_skin,city-hold/public/textures/shopfronts/electronics.jpg,JPG uitsnede concept 03,INGEBOUWD EN GECONTROLEERD,"ShopModule.setFacade(): alleen bij onaangeroerde winkel; platte afbeelding, geen 3D",,code
+paris,gebouw/winkel,shop.fashion,city-hold/src/render/shopModule.ts (ShopModule),procedurele three.js-geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts -> ShopModule; groepen shell/interior/fixtures/stock/glass_intact/glass_broken/boards/shutter/debris; toestanden via shopVisualState.ts,,code
+paris,gebouw/winkel,shop.fashion.facade_skin,city-hold/public/textures/shopfronts/fashion.jpg,JPG uitsnede concept 03,INGEBOUWD EN GECONTROLEERD,"ShopModule.setFacade(): alleen bij onaangeroerde winkel; platte afbeelding, geen 3D",,code
+paris,gebouw/winkel,shop.grocery,city-hold/src/render/shopModule.ts,procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,"decor-winkels (map.decorShops), geen gameplay-voorraad",,code
+paris,gebouw/winkel,shop.jewelry,city-hold/src/render/shopModule.ts (ShopModule),procedurele three.js-geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,world.ts -> ShopModule; groepen shell/interior/fixtures/stock/glass_intact/glass_broken/boards/shutter/debris; toestanden via shopVisualState.ts,,code
+paris,gebouw/winkel,shop.jewelry.facade_skin,city-hold/public/textures/shopfronts/jewelry.jpg,JPG uitsnede concept 03,INGEBOUWD EN GECONTROLEERD,"ShopModule.setFacade(): alleen bij onaangeroerde winkel; platte afbeelding, geen 3D",,code
+paris,gebouw/winkel,shop.sneakers,city-hold/src/render/shopModule.ts,procedurele geometrie,TIJDELIJKE/PROCEDURELE VERVANGING,"decor-winkels (map.decorShops), geen gameplay-voorraad",,code
+paris,gebouw/winkel,sneakers_boarded,city-hold/assets/paris_realism/references/shops/sneakers_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,sneakers_damaged,city-hold/assets/paris_realism/references/shops/sneakers_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,sneakers_intact,city-hold/assets/paris_realism/references/shops/sneakers_intact.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,gebouw/winkel,sneakers_looted,city-hold/assets/paris_realism/references/shops/sneakers_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+paris,stad/UI-beeld,20_paris_boulevard,city-hold/assets/maps/20_paris_boulevard.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+saopaulo,gebouw,building.modern,city-hold/src/render/world.ts buildBuilding() + textures.ts facadeTexture(),kubus met getegelde canvastextuur,TIJDELIJKE/PROCEDURELE VERVANGING,"src/maps/cities.ts; geen geveldiepte, geen echte ramen/deuren/daken (visueel gecontroleerd met testscreenshot)",,code
+saopaulo,gebouw/winkel,25_sao_paulo_retail,city-hold/public/ui/25_sao_paulo_retail.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:200; src/maps/index.ts:16; src/ui/menu.ts:55,,repo
+saopaulo,gebouw/winkel,36_sao_paulo_disorder,city-hold/public/ui/36_sao_paulo_disorder.jpg,jpg 1279x720,INGEBOUWD EN GECONTROLEERD,src/maps/cities.ts:200,,repo
+saopaulo,gebouw/winkel,PONTO 3D,-,GLB of modulaire geometrie,ONTBREEKT,alleen PNG-referentie aanwezig,,code
+saopaulo,gebouw/winkel,card_saopaulo,city-hold/public/menu/card_saopaulo.jpg,jpg 243x160,INGEBOUWD EN GECONTROLEERD,src/ui/menu.ts:55,,repo
+saopaulo,gebouw/winkel,commercial_building,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/sao_paulo/commercial_building.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",RIOTS_SaoPaulo_PONTO_CityPack/references/ponto_intact.png,zip
+saopaulo,gebouw/winkel,ponto_boarded,ZIP RIOTS_SaoPaulo_PONTO_CityPack/references/ponto_boarded.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+saopaulo,gebouw/winkel,ponto_damaged,ZIP RIOTS_SaoPaulo_PONTO_CityPack/references/ponto_damaged.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+saopaulo,gebouw/winkel,ponto_looted,ZIP RIOTS_SaoPaulo_PONTO_CityPack/references/ponto_looted.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",,zip
+saopaulo,gebouw/winkel,store.saopaulo,city-hold/src/render/world.ts buildStore()/updateStoreVisual(),procedurele pui (shopfront.ts),TIJDELIJKE/PROCEDURELE VERVANGING,alleen schadestadia 0-3; planken en roet niet zichtbaar; geen ShopModule-interieur,,code
+saopaulo,object,bus_stop,ZIP RIOTS_Milan_Berlin_SaoPaulo_6/references/sao_paulo/bus_stop.png,png 1536x1024,ALLEEN PNG-REFERENTIE,"niet in de repo, niet geladen",RIOTS_SaoPaulo_PONTO_CityPack/references/ponto_bus_stop.png,zip
+saopaulo,stad/UI-beeld,25_sao_paulo_retail,city-hold/assets/maps/25_sao_paulo_retail.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
+saopaulo,stad/UI-beeld,36_sao_paulo_disorder,city-hold/assets/maps/36_sao_paulo_disorder.png,png 1672x941,ALLEEN PNG-REFERENTIE,niet geladen door de game,,repo
