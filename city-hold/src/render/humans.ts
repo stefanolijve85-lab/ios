@@ -236,7 +236,15 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
     const rim = new THREE.Mesh(new THREE.EdgesGeometry(geo.shield), new THREE.LineBasicMaterial({ color: 0x222831 }));
     shield.add(rim);
   }
-  if (kind === 'firefighter') { ext = m(geo.ext, mat(0xc0201a, 0.4), elbows[1], 0, -0.32, 0.05); }
+  if (kind === 'firefighter') {
+    // hose with a separate nozzle socket (firefighter_hose reference); the water jet is drawn by the effects system
+    ext = m(geo.ext, mat(0x2a2a2a, 0.4, 0.6), elbows[1], 0, -0.3, 0.12); ext.rotation.x = Math.PI / 2; ext.scale.set(0.6, 1.4, 0.6);
+    const nozzle = new THREE.Object3D(); nozzle.name = 'nozzle'; nozzle.position.set(0, -0.3, 0.35); elbows[1].add(nozzle);
+    const hose = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.035, 6, 16, Math.PI * 1.3), mat(0x7a1c18, 0.7));
+    hose.position.set(0.12, 0.05, -0.12); hose.rotation.set(0.2, 0.6, 1.6); torso.add(hose);
+    // reflective stripes on arms and helmet visor (firefighter reference)
+    for (const el of elbows) m(geo.stripe, mat(0xd8e04a, 0.35), el, 0, -0.15, 0).scale.set(0.3, 1, 0.3);
+  }
 
   if (opts.exportMode) return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon: new THREE.Sprite(), phase: 0, recoil: 0, kind };
   const shadow = new THREE.Mesh(blobGeo, new THREE.MeshBasicMaterial({ map: blob(), transparent: true, depthWrite: false }));

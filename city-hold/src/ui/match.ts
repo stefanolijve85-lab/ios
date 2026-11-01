@@ -9,11 +9,11 @@ type BuildKind = 'barrier' | 'concrete' | 'camera';
 
 const DEF_CARDS: { kind: DefKind | BuildKind; label: string; img: string; note: string }[] = [
   { kind: 'security', label: 'Security', img: 'ui/10_security_officer.webp', note: 'Fast · intercepts one offender' },
-  { kind: 'shield', label: 'Shield team', img: 'ui/12_shield_officer.webp', note: 'Slow · holds up to 3' },
+  { kind: 'shield', label: 'Shield team', img: 'ui/fx_shield_officer.webp', note: 'Slow · holds up to 3' },
   { kind: 'barrier', label: 'Barrier', img: 'ui/15_barrier.webp', note: 'Slows a lane · breakable' },
   { kind: 'concrete', label: 'Concrete', img: 'ui/31_concrete_barriers.webp', note: '2× durability · large socket' },
   { kind: 'camera', label: 'Camera', img: 'ui/16_camera_mast.webp', note: 'Detection · no damage' },
-  { kind: 'firefighter', label: 'Firefighter', img: 'ui/29_firefighter.webp', note: 'Extinguishes fires' },
+  { kind: 'firefighter', label: 'Firefighter', img: 'ui/fx_firefighter_hose.webp', note: 'Extinguishes fires' },
 ];
 
 const ATT_CARDS: { kind: AttKind; label: string; img: string | null; note: string }[] = [
@@ -274,7 +274,7 @@ export class Match {
         case 'intercept': this.sfx.play('intercept'); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;
         case 'recovered': if (e.x !== undefined) this.view.floatText(e.x, e.z! + 0.6, `+${e.amount} recovered`, 'cyan'); break;
         case 'extract': this.sfx.play('extract'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `−${e.amount} stock`, 'orange'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
-        case 'breach': this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
+        case 'breach': if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
         case 'fire': this.sfx.play('fire'); this.toast(e.text, 'bad'); break;
         case 'held': this.sfx.play('held'); break;
         case 'waveStart': this.toast(e.text, 'info'); break;

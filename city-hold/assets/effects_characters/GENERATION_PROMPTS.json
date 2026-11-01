@@ -1,0 +1,54 @@
+{
+  "method": "built-in image_gen",
+  "transparent_background": true,
+  "prompts": [
+    {
+      "id": "tear_gas",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game vfx reference asset. Primary request: one isolated low spreading pale gray-white tear gas plume, dense near ground, billowing wisps, clearly defined organic volume, no canister, no people, no environment. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft physically plausible transparency at edges, readable silhouette at small scale, one static effect image not a sprite sheet."
+    },
+    {
+      "id": "fire",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game vfx reference asset. Primary request: one isolated moderately sized orange and amber fire plume, several licking tongues of flame rising from a compact base, warm white core and darker orange edges, no object being burned, no ground. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft physically plausible transparency at edges, readable silhouette at small scale, one static effect image not a sprite sheet."
+    },
+    {
+      "id": "smoke",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game vfx reference asset. Primary request: one isolated thick charcoal-gray rising smoke column, turbulent rolling lobes with softer thin wisps at the upper edges, no flames, no ground, no environment. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft physically plausible transparency at edges, readable silhouette at small scale, one static effect image not a sprite sheet."
+    },
+    {
+      "id": "sparks",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game vfx reference asset. Primary request: one isolated small burst of orange sparks and glowing embers scattering upward and outward from a compact origin, short varied streaks, no background or object. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft physically plausible transparency at edges, readable silhouette at small scale, one static effect image not a sprite sheet."
+    },
+    {
+      "id": "explosion",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game vfx reference asset. Primary request: one isolated fictional cinematic game explosion visual effect, compact orange fireball with a rolling charcoal smoke rim and a few sparks, no bomb, no weapon, no debris projectile, no people, no environment. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft physically plausible transparency at edges, readable silhouette at small scale, one static effect image not a sprite sheet."
+    },
+    {
+      "id": "extinguisher",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game prop reference asset. Primary request: one complete generic red portable fire extinguisher, black hose, squeeze handle, metal pressure gauge, small blank white label, standing upright, no readable branding. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "firefighter",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult firefighter with medium brown skin visible at the face, yellow helmet visor raised, navy turnout coat and trousers with reflective yellow stripes, sturdy boots and gloves, standing alert with both hands empty, full body including feet. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "shield_officer",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult dark-skinned police crowd-control officer, navy padded uniform and helmet with clear face visor, holding a clear rectangular riot shield vertically in front, other hand relaxed empty, no weapons, no readable insignia, full body including feet. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "evacuating_civilian",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult woman with medium brown skin, beige jacket and dark jeans, running away from danger with anxious but non-exaggerated face, empty hands, full body including feet, no injuries. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "shopkeeper",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult male shopkeeper with light skin, short brown hair and stubble, olive sweater and dark work apron, standing concerned holding a small closed plain cardboard box with both hands, full body including feet. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "helper",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult woman with dark skin and tied-back curly hair, high visibility orange vest over navy casual clothes, practical boots, standing gesturing an open hand toward an evacuation direction, no medical logos, full body including feet. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    },
+    {
+      "id": "firefighter_hose",
+      "prompt": "Use case: stylized-concept. Asset type: CITY HOLD realistic urban strategy game character reference asset. Primary request: one fictional adult firefighter with light skin partly visible beneath yellow helmet visor, navy turnout suit with reflective yellow stripes and sturdy gloves, braced stance holding a firefighting hose nozzle in both hands, short hose curves down to the base, no water stream, full body including feet. Premium realistic physically based 3D game rendering, three-quarter view, single subject centered with generous safe margin, whole subject visible, no cropping. Genuine transparent background, no opaque backdrop, no scenery, no text, no watermark, no collage. Soft neutral studio lighting, realistic proportions and construction, believable fabric and material detail, no cartoon style. Fictional original design."
+    }
+  ]
+}

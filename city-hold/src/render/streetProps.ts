@@ -281,3 +281,19 @@ export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced:
   }
   return { group: g, animated, spray };
 }
+
+// ---------------------------------------------------------------- extinguisher (effects pack props/extinguisher.png), 0.55 m, bottom pivot
+export function buildExtinguisher(): THREE.Group {
+  const g = new THREE.Group();
+  const red = M('extRed', () => new THREE.MeshStandardMaterial({ color: 0xc3191a, roughness: 0.32, metalness: 0.1 }));
+  add(lathe([[0, 0], [0.085, 0], [0.09, 0.02], [0.09, 0.4], [0.075, 0.45], [0.035, 0.47], [0, 0.47]], 18), red, g);
+  add(box(0.09, 0.02, 0.0), red, g);
+  add(new THREE.PlaneGeometry(0.08, 0.12), M('extLabel', () => new THREE.MeshStandardMaterial({ color: 0xf2f2f0, roughness: 0.6 })), g, 0, 0.26, 0.091, false);
+  add(box(0.18, 0.012, 0.03), darkSteel(), g, 0, 0.32, 0.0).scale.set(1, 1, 1);
+  add(cyl(0.018, 0.02, 0.05, 8), galv(), g, 0, 0.495, 0);
+  const lever = add(box(0.12, 0.012, 0.025), red, g, 0.03, 0.535, 0); lever.rotation.z = -0.25;
+  add(new THREE.SphereGeometry(0.018, 8, 6), galv(), g, -0.04, 0.505, 0.02);
+  add(tube([[0.02, 0.5, -0.01], [0.09, 0.47, -0.03], [0.11, 0.3, -0.03], [0.1, 0.12, -0.02]], 0.009), darkSteel(), g);
+  add(cyl(0.012, 0.016, 0.06, 8), darkSteel(), g, 0.1, 0.1, -0.02);
+  return g;
+}

@@ -143,7 +143,7 @@ export class MatchView {
     this.disposed = true;
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown); window.removeEventListener('keyup', this.onKeyUp);
-    this.post?.dispose(); this.wet?.dispose();
+    this.post?.dispose(); this.wet?.dispose(); this.fx.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove(); this.overlay.remove();
   }
@@ -393,7 +393,7 @@ export class MatchView {
     g.stores.forEach((s, i) => {
       const v = this.world.stores[i];
       v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0, s.boards / s.boardsMax);
-      if (v.justBroke) this.fx.glassBurst(s.door.x, s.door.z);
+      if (v.justBroke) this.fx.event(`glass:${i}:${Math.round(g.time * 10)}`, 'glass', s.door.x, s.door.z);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
       const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.8, sd.front.z + sd.normal.z * 0.5);
       // keep store labels below the top bar on short screens
@@ -433,15 +433,16 @@ export class MatchView {
       }
     }
     // cars that caught fire
-    for (const idx of g.burnedProps) { const c = this.world.cars.get(idx); if (c && c.intact.visible) { c.intact.visible = false; c.burned.visible = true; } }
+    for (const idx of g.burnedProps) { const c = this.world.cars.get(idx); if (c && c.intact.visible) { c.intact.visible = false; c.burned.visible = true; const pp = this.map.props[idx]; this.fx.event(`car:${idx}`, 'explosion', pp.x, pp.z); } }
     // fires
     const activeFires = g.fires.filter((f) => !f.out);
     for (const f of activeFires) {
-      this.fx.burn(f.x, f.z, dt, 1 - f.progress * 0.7);
+      this.fx.burn(String(f.id), f.x, f.z, 1 - f.progress * 0.7);
       if (f.progress > 0) this.bar('f' + f.id, f.x, 2.8, f.z, f.progress, '#9fe3ff', 'EXTINGUISH');
     }
     this.fx.setFireLights(activeFires, this.time);
-    for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt); }
+    for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }
+    (window as unknown as { __fx?: unknown }).__fx = this.fx;
     // dropped goods markers
     const dseen = new Set<number>();
     for (const d of g.drops) {

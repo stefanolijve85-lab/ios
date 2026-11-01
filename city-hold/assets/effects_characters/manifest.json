@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "asset_count": 12,
+  "assets": [
+    {
+      "id": "tear_gas",
+      "label_nl": "Traangaswolk",
+      "category": "vfx",
+      "path": "effects/tear_gas.png",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "bc5198bbc8be702c11987ab509b374e5b49366f6c3b4badad36d6dca3aae508c",
+      "usage": "static_effect_sprite",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "fire",
+      "label_nl": "Vuur",
+      "category": "vfx",
+      "path": "effects/fire.png",
+      "dimensions_px": [
+        1312,
+        1199
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "c19c76c5755758b84b8d4aa3d5c21e6e52de6a64f59a214cfc99b7279ab18600",
+      "usage": "static_effect_sprite",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "smoke",
+      "label_nl": "Donkere rook",
+      "category": "vfx",
+      "path": "effects/smoke.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "28c122f0b60aa412b81b49a6092507dc432a1555e5c7cc2c19ec47d61ca0c705",
+      "usage": "static_effect_sprite",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "sparks",
+      "label_nl": "Vonken",
+      "category": "vfx",
+      "path": "effects/sparks.png",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "a620e5d801057986cd81384772a08119de4983fdf2c19f1586a0477b85e2d2fd",
+      "usage": "static_effect_sprite",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "explosion",
+      "label_nl": "Explosie-effect",
+      "category": "vfx",
+      "path": "effects/explosion.png",
+      "dimensions_px": [
+        1374,
+        1145
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "f623292ecbd44a7aac455ed4855799324dedba3af762a4687cac6af054fc3eb7",
+      "usage": "static_effect_sprite",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "extinguisher",
+      "label_nl": "Brandblusser",
+      "category": "prop",
+      "path": "props/extinguisher.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "9b8e9adb59bd5c211bfde3efc5fc617ea3d8de51330b2e92eee34151772d153e",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "firefighter",
+      "label_nl": "Brandweer",
+      "category": "character",
+      "path": "figures/firefighter.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "f211c1beb4829de5f0b60a542c5436e6060036faeedefe85076f6e0985b95a22",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "shield_officer",
+      "label_nl": "Schildagent",
+      "category": "character",
+      "path": "figures/shield_officer.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "73e1716bcc6ab4b59ae02e038f77ab2c93c00b7c0f6b0e2ccece7cd70b918b7e",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "evacuating_civilian",
+      "label_nl": "Vluchtende burger",
+      "category": "character",
+      "path": "figures/evacuating_civilian.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "844fc21931d4cc0b409c063f14677076f04a2196a25f54ef910619f539cc8d39",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "shopkeeper",
+      "label_nl": "Winkelier",
+      "category": "character",
+      "path": "figures/shopkeeper.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "1fdf244bc71b6d657aaacb853fe9f89e317fe35a0d9dc3ce36171730e105e6fd",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "helper",
+      "label_nl": "Hulpverlener",
+      "category": "character",
+      "path": "figures/helper.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "63ad2251f746ec12cfd365e3189a8951fb7f8682ec8102460204c0b83454bbe8",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    },
+    {
+      "id": "firefighter_hose",
+      "label_nl": "Brandweer met slang",
+      "category": "character",
+      "path": "figures/firefighter_hose.png",
+      "dimensions_px": [
+        1024,
+        1536
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "c74cf3b3422a72a881fe8d6cc0cc7327e18db446b552780c997bb41c03552fcc",
+      "usage": "visual_reference",
+      "has_animation": false,
+      "has_3d_geometry": false
+    }
+  ]
+}

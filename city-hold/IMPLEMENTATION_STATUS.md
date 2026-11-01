@@ -14,6 +14,15 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris realism, street props and effects packs
+
+- **Shops:** six procedural shop modules from `assets/paris_realism` (see `ASSETS_TODO.md`). Damage, boards and stock are independent: `src/render/shopVisualState.ts` is a TypeScript port of the pack's helper; it only reads game state. New gameplay actions in the store panel: **Board up** (120, a 50-point protection layer broken before the shutter) and **Repair** (200, between waves, restores structure only — stock is never refilled). The shutter upgrade, waves, loot accounting (stock → carried → dropped → returned or escaped), routes and the save format are unchanged.
+- **Street objects:** eight objects from `assets/street_props` as procedural 3D; the shelter blocks only its rear and sides, the van its footprint; barriers are still refused when they would cut every route. Tree crowns and the shelter roof fade when they hide units.
+- **Effects:** pooled sprite particles from `assets/effects_characters` with presets from `effect_presets.json`; global cap 64 (mobile) / 160 (desktop); fire = flames + smoke with one emitter per fire id that stops when extinguished (short smoke tail); one-shot events (breach sparks, glass, vehicle-fire flash, interception) are deduplicated by event id; particles freeze while paused; emitters are cleared on restart. The vehicle-fire flash is visual only. There is no camera shake. Firefighters have a hose with a nozzle socket and a water jet towards the fire.
+- **Developer pages** (not linked from the player UI): `#showroom` (six shops side by side; damage, stock, boards, breach, shutter level, quality; near/mid/far/game camera; street props; fountain) and `#fxroom` (each effect on light and dark ground, in front of and behind a wall; bursts, stress test, pause, extinguish, quality).
+- **Measured** (headless Chromium with software WebGL — no real phone or GPU was available): phone emulation (iPhone 13 landscape, mobile quality) ≈ 11 ms per frame and about 360 draw calls in the play scene; effect stress test stays at or below the cap (≤ 104 of 160 desktop, ≤ 43 of 64 mobile). Not measured: real iOS/Android devices, real desktop GPUs. The pack's draw-call target (≤ 150 on mobile) is **not** met yet.
+- Screenshots (same camera before/after): `docs/screenshots/paris_before_after_same_camera.jpg`, `paris_before_after_damage_same_camera.jpg`; plus `shops_*`, `street_*`, `effects_showroom.png`.
+
 ## Paris street realism pass
 
 - **Buildings:** modular Haussmann facade kit with real depth (see `ASSETS_TODO.md` for the full list), drawn as one InstancedMesh per element type per building.

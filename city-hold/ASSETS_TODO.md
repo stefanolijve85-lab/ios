@@ -45,25 +45,39 @@ The in-game menu **3D assets** shows the live status per slot.
 `prop.van` (image 17, light bar meshes named `beacon*`), `prop.barrier` (image 15), `prop.concrete` (image 31),
 `prop.camera_mast` (image 16).
 
-## Built in code for the Paris street (no slot yet — final assets would still look better)
+## Built in code — final assets still wanted
 
-These are now real 3D geometry instead of painted textures, but they are procedural stand-ins:
+Everything below is real procedural 3D geometry in the engine (no reference image is used as a texture).
+Each has, or can get, a GLB slot; a final GLB marked `final` in `manifest.json` replaces it without code changes.
 
-1. **Haussmann facade kit** (`src/render/haussmann.ts`): houses of 3–5 bays with varying stone tint and storey
-   height, recessed windows with casements, stone surrounds and pediments, string courses, main cornice, continuous
-   wrought-iron balconies on the noble and top floors, balconettes, rusticated ground floor, mansard roof with lit
-   dormers and chimney stacks. *Final asset wanted:* modular GLB kit (bay, corner, ground floor, roof, dormer,
-   chimney) with sculpted mouldings, consoles and PBR limestone/zinc.
-2. **Shopfronts** (`src/render/shopfront.ts`): painted timber fronts with fictional names (Maison Aurèle, Volta
-   Électronique, Atelier Verdier), framed glazing, recessed glazed door, lit interior (floor, back wall, ceiling,
-   counters, racks, screens, mannequins) with products that disappear as stock is taken, roller shutter (levels 1–3)
-   and damage states (cracked → shattered → breached with bent shutter, boxes and glass shards). *Final asset wanted:*
-   three shop GLBs with interiors and the same damage states.
-3. **Fountain** (`src/render/street.ts`): moulded lathe basin, two bowls, bronze finial, falling-water sheets,
-   underwater lights. *Final asset wanted:* sculpted fountain GLB.
-4. **Street surface:** Parisian fan-pattern setts with a generated normal map, slab pavements, kerbs, gutters,
-   manhole covers and drain grates. *Final asset wanted:* scanned PBR materials (setts, slabs, kerb) and decals.
-5. **Sky / ambient light:** procedural gradient and a generic environment. *Final asset wanted:* blue-hour HDRI.
+### Paris shops (pack `assets/paris_realism`) — slots `shop.electronics|fashion|jewelry|grocery|cafe|sneakers` (optional)
+`src/render/shopModule.ts`: VOLT, ATELIER, LUMIERE (gameplay stores) and MARCHE, CAFE RIVE, COURT (decorative).
+Persistent shell (8 m module, 0.22 m window recess, 0.3 m entrance recess, plinth, pilasters with base/capital,
+fascia sign, three-profile cornice, wall lanterns), interior box with type-specific fixtures, seeded stock, and the
+named groups glass_intact / glass_broken / boards / shutter_intact / shutter_bent / debris / damage_decals plus
+sockets entrance, pickup_01..06, sign, light_left, light_right. A GLB round trip (export → load into the slot →
+drive with game state) was verified in the browser. **Missing:** six final shop GLBs with sculpted mouldings,
+real product models, and PBR materials (limestone, painted wood, brass, glass, cardboard).
+
+### Street objects (pack `assets/street_props`)
+`src/render/streetProps.ts`: cast-iron lamp, slatted bench, Versailles planter tree (LOD crown), bus shelter,
+crowd barrier with snap points, trailer camera mast with turning camera pivots, unbranded delivery van, octagonal
+three-bowl fountain, extinguisher. Slots: `prop.lamp`, `prop.bench`, `prop.tree`, `prop.shelter`,
+`prop.delivery_van`, `prop.barrier`, `prop.camera_mast`, `prop.fountain` (optional). **Missing:** final GLBs.
+
+### Effects (pack `assets/effects_characters`)
+The five PNGs are used as particle sprites (`public/fx`, made by `tools/prepare_fx.py`); motion is pooled particles.
+**Missing:** flipbook/atlas animations for fire, smoke and gas, and a soft-particle depth fade.
+
+### Characters
+The supplied figure PNGs (firefighter, firefighter with hose, shield officer, civilian, shopkeeper, helper) are used
+as card portraits and as build references. **Missing:** rigged, skinned GLB characters for every `char.*` slot with
+the clip names listed above; the civilian, shopkeeper and helper have no gameplay role yet.
+
+### Buildings, ground, light
+Haussmann facade kit, fan-pattern setts, pavements and sky are procedural. **Missing:** modular facade GLB kit
+(bay, corner, ground floor, mansard, dormer, chimney), tileable PBR sets (setts, slabs, kerb, limestone, slate,
+zinc, brick) and a licensed blue-hour HDRI.
 
 Other cities (Amsterdam, London, Milan, Berlin, São Paulo) need their own building kits; they are out of scope
 for this Paris-street milestone.

@@ -1,0 +1,112 @@
+{
+  "status": "proposed_visual_starting_values_not_integrated_or_benchmarked",
+  "distance_units": "game_meters",
+  "global_particle_cap_mobile_desktop": [
+    64,
+    160
+  ],
+  "pooled_instances": true,
+  "depth_test": true,
+  "depth_write": false,
+  "premultiplied_alpha": "match_texture_upload_and_material_pipeline",
+  "effects": {
+    "tear_gas": {
+      "blend": "normal_alpha",
+      "particle_life_s": [
+        3,
+        6
+      ],
+      "scale_start_end_m": [
+        0.7,
+        3.2
+      ],
+      "opacity_peak": 0.3,
+      "drift_m_s": [
+        0.15,
+        0.35
+      ],
+      "spawn_per_s_mobile_desktop": [
+        2,
+        4
+      ],
+      "loop": true
+    },
+    "fire": {
+      "blend": "additive_or_normal_alpha_compare_visually",
+      "particle_life_s": [
+        0.5,
+        1.1
+      ],
+      "scale_start_end_m": [
+        0.5,
+        1.3
+      ],
+      "opacity_peak": 0.7,
+      "rise_m_s": [
+        0.4,
+        1
+      ],
+      "spawn_per_s_mobile_desktop": [
+        4,
+        8
+      ],
+      "loop": true
+    },
+    "smoke": {
+      "blend": "normal_alpha",
+      "particle_life_s": [
+        3,
+        5
+      ],
+      "scale_start_end_m": [
+        0.8,
+        2.8
+      ],
+      "opacity_peak": 0.3,
+      "rise_m_s": [
+        0.3,
+        0.6
+      ],
+      "spawn_per_s_mobile_desktop": [
+        2,
+        4
+      ],
+      "loop": true
+    },
+    "sparks": {
+      "blend": "additive",
+      "particle_life_s": [
+        0.2,
+        0.6
+      ],
+      "scale_start_end_m": [
+        0.2,
+        0.5
+      ],
+      "opacity_peak": 0.8,
+      "burst_count_mobile_desktop": [
+        2,
+        4
+      ],
+      "loop": false
+    },
+    "explosion": {
+      "blend": "normal_alpha",
+      "particle_life_s": [
+        0.6,
+        1.1
+      ],
+      "scale_start_end_m": [
+        0.25,
+        2
+      ],
+      "opacity_peak": 0.9,
+      "burst_count_mobile_desktop": [
+        1,
+        2
+      ],
+      "loop": false
+    }
+  },
+  "gameplay_damage": "not_defined_by_this_config"
+}

@@ -28,3 +28,8 @@ Bediening: slepen = pannen, scrollen/knijpen = zoomen, P = pauze. Instellingen: 
 **Kwaliteit:** op telefoons staat standaard *Mobile quality* aan (geen reflecties, gloed of schaduwen). Op de pc kun je die in Settings aan- of uitzetten.
 
 Welke definitieve 3D-assets nog ontbreken en hoe je ze aanlevert: zie **ASSETS_TODO.md**.
+
+## Ontwikkelpagina's
+- `http://localhost:5173/#showroom` — de zes winkels naast elkaar met schuifjes voor schade, voorraad, planken en kwaliteit, plus de straatobjecten en de fontein.
+- `http://localhost:5173/#fxroom` — alle effecten op lichte en donkere ondergrond, met stresstest en pauze.
+- `node tools/fx-check.cjs http://localhost:5173/ fx.png mobile` — controleert particlelimiet, pauze en opruimen van brand.

@@ -3,7 +3,7 @@ import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
 import { cloneModel, slotStatus } from './assets';
-import { buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y } from './streetProps';
+import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y } from './streetProps';
 import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
@@ -492,6 +492,8 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
   const { g: van, lights: vanLights } = vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
   van.position.set(map.van.x, 0, map.van.z); van.rotation.y = (map.van.rot * Math.PI) / 180; group.add(van);
+  // extinguishers at the staging van (decorative, firefighters carry the hose)
+  for (const dx of [-0.25, 0.25]) { const e = buildExtinguisher(); e.position.set(1.35, 0, dx + 1.6); van.add(e); }
   // loading lane markings
   if (map.loadingLane) {
     const r = map.loadingLane;

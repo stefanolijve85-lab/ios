@@ -65,7 +65,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_loop_complete.png` });
   }
   // restart: fresh state, one canvas
-  await p.click('[data-a="restart"]'); await p.waitForTimeout(3000);
+  await p.evaluate(() => { window.__prevMatch = window.__match; }); await p.click('[data-a="restart"]');
+  await p.waitForFunction(() => window.__match && window.__match !== window.__prevMatch && document.querySelector('.hud'), null, { timeout: 120000 }).catch(() => {}); await p.waitForTimeout(800);
   st = await p.evaluate(() => ({ budget: window.__match.game.budget, wave: window.__match.game.wave, canvases: document.querySelectorAll('canvas').length, labels: document.querySelectorAll('.store-label').length }));
   assert(st.wave === 1 && st.budget >= 1500 && st.canvases === 1 && st.labels === 3, `restart resets state (budget ${st.budget}, canvases ${st.canvases}, labels ${st.labels})`);
   // lose quickly: remove defenders and run

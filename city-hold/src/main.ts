@@ -6,6 +6,7 @@ import { BALANCE } from './config/balance';
 import type { Side } from './sim/game';
 import { loadAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
+import { fxroom } from './fxroom';
 
 const app = document.getElementById('app')!;
 let progress: Progress = loadProgress();
@@ -131,4 +132,4 @@ function onExit(_r: MatchResult | null, action: 'menu' | 'restart' | 'next') {
 
 void cityUnlocked;
 // developer showroom: open index.html#showroom (not linked from the player UI)
-if (location.hash === '#showroom') void showroom(app); else menu();
+if (location.hash === '#showroom') void showroom(app); else if (location.hash === '#fxroom') fxroom(app); else menu();
