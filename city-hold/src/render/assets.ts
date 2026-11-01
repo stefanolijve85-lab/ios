@@ -44,7 +44,7 @@ export const SLOTS: SlotDef[] = [
   { slot: 'prop.camera_mast', group: 'prop', label: 'Camera mast (image 16, street-props camera_mast)', spec: 'GLB ~5.5 m, trailer base 1.8 x 1.8 m. Nodes cam_pivot_1..3 are turned slowly by the game; detection range comes from the rules.' },
   { slot: 'prop.shelter', group: 'prop', label: 'Bus shelter (street-props bus_shelter)', spec: 'GLB 4 x 2.6 x 1.6 m, open front +Z. Glass separate; material "ad_panel" swappable. Collision: rear and sides only.' },
   { slot: 'prop.delivery_van', group: 'prop', label: 'Delivery van, unbranded (street-props delivery_van)', spec: 'GLB 2 x 2.5 x 5.2 m, long axis Z, front +Z. Nodes wheel_fl/fr/rl/rr and mirror_left/right separate.' },
-  { slot: 'prop.fountain', group: 'prop', optional: true, label: 'Octagonal fountain (street-props fountain)', spec: 'GLB ~8 m across for the Paris square (scaled to the map circle). Basin, pedestal, bowls and water as separate meshes.' },
+  { slot: 'prop.fountain', group: 'prop', optional: true, label: 'Fountain (round basin with sculpture group, concept 01-03)', spec: 'GLB of the basin, pedestal, bowls and sculptures; any size: it is scaled to fit inside the planter ring and set on the ground. The benches and planters around it stay procedural.' },
 ];
 
 const loaded = new Map<string, { scene: THREE.Object3D; animations: THREE.AnimationClip[] }>();

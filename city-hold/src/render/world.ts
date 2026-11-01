@@ -462,7 +462,16 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const animated: Scroll[] = [];
   if (map.fountain) {
     const f = map.fountain;
-    const fh = buildOctagonFountain(f, group, reducedFx, map.id === 'paris' ? 'round' : 'octagon');
+    const glbFountain = slotStatus('prop.fountain') === 'final' ? cloneModel('prop.fountain') : null;
+    let fh: { group: THREE.Group; animated: Scroll[]; spray: THREE.Points | null };
+    if (glbFountain) {
+      // a final model (e.g. image-to-3D from concept 03): scaled to the basin inside the planter ring, standing on the ground
+      const fg = new THREE.Group(); fg.position.set(f.x, 0, f.z); group.add(fg);
+      const bb = new THREE.Box3().setFromObject(glbFountain); const size = bb.getSize(new THREE.Vector3());
+      const k = (2 * (f.r - 0.9)) / Math.max(size.x, size.z, 1e-3); glbFountain.scale.setScalar(k);
+      const c = bb.getCenter(new THREE.Vector3()); glbFountain.position.set(-c.x * k, -bb.min.y * k, -c.z * k);
+      fg.add(glbFountain); fh = { group: fg, animated: [], spray: null };
+    } else fh = buildOctagonFountain(f, group, reducedFx, map.id === 'paris' ? 'round' : 'octagon');
     animated.push(...fh.animated); fountainWater = fh.spray;
     // ring of planters with benches between them, all inside the fountain's collision circle
     for (let k = 0; k < 8; k++) {
