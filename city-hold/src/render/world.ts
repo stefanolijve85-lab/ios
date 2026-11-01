@@ -3,7 +3,7 @@ import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
 import { cloneModel, slotStatus } from './assets';
-import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y } from './streetProps';
+import { buildExtinguisher, buildBusShelter, buildCameraMast, buildCrowdBarrier, buildDeliveryVan, buildOctagonFountain, buildStreetBench, buildStreetLamp, buildTreePlanter, LAMP_LIGHT_Y, buildBistroSet } from './streetProps';
 import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
@@ -318,6 +318,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
+    case 'cafe_table': buildBistroSet(g, 2 + (i % 2), i); break;
     case 'fence': for (const dx of [-1.27, 1.27]) { const b = buildCrowdBarrier(2.5); b.position.x = dx; g.add(b); } break;
     case 'tree': case 'palm': {
       if (p.type === 'palm') {

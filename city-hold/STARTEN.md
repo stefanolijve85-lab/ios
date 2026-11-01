@@ -8,7 +8,9 @@ npm ci
 npm run dev
 ```
 
-Open het adres dat Vite toont (standaard http://localhost:5173). Kies **Defence** of **Looters**, district **Paris**, en druk op **Play**.
+Open het adres dat Vite toont (standaard http://localhost:5173). Druk op **SPELEN** → **Parijs** → **VERDER** → kies **VERDEDIGEN** of **PLUNDEREN** (en de moeilijkheid) → **START MISSIE**.
+
+Op je telefoon (zelfde wifi): `npm run dev -- --host` en open het adres achter *Network* (bijv. http://192.168.1.23:5173).
 
 ## De spelcyclus (linksonder in beeld wordt die afgevinkt)
 

@@ -1,5 +1,5 @@
 import { BALANCE, DIFFICULTY, type Difficulty, type AttKind, type DefKind, type UnitKind, waveComposition } from '../config/balance';
-import type { MapDef, Rect, SocketDef, Vec2 } from '../maps/types';
+import type { MapDef, Rect, SocketDef, Vec2, Spot } from '../maps/types';
 import { storeDoor } from '../maps/types';
 import { NavGrid, barrierRect } from './nav';
 
@@ -83,9 +83,10 @@ export interface Unit {
 export interface Barrier { id: number; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number }
-export type NpcRole = 'civilian' | 'shopkeeper' | 'helper';
+/** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
+export type NpcRole = 'civilian' | 'shopkeeper' | 'helper' | 'patron' | 'police';
 /** neutral person: never targeted, never counted, only reacts to danger */
-export interface Npc { id: number; role: NpcRole; x: number; z: number; facing: number; state: 'stroll' | 'idle' | 'flee' | 'guide' | 'gone'; path: Vec2[] | null; pi: number; goal: Vec2 | null; moving: boolean; speed: number; store: number; variant: number; carrying: boolean; exit: string; t: number }
+export interface Npc { id: number; role: NpcRole; x: number; z: number; facing: number; state: 'stroll' | 'idle' | 'flee' | 'guide' | 'gone' | 'browse'; home?: Spot; browsed?: boolean; wait?: number; repaths?: number; path: Vec2[] | null; pi: number; goal: Vec2 | null; moving: boolean; speed: number; store: number; variant: number; carrying: boolean; exit: string; t: number }
 export interface ThrowTarget { kind: 'store' | 'prop' | 'ground'; idx: number; x: number; z: number }
 /** fictional thrown incendiary in flight (game object; physics is a simple configurable arc) */
 export interface Projectile { id: number; owner: number; x: number; y: number; z: number; sx: number; sy: number; sz: number; tx: number; tz: number; t: number; T: number; apex: number; target: ThrowTarget; spin: number }
@@ -1064,6 +1065,17 @@ export class Game {
   private initNpcs() {
     this.map.stores.forEach((sd, i) => { const n = this.newNpc('shopkeeper', sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, i); n.facing = Math.atan2(sd.normal.x, sd.normal.z); });
     const v = this.map.van; this.newNpc('helper', v.x - 2.2, v.z + 1.5);
+    const amb = this.map.ambient; if (!amb) return;
+    const patrons = amb.patrons.slice(0, this.maxCivilians < BALANCE.npc.civilians.desktop ? BALANCE.npc.patrons.mobile : BALANCE.npc.patrons.desktop);
+    for (const sp of patrons) { const n = this.newNpc('patron', sp.x, sp.z); n.state = 'idle'; n.home = sp; n.facing = sp.facing; }
+    for (const sp of amb.police) { const n = this.newNpc('police', sp.x, sp.z); n.state = 'idle'; n.home = sp; n.facing = sp.facing; }
+    // the square is already lively when the match starts: half the passers-by are mid-walk
+    const sp = this.map.entries.filter((e) => e.spawn);
+    for (let i = 0; i < Math.floor(this.maxCivilians / 2) && amb.browse.length; i++) {
+      const b = amb.browse[this.npcRng.int(amb.browse.length)];
+      const n = this.newNpc('civilian', b.x + this.npcRng.next() * 2 - 1, b.z + this.npcRng.next() * 2 - 1);
+      const e = sp[this.npcRng.int(sp.length)]; n.exit = e.id; n.browsed = true; this.npcGo(n, e.x, e.z);
+    }
   }
   /** nearest danger (attacker or fire) to a point */
   private danger(x: number, z: number): { x: number; z: number; d: number } | null {
@@ -1078,7 +1090,10 @@ export class Game {
     ex.sort((a, b) => (Math.hypot(a.x - n.x, a.z - n.z) - Math.hypot(a.x - from.x, a.z - from.z) * 1.5) - (Math.hypot(b.x - n.x, b.z - n.z) - Math.hypot(b.x - from.x, b.z - from.z) * 1.5));
     return ex[0];
   }
-  private npcGo(n: Npc, x: number, z: number) { n.goal = { x, z }; n.path = this.nav.findPath(n, n.goal, 'def'); n.pi = 1; }
+  private npcGo(n: Npc, x: number, z: number) {
+    n.goal = { x, z }; n.path = this.nav.findPath(n, n.goal, 'def'); n.pi = 1;
+    n.repaths = (n.repaths ?? 0) + 1;
+  }
   private stepNpcs(dt: number) {
     const N = BALANCE.npc;
     // ambient passers-by
@@ -1087,13 +1102,18 @@ export class Game {
     if (this.npcSpawnT <= 0 && civs.length < this.maxCivilians) {
       this.npcSpawnT = N.spawnEvery;
       const sp = this.map.entries.filter((e) => e.spawn); const a = sp[this.npcRng.int(sp.length)];
-      if (!this.danger(a.x, a.z)) { const n = this.newNpc('civilian', a.x, a.z); const b = sp.filter((e) => e !== a)[this.npcRng.int(Math.max(1, sp.length - 1))] ?? a; n.exit = b.id; this.npcGo(n, b.x, b.z); }
+      if (!this.danger(a.x, a.z)) {
+        const n = this.newNpc('civilian', a.x, a.z); const b = sp.filter((e) => e !== a)[this.npcRng.int(Math.max(1, sp.length - 1))] ?? a; n.exit = b.id;
+        const br = this.map.ambient?.browse ?? [];
+        if (br.length && this.npcRng.next() < N.browseChance) { const w = br[this.npcRng.int(br.length)]; this.npcGo(n, w.x, w.z); } // window-shopping or a look at the fountain first
+        else { n.browsed = true; this.npcGo(n, b.x, b.z); }
+      }
     }
     const fleeing: Npc[] = [];
     for (const n of this.npcs) {
       n.t += dt;
       const dz = this.danger(n.x, n.z);
-      if (n.role !== 'helper' && dz && n.state !== 'flee') {
+      if (n.role !== 'helper' && n.role !== 'police' && dz && n.state !== 'flee') {
         const e = this.safeExit(n, dz); n.exit = e.id; n.state = 'flee'; this.npcGo(n, e.x, e.z);
         if (n.role === 'shopkeeper') n.carrying = true; // takes the till box along
       }
@@ -1101,8 +1121,12 @@ export class Game {
       if (n.role === 'shopkeeper' && n.state === 'gone' && this.phase === 'prep' && n.store >= 0 && !this.isBurning(n.store)) {
         // back at the shop once the street is calm
         const sd = this.map.stores[n.store]; const q = this.nav.nearestWalkable(sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, 4);
-        if (q) { n.x = q.x; n.z = q.z; n.state = 'idle'; n.carrying = false; n.facing = Math.atan2(sd.normal.x, sd.normal.z); }
+        if (q) { n.x = q.x; n.z = q.z; n.state = 'idle'; n.carrying = false; n.repaths = 0; n.facing = Math.atan2(sd.normal.x, sd.normal.z); }
       }
+      if (n.role === 'patron' && n.state === 'gone' && this.phase === 'prep' && n.home && !this.danger(n.home.x, n.home.z)) {
+        n.x = n.home.x; n.z = n.home.z; n.facing = n.home.facing; n.state = 'idle'; n.path = null; n.repaths = 0; // guests come back to the terrace once it is calm
+      }
+      if (n.state === 'browse') { n.moving = false; n.wait = (n.wait ?? 0) - dt; if (n.wait <= 0) { n.state = 'stroll'; n.browsed = true; const e = this.map.entries.find((en) => en.id === n.exit); if (e) this.npcGo(n, e.x, e.z); } continue; }
       if (n.state === 'gone' || n.state === 'idle') { n.moving = false; continue; }
       const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : N.walkSpeed;
       n.moving = false; n.speed = 0;
@@ -1116,9 +1140,16 @@ export class Game {
           n.x = nx; n.z = nz; n.facing = Math.atan2(dx, dzz); budget -= st; n.moving = true; n.speed = sp; if (st >= d - 1e-6) n.pi++;
         }
       } else if (n.role === 'helper') { n.state = n.state === 'guide' ? 'guide' : 'idle'; }
+      else if (n.state === 'stroll' && n.role === 'civilian' && !n.browsed) {
+        n.state = 'browse'; n.wait = N.browseSec[0] + this.npcRng.next() * (N.browseSec[1] - N.browseSec[0]); // stop and look
+        const sx = this.map.stores.reduce((b, sd) => (Math.hypot(sd.front.x - n.x, sd.front.z - n.z) < Math.hypot(b.front.x - n.x, b.front.z - n.z) ? sd : b), this.map.stores[0]);
+        if (Math.hypot(sx.front.x - n.x, sx.front.z - n.z) < 6) n.facing = Math.atan2(sx.front.x - n.x, sx.front.z - n.z);
+        else if (this.map.fountain) n.facing = Math.atan2(this.map.fountain.x - n.x, this.map.fountain.z - n.z);
+      }
       else if (n.state === 'flee' || n.state === 'stroll') {
         const e = this.map.entries.find((en) => en.id === n.exit);
-        if (!e || Math.hypot(e.x - n.x, e.z - n.z) < 2.5) n.state = 'gone'; else this.npcGo(n, e.x, e.z);
+        // close enough, or the exit cannot be reached from here: leave the scene (never re-path every frame)
+        if (!e || Math.hypot(e.x - n.x, e.z - n.z) < 2.5 || (n.repaths ?? 0) > 6) n.state = 'gone'; else this.npcGo(n, e.x, e.z);
       }
     }
     // the helper (hi-vis vest) walks towards fleeing people and points them to the exit; returns to the van after
@@ -1133,7 +1164,7 @@ export class Game {
         helper.state = 'stroll'; this.npcGo(helper, this.map.van.x - 2.2, this.map.van.z + 1.5);
       }
     }
-    this.npcs = this.npcs.filter((n) => n.state !== 'gone' || n.role === 'shopkeeper');
+    this.npcs = this.npcs.filter((n) => n.state !== 'gone' || n.role === 'shopkeeper' || n.role === 'patron');
   }
 
   // ------------------------------------------------------------------ throwing

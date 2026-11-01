@@ -219,15 +219,26 @@ export class NavGrid {
   }
 
   /** line of sight across walkable cells (barriers interrupt for attackers so they still meet them) */
+  /** line of sight on the grid: visits every cell the segment touches (grid traversal), so no corner is skipped */
   los(a: Vec2, b: Vec2, mode: 'att' | 'def' | 'solid' = 'att'): boolean {
-    const dx = b.x - a.x, dz = b.z - a.z; const len = Math.hypot(dx, dz);
-    const steps = Math.ceil(len / 0.08);
-    for (let s = 0; s <= steps; s++) {
-      const t = s / Math.max(1, steps);
-      const x = a.x + dx * t, z = a.z + dz * t;
-      const k = this.idx(x, z);
-      if (k < 0 || this.blocked[k]) return false;
-      if (mode !== 'def' && this.barrier[k] >= 0) return false;
+    const bad = (i: number, j: number) => {
+      if (i < 0 || j < 0 || i >= this.w || j >= this.h) return true;
+      const k = j * this.w + i; return this.blocked[k] !== 0 || (mode !== 'def' && this.barrier[k] >= 0);
+    };
+    const fx = (a.x - this.ox) / CELL, fz = (a.z - this.oz) / CELL, tx = (b.x - this.ox) / CELL, tz = (b.z - this.oz) / CELL;
+    let i = Math.floor(fx), j = Math.floor(fz); const ti = Math.floor(tx), tj = Math.floor(tz);
+    const dx = tx - fx, dz = tz - fz; const si = Math.sign(dx), sj = Math.sign(dz);
+    const tdx = si !== 0 ? Math.abs(1 / dx) : Infinity, tdz = sj !== 0 ? Math.abs(1 / dz) : Infinity;
+    let tmx = si > 0 ? (i + 1 - fx) * tdx : si < 0 ? (fx - i) * tdx : Infinity;
+    let tmz = sj > 0 ? (j + 1 - fz) * tdz : sj < 0 ? (fz - j) * tdz : Infinity;
+    if (bad(i, j)) return false;
+    for (let n = 0; n < 100000 && (i !== ti || j !== tj); n++) {
+      if (Math.abs(tmx - tmz) < 1e-9) { // exactly through a corner: both neighbours must be free
+        if (bad(i + si, j) || bad(i, j + sj)) return false;
+        i += si; j += sj; tmx += tdx; tmz += tdz;
+      } else if (tmx < tmz) { i += si; tmx += tdx; } else { j += sj; tmz += tdz; }
+      if (tmx > 1 + 1e-9 && tmz > 1 + 1e-9 && (i !== ti || j !== tj)) { i = ti; j = tj; }
+      if (bad(i, j)) return false;
     }
     return true;
   }

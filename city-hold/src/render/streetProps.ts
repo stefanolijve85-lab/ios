@@ -301,3 +301,26 @@ export function buildExtinguisher(): THREE.Group {
   return g;
 }
 
+
+// ---------------------------------------------------------------- café terrace set (images 01/02): round bistro table with chairs
+const marble = () => M('bistroTop', () => new THREE.MeshStandardMaterial({ color: 0xe8e2d6, roughness: 0.25 }));
+const rattan = () => M('rattan', () => new THREE.MeshStandardMaterial({ color: 0x9a6a3a, roughness: 0.75 }));
+const rattanSeat = () => M('rattanSeat', () => new THREE.MeshStandardMaterial({ color: 0x2c3a5a, roughness: 0.8 })); // woven seat in Paris-café blue
+/** bistro table (0.6 m marble top, cast-iron base) with `chairs` rattan chairs around it; front +Z */
+export function buildBistroSet(parent: THREE.Object3D, chairs = 2, seed = 1): THREE.Group {
+  const g = new THREE.Group(); parent.add(g); const r = seeded(seed * 97 + 13);
+  add(cyl(0.3, 0.3, 0.03, 20), marble(), g, 0, 0.74, 0);
+  add(cyl(0.025, 0.03, 0.7, 8), castIron(), g, 0, 0.38, 0);
+  add(cyl(0.2, 0.22, 0.03, 12), castIron(), g, 0, 0.015, 0);
+  // a cup or a glass on the table
+  add(cyl(0.035, 0.03, 0.07, 8), M('cup', () => new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.3 })), g, 0.1, 0.79, 0.05, false);
+  for (let k = 0; k < chairs; k++) {
+    const a = (k / chairs) * Math.PI * 2 + Math.PI / 2 + (r() - 0.5) * 0.4; const d = 0.62;
+    const c = new THREE.Group(); c.position.set(Math.cos(a) * d, 0, Math.sin(a) * d); c.rotation.y = -a - Math.PI / 2; g.add(c);
+    add(box(0.42, 0.04, 0.4), rattanSeat(), c, 0, 0.46, 0);
+    for (const [lx, lz] of [[-0.18, -0.17], [0.18, -0.17], [-0.18, 0.17], [0.18, 0.17]]) add(cyl(0.015, 0.015, 0.46, 6), rattan(), c, lx, 0.23, lz, false);
+    add(tube([[-0.19, 0.46, 0.19], [-0.2, 0.86, 0.22], [0.2, 0.86, 0.22], [0.19, 0.46, 0.19]], 0.018), rattan(), c);
+    add(box(0.38, 0.22, 0.02), rattanSeat(), c, 0, 0.7, 0.21, false);
+  }
+  return g;
+}

@@ -14,6 +14,17 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris: passers-by, café terraces, police line
+
+- Passers-by: up to 14 on desktop / 6 on phones (was 6/3), a new one every 2.5 s, and half of them are already on the square at the start. 60 % first stop at a shop window, the fountain or the café for 3–9 s, then walk to an exit.
+- Café terraces: bistro tables (marble top, rattan chairs) in front of CAFE RIVE and around the foreground umbrellas, with 10 guests (4 on phones). Guests run off when looters or fire come close and return in the next preparation phase.
+- Police line: crowd fence and three officers at the staging van. Purely decorative: they never move, never flee, cannot be selected and do not affect the game.
+- All of these use a separate random stream and never block or change the game (tests in `tests/npc.test.ts`).
+- Foreground roof blocks lowered to 7 m so the staging van and police line stay visible from the default camera.
+- Path smoothing now checks every grid cell a straight line crosses (exact grid traversal) instead of sampling points; a route could otherwise clip a corner of the fountain.
+- A civilian that cannot reach its exit leaves after a few attempts instead of searching for a path every frame (this was making the simulation 12× slower).
+- Screenshots: `docs/screenshots/paris_ambient_overview.png`, `paris_cafe_terrace.png`, `paris_police_line.png`.
+
 ## Paris toward concept images 02/03 (pass 1)
 
 - Camera: lower, oblique view (pitch 54° → 46°, default distance 52 → 44) so the shopfronts read as in 02/03; default target keeps the staging team clear of the HUD.

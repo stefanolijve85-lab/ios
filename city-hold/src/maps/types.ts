@@ -45,13 +45,15 @@ export interface EntryDef {
 
 export interface SocketDef { id: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90 }
 
-export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence';
+export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table';
 
 export interface PropDef { type: PropType; x: number; z: number; rot?: number; collide?: boolean; r?: number; burnable?: boolean }
 
 export interface ArcadeDef { rect: Rect; height: number; columns: Circle[] }
 
 export interface SupplyDef { route: Vec2[]; loadIndex: number }
+
+export interface Spot { x: number; z: number; facing: number }
 
 export interface MapDef {
   id: string;
@@ -76,6 +78,8 @@ export interface MapDef {
   stores: StoreDef[];
   /** decorative shopfronts (no gameplay stock) shown for atmosphere */
   decorShops?: StoreDef[];
+  /** ambient life (no gameplay effect): café guests at terrace tables, a decorative police line, points where passers-by stop */
+  ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
   entries: EntryDef[];
   sockets: SocketDef[];
   van: { x: number; z: number; rot: number };

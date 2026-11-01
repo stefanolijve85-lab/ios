@@ -407,7 +407,10 @@ export class MatchView {
       if (n.state === 'gone') continue;
       nseen.add(n.id);
       let c = this.npcVis.get(n.id);
-      if (!c) { c = createCharacter(n.role, n.variant); this.npcVis.set(n.id, c); this.scene.add(c.root); c.root.position.set(n.x, 0, n.z); }
+      if (!c) {
+        c = createCharacter(n.role === 'patron' ? 'civilian' : n.role === 'police' ? 'security' : n.role, n.variant);
+        if (n.role === 'police') c.icon.visible = false; // decorative police line: no faction icon, not selectable
+        this.npcVis.set(n.id, c); this.scene.add(c.root); c.root.position.set(n.x, 0, n.z); }
       const k = 1 - Math.exp(-dt * 20);
       c.root.position.x += (n.x - c.root.position.x) * k; c.root.position.z += (n.z - c.root.position.z) * k;
       let df = n.facing - c.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;

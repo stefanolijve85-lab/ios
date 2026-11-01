@@ -49,7 +49,7 @@ export const BALANCE = {
   unloadedSightDetectDelay: 0.6,
   fire: { storeDamagePerSec: 1.2, vandalIgniteChance: 0.55, max: 4, groundBurnSec: 5, scorchAfterSec: 2 },
   /** neutral people: no gameplay effect, they react to danger (design: civilians remain neutral) */
-  npc: { civilians: { mobile: 3, desktop: 6 }, fleeRadius: 7, fireRadius: 8, walkSpeed: 1.4, runSpeed: 3.4, spawnEvery: 6 },
+  npc: { civilians: { mobile: 6, desktop: 14 }, patrons: { mobile: 4, desktop: 10 }, fleeRadius: 7, fireRadius: 8, walkSpeed: 1.4, runSpeed: 3.4, spawnEvery: 2.5, browseChance: 0.6, browseSec: [3, 9] as [number, number] },
   /** fictional thrown incendiary (game object only). All values are tunable game balance. */
   throw: {
     range: 12, minRange: 3,            // metres from the thrower to the aim point
