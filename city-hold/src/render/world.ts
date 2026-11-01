@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
@@ -392,7 +393,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   const decorShops: ShopModule[] = (map.decorShops ?? []).map((s, i) => { const sm = new ShopModule(s, 100 + i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 201 + i, withLight: false }); sm.hit.userData.store = -1; group.add(sm.group); return sm; });
   const fadeables: Fadeable[] = [];
-  map.buildings.forEach((bd, i) => buildBuilding(bd, group, i, fadeables, map, reducedFx));
+  map.buildings.forEach((bd, i) => { if (!(reducedFx && bd.backdrop)) buildBuilding(bd, group, i, fadeables, map, reducedFx); });
   const stores: ShopLike[] = map.stores.map((s, i) => {
     if (map.id === 'paris') { const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: !reducedFx }); group.add(sm.group); return sm; }
     const v = buildStore(s, i, group, !reducedFx);
@@ -488,20 +489,21 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
   const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.42)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
+  // light pools and wet-street streaks are each merged into one mesh (one draw call each, whatever the lamp count)
+  const flat = (w: number, d: number, x: number, y: number, z: number, rotY = 0) => new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).rotateY(rotY).translate(x, y, z);
+  const pools: THREE.BufferGeometry[] = []; const streaks: THREE.BufferGeometry[] = [];
   lampPos.forEach((lp, i) => {
-    const pm = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
+    pools.push(flat(8, 8, lp.x, 0.03, lp.z));
     if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
+  for (const s of map.stores) pools.push(flat(s.width + 2, 5, s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4, Math.atan2(s.normal.x, s.normal.z)));
   // long reflections of lamps and shop windows on the wet setts, smeared towards the camera (which never turns)
   const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.55 : 0.4 });
-  const addStreak = (x: number, z: number, w: number, len: number) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), streak); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.035, z + len / 2 - 0.3); m.renderOrder = 2; group.add(m); };
+  const addStreak = (x: number, z: number, w: number, len: number) => streaks.push(flat(w, len, x, 0.035, z + len / 2 - 0.3));
   for (const lp of lampPos) addStreak(lp.x, lp.z, 0.9, 6.5);
   for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 1.6, 7);
-  for (const s of map.stores) {
-    const pm = new THREE.Mesh(new THREE.PlaneGeometry(s.width + 2, 5), pool); pm.rotation.x = -Math.PI / 2;
-    pm.rotation.z = -Math.atan2(s.normal.x, s.normal.z);
-    pm.position.set(s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4); group.add(pm);
-  }
+  if (pools.length) group.add(new THREE.Mesh(mergeGeometries(pools)!, pool));
+  if (streaks.length) { const sm = new THREE.Mesh(mergeGeometries(streaks)!, streak); sm.renderOrder = 2; group.add(sm); }
   // support van (staging point)
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
   const { g: van, lights: vanLights } = vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();

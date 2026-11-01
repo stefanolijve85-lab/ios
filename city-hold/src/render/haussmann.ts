@@ -245,11 +245,16 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   // ---- mansard roof: slate/zinc slopes, lit dormers, chimney stacks with pots
   const roofH = 3.6;
   const zt = T.zinc.clone(); zt.repeat.set(Math.max(1, (r.x1 - r.x0) / 4), Math.max(1, (r.z1 - r.z0) / 4)); zt.needsUpdate = true;
-  const sl = pbr('slate', Math.max(1, (r.x1 - r.x0) / 3), Math.max(1, (r.z1 - r.z0) / 3)); void zt;
-  const slate = new THREE.MeshStandardMaterial({ ...sl, color: 0xb8bcc4, roughness: 1, metalness: 0.15 });
-  const frustum = new THREE.CylinderGeometry(Math.SQRT1_2 * 0.86, Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
-  const roof = new THREE.Mesh(frustum, slate); roof.position.set((r.x0 + r.x1) / 2, H + roofH / 2, (r.z0 + r.z1) / 2); roof.scale.set(r.x1 - r.x0 + 0.3, roofH, r.z1 - r.z0 + 0.3);
+  const sl = pbr('slate', Math.max(1, (r.x1 - r.x0) / 3), Math.max(1, (r.z1 - r.z0) / 3));
+  // blue-grey slate on the steep lower slope, pale zinc on the shallow top deck (images 01-03); a little metalness so the blue-hour sky reads on it
+  const slate = new THREE.MeshStandardMaterial({ ...sl, color: 0xc4ccd8, roughness: 0.62, metalness: 0.35, envMapIntensity: 1.4 });
+  const zincTop = new THREE.MeshStandardMaterial({ map: zt, color: 0xb4bcc6, roughness: 0.45, metalness: 0.6, envMapIntensity: 1.5 });
+  const frustum = new THREE.CylinderGeometry(Math.SQRT1_2 * 0.8, Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
+  const roof = new THREE.Mesh(frustum, [slate, zincTop, slate]); roof.position.set((r.x0 + r.x1) / 2, H + roofH / 2, (r.z0 + r.z1) / 2); roof.scale.set(r.x1 - r.x0 + 0.3, roofH, r.z1 - r.z0 + 0.3);
   roof.castShadow = true; roof.receiveShadow = true; g.add(roof); meshes.push(roof);
+  // zinc gutter along the foot of the mansard, catching the light
+  const gutter = new THREE.Mesh(BOX, new THREE.MeshStandardMaterial({ color: 0xc9d0d8, roughness: 0.35, metalness: 0.8 }));
+  gutter.position.set((r.x0 + r.x1) / 2, H + 0.08, (r.z0 + r.z1) / 2); gutter.scale.set(r.x1 - r.x0 + 0.5, 0.16, r.z1 - r.z0 + 0.5); g.add(gutter); meshes.push(gutter);
   const dB = new Batch(BOX, new THREE.MeshStandardMaterial({ map: T.stone, color: 0xe6dcc6, roughness: 0.7 }), true);
   const dRoof = new Batch(new THREE.CylinderGeometry(Math.SQRT1_2, Math.SQRT1_2, 1, 3, 1).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), slate, true);
   const dGlass = new Batch(PLANE, litM); const dDark = new Batch(PLANE, darkM);
@@ -263,7 +268,7 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
       const face2: Face = { o: base.clone().addScaledVector(f.u, -u), u: f.u, n: f.n, len: f.len };
       dB.add(fm(face2, u, H + 1.25, 0, 1.15, 1.7, 0.9));
       dRoof.add(fm(face2, u, H + 2.35, 0, 1.35, 0.6, 1.1));
-      (rnd() < 0.55 ? dGlass : dDark).add(fm(face2, u, H + 1.2, 0.46, 0.62, 1.05, 1));
+      (rnd() < 0.72 ? dGlass : dDark).add(fm(face2, u, H + 1.2, 0.46, 0.62, 1.05, 1));
     }
     for (let u = 3.5; u < f.len - 2; u += 7 + rnd() * 4) {
       const p = f.o.clone().addScaledVector(f.u, u).addScaledVector(inward, 2.6);

@@ -9,6 +9,8 @@ export type BuildingStyle = 'haussmann' | 'canal' | 'brick' | 'italian' | 'berli
 
 export interface BuildingDef {
   rect: Rect;
+  /** scenery outside the play area only (skipped in mobile quality) */
+  backdrop?: boolean;
   height: number;
   style: BuildingStyle;
   /** fade when it occludes the view (foreground roofs) */

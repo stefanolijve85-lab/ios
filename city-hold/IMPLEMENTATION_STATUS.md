@@ -14,6 +14,15 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris: mansard roofs and side streets
+
+- Mansard roofs: blue-grey slate on the steep lower slope and pale zinc on the top deck (both catch the blue-hour sky), a zinc gutter at the foot, and more lit dormers (72 % instead of 55 %).
+- Side streets: lamps alternating along both kerbs and trees in planters. They carry on past a cross street to three backdrop blocks outside the play area. The backdrop blocks are not built in mobile quality.
+- Side blocks are lower (17 → 14 m), so more of the side streets shows from the square camera.
+- Light pools and wet-street streaks are each merged into one mesh. Phone emulation is back to about 455 draw calls with all the new lamps.
+- Known: in the phone e2e the tap on the reserve team failed in about 1 run in 5 (it passed when re-run); not yet investigated.
+- Screenshots: `docs/screenshots/paris_roof_overview.png`, `paris_side_street.png`.
+
 ## Paris toward concept images 01-03 (pass 2)
 
 - Fountain: round basin on a raised two-step stone platform with benches and planters, a sculpture group of four seated figures on the pedestal, darker teal water and thinner, paler falling water (the octagonal version stays for the showroom).

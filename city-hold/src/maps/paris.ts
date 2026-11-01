@@ -17,6 +17,11 @@ const props: PropDef[] = [
   { type: 'lamp', x: 5, z: -11.4, collide: true, r: 0.25 },
   { type: 'lamp', x: -10.5, z: 8.6, collide: true, r: 0.25 },
   { type: 'lamp', x: 10.5, z: 8.6, collide: true, r: 0.25 },
+  // side streets lit along both kerbs and lined with trees; the far lamps sit outside the play area and only add depth
+  ...([[-17.7, -20], [17.7, -20], [-24.3, -32], [24.3, -31], [-17.7, -38], [17.7, -38], [-24.3, -47], [24.3, -47], [-17.7, -55], [17.7, -55]] as const)
+    .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
+  ...([[-24.1, -21.5], [24.1, -19], [-24.1, -36.5], [24.1, -36.5], [-24.1, -52], [24.1, -52]] as const)
+    .map(([x, z]) => ({ type: 'tree' as const, x, z, collide: true, r: 0.7 })),
   // planters with small trees
   { type: 'planter', x: -5, z: -13.1, collide: true, r: 0.7 },
   { type: 'planter', x: 5, z: -13.1, collide: true, r: 0.7 },
@@ -67,8 +72,12 @@ export const PARIS: MapDef = {
   ground: 'cobble',
   buildings: [
     { rect: { x0: -17, z0: -40, x1: 17, z1: -14 }, height: 19, style: 'haussmann' },
-    { rect: { x0: -44, z0: -40, x1: -25, z1: 3 }, height: 17, style: 'haussmann' },
-    { rect: { x0: 25, z0: -40, x1: 44, z1: 3 }, height: 17, style: 'haussmann' },
+    { rect: { x0: -44, z0: -40, x1: -25, z1: 3 }, height: 14, style: 'haussmann' },
+    { rect: { x0: 25, z0: -40, x1: 44, z1: 3 }, height: 14, style: 'haussmann' },
+    // backdrop beyond the play area: the side streets run on past a cross street, as in images 01/02 (outside the nav bounds)
+    { rect: { x0: -46, z0: -76, x1: -25, z1: -46 }, height: 19, style: 'haussmann', backdrop: true },
+    { rect: { x0: -17, z0: -76, x1: 17, z1: -46 }, height: 20, style: 'haussmann', backdrop: true },
+    { rect: { x0: 25, z0: -76, x1: 46, z1: -46 }, height: 19, style: 'haussmann', backdrop: true },
     { rect: { x0: -44, z0: 15, x1: -5, z1: 34 }, height: 7, style: 'haussmann', fadeable: true },
     { rect: { x0: 5, z0: 15, x1: 44, z1: 34 }, height: 7, style: 'haussmann', fadeable: true },
   ],
