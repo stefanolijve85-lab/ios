@@ -208,6 +208,11 @@
       "file": "placeholder/char_helper.glb",
       "status": "placeholder",
       "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "prop.fountain": {
+      "file": "final/prop.fountain.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from concept 03 crop (1 credit), raw"
     }
   }
 }

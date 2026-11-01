@@ -10,7 +10,7 @@ import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
 import { pbr } from './pbr';
 import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
-import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, streakTexture, shutterTexture, signTexture, waterTexture } from './textures';
+import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, fallingWaterTexture, radialTexture, rippleTexture, roofTexture, streakTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
   group: THREE.Group;
@@ -369,6 +369,33 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
   }
 }
 
+/** Moving water for a fountain model: finds the basin and the top bowl in the mesh and adds a rippling surface,
+ *  a falling-water sheet from the bowl rim and warm underwater lights (the model itself is static). */
+function fountainWaterFor(model: THREE.Object3D, parent: THREE.Group, outerR: number, reducedFx: boolean): Scroll[] {
+  model.updateMatrixWorld(true); parent.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(parent.matrixWorld).invert(); const v = new THREE.Vector3();
+  const pts: [number, number][] = []; let top = 0;
+  model.traverse((o) => { const m = o as THREE.Mesh; if (!m.isMesh) return; const pa = m.geometry.attributes.position;
+    for (let i = 0; i < pa.count; i += 2) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); pts.push([Math.hypot(v.x, v.z), v.y]); top = Math.max(top, v.y); } });
+  // basin: lowest surface between 45 % and 80 % of the radius; bowl: the widest vertices in the upper half
+  const inner = pts.filter(([r]) => r > outerR * 0.45 && r < outerR * 0.8).map(([, y]) => y).sort((a, b) => a - b);
+  const waterY = (inner[Math.floor(inner.length * 0.5)] ?? 0.4) + 0.03;
+  const upper = pts.filter(([, y]) => y > top * 0.5 && y < top * 0.85);
+  const bowlR = upper.reduce((a, [r]) => Math.max(a, r), 0.6); const bowlY = upper.filter(([r]) => r > bowlR * 0.9).reduce((a, [, y]) => Math.max(a, y), top * 0.7);
+  const animated: Scroll[] = [];
+  const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.015, vy: 0.01 });
+  const water = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.78, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: rip, color: 0x6f8f8a, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55, depthWrite: false, emissive: 0x2e4440, emissiveIntensity: 0.5 }));
+  water.position.y = waterY; parent.add(water);
+  const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,220,150,0.26)', 'rgba(255,200,120,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.3; const d = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20).rotateX(-Math.PI / 2), glow); d.position.set(Math.cos(a) * outerR * 0.58, waterY + 0.01, Math.sin(a) * outerR * 0.58); parent.add(d); }
+  if (!reducedFx && bowlY > waterY + 0.3) {
+    const ft = fallingWaterTexture().clone(); ft.repeat.set(14, 1); ft.needsUpdate = true; animated.push({ tex: ft, vx: 0, vy: 0.9 });
+    const h = bowlY - waterY; const sheet = new THREE.Mesh(new THREE.CylinderGeometry(bowlR + 0.04, bowlR + 0.18, h, 40, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xf4fbff, opacity: 0.35 }));
+    sheet.position.y = waterY + h / 2; parent.add(sheet);
+  }
+  return animated;
+}
+
 export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean): WorldHandles {
   const group = new THREE.Group(); scene.add(group);
   const b = map.bounds; const W = b.x1 - b.x0 + 80, D = b.z1 - b.z0 + 80;
@@ -470,7 +497,17 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       const bb = new THREE.Box3().setFromObject(glbFountain); const size = bb.getSize(new THREE.Vector3());
       const k = (2 * (f.r - 0.9)) / Math.max(size.x, size.z, 1e-3); glbFountain.scale.setScalar(k);
       const c = bb.getCenter(new THREE.Vector3()); glbFountain.position.set(-c.x * k, -bb.min.y * k, -c.z * k);
-      fg.add(glbFountain); fh = { group: fg, animated: [], spray: null };
+      // image-to-3D models carry the concept's own night lighting in their colour texture and often no normals:
+      // smooth the normals once and let the texture glow a little so it reads like the painting under our lights
+      glbFountain.traverse((o) => {
+        const m = o as THREE.Mesh; if (!m.isMesh) return;
+        if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals();
+        const src = m.material as THREE.MeshStandardMaterial; if (!src.isMeshStandardMaterial) return;
+        const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.7; mm.metalness = 0;
+        if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.6; }
+        mm.needsUpdate = true; m.material = mm;
+      });
+      fg.add(glbFountain); fh = { group: fg, animated: fountainWaterFor(glbFountain, fg, f.r - 0.9, reducedFx), spray: null };
     } else fh = buildOctagonFountain(f, group, reducedFx, map.id === 'paris' ? 'round' : 'octagon');
     animated.push(...fh.animated); fountainWater = fh.spray;
     // ring of planters with benches between them, all inside the fountain's collision circle

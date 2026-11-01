@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris fountain: first AI-generated final model
+
+- `prop.fountain` is now a final GLB made with Higgsfield SAM-3D (1 credit) from a crop of concept image 03 (`assets/model_refs/fountain_from_03.png`). It has 14k triangles and one 1.2 MB colour texture, 1.6 MB in total.
+- In the game it is scaled to fit inside the planter ring. Normals are computed when the file has none, and the texture glows a little, because it already contains the concept's night lighting. The benches and planters stay procedural.
+- The model is static, so the water is added on top: the basin water level and the top bowl are measured from the mesh, then a rippling surface, warm underwater lights and a falling-water sheet from the bowl rim (desktop only) are added.
+- Install other models the same way: `node tools/install-model.cjs <slot> file.glb`. Removing the slot from `public/models/manifest.json` brings back the procedural fountain.
+- Comparison: `docs/screenshots/fountain_concept_vs_glb.jpg`.
+
 ## Paris: mansard roofs and side streets
 
 - Mansard roofs: blue-grey slate on the steep lower slope and pale zinc on the top deck (both catch the blue-hour sky), a zinc gutter at the foot, and more lit dormers (72 % instead of 55 %).
