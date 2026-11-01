@@ -17,7 +17,7 @@ export interface BuildingDef {
   passages?: Rect[];
 }
 
-export type StoreKind = 'jewellery' | 'electronics' | 'fashion' | 'sports' | 'phones' | 'department';
+export type StoreKind = 'jewellery' | 'electronics' | 'fashion' | 'sports' | 'phones' | 'department' | 'grocery' | 'cafe' | 'sneakers';
 
 export interface StoreDef {
   name: string;
@@ -74,6 +74,8 @@ export interface MapDef {
   islands: Rect[];
   props: PropDef[];
   stores: StoreDef[];
+  /** decorative shopfronts (no gameplay stock) shown for atmosphere */
+  decorShops?: StoreDef[];
   entries: EntryDef[];
   sockets: SocketDef[];
   van: { x: number; z: number; rot: number };

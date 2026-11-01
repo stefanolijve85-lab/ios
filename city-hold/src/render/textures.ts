@@ -213,7 +213,7 @@ export function roofTexture(style: BuildingStyle): THREE.Texture {
 }
 
 const STORE_SIGN: Record<StoreKind, string> = {
-  jewellery: 'BIJOUX', electronics: 'ÉLECTRO', fashion: 'MODE', sports: 'SPORT', phones: 'MOBILE', department: 'STORE',
+  jewellery: 'BIJOUX', electronics: 'ÉLECTRO', fashion: 'MODE', sports: 'SPORT', phones: 'MOBILE', department: 'STORE', grocery: 'MARCHÉ', cafe: 'CAFÉ', sneakers: 'COURT',
 };
 
 export function signTexture(name: string, kind: StoreKind, color: number): THREE.Texture {

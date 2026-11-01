@@ -115,6 +115,7 @@ function fm(f: Face, u: number, v: number, w: number, su: number, sv: number, sw
 export interface KitResult { meshes: THREE.Mesh[]; lights: THREE.Vector3[] }
 
 export interface KitOpts { stores: StoreDef[]; mobile: boolean; index: number }
+export const SHOP_SPAN_PAD = 0.46;
 
 /** Build one Haussmann block: core volume, facade modules on the faces that face the street, mansard roof. */
 export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group, opts: KitOpts): KitResult {
@@ -142,7 +143,7 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   // ---- core volume, recessed behind the facade layer on visible faces (deeper at shop level on store faces)
   const storeFaces = faces.map(({ f }) => opts.stores.filter((s) => Math.abs(s.normal.x - f.n.x) < 0.01 && Math.abs(s.normal.z - f.n.z) < 0.01 &&
     Math.abs((s.front.x - f.o.x) * f.n.x + (s.front.z - f.o.z) * f.n.z) < 0.05));
-  const inset = (i: number, ground: boolean) => (faces[i].vis ? (ground && storeFaces[i].length ? 3.6 : WALL_D) : 0);
+  const inset = (i: number, ground: boolean) => (faces[i].vis ? (ground && storeFaces[i].length ? 4.25 : WALL_D) : 0);
   const coreBox = (y0: number, y1: number, ground: boolean) => {
     // faces: 0 south (z1), 1 north (z0), 2 east (x1), 3 west (x0)
     const x0 = r.x0 + inset(3, ground), x1 = r.x1 - inset(2, ground), z0 = r.z0 + inset(1, ground), z1 = r.z1 - inset(0, ground);
@@ -155,7 +156,8 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   const top = H - 0.7; // underside of the main cornice
   faces.forEach(({ f, vis }, fi) => {
     if (!vis) return;
-    const shops = storeFaces[fi].map((s) => { const c = (s.front.x - f.o.x) * f.u.x + (s.front.z - f.o.z) * f.u.z; return [c - s.width / 2 - 0.35, c + s.width / 2 + 0.35]; });
+    const shops = storeFaces[fi].map((s) => { const c = (s.front.x - f.o.x) * f.u.x + (s.front.z - f.o.z) * f.u.z; return [c - s.width / 2 - 0.46, c + s.width / 2 + 0.46]; });
+    const gDepth = shops.length ? 4.25 : WALL_D; // ground-floor wall depth (deep where shop interiors sit behind)
     const inShop = (u0: number, u1: number) => shops.some(([a, b2]) => u1 > a && u0 < b2);
     // split the face into houses of 3-5 bays with their own stone tint and storey height
     let u = 0;
@@ -164,24 +166,34 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
       if (u + bays * bw > f.len) { bays = Math.max(1, Math.round((f.len - u) / bw)); bw = (f.len - u) / bays; }
       const hw = bays * bw; const tint = new THREE.Color(STONE[Math.floor(rnd() * STONE.length)]);
       const avail = top - GROUND_H; const floors = Math.max(3, Math.round(avail / (3.2 + rnd() * 0.5))); const fh = avail / floors;
-      // ground floor: rusticated piers with tall openings, skipped where a shopfront is
-      for (let k = 0; k < bays; k++) {
-        const b0 = u + k * bw, b1 = b0 + bw;
-        if (inShop(b0, b1)) continue;
-        const ow = Math.min(1.7, bw * 0.62), oc = (b0 + b1) / 2;
-        const door = k === Math.floor(bays / 2);
-        const oh = door ? 3.5 : 3.1;
-        B.rustic.add(fm(f, b0 + (bw - ow) / 4, GROUND_H / 2, -WALL_D / 2, (bw - ow) / 2, GROUND_H, WALL_D), tint);
-        B.rustic.add(fm(f, b1 - (bw - ow) / 4, GROUND_H / 2, -WALL_D / 2, (bw - ow) / 2, GROUND_H, WALL_D), tint);
-        B.rustic.add(fm(f, oc, (oh + GROUND_H) / 2, -WALL_D / 2, ow, GROUND_H - oh, WALL_D), tint);
-        if (door) B.door.add(fm(f, oc, oh / 2, -0.32, ow, oh, 0.08));
-        else {
-          (rnd() < 0.35 ? B.lit : B.dark).add(fm(f, oc, oh / 2 + 0.3, -0.3, ow - 0.1, oh - 0.6, 1));
-          B.rustic.add(fm(f, oc, 0.15, -WALL_D / 2, ow, 0.3, WALL_D), tint);
+      // ground floor: free stretches between shopfronts become rusticated bays (or plain wall if too narrow)
+      const free: [number, number][] = [[u, u + hw]];
+      for (const [a, b2] of shops) for (let i = free.length - 1; i >= 0; i--) {
+        const [f0, f1] = free[i]; if (b2 <= f0 || a >= f1) continue;
+        free.splice(i, 1, ...([[f0, Math.max(f0, a)], [Math.min(f1, b2), f1]] as [number, number][]).filter(([x0, x1]) => x1 - x0 > 0.01));
+      }
+      for (const [f0, f1] of free) {
+        const len = f1 - f0; const nb = Math.floor(len / 2.0);
+        if (nb < 1) { B.rustic.add(fm(f, (f0 + f1) / 2, GROUND_H / 2, -gDepth / 2, len, GROUND_H, gDepth), tint); continue; }
+        const bw2 = len / nb;
+        for (let k = 0; k < nb; k++) {
+          const b0 = f0 + k * bw2, b1 = b0 + bw2;
+          const ow = Math.min(1.7, bw2 * 0.62), oc = (b0 + b1) / 2;
+          const door = !shops.length && k === Math.floor(nb / 2);
+          const oh = door ? 3.5 : 3.1;
+          B.rustic.add(fm(f, b0 + (bw2 - ow) / 4, GROUND_H / 2, -gDepth / 2, (bw2 - ow) / 2, GROUND_H, gDepth), tint);
+          B.rustic.add(fm(f, b1 - (bw2 - ow) / 4, GROUND_H / 2, -gDepth / 2, (bw2 - ow) / 2, GROUND_H, gDepth), tint);
+          B.rustic.add(fm(f, oc, (oh + GROUND_H) / 2, -gDepth / 2, ow, GROUND_H - oh, gDepth), tint);
+          if (door) B.door.add(fm(f, oc, oh / 2, -0.32, ow, oh, 0.08));
+          else {
+            (rnd() < 0.35 ? B.lit : B.dark).add(fm(f, oc, oh / 2 + 0.3, -0.3, ow - 0.1, oh - 0.6, 1));
+            B.rustic.add(fm(f, oc, 0.15, -gDepth / 2, ow, 0.3, gDepth), tint);
+            if (gDepth > WALL_D) B.rustic.add(fm(f, oc, oh / 2 + 0.3, -gDepth / 2 - 0.2, ow, oh - 0.6, gDepth - 0.4), tint); // closes the void behind the glass
+          }
         }
       }
       // ground-floor cornice band over the whole house (also above shops)
-      B.stone.add(fm(f, u + hw / 2, GROUND_H - 0.12, 0.08, hw, 0.24, 0.16), tint);
+      for (const [f0, f1] of free) B.stone.add(fm(f, (f0 + f1) / 2, GROUND_H - 0.12, 0.08, f1 - f0, 0.24, 0.16), tint);
       // upper storeys
       for (let fl = 0; fl < floors; fl++) {
         const y0 = GROUND_H + fl * fh; const noble = fl === 0; const topF = fl === floors - 1;

@@ -8,7 +8,7 @@ const root = new URL('../public/models/', import.meta.url);
 describe('model slots', () => {
   const manifest = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8'));
   test('every slot is filled by a GLB file listed in the manifest', () => {
-    for (const s of SLOTS) {
+    for (const s of SLOTS.filter((d) => !d.optional)) {
       const e = manifest.slots[s.slot];
       expect(e, s.slot).toBeTruthy();
       expect(['placeholder', 'final']).toContain(e.status);

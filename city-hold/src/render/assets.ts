@@ -5,8 +5,8 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 // Model slots. The game asks for a slot; public/models/manifest.json says which GLB fills it and whether it is a
 // temporary placeholder or a final asset. Dropping in a final GLB with the same slot changes nothing in the code.
 
-export type SlotGroup = 'character' | 'prop';
-export interface SlotDef { slot: string; group: SlotGroup; label: string; spec: string }
+export type SlotGroup = 'character' | 'prop' | 'shop';
+export interface SlotDef { slot: string; group: SlotGroup; label: string; spec: string; /** built in code until a final GLB is supplied */ optional?: boolean }
 export interface ManifestEntry { file: string; status: 'placeholder' | 'final'; note?: string }
 export interface Manifest { version: 1; units: 'metres'; up: 'Y'; forward: '+Z'; slots: Record<string, ManifestEntry> }
 
@@ -21,6 +21,10 @@ export const SLOTS: SlotDef[] = [
   { slot: 'char.heavy', group: 'character', label: 'Heavy carrier (image 28)', spec: CHAR_SPEC },
   { slot: 'char.vandal', group: 'character', label: 'Vandal, casual', spec: CHAR_SPEC },
   ...['01_tracksuit_arms_spread', '02_puffer_large_box', '03_runner_backpack', '04_vest_shopping_bags', '05_hoodie_backpack_walking', '06_puffer_electronics_box', '07_navy_runner', '08_padded_vest_bags', '09_large_backpack', '10_windbreaker_small_box'].map((r) => ({ slot: `char.looter.${r}`, group: 'character' as const, label: `Streetwear looter ${r.replace(/_/g, ' ')}`, spec: CHAR_SPEC })),
+  ...([['electronics', 'VOLT'], ['fashion', 'ATELIER'], ['jewelry', 'LUMIERE'], ['grocery', 'MARCHE'], ['cafe', 'CAFE RIVE'], ['sneakers', 'COURT']] as const).map(([id, sign]) => ({
+    slot: `shop.${id}`, group: 'shop' as const, optional: true, label: `Paris shop ${sign} (assets/paris_realism)`,
+    spec: '8 m wide, 4.4 m high, interior 4 m deep, pivot at door floor centre, facade +Z. Named groups: shell, interior, fixtures, stock, glass_intact, glass_broken, boards, shutter_intact, shutter_bent, debris, damage_decals. Sockets: entrance, pickup_01..06, sign, light_left, light_right. Children of "stock" are hidden in order as stock falls.',
+  })),
   { slot: 'prop.lamp', group: 'prop', label: 'Paris cast-iron street lamp', spec: 'Static GLB, ~4.9 m tall, origin at base. Lantern material named "glow" (made to bloom in game).' },
   { slot: 'prop.tree', group: 'prop', label: 'Street tree with planter base', spec: 'Static GLB, ~4.5 m, origin at base, footprint ≤ 1.8 m.' },
   { slot: 'prop.planter', group: 'prop', label: 'Planter box with shrub', spec: 'Static GLB, 1.4 × 1.4 m footprint.' },
@@ -85,6 +89,9 @@ export async function loadAssets(base = 'models/', onProgress?: (done: number, t
     onProgress?.(++done, entries.length);
   }));
 }
+
+/** register a model for a slot at runtime (tools, tests, mods) */
+export function registerModel(slot: string, scene: THREE.Object3D, animations: THREE.AnimationClip[] = []) { loaded.set(slot, { scene, animations }); }
 
 /** for tests / tools */
 export function _resetAssets() { loaded.clear(); manifest = null; }

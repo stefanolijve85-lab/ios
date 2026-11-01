@@ -100,6 +100,11 @@ export class Effects {
     for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2; f.emit({ x, y: 1.1, z, vx: Math.cos(a) * 1.6, vy: 0.6 + Math.random(), vz: Math.sin(a) * 1.6, life: 0, max: 0.5, size: 0.35 }); }
   }
 
+  /** one short burst of glass when a shopfront first breaks; static shards remain afterwards */
+  glassBurst(x: number, z: number) {
+    for (let i = 0; i < (this.reduced ? 12 : 28); i++) { const a = Math.random() * Math.PI * 2; this.spark.emit({ x: x + (Math.random() - 0.5) * 3, y: 1 + Math.random() * 1.5, z: z - 0.5, vx: Math.cos(a) * 1.2, vy: 0.4 + Math.random(), vz: Math.abs(Math.sin(a)) * 1.6, life: 0, max: 0.45, size: 0.22 }); }
+  }
+
   dropBox(x: number, z: number) {
     const m = new THREE.Mesh(this.boxGeo, mat(0xa77d4e, 0.95)); m.position.set(x, 1.1, z); m.castShadow = true;
     this.group.add(m);

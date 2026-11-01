@@ -23,8 +23,8 @@ const props: PropDef[] = [
   { type: 'planter', x: 15.5, z: -13, collide: true, r: 0.8 },
   { type: 'tree', x: -11, z: 11, collide: true, r: 0.9 },
   { type: 'tree', x: 11, z: 11, collide: true, r: 0.9 },
-  { type: 'tree', x: -23.5, z: -4, collide: true, r: 0.8 },
-  { type: 'tree', x: 23.5, z: -4, collide: true, r: 0.8 },
+  { type: 'tree', x: -23.2, z: 1.2, collide: true, r: 0.8 },
+  { type: 'tree', x: 23.2, z: 1.2, collide: true, r: 0.8 },
   // bollards along the foreground pavement (gaps are walkable)
   ...[-9, -7, 7, 9].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
   // café terraces
@@ -32,7 +32,7 @@ const props: PropDef[] = [
   { type: 'umbrella', x: 19.5, z: 11.5, collide: true, r: 1.5 },
   // benches around the fountain are part of the fountain obstacle ring
   // parked cars in the side streets (can be set alight by vandals)
-  { type: 'car', x: -23.2, z: -21, rot: 90, collide: true, burnable: true },
+  { type: 'car', x: -23.2, z: -27.2, rot: 90, collide: true, burnable: true },
   { type: 'car', x: 23.2, z: -24, rot: 90, collide: true, burnable: true },
 ];
 
@@ -60,9 +60,15 @@ export const PARIS: MapDef = {
   islands: [],
   props,
   stores: [
-    { name: 'Jewellery', brand: 'Maison Aurèle', kind: 'jewellery', color: 0x7a1f2b, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
-    { name: 'Electronics', brand: 'Volta Électronique', kind: 'electronics', color: 0x1c2a4e, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
-    { name: 'Fashion', brand: 'Atelier Verdier', kind: 'fashion', color: 0x1d5a3a, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
+    { name: 'Jewellery', brand: 'LUMIERE', kind: 'jewellery', color: 0x18382c, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Electronics', brand: 'VOLT', kind: 'electronics', color: 0x152337, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Fashion', brand: 'ATELIER', kind: 'fashion', color: 0x541d2b, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+  ],
+  // decorative shopfronts on the square's side facades (no gameplay stock)
+  decorShops: [
+    { name: 'Cafe', brand: 'CAFE RIVE', kind: 'cafe', color: 0x38261c, front: { x: -25, z: -5.5 }, normal: { x: 1, z: 0 }, width: 8 },
+    { name: 'Grocery', brand: 'MARCHE', kind: 'grocery', color: 0x60705a, front: { x: -25, z: -20.5 }, normal: { x: 1, z: 0 }, width: 8 },
+    { name: 'Sneakers', brand: 'COURT', kind: 'sneakers', color: 0x292b30, front: { x: 25, z: -5.5 }, normal: { x: -1, z: 0 }, width: 8 },
   ],
   entries: [
     { id: 'nw', name: 'North-west street', x: -21, z: -29, spawn: true, extract: true, marker: 'street' },

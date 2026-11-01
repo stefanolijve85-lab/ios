@@ -174,3 +174,9 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
   .actions .btnrow button { min-height: 32px; padding: 4px 8px; font-size: 12px; }
   .incoming .from { display: none; }
 }
+
+.showroom { position: absolute; inset: 0; } .showroom canvas { width: 100%; height: 100%; display: block; }
+.sr-panel { position: absolute; left: 10px; top: 10px; width: 330px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; font-size: 12px; }
+.sr-panel label { display: flex; gap: 6px; align-items: center; } .sr-panel input[type=range] { flex: 1; }
+.sr-row { display: flex; flex-wrap: wrap; gap: 4px; } .sr-row button { min-height: 30px; padding: 2px 8px; font-size: 11px; }
+.sr-panel pre { margin: 0; font-size: 11px; white-space: pre-wrap; }

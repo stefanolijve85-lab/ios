@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "status": "proposed_adapter_config_not_integrated",
+  "units": "meters",
+  "axes": {
+    "up": "+Y",
+    "front": "+Z"
+  },
+  "module": {
+    "width": 8,
+    "height": 4.5,
+    "interior_depth": 4,
+    "window_recess": 0.22,
+    "door_width": 1.4,
+    "door_height": 2.4,
+    "entrance_recess": 0.3,
+    "pivot": "door_floor_center"
+  },
+  "shops": [
+    {
+      "id": "electronics",
+      "sign": "VOLT",
+      "frame_color_srgb_hex": "#152337",
+      "fixture_types": [
+        "display_table",
+        "wall_shelf",
+        "screen"
+      ],
+      "loot_visual": "electronics_box",
+      "reference_paths": {
+        "intact": "references/shops/electronics_intact.png",
+        "boarded": "references/shops/electronics_boarded.png",
+        "damaged": "references/shops/electronics_damaged.png",
+        "looted": "references/shops/electronics_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_electronics.glb",
+        "status": "NOT_INCLUDED"
+      }
+    },
+    {
+      "id": "fashion",
+      "sign": "ATELIER",
+      "frame_color_srgb_hex": "#541d2b",
+      "fixture_types": [
+        "clothing_rail",
+        "mannequin",
+        "fold_table"
+      ],
+      "loot_visual": "clothing_bag",
+      "reference_paths": {
+        "intact": "references/shops/fashion_intact.png",
+        "boarded": "references/shops/fashion_boarded.png",
+        "damaged": "references/shops/fashion_damaged.png",
+        "looted": "references/shops/fashion_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_fashion.glb",
+        "status": "NOT_INCLUDED"
+      }
+    },
+    {
+      "id": "jewelry",
+      "sign": "LUMIERE",
+      "frame_color_srgb_hex": "#18382c",
+      "fixture_types": [
+        "glass_counter",
+        "velvet_stand",
+        "service_desk"
+      ],
+      "loot_visual": "small_case",
+      "reference_paths": {
+        "intact": "references/shops/jewelry_intact.png",
+        "boarded": "references/shops/jewelry_boarded.png",
+        "damaged": "references/shops/jewelry_damaged.png",
+        "looted": "references/shops/jewelry_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_jewelry.glb",
+        "status": "NOT_INCLUDED"
+      }
+    },
+    {
+      "id": "grocery",
+      "sign": "MARCHE",
+      "frame_color_srgb_hex": "#60705a",
+      "fixture_types": [
+        "produce_crate",
+        "shelf",
+        "checkout"
+      ],
+      "loot_visual": "grocery_crate",
+      "reference_paths": {
+        "intact": "references/shops/grocery_intact.png",
+        "boarded": "references/shops/grocery_boarded.png",
+        "damaged": "references/shops/grocery_damaged.png",
+        "looted": "references/shops/grocery_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_grocery.glb",
+        "status": "NOT_INCLUDED"
+      }
+    },
+    {
+      "id": "cafe",
+      "sign": "CAFE RIVE",
+      "frame_color_srgb_hex": "#38261c",
+      "fixture_types": [
+        "coffee_bar",
+        "chair",
+        "cafe_table"
+      ],
+      "loot_visual": "supplies_box",
+      "reference_paths": {
+        "intact": "references/shops/cafe_intact.png",
+        "boarded": "references/shops/cafe_boarded.png",
+        "damaged": "references/shops/cafe_damaged.png",
+        "looted": "references/shops/cafe_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_cafe.glb",
+        "status": "NOT_INCLUDED"
+      }
+    },
+    {
+      "id": "sneakers",
+      "sign": "COURT",
+      "frame_color_srgb_hex": "#292b30",
+      "fixture_types": [
+        "shoe_wall",
+        "bench",
+        "box_stack"
+      ],
+      "loot_visual": "shoe_box",
+      "reference_paths": {
+        "intact": "references/shops/sneakers_intact.png",
+        "boarded": "references/shops/sneakers_boarded.png",
+        "damaged": "references/shops/sneakers_damaged.png",
+        "looted": "references/shops/sneakers_looted.png"
+      },
+      "future_glb": {
+        "path": "models/paris/shop_sneakers.glb",
+        "status": "NOT_INCLUDED"
+      }
+    }
+  ],
+  "material_starting_values": {
+    "limestone": {
+      "roughness": 0.86,
+      "metalness": 0
+    },
+    "painted_frame": {
+      "roughness": 0.46,
+      "metalness": 0
+    },
+    "brass": {
+      "roughness": 0.34,
+      "metalness": 1
+    },
+    "glass": {
+      "roughness": 0.12,
+      "metalness": 0
+    },
+    "cardboard": {
+      "roughness": 0.95,
+      "metalness": 0
+    }
+  },
+  "quality_starting_budgets": {
+    "mobile": {
+      "shop_near_triangles": 12000,
+      "debris_per_shop": 12,
+      "pixel_ratio_max": 1.5
+    },
+    "desktop": {
+      "shop_near_triangles": 30000,
+      "debris_per_shop": 30,
+      "pixel_ratio_max": 2
+    }
+  },
+  "geometry_groups": [
+    "shell",
+    "interior",
+    "fixtures",
+    "stock",
+    "glass_intact",
+    "glass_broken",
+    "boards",
+    "shutter_intact",
+    "shutter_bent",
+    "debris",
+    "damage_decals"
+  ]
+}

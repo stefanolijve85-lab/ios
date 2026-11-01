@@ -14,7 +14,9 @@ export const BALANCE = {
     storesNeededToWin: 2,
     storeStructure: 100,
     storeStock: 100,
-    costs: { security: 250, shield: 400, barrier: 150, camera: 200, concrete: 350, firefighter: 250 },
+    costs: { security: 250, shield: 400, barrier: 150, camera: 200, concrete: 350, firefighter: 250, boards: 120, repair: 200 },
+    /** plywood boards: a protection layer in front of the shopfront, broken before the shutter takes damage */
+    boardsHp: 50,
     maxDefenders: 14,
   },
   looters: {

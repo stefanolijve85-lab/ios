@@ -25,6 +25,9 @@ export interface Store {
   door: Vec2;
   /** total extracted (permanently lost) */
   lost: number;
+  /** plywood boards over the front (protection layer, separate from structure damage) */
+  boards: number;
+  boardsMax: number;
 }
 
 export type AttState = 'approach' | 'breach' | 'collect' | 'extract' | 'flee' | 'barrier' | 'held' | 'restrained' | 'escorted' | 'removed' | 'escaped';
@@ -143,7 +146,7 @@ export class Game {
     const bonus = this.perks.has('budget') ? 100 : 0;
     this.stores = map.stores.map((s, idx) => ({
       idx, name: s.name, structure: BALANCE.defence.storeStructure, maxStructure: BALANCE.defence.storeStructure,
-      stock: BALANCE.defence.storeStock, reserved: 0, shutterLevel: 1, door: storeDoor(s), lost: 0,
+      stock: BALANCE.defence.storeStock, reserved: 0, shutterLevel: 1, door: storeDoor(s), lost: 0, boards: 0, boardsMax: BALANCE.defence.boardsHp,
     }));
     this.looterRoute = map.entries.find((e) => e.spawn)!.id;
     if (side === 'defence') {
@@ -408,6 +411,31 @@ export class Game {
   }
 
   shutterNext(idx: number) { return BALANCE.upgrades.shutter.find((s) => s.level === this.stores[idx].shutterLevel + 1) ?? null; }
+
+  /** nail plywood over the front. Protection only: it does not repair damage and does not change stock. */
+  boardUp(idx: number): ActionResult {
+    if (this.over || this.side !== 'defence') return { ok: false };
+    const s = this.stores[idx]; if (!s) return { ok: false };
+    if (s.boards >= s.boardsMax) return this.deny('Already boarded');
+    const c = BALANCE.defence.costs.boards;
+    if (this.budget < c) return this.deny('Insufficient budget');
+    this.budget -= c; s.boards = s.boardsMax;
+    this.emit({ type: 'upgrade', text: `${s.name}: boarded up (+${s.boardsMax} protection, -${c})`, x: s.door.x, z: s.door.z });
+    return { ok: true };
+  }
+
+  /** repair glass and shutter between waves. Restores structure only; stock is NOT refilled. */
+  repairStore(idx: number): ActionResult {
+    if (this.over || this.side !== 'defence') return { ok: false };
+    const s = this.stores[idx]; if (!s) return { ok: false };
+    if (this.phase !== 'prep') return this.deny('Repairs only between waves');
+    if (s.structure >= s.maxStructure) return this.deny('Nothing to repair');
+    const c = BALANCE.defence.costs.repair;
+    if (this.budget < c) return this.deny('Insufficient budget');
+    this.budget -= c; s.structure = s.maxStructure;
+    this.emit({ type: 'upgrade', text: `${s.name}: storefront repaired (-${c}); stock stays at ${s.stock}`, x: s.door.x, z: s.door.z });
+    return { ok: true };
+  }
 
   upgradeShutter(idx: number): ActionResult {
     if (this.over) return { ok: false };
@@ -862,7 +890,7 @@ export class Game {
         this.maybeIgniteCar(u);
         if (this.follow(u, dt, sp)) {
           u.facing = Math.atan2(-this.map.stores[u.targetStore].normal.x, -this.map.stores[u.targetStore].normal.z);
-          u.state = s.structure > 0 ? 'breach' : 'collect'; u.stateT = 0;
+          u.state = s.structure > 0 || s.boards > 0 ? 'breach' : 'collect'; u.stateT = 0;
           if (u.state === 'collect') this.beginCollect(u);
         }
         this.checkStuck(u, dt);
@@ -871,8 +899,13 @@ export class Game {
       case 'breach': {
         u.moving = false;
         const s = this.stores[u.targetStore];
-        if (s.structure > 0) {
-          s.structure = Math.max(0, s.structure - (BALANCE.units[u.kind] as { breakRate: number }).breakRate * dt);
+        const rate = (BALANCE.units[u.kind] as { breakRate: number }).breakRate;
+        if (s.boards > 0) {
+          // boards absorb the attack first; the shutter is untouched until they are gone
+          s.boards = Math.max(0, s.boards - rate * dt);
+          if (s.boards <= 0) this.emit({ type: 'barrierBroken', text: `${s.name}: boards torn down`, x: s.door.x, z: s.door.z });
+        } else if (s.structure > 0) {
+          s.structure = Math.max(0, s.structure - rate * dt);
           if (s.structure <= 0) {
             this.emit({ type: 'breach', text: `${s.name} shutter breached`, x: s.door.x, z: s.door.z });
             if (u.kind === 'vandal' && this.rng.next() < BALANCE.fire.vandalIgniteChance) this.startFire(s.door.x, s.door.z - 0.0, s.idx, -1);

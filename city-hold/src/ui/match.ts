@@ -433,7 +433,10 @@ export class Match {
       const si = this.view.selectedStore;
       if (si >= 0) {
         const st = g.stores[si]; const nx = g.shutterNext(si);
-        html += `<div class="upg"><small>SHUTTER · ${st.name.toUpperCase()}</small><div>Level ${st.shutterLevel}: max ${st.maxStructure} structure</div>${nx ? `<div class="next">Next: level ${nx.level} → max ${st.maxStructure + nx.addCapacity} (+${nx.addCapacity}, repairs only the added capacity)</div><button data-u="shutter" ${g.budget < nx.cost ? 'disabled' : ''}>Upgrade shutter · ${nx.cost}</button>` : '<div class="next">Maximum level</div>'}</div>`;
+        html += `<div class="upg"><small>SHUTTER · ${st.name.toUpperCase()}</small><div>Level ${st.shutterLevel}: max ${st.maxStructure} structure</div>${nx ? `<div class="next">Next: level ${nx.level} → max ${st.maxStructure + nx.addCapacity} (+${nx.addCapacity}, repairs only the added capacity)</div><button data-u="shutter" ${g.budget < nx.cost ? 'disabled' : ''}>Upgrade shutter · ${nx.cost}</button>` : '<div class="next">Maximum level</div>'}
+          <div>Boards ${Math.ceil(st.boards)}/${st.boardsMax} · protection layer (does not repair)</div>
+          <button data-u="boards" ${g.budget < BALANCE.defence.costs.boards || st.boards >= st.boardsMax ? 'disabled' : ''}>Board up · ${BALANCE.defence.costs.boards}<br><small>absorbs ${st.boardsMax} damage before the shutter</small></button>
+          <button data-u="repair" ${g.budget < BALANCE.defence.costs.repair || st.structure >= st.maxStructure || g.phase !== 'prep' ? 'disabled' : ''}>Repair glass & shutter · ${BALANCE.defence.costs.repair}<br><small>between waves · stock is not refilled</small></button></div>`;
       }
       const tr = BALANCE.upgrades.securityTraining, sp = BALANCE.upgrades.securitySpec;
       html += `<div class="upg"><small>SECURITY TEAMS</small>`;
@@ -458,6 +461,8 @@ export class Match {
     i.querySelectorAll<HTMLButtonElement>('[data-u]').forEach((b) => b.addEventListener('click', () => {
       const u = b.dataset.u!; let r;
       if (u === 'shutter') r = g.upgradeShutter(this.view.selectedStore);
+      else if (u === 'boards') r = g.boardUp(this.view.selectedStore);
+      else if (u === 'repair') r = g.repairStore(this.view.selectedStore);
       else if (u === 'train') r = g.upgradeSecurity();
       else if (u === 'mobile' || u === 'fixed') r = g.chooseSecuritySpec(u);
       else if (u === 'wide' || u === 'fast') r = g.chooseCameraSpec(u);

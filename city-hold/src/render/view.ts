@@ -392,7 +392,8 @@ export class MatchView {
     // stores
     g.stores.forEach((s, i) => {
       const v = this.world.stores[i];
-      v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0);
+      v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0, s.boards / s.boardsMax);
+      if (v.justBroke) this.fx.glassBurst(s.door.x, s.door.z);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
       const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.8, sd.front.z + sd.normal.z * 0.5);
       // keep store labels below the top bar on short screens
@@ -463,6 +464,8 @@ export class MatchView {
     }
     // van lights flash
     this.world.vanLights.forEach((l, i) => ((l.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(this.time * 9 + i * Math.PI) > 0 ? 0x3a6aff : 0x0a1440)));
+    // shop detail levels by camera distance (decoration only; gameplay objects are unaffected)
+    for (const sh of [...this.world.stores, ...this.world.decorShops]) if (sh.setLod && sh.group) sh.setLod(this.camera.position.distanceTo(sh.group.position));
     for (const sc of this.world.animated) { sc.tex.offset.x += sc.vx * dt; sc.tex.offset.y += sc.vy * dt; }
     // fountain spray
     if (this.world.fountainWater) {

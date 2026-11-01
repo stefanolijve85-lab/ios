@@ -57,4 +57,23 @@ async function run(): Promise<Record<string, string>> {
 }
 
 (window as unknown as { __exportPlaceholders: () => Promise<Record<string, string>> }).__exportPlaceholders = run;
+
+/** round-trip check: procedural shop -> GLB -> registered slot -> ShopModule driven by game state */
+(window as unknown as { __shopGlbCheck: () => Promise<unknown> }).__shopGlbCheck = async () => {
+  const { ShopModule } = await import('../render/shopModule');
+  const { registerModel } = await import('../render/assets');
+  const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+  const def = { name: 'x', kind: 'electronics' as const, color: 0, front: { x: 0, z: 0 }, normal: { x: 0, z: 1 }, width: 8 };
+  const proc = new ShopModule(def, 0, { quality: 'desktop', seed: 1, withLight: false });
+  proc.update(0.1, 1, 3, true, 1); // export with every part populated (instanced parts must not have count 0)
+  const out = await new GLTFExporter().parseAsync(proc.group, { binary: true, onlyVisible: false }) as ArrayBuffer;
+  const gltf = await new GLTFLoader().parseAsync(out, '');
+  registerModel('shop.electronics', gltf.scene);
+  const m = new ShopModule(def, 0, { quality: 'desktop', seed: 1, withLight: false });
+  const res: Record<string, unknown> = { source: m.source, bytes: out.byteLength, groups: Object.fromEntries(Object.entries(m.groups).map(([k, g]) => [k, g.children.length])) };
+  m.update(1, 1, 1, false, 0); res.intact = { glass: m.groups.glass_intact.visible, broken: m.groups.glass_broken.visible, boards: m.groups.boards.visible };
+  m.update(0.2, 1, 1, true, 0); res.damagedFull = { glass: m.groups.glass_intact.visible, broken: m.groups.glass_broken.visible, bent: m.groups.shutter_bent.visible, stock: m.groups.stock.visible };
+  m.update(1, 0, 1, false, 1); res.boardedEmpty = { boards: m.groups.boards.visible, stock: m.groups.stock.visible, state: m.referenceState };
+  return res;
+};
 document.getElementById('status')!.textContent = 'ready';

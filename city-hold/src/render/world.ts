@@ -4,7 +4,7 @@ import { mat } from './humans';
 import { VAN } from '../sim/nav';
 import { cloneModel } from './assets';
 import { buildHaussmann } from './haussmann';
-import { ShopVisual } from './shopfront';
+import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
 import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
 import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
@@ -24,7 +24,7 @@ export interface StoreVisual {
 }
 
 /** anything that draws a store and reacts to its state */
-export interface ShopLike { hit: THREE.Mesh; update(structureRatio: number, stockRatio: number, level: number, breached: boolean): void }
+export interface ShopLike { hit: THREE.Mesh; update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio?: number): void; setLod?(dist: number): void; justBroke?: boolean; group?: THREE.Group }
 
 export interface Fadeable { meshes: THREE.Mesh[]; box: THREE.Box3; opacity: number }
 
@@ -39,6 +39,7 @@ export interface WorldHandles {
   water: THREE.Mesh[];
   fountainWater: THREE.Points | null;
   animated: Scroll[];
+  decorShops: ShopModule[];
   lampLights: THREE.PointLight[];
 }
 
@@ -93,7 +94,7 @@ function registerFade(b: BuildingDef, meshes: THREE.Mesh[], fadeables: Fadeable[
 function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeables: Fadeable[], map?: MapDef, mobile = false) {
   // Paris uses the modular Haussmann facade kit (real window depth, balconies, cornices)
   if (map && map.id === 'paris' && b.style === 'haussmann' && !(b.passages?.length)) {
-    const res = buildHaussmann(b, map, parent, { stores: map.stores, mobile, index: idx });
+    const res = buildHaussmann(b, map, parent, { stores: [...map.stores, ...(map.decorShops ?? [])], mobile, index: idx });
     registerFade(b, res.meshes, fadeables);
     return;
   }
@@ -363,10 +364,11 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     mesh(box, kerb, group, kx, 0.06, kz + kd / 2, kw, 0.12, 0.18, false); mesh(box, kerb, group, kx, 0.06, kz - kd / 2, kw, 0.12, 0.18, false);
     mesh(box, kerb, group, kx + kw / 2, 0.06, kz, 0.18, 0.12, kd, false); mesh(box, kerb, group, kx - kw / 2, 0.06, kz, 0.18, 0.12, kd, false);
   }
+  const decorShops: ShopModule[] = (map.decorShops ?? []).map((s, i) => { const sm = new ShopModule(s, 100 + i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 201 + i, withLight: false }); sm.hit.userData.store = -1; group.add(sm.group); return sm; });
   const fadeables: Fadeable[] = [];
   map.buildings.forEach((bd, i) => buildBuilding(bd, group, i, fadeables, map, reducedFx));
   const stores: ShopLike[] = map.stores.map((s, i) => {
-    if (map.id === 'paris') { const sv = new ShopVisual(s, i, reducedFx); group.add(sv.group); return sv; }
+    if (map.id === 'paris') { const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: !reducedFx }); group.add(sm.group); return sm; }
     const v = buildStore(s, i, group, !reducedFx);
     return { hit: v.hit, update: (a: number, b: number, c: number, d: boolean) => updateStoreVisual(v, a, b, c, d) };
   });
@@ -474,7 +476,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     lm.rotation.x = -Math.PI / 2; lm.position.set((r.x0 + r.x1) / 2, 0.04, (r.z0 + r.z1) / 2); group.add(lm);
   }
   buildStreetDetails(map, group);
-  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated };
+  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated, decorShops };
 }
 
 export function skyTexture(): THREE.Texture {

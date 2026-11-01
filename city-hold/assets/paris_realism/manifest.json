@@ -1,0 +1,374 @@
+{
+  "version": 1,
+  "city": "fictional_paris",
+  "image_count": 24,
+  "usage": "Reference art for reconstructing real 3D geometry. Not textures or models.",
+  "state_order": [
+    "intact",
+    "boarded",
+    "damaged",
+    "looted"
+  ],
+  "assets": [
+    {
+      "id": "electronics_intact",
+      "shop": "electronics",
+      "state": "intact",
+      "path": "references/shops/electronics_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "6e5375ac01bf3405a83ecb4da454dd49f9af17788e57c1208b408a157894d7b6"
+    },
+    {
+      "id": "electronics_boarded",
+      "shop": "electronics",
+      "state": "boarded",
+      "path": "references/shops/electronics_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "b46172052e22894dbdc040ea2931fdeb0dd6256ba69f9d164a582a52a873f800"
+    },
+    {
+      "id": "electronics_damaged",
+      "shop": "electronics",
+      "state": "damaged",
+      "path": "references/shops/electronics_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "60534caae745efbbdde6564e411407723a28120a5a54c0e6419afd6af80d7a60"
+    },
+    {
+      "id": "electronics_looted",
+      "shop": "electronics",
+      "state": "looted",
+      "path": "references/shops/electronics_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "e6e7f9375434835dc989085421c99b1cbd2396f074ee1eaf860f459a41ae9a2f"
+    },
+    {
+      "id": "fashion_intact",
+      "shop": "fashion",
+      "state": "intact",
+      "path": "references/shops/fashion_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "e07e8093a5b9e279a920220c93e665fc9cd5acfa8a8462117a54c01c5bb649da"
+    },
+    {
+      "id": "fashion_boarded",
+      "shop": "fashion",
+      "state": "boarded",
+      "path": "references/shops/fashion_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "32218e1f5368acd7b2084cdf178c2b3ba06413977d178a5ab6a58288a01bd779"
+    },
+    {
+      "id": "fashion_damaged",
+      "shop": "fashion",
+      "state": "damaged",
+      "path": "references/shops/fashion_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "722cf54e13987576c27fa1005db182aecebeff4456dd954ab4e19c2b6df38d62"
+    },
+    {
+      "id": "fashion_looted",
+      "shop": "fashion",
+      "state": "looted",
+      "path": "references/shops/fashion_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "8d69dfdcee6cbc05f734ac7e29a2e36b787ff05d28336c00d3dc977507585223"
+    },
+    {
+      "id": "jewelry_intact",
+      "shop": "jewelry",
+      "state": "intact",
+      "path": "references/shops/jewelry_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "4275c5a59b26ee028c0ea4a2abe55489f3a8525e41dd923c3d1f333fec73a108"
+    },
+    {
+      "id": "jewelry_boarded",
+      "shop": "jewelry",
+      "state": "boarded",
+      "path": "references/shops/jewelry_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "0c8100332c0933363cadec0ab1ca3bdfd611d964dd7b01ac13163ebddc40bc29"
+    },
+    {
+      "id": "jewelry_damaged",
+      "shop": "jewelry",
+      "state": "damaged",
+      "path": "references/shops/jewelry_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "4a0eadc9b79e6cdfa0f5b0c65316a4d0602221034d9de9ec1f522ad0e981ec6a"
+    },
+    {
+      "id": "jewelry_looted",
+      "shop": "jewelry",
+      "state": "looted",
+      "path": "references/shops/jewelry_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "663cc714e7c0d78af24c2bfdeaa3ec95be4f7a581f93c7820af8844458b88f3c"
+    },
+    {
+      "id": "grocery_intact",
+      "shop": "grocery",
+      "state": "intact",
+      "path": "references/shops/grocery_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "843a6ca7fd5bc5ba80f472967e944a544b747685e62504d7b374092dc2598d67"
+    },
+    {
+      "id": "grocery_boarded",
+      "shop": "grocery",
+      "state": "boarded",
+      "path": "references/shops/grocery_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "85ea7d983033fd398ff5f2b20c75d6f37e5cc7238839bb27e13e92cae8e1fe50"
+    },
+    {
+      "id": "grocery_damaged",
+      "shop": "grocery",
+      "state": "damaged",
+      "path": "references/shops/grocery_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "b04e52496b86b9bbbe23b0cd8ebd43b9dfc7a17e22ab3bfcfdfaf24827365458"
+    },
+    {
+      "id": "grocery_looted",
+      "shop": "grocery",
+      "state": "looted",
+      "path": "references/shops/grocery_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "73dc270be44d62522c3ec97b1d8d2717a03e3e22e6a67e1b7b041ec14968bfb6"
+    },
+    {
+      "id": "cafe_intact",
+      "shop": "cafe",
+      "state": "intact",
+      "path": "references/shops/cafe_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "d2b6d44aec030461816f5fb42f4feeab52e54b0755ba86ef1c0bc2f15cd79e3f"
+    },
+    {
+      "id": "cafe_boarded",
+      "shop": "cafe",
+      "state": "boarded",
+      "path": "references/shops/cafe_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "273609bd425410a48f4175eb627b2334561fe255abb202926174683d96b1c43f"
+    },
+    {
+      "id": "cafe_damaged",
+      "shop": "cafe",
+      "state": "damaged",
+      "path": "references/shops/cafe_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "e1d0ae6a2bf6485200ce5a35e0a8e51e3d62270cfadb102cb47155dc36480d17"
+    },
+    {
+      "id": "cafe_looted",
+      "shop": "cafe",
+      "state": "looted",
+      "path": "references/shops/cafe_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "5d859f43336f6b90e2d45fad13af45fca4237902f8d1726c9b52bebbf5d90821"
+    },
+    {
+      "id": "sneakers_intact",
+      "shop": "sneakers",
+      "state": "intact",
+      "path": "references/shops/sneakers_intact.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "2d4da0c5a09ce410a11552ab438bbbab7cfe92303ea5c1f00367ba27a19b0e00"
+    },
+    {
+      "id": "sneakers_boarded",
+      "shop": "sneakers",
+      "state": "boarded",
+      "path": "references/shops/sneakers_boarded.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "2678604ef9d55de9827a8c0161c3390f5286b71a87789a84a92984a6fb6fe9ae"
+    },
+    {
+      "id": "sneakers_damaged",
+      "shop": "sneakers",
+      "state": "damaged",
+      "path": "references/shops/sneakers_damaged.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "7953a26460a0ff20c4bda3e35c04a50a7353ae57b869d66228e1869bdccf4db1"
+    },
+    {
+      "id": "sneakers_looted",
+      "shop": "sneakers",
+      "state": "looted",
+      "path": "references/shops/sneakers_looted.png",
+      "type": "visual_reference",
+      "format": "PNG",
+      "dimensions_px": [
+        1536,
+        1024
+      ],
+      "has_3d_geometry": false,
+      "not_tileable": true,
+      "sha256": "8a0b3567c4d347dea66d17a60cdc950d8e6c17096a5ff98fd76e41fd2fabff17"
+    }
+  ]
+}
