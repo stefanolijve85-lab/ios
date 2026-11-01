@@ -33,9 +33,12 @@ const props: PropDef[] = [
   { type: 'tree', x: -23.2, z: 1.2, collide: true, r: 0.8 },
   { type: 'tree', x: 23.2, z: 1.2, collide: true, r: 0.8 },
   // bollards along the foreground pavement (gaps are walkable)
-  ...[-9, -7, 7, 9].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
+  ...[-9, -7, -3.4, 3.4, 7, 9, -13, 13].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
   // crowd-control fences against the side facades, as in images 02/03 (decor, off the walking lines)
   { type: 'fence', x: 24.1, z: -9.6, rot: 90, collide: true, r: 0.5 },
+  // parasols over the CAFE RIVE terrace
+  { type: 'umbrella', x: -21.6, z: -8.2, collide: true, r: 0.3 },
+  { type: 'umbrella', x: -21.6, z: -2.8, collide: true, r: 0.3 },
   // police line in front of the staging van (decor, as in images 02/03)
   { type: 'fence', x: 25.6, z: 5.3, rot: 0, collide: true, r: 0.5 },
   // café terraces: tables in front of CAFE RIVE and around the foreground umbrellas

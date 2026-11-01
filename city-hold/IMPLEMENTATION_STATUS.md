@@ -14,6 +14,15 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris toward concept images 01-03 (pass 2)
+
+- Fountain: round basin on a raised two-step stone platform with benches and planters, a sculpture group of four seated figures on the pedestal, darker teal water and thinner, paler falling water (the octagonal version stays for the showroom).
+- Wet street: long light streaks from every lamp and the shop windows, smeared towards the camera (the camera never turns, so they are static and cheap; also on phones).
+- Café: large cream parasols with a warm glow over the CAFE RIVE terrace and the foreground terraces; tree crowns in autumn olive/ochre; a full row of bollards along the foreground pavement.
+- Shop windows: jewellery has stepped velvet plinths with neck busts and lit gold necklaces behind each pane; electronics has a big lit screen on a stand. Both are stock items, so they disappear when the shop is looted.
+- Draw calls on the emulated phone went up from about 390 to 460 (frame time still about 9 ms in software rendering).
+- Comparison: `docs/screenshots/paris_concept_vs_game_2.jpg`.
+
 ## Paris: passers-by, café terraces, police line
 
 - Passers-by: up to 14 on desktop / 6 on phones (was 6/3), a new one every 2.5 s, and half of them are already on the square at the start. 60 % first stop at a shop window, the fountain or the café for 3–9 s, then walk to an exit.

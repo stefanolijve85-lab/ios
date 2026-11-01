@@ -341,6 +341,9 @@ export class ShopModule {
         const dev: [number, number, number, number][] = [];
         for (const [x, z] of [[-1.7, -1.5], [1.7, -1.5]]) for (let i = 0; i < 3; i++) dev.push([x - 0.55 + i * 0.55, 0.92, z, (rnd() - 0.5) * 0.2]);
         stock(new THREE.BoxGeometry(0.36, 0.24, 0.016).translate(0, 0.12, 0).rotateX(-0.28), M('dev', () => new THREE.MeshBasicMaterial({ map: screenTex() })), dev);
+        // window display (image 03): a lit screen on a stand behind each pane
+        for (const x of [-2.3, 2.3]) { add(BOX, dark, G.fixtures, x, 0.5, -0.55, 1.4, 0.06, 0.5); add(BOX, metal, G.fixtures, x, 0.85, -0.6, 0.06, 0.7, 0.06); }
+        stock(new THREE.PlaneGeometry(1.25, 0.72), M('wscr', () => new THREE.MeshBasicMaterial({ map: screenTex(), color: new THREE.Color(1.6, 1.6, 1.7) })), [[-2.3, 1.55, -0.56], [2.3, 1.55, -0.56]]);
         const boxes: [number, number, number][] = [];
         for (const y of [1.25, 1.9, 2.55]) for (let i = 0; i < 7; i++) boxes.push([-W / 2 + 0.7 + i * (W - 1.4) / 6, y, -D + 0.25]);
         stock(new THREE.BoxGeometry(0.3, 0.22, 0.2), white, boxes);
@@ -377,6 +380,17 @@ export class ShopModule {
         for (const [x, z] of counters) for (let i = 0; i < 4; i++) stands.push([x - 0.5 + i * 0.33, 0.97, z]);
         for (let i = 0; i < 6; i++) stands.push([-W / 2 + 0.9 + i * (W - 1.8) / 5, 1.4, -D + 0.24]);
         stock(new THREE.ConeGeometry(0.06, 0.16, 6), velvet, stands);
+        // window display (image 03): stepped velvet plinths with neck busts wearing lit gold necklaces, behind each pane
+        const bust: [number, number, number][] = [];
+        for (const x of [-2.3, 2.3]) {
+          add(BOX, velvet, G.fixtures, x, 0.62, -0.62, 1.5, 0.12, 0.5); add(BOX, velvet, G.fixtures, x, 0.78, -0.75, 1.1, 0.2, 0.3);
+          for (const [dx, y] of [[-0.5, 0.68], [0, 0.88], [0.5, 0.68]] as const) {
+            add(new THREE.CapsuleGeometry(0.1, 0.18, 4, 8).scale(1.2, 1, 0.7), velvet, G.fixtures, x + dx, y + 0.2, -0.66);
+            add(new THREE.CylinderGeometry(0.04, 0.05, 0.14, 8), velvet, G.fixtures, x + dx, y + 0.42, -0.66);
+            bust.push([x + dx, y + 0.27, -0.6]);
+          }
+        }
+        stock(new THREE.TorusGeometry(0.09, 0.012, 6, 16, Math.PI).rotateZ(Math.PI), M('goldNeck', () => new THREE.MeshStandardMaterial({ color: 0xffd36a, roughness: 0.12, metalness: 1, emissive: 0xb07a20, emissiveIntensity: 1.2 })), bust);
         stock(new THREE.TorusGeometry(0.04, 0.012, 6, 12), M('gold', () => new THREE.MeshStandardMaterial({ color: 0xffd36a, roughness: 0.15, metalness: 1, emissive: 0x6a4a10, emissiveIntensity: 0.5 })), stands.map(([x, y, z]) => [x, y + 0.1, z] as [number, number, number]));
         break;
       }

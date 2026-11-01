@@ -16,7 +16,8 @@ const timber = () => M('timber', () => new THREE.MeshStandardMaterial({ color: 0
 const stone = () => M('fstone2', () => new THREE.MeshStandardMaterial({ color: 0xbfae8e, roughness: 0.82 })); // weathered limestone (images 02/03)
 const clearGlass = () => M('clearGlass', () => new THREE.MeshStandardMaterial({ color: 0xcfe2ee, roughness: 0.06, transparent: true, opacity: 0.22, depthWrite: false, envMapIntensity: 1.2, side: THREE.DoubleSide }));
 const lampGlow = () => M('lampGlow', () => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd28c).multiplyScalar(4.5) }); m.name = 'glow'; return m; });
-const leafMats = [0x5f7d34, 0x6f8c3a, 0x4f6e2c, 0x7f9842].map((c) => M('leaf' + c, () => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, flatShading: true })));
+const leafMats = [0x8c8a3a, 0xa8893a, 0x6f7a32, 0xb99a42].map((c) => // autumn olive/ochre crowns (images 01-03)
+   M('leaf' + c, () => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, flatShading: true })));
 
 function add(geo: THREE.BufferGeometry, mat: THREE.Material, parent: THREE.Object3D, x = 0, y = 0, z = 0, shadow = true) {
   const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; parent.add(o); return o;
@@ -232,25 +233,34 @@ export function buildDeliveryVan(): THREE.Group {
 
 // ---------------------------------------------------------------- 1. fountain (octagonal basin, three bowls, water meshes)
 export interface FountainBuild { group: THREE.Group; animated: Scroll[]; spray: THREE.Points | null }
-export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced: boolean): FountainBuild {
+/** shape 'round' follows concept images 01-03 (round basin on a raised stone platform, sculpture group); 'octagon' the street-props sheet */
+export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced: boolean, shape: 'octagon' | 'round' = 'octagon'): FountainBuild {
   const g = new THREE.Group(); g.position.set(f.x, 0, f.z); parent.add(g);
   const animated: Scroll[] = [];
   const R = f.r * 0.8; // basin inside the ring of planters/benches (the gameplay obstacle stays the map circle)
   const seg = 8; const side = 2 * R * Math.tan(Math.PI / seg);
-  for (let k = 0; k < seg; k++) {
-    const a = (k / seg) * Math.PI * 2 + Math.PI / seg;
-    const wall = add(box(side, 0.62, 0.3), stone(), g, Math.cos(a) * R, 0.31, Math.sin(a) * R); wall.rotation.y = -a + Math.PI / 2;
-    const cope = add(box(side + 0.1, 0.1, 0.46), stone(), g, Math.cos(a) * R, 0.67, Math.sin(a) * R); cope.rotation.y = -a + Math.PI / 2;
-    const panel = add(box(side * 0.6, 0.32, 0.03), M('relief', () => new THREE.MeshStandardMaterial({ color: 0xbfb194, roughness: 0.9 })), g, Math.cos(a) * (R + 0.16), 0.33, Math.sin(a) * (R + 0.16)); panel.rotation.y = -a + Math.PI / 2;
-    const pa = (k / seg) * Math.PI * 2; const pr = R / Math.cos(Math.PI / seg);
-    add(box(0.42, 0.82, 0.42), stone(), g, Math.cos(pa) * pr, 0.41, Math.sin(pa) * pr).rotation.y = -pa;            // pier
-    add(new THREE.SphereGeometry(0.11, 10, 8), stone(), g, Math.cos(pa) * pr, 0.93, Math.sin(pa) * pr);              // ball finial
+  if (shape === 'round') {
+    // raised platform (two shallow steps) the benches and planters stand on
+    add(cyl(f.r + 0.25, f.r + 0.35, 0.12, 48), M('fplat', () => new THREE.MeshStandardMaterial({ color: 0x9c8f78, roughness: 0.7 })), g, 0, 0.06, 0);
+    add(cyl(R + 0.7, R + 0.75, 0.1, 48), stone(), g, 0, 0.17, 0);
+    // basin wall with moulded base and a broad coping, as a lathe profile
+    add(lathe([[R - 0.2, 0.2], [R + 0.18, 0.2], [R + 0.22, 0.28], [R + 0.16, 0.34], [R + 0.16, 0.58], [R + 0.3, 0.62], [R + 0.3, 0.72], [R - 0.22, 0.72], [R - 0.22, 0.5]], 56), stone(), g);
+  } else {
+    for (let k = 0; k < seg; k++) {
+      const a = (k / seg) * Math.PI * 2 + Math.PI / seg;
+      const wall = add(box(side, 0.62, 0.3), stone(), g, Math.cos(a) * R, 0.31, Math.sin(a) * R); wall.rotation.y = -a + Math.PI / 2;
+      const cope = add(box(side + 0.1, 0.1, 0.46), stone(), g, Math.cos(a) * R, 0.67, Math.sin(a) * R); cope.rotation.y = -a + Math.PI / 2;
+      const panel = add(box(side * 0.6, 0.32, 0.03), M('relief', () => new THREE.MeshStandardMaterial({ color: 0xbfb194, roughness: 0.9 })), g, Math.cos(a) * (R + 0.16), 0.33, Math.sin(a) * (R + 0.16)); panel.rotation.y = -a + Math.PI / 2;
+      const pa = (k / seg) * Math.PI * 2; const pr = R / Math.cos(Math.PI / seg);
+      add(box(0.42, 0.82, 0.42), stone(), g, Math.cos(pa) * pr, 0.41, Math.sin(pa) * pr).rotation.y = -pa;            // pier
+      add(new THREE.SphereGeometry(0.11, 10, 8), stone(), g, Math.cos(pa) * pr, 0.93, Math.sin(pa) * pr);              // ball finial
+    }
   }
   add(box(0.01, 0.01, 0.01), stone(), g); // keeps the group non-empty for merging tools
   const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.015, vy: 0.01 });
-  const water = M('fwater', () => new THREE.MeshStandardMaterial({ map: rip, color: 0x86a097, roughness: 0.04, metalness: 0.35, emissive: 0x3e4a3a, emissiveIntensity: 0.6 }));
+  const water = M('fwater', () => new THREE.MeshStandardMaterial({ map: rip, color: 0x5a7a78, roughness: 0.04, metalness: 0.4, emissive: 0x2e4440, emissiveIntensity: 0.6 }));
   (water as THREE.MeshStandardMaterial).map = rip;
-  add(new THREE.CylinderGeometry(R - 0.12, R - 0.12, 0.02, seg).rotateY(Math.PI / seg), water, g, 0, 0.55, 0, false);
+  add(new THREE.CylinderGeometry(R - 0.12, R - 0.12, 0.02, shape === 'round' ? 48 : seg).rotateY(Math.PI / seg), water, g, 0, 0.55, 0, false);
   const glow = M('fglow', () => new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2b0).multiplyScalar(1.6), transparent: true, opacity: 0.7 }));
   for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; add(new THREE.CircleGeometry(0.06, 10).rotateX(-Math.PI / 2), glow, g, Math.cos(a) * (R - 0.6), 0.57, Math.sin(a) * (R - 0.6), false); }
   // underwater lights: a warm additive glow over the basin (image 03)
@@ -258,6 +268,19 @@ export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced:
   for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; add(new THREE.CircleGeometry(1.5, 20).rotateX(-Math.PI / 2), uw, g, Math.cos(a) * (R - 0.8), 0.575, Math.sin(a) * (R - 0.8), false); }
   // pedestal and three scalloped bowls, pineapple finial
   add(lathe([[0, 0.5], [0.9, 0.5], [0.9, 0.66], [0.62, 0.78], [0.48, 1.15], [0.6, 1.25], [0.36, 1.38], [0.3, 1.7], [0.42, 1.8], [0, 1.8]], 24), stone(), g);
+  if (shape === 'round') {
+    // sculpture group on the pedestal: four seated figures (weathered bronze-stone) leaning against the column
+    const fig = M('fsculpt', () => new THREE.MeshStandardMaterial({ color: 0x8f8a74, roughness: 0.55, metalness: 0.35 }));
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2 + Math.PI / 4; const fx = Math.cos(a) * 0.62, fz = Math.sin(a) * 0.62;
+      const body = new THREE.Group(); body.position.set(fx, 0.78, fz); body.rotation.y = -a + Math.PI / 2; g.add(body);
+      add(new THREE.CapsuleGeometry(0.17, 0.42, 4, 8), fig, body, 0, 0.38, 0.04).rotation.x = -0.25;            // torso
+      add(new THREE.SphereGeometry(0.13, 10, 8), fig, body, 0, 0.78, 0.13);                                    // head
+      add(new THREE.CapsuleGeometry(0.08, 0.36, 4, 6), fig, body, 0.12, 0.12, 0.28).rotation.x = Math.PI / 2.3; // thighs
+      add(new THREE.CapsuleGeometry(0.08, 0.36, 4, 6), fig, body, -0.12, 0.12, 0.28).rotation.x = Math.PI / 2.3;
+      const arm = add(new THREE.CapsuleGeometry(0.06, 0.4, 4, 6), fig, body, 0.2, 0.62, 0.0); arm.rotation.z = 2.6;  // arm raised to the bowl
+    }
+  }
   const bowls: [number, number][] = [[1.75, 1.85], [1.15, 2.75], [0.62, 3.45]];
   bowls.forEach(([r, y], i) => {
     const pts: [number, number][] = [[0, y - 0.05], [0.3, y], [r * 0.7, y + 0.22], [r, y + 0.36], [r + 0.06, y + 0.44], [r - 0.06, y + 0.46], [r * 0.68, y + 0.36], [0, y + 0.3]];
@@ -272,7 +295,7 @@ export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced:
       const h = top + 0.42 - (top === bowls[0][1] ? 0.57 : 0) - (top === bowls[0][1] ? 0 : 0);
       const fallTo = top === bowls[0][1] ? 0.57 : bowls[bowls.findIndex((b) => b[1] === top) - 1][1] + 0.42;
       const hh = top + 0.44 - fallTo; void h;
-      const sheet = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.05, r + 0.12, hh, 32, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xfff1d8, opacity: 0.32 }));
+      const sheet = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.05, r + 0.12, hh, 32, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xf4fbff, opacity: 0.2 }));
       sheet.position.y = fallTo + hh / 2; g.add(sheet);
     }
   }

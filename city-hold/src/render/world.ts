@@ -9,7 +9,7 @@ import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
 import { pbr } from './pbr';
 import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
-import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
+import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, streakTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
   group: THREE.Group;
@@ -346,9 +346,13 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
     case 'bench': buildStreetBench(g); break;
     case 'bollard': mesh(cyl, mat(0x202226, 0.6, 0.3), g, 0, 0.45, 0, 0.12, 0.9, 0.12); break;
     case 'umbrella': {
-      mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 1.2, 0, 0.04, 2.4, 0.04);
-      mesh(new THREE.ConeGeometry(1.6, 0.6, 8), mat(0xe9dfc8, 0.9), g, 0, 2.5, 0);
-      for (let k = 0; k < 3; k++) { const a = k * 2.1; mesh(cyl, mat(0x3a2a1a, 0.7), g, Math.cos(a) * 0.9, 0.38, Math.sin(a) * 0.9, 0.35, 0.05, 0.35); }
+      // large cream café parasol (images 01/02): 8 ribs, scalloped valance, warm light underneath
+      mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 1.25, 0, 0.045, 2.5, 0.045);
+      mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 0.04, 0, 0.35, 0.08, 0.35);
+      const canopy = mesh(new THREE.ConeGeometry(2.0, 0.55, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0xeee3c8, roughness: 0.85, side: THREE.DoubleSide, emissive: 0x6a4a22, emissiveIntensity: 0.25 }), g, 0, 2.62, 0);
+      canopy.rotation.y = Math.PI / 8;
+      mesh(new THREE.CylinderGeometry(2.0, 2.0, 0.16, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0xe4d6b6, roughness: 0.9, side: THREE.DoubleSide }), g, 0, 2.28, 0).rotation.y = Math.PI / 8;
+      mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd9a0).multiplyScalar(2) }), g, 0, 2.2, 0, 1, 1, 1, false);
       break;
     }
     case 'kiosk': mesh(box, mat(0x2f4a3a, 0.6), g, 0, 1.3, 0, 2, 2.6, 2); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffd28a }), g, 0, 1.4, 1.01, 1.4, 0.8, 0.02, false); break;
@@ -457,7 +461,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const animated: Scroll[] = [];
   if (map.fountain) {
     const f = map.fountain;
-    const fh = buildOctagonFountain(f, group, reducedFx);
+    const fh = buildOctagonFountain(f, group, reducedFx, map.id === 'paris' ? 'round' : 'octagon');
     animated.push(...fh.animated); fountainWater = fh.spray;
     // ring of planters with benches between them, all inside the fountain's collision circle
     for (let k = 0; k < 8; k++) {
@@ -488,6 +492,11 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
     if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
+  // long reflections of lamps and shop windows on the wet setts, smeared towards the camera (which never turns)
+  const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.55 : 0.4 });
+  const addStreak = (x: number, z: number, w: number, len: number) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), streak); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.035, z + len / 2 - 0.3); m.renderOrder = 2; group.add(m); };
+  for (const lp of lampPos) addStreak(lp.x, lp.z, 0.9, 6.5);
+  for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 1.6, 7);
   for (const s of map.stores) {
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(s.width + 2, 5), pool); pm.rotation.x = -Math.PI / 2;
     pm.rotation.z = -Math.atan2(s.normal.x, s.normal.z);

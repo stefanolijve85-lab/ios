@@ -401,3 +401,19 @@ export function waterTexture(): THREE.Texture {
     return tex(c);
   });
 }
+
+/** wet-street light streak (images 01-03): a lamp's reflection smeared towards the viewer, broken up by the setts */
+export function streakTexture(): THREE.Texture {
+  return cached('streak', () => {
+    const [c, g] = canvas(64, 256);
+    for (let y = 0; y < 256; y++) {
+      const v = y / 255; const fall = Math.pow(1 - v, 1.6) * (0.55 + 0.45 * Math.sin(v * 40 + Math.sin(v * 7) * 3) ** 2);
+      for (let x = 0; x < 64; x++) {
+        const u = (x - 31.5) / 32; const w = Math.exp(-u * u * (6 + v * 4)) * (0.75 + rnd() * 0.25);
+        const a = Math.max(0, Math.min(1, fall * w));
+        g.fillStyle = `rgba(255,${190 + Math.round(30 * (1 - v))},${120 + Math.round(40 * (1 - v))},${a.toFixed(3)})`; g.fillRect(x, y, 1, 1);
+      }
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  });
+}
