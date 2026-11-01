@@ -77,7 +77,7 @@ export interface Humanoid {
   recoil: number;
   /** 0..1 progress of a one-shot action such as a throw */
   actionT?: number;
-  kind: UnitKind;
+  kind: AnyKind;
 }
 
 function rng(seed: number) { let s = seed % 2147483647 || 1; return () => { s = (s * 48271) % 2147483647; return s / 2147483647; }; }
@@ -118,16 +118,21 @@ export const SKIN_TONES = SKIN;
 export const CASUAL_TOPS = HOODIES;
 export const CASUAL_LEGS = JEANS;
 
-export function outfitFor(kind: UnitKind, variant: number): Outfit | null {
+export function outfitFor(kind: UnitKind | 'civilian' | 'shopkeeper' | 'helper', variant: number): Outfit | null {
+  if (kind === 'civilian' || kind === 'shopkeeper' || kind === 'helper') return null;
   if (kind === 'security' || kind === 'shield' || kind === 'firefighter') return null;
   if (variant % 5 === 4) return null; // one in five keeps the earlier casual clothing (images 13, 14, 26-28)
-  const list = STREETWEAR.filter((o) => o.kinds.includes(kind));
+  const list = STREETWEAR.filter((o) => o.kinds.includes(kind as UnitKind));
   return list[Math.floor(variant / 5) % list.length];
 }
 
 export interface BuildOpts { outfit?: Outfit | null; exportMode?: boolean }
 
-export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts = {}): Humanoid {
+/** neutral people (effects-pack figures: evacuating civilian, shopkeeper, helper in hi-vis vest) */
+export type NpcKind = 'civilian' | 'shopkeeper' | 'helper';
+export type AnyKind = UnitKind | NpcKind;
+
+export function buildHumanoid(kind: AnyKind, variant: number, opts: BuildOpts = {}): Humanoid {
   const r = rng(variant + 17);
   const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
   // in export mode the tintable materials are unique and named so the game can recolour them per unit
@@ -137,7 +142,11 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
   const female = r() < 0.45; // presentation only
   const isDef = kind === 'security' || kind === 'shield' || kind === 'firefighter';
   let top: number, legsC: number, shoes = 0x1c1c1e;
+  const isNpc = kind === 'civilian' || kind === 'shopkeeper' || kind === 'helper';
   if (kind === 'security') { top = 0x1d2433; legsC = 0x1e2534; }
+  else if (kind === 'shopkeeper') { top = pick([0x3e4a2c, 0x5a4a3a, 0x2f3a4a]); legsC = 0x4a3a2a; shoes = 0x3a2a1c; }
+  else if (kind === 'helper') { top = 0x23314a; legsC = 0x22304a; shoes = 0x3a2a1c; }
+  else if (kind === 'civilian') { top = pick([0xc9b48a, 0x7a2f2f, 0x2f4a6a, 0xd8d0c0, 0x4a5a3a]); legsC = pick([0x2d3a52, 0x3a3f46, 0x5a4a3a]); shoes = pick([0x5a3a22, 0xdedede, 0x2a2a2a]); }
   else if (kind === 'shield') { top = 0x232b3c; legsC = 0x1f2633; }
   else if (kind === 'firefighter') { top = 0x2a2a28; legsC = 0x2a2a28; }
   else { top = pick(HOODIES); legsC = pick(JEANS); shoes = pick([0xdedede, 0x2a2a2a, 0x8a8a8a, 0xc9c0b0]); }
@@ -171,6 +180,8 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
   if (kind === 'heavy') torsoMesh.scale.set(1.15, 1, 1.2);
   if (female) torsoMesh.scale.x *= 0.92;
   if (kind === 'security') m(geo.vest, mat(0x111316, 0.7), torso);
+  if (kind === 'shopkeeper') { const ap = m(geo.vest, mat(0x2e2a26, 0.85), torso); ap.scale.set(0.96, 1.5, 1.06); ap.position.y = -0.2; } // work apron
+  if (kind === 'helper') { m(geo.vest, mat(0xff7a1a, 0.5), torso).scale.set(1.04, 1, 1.08); for (const y of [0.22, 0.4]) m(geo.stripe, mat(0xe8f04a, 0.3), torso, 0, y, 0).scale.set(1.12, 1, 1.16); } // hi-vis vest
   if (kind === 'shield') { m(geo.vest, mat(0x2a3346, 0.6), torso); }
   if (kind === 'firefighter') { for (const y of [0.16, 0.4]) m(geo.stripe, mat(0xd8e04a, 0.35), torso, 0, y, 0); }
   if (outfit) {
@@ -263,12 +274,13 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
   shadow.position.y = 0.02; shadow.renderOrder = 2; root.add(shadow);
 
   const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTexture(kind, isDef ? '#36e0ff' : '#ff9a2e'), depthTest: false, transparent: true }));
+  icon.visible = !isNpc; // neutral people get no faction icon
   icon.scale.set(0.42, 0.42, 1); icon.position.y = 2.15; icon.renderOrder = 10; root.add(icon);
 
   return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon, phase: r() * 6, recoil: 0, kind };
 }
 
-export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw';
+export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw' | 'guide' | 'flee';
 
 /** fraction of the throw clip at which the object leaves the hand (BALANCE.throw.releaseAt / duration) */
 export const THROW_RELEASE = 0.45 / 1.15;
@@ -349,6 +361,8 @@ export function animate(h: Humanoid, pose: Pose, moving: boolean, speed: number,
     case 'restrain': { aL = -1.2; aR = -0.9; eL = -0.5; eR = -0.6; lean = 0.12; break; }
     case 'escort': { aL = -0.9; eL = -0.5; azL = -0.4; break; }
     case 'brace': { lean = 0.2; aL = -1.25; eL = -0.9; aR = -0.8; eR = -1.0; set(h.legs[0], 0.4); set(h.legs[1], -0.35); set(h.knees[0], 0.35); set(h.knees[1], 0.3); break; }
+    case 'guide': { aR = -1.5; azR = 0.9; eR = -0.1; aL = -0.3; break; } // arm out, pointing the way (helper reference)
+    case 'flee': { lean = 0.28; aL = -s * 1.1 - 0.4; aR = s * 1.1 - 0.4; if (carrying) { aL = aR = -0.75; } break; } // running away, glancing back
     case 'extinguish': { aL = -1.0; aR = -1.1; eL = -0.4; eR = -0.3; lean = 0.1; break; }
   }
   if (h.kind === 'shield' && pose !== 'brace') { aL = moving ? -1.05 : -1.2; eL = -0.9; }

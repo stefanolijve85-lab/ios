@@ -83,6 +83,9 @@ export interface Unit {
 export interface Barrier { id: number; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number }
+export type NpcRole = 'civilian' | 'shopkeeper' | 'helper';
+/** neutral person: never targeted, never counted, only reacts to danger */
+export interface Npc { id: number; role: NpcRole; x: number; z: number; facing: number; state: 'stroll' | 'idle' | 'flee' | 'guide' | 'gone'; path: Vec2[] | null; pi: number; goal: Vec2 | null; moving: boolean; speed: number; store: number; variant: number; carrying: boolean; exit: string; t: number }
 export interface ThrowTarget { kind: 'store' | 'prop' | 'ground'; idx: number; x: number; z: number }
 /** fictional thrown incendiary in flight (game object; physics is a simple configurable arc) */
 export interface Projectile { id: number; owner: number; x: number; y: number; z: number; sx: number; sy: number; sz: number; tx: number; tz: number; t: number; T: number; apex: number; target: ThrowTarget; spin: number }
@@ -115,6 +118,11 @@ export class Game {
   cameras: CameraMast[] = [];
   fires: Fire[] = [];
   projectiles: Projectile[] = [];
+  npcs: Npc[] = [];
+  /** separate random stream: neutral people must never change the course of the game */
+  private npcRng!: Rng;
+  maxCivilians: number = BALANCE.npc.civilians.desktop;
+  private npcSpawnT = 0;
   /** projectile budget (lower on phones) */
   maxProjectiles: number = BALANCE.throw.maxActive.desktop;
   drops: Drop[] = [];
@@ -155,6 +163,7 @@ export class Game {
     this.rng = new Rng(opts.seed ?? 12345);
     this.perks = new Set(opts.perks ?? []);
     if (opts.mobile) this.maxProjectiles = BALANCE.throw.maxActive.mobile;
+    this.maxCivilians = opts.mobile ? BALANCE.npc.civilians.mobile : BALANCE.npc.civilians.desktop;
     const bonus = this.perks.has('budget') ? 100 : 0;
     this.stores = map.stores.map((s, idx) => ({
       idx, name: s.name, structure: BALANCE.defence.storeStructure, maxStructure: BALANCE.defence.storeStructure,
@@ -173,6 +182,8 @@ export class Game {
       this.budget = BALANCE.looters.startBudget + bonus;
       this.setupAiDefence();
     }
+    this.npcRng = new Rng(((opts.seed ?? 12345) * 7919) ^ 0x5bd1e995);
+    this.initNpcs();
     if (map.supply) {
       const p = map.supply.route[0];
       this.truck = { x: p.x, z: p.z, facing: 0, seg: 0, done: false, rewarded: false, waitT: 0, active: false, blocked: false };
@@ -588,6 +599,7 @@ export class Game {
     this.stepShields(dt);
     this.separate();
     this.stepProjectiles(dt);
+    this.stepNpcs(dt);
     this.stepFires(dt);
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;
@@ -1036,6 +1048,87 @@ export class Game {
         this.burnedProps.add(i); this.startFire(p.x, p.z, -1, i);
       }
     });
+  }
+
+  // ------------------------------------------------------------------ neutral people
+  private newNpc(role: NpcRole, x: number, z: number, store = -1): Npc {
+    const q = this.nav.nearestWalkable(x, z, 4) ?? { x, z };
+    const n: Npc = { id: this.nextId++, role, x: q.x, z: q.z, facing: 0, state: role === 'civilian' ? 'stroll' : 'idle', path: null, pi: 0, goal: null, moving: false, speed: 0, store, variant: Math.floor(this.npcRng.next() * 1e6), carrying: false, exit: '', t: 0 };
+    this.npcs.push(n); return n;
+  }
+  private initNpcs() {
+    this.map.stores.forEach((sd, i) => { const n = this.newNpc('shopkeeper', sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, i); n.facing = Math.atan2(sd.normal.x, sd.normal.z); });
+    const v = this.map.van; this.newNpc('helper', v.x - 2.2, v.z + 1.5);
+  }
+  /** nearest danger (attacker or fire) to a point */
+  private danger(x: number, z: number): { x: number; z: number; d: number } | null {
+    let best: { x: number; z: number; d: number } | null = null;
+    for (const a of this.attackers()) { const d = Math.hypot(a.x - x, a.z - z); if (d < BALANCE.npc.fleeRadius && (!best || d < best.d)) best = { x: a.x, z: a.z, d }; }
+    for (const f of this.fires) { if (f.out) continue; const d = Math.hypot(f.x - x, f.z - z); if (d < BALANCE.npc.fireRadius && (!best || d < best.d)) best = { x: f.x, z: f.z, d }; }
+    return best;
+  }
+  /** exit that leads away from the danger */
+  private safeExit(n: Npc, from: { x: number; z: number }) {
+    const ex = this.map.entries.filter((e) => e.extract);
+    ex.sort((a, b) => (Math.hypot(a.x - n.x, a.z - n.z) - Math.hypot(a.x - from.x, a.z - from.z) * 1.5) - (Math.hypot(b.x - n.x, b.z - n.z) - Math.hypot(b.x - from.x, b.z - from.z) * 1.5));
+    return ex[0];
+  }
+  private npcGo(n: Npc, x: number, z: number) { n.goal = { x, z }; n.path = this.nav.findPath(n, n.goal, 'def'); n.pi = 1; }
+  private stepNpcs(dt: number) {
+    const N = BALANCE.npc;
+    // ambient passers-by
+    this.npcSpawnT -= dt;
+    const civs = this.npcs.filter((n) => n.role === 'civilian' && n.state !== 'gone');
+    if (this.npcSpawnT <= 0 && civs.length < this.maxCivilians) {
+      this.npcSpawnT = N.spawnEvery;
+      const sp = this.map.entries.filter((e) => e.spawn); const a = sp[this.npcRng.int(sp.length)];
+      if (!this.danger(a.x, a.z)) { const n = this.newNpc('civilian', a.x, a.z); const b = sp.filter((e) => e !== a)[this.npcRng.int(Math.max(1, sp.length - 1))] ?? a; n.exit = b.id; this.npcGo(n, b.x, b.z); }
+    }
+    const fleeing: Npc[] = [];
+    for (const n of this.npcs) {
+      n.t += dt;
+      const dz = this.danger(n.x, n.z);
+      if (n.role !== 'helper' && dz && n.state !== 'flee') {
+        const e = this.safeExit(n, dz); n.exit = e.id; n.state = 'flee'; this.npcGo(n, e.x, e.z);
+        if (n.role === 'shopkeeper') n.carrying = true; // takes the till box along
+      }
+      if (n.state === 'flee') fleeing.push(n);
+      if (n.role === 'shopkeeper' && n.state === 'gone' && this.phase === 'prep' && n.store >= 0 && !this.isBurning(n.store)) {
+        // back at the shop once the street is calm
+        const sd = this.map.stores[n.store]; const q = this.nav.nearestWalkable(sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, 4);
+        if (q) { n.x = q.x; n.z = q.z; n.state = 'idle'; n.carrying = false; n.facing = Math.atan2(sd.normal.x, sd.normal.z); }
+      }
+      if (n.state === 'gone' || n.state === 'idle') { n.moving = false; continue; }
+      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : N.walkSpeed;
+      n.moving = false; n.speed = 0;
+      if (n.path && n.pi < n.path.length) {
+        let budget = sp * dt;
+        while (budget > 0 && n.pi < n.path.length) {
+          const p = n.path[n.pi]; const dx = p.x - n.x, dzz = p.z - n.z; const d = Math.hypot(dx, dzz);
+          if (d < 0.05) { n.pi++; continue; }
+          const st = Math.min(d, budget); const nx = n.x + (dx / d) * st, nz = n.z + (dzz / d) * st;
+          if (!this.nav.walkable(nx, nz)) { n.path = null; break; }
+          n.x = nx; n.z = nz; n.facing = Math.atan2(dx, dzz); budget -= st; n.moving = true; n.speed = sp; if (st >= d - 1e-6) n.pi++;
+        }
+      } else if (n.role === 'helper') { n.state = n.state === 'guide' ? 'guide' : 'idle'; }
+      else if (n.state === 'flee' || n.state === 'stroll') {
+        const e = this.map.entries.find((en) => en.id === n.exit);
+        if (!e || Math.hypot(e.x - n.x, e.z - n.z) < 2.5) n.state = 'gone'; else this.npcGo(n, e.x, e.z);
+      }
+    }
+    // the helper (hi-vis vest) walks towards fleeing people and points them to the exit; returns to the van after
+    const helper = this.npcs.find((n) => n.role === 'helper');
+    if (helper) {
+      const target = fleeing.sort((a, b) => Math.hypot(a.x - helper.x, a.z - helper.z) - Math.hypot(b.x - helper.x, b.z - helper.z))[0];
+      if (target) {
+        const d = Math.hypot(target.x - helper.x, target.z - helper.z);
+        if (d > 3 && (!helper.goal || Math.hypot(helper.goal.x - target.x, helper.goal.z - target.z) > 2 || !helper.path)) { helper.state = 'stroll'; this.npcGo(helper, target.x, target.z); }
+        else if (d <= 3) { helper.state = 'guide'; helper.path = null; const e = this.map.entries.find((en) => en.id === target.exit); if (e) helper.facing = Math.atan2(e.x - helper.x, e.z - helper.z); }
+      } else if (helper.state === 'guide' || (helper.state === 'idle' && Math.hypot(helper.x - (this.map.van.x - 2.2), helper.z - (this.map.van.z + 1.5)) > 2)) {
+        helper.state = 'stroll'; this.npcGo(helper, this.map.van.x - 2.2, this.map.van.z + 1.5);
+      }
+    }
+    this.npcs = this.npcs.filter((n) => n.state !== 'gone' || n.role === 'shopkeeper');
   }
 
   // ------------------------------------------------------------------ throwing

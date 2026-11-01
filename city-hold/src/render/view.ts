@@ -43,6 +43,7 @@ export class MatchView {
   private masts = new Map<number, THREE.Object3D>();
   private dropMarkers = new Map<number, THREE.Group>();
   private tmpV = new THREE.Vector3();
+  private npcVis = new Map<number, CharacterVisual>();
   private projPool!: IncendiaryPool;
   private truck: THREE.Group | null = null;
   private rings = new Map<number, THREE.Mesh>();
@@ -391,6 +392,20 @@ export class MatchView {
       if (u.state === 'collect' && u.pending > 0) this.bar('c' + u.id, u.x, 2.4, u.z, u.stateT / (u.pending * BALANCE.collectTimePerStock + 0.6), '#ff9a2e');
       if (u.carrying > 0 && !isDef) this.bar('k' + u.id, u.x, 2.5, u.z, 1, '#ff9a2e', String(u.carrying));
     }
+    // neutral people (no selection, no faction icon)
+    const nseen = new Set<number>();
+    for (const n of g.npcs) {
+      if (n.state === 'gone') continue;
+      nseen.add(n.id);
+      let c = this.npcVis.get(n.id);
+      if (!c) { c = createCharacter(n.role, n.variant); this.npcVis.set(n.id, c); this.scene.add(c.root); c.root.position.set(n.x, 0, n.z); }
+      const k = 1 - Math.exp(-dt * 20);
+      c.root.position.x += (n.x - c.root.position.x) * k; c.root.position.z += (n.z - c.root.position.z) * k;
+      let df = n.facing - c.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
+      c.root.rotation.y += df * Math.min(1, dt * 10);
+      c.update(n.state === 'flee' ? 'flee' : n.state === 'guide' ? 'guide' : n.moving ? 'walk' : 'idle', n.moving, n.speed, n.carrying, dt);
+    }
+    for (const [id, c] of this.npcVis) if (!nseen.has(id)) { this.scene.remove(c.root); this.npcVis.delete(id); }
     for (const [id, h] of this.humans) if (!seen.has(id)) {
       this.scene.remove(h.root); this.humans.delete(id);
       const ring = this.rings.get(id); if (ring) { this.scene.remove(ring); this.rings.delete(id); }

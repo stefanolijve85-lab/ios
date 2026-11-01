@@ -193,6 +193,21 @@
       "file": "placeholder/char_looter_thrower_3.glb",
       "status": "placeholder",
       "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.civilian": {
+      "file": "placeholder/char_civilian.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.shopkeeper": {
+      "file": "placeholder/char_shopkeeper.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.helper": {
+      "file": "placeholder/char_helper.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
     }
   }
 }

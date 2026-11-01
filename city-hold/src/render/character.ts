@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import type { UnitKind } from '../config/balance';
-import { THROW_RELEASE, animate, buildHumanoid, contactShadow, outfitFor, CASUAL_LEGS, CASUAL_TOPS, SKIN_TONES, type Humanoid, type Pose } from './humans';
+import { THROW_RELEASE, animate, buildHumanoid, type AnyKind, contactShadow, outfitFor, CASUAL_LEGS, CASUAL_TOPS, SKIN_TONES, type Humanoid, type Pose } from './humans';
 import { iconTexture } from './textures';
 import { getModel } from './assets';
 import { buildIncendiary } from './thrown';
@@ -20,7 +20,7 @@ export interface CharacterVisual {
 const JOINTS = ['torso', 'head', 'legL', 'legR', 'kneeL', 'kneeR', 'armL', 'armR', 'elbowL', 'elbowR'];
 
 /** Animation clips every character GLB should provide (names are the contract with final assets). */
-export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish', 'throw'] as const;
+export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish', 'throw', 'guide', 'flee'] as const;
 export type ClipName = (typeof CLIP_NAMES)[number];
 
 const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; carrying: boolean; period: number }> = {
@@ -39,6 +39,8 @@ const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; 
   brace: { pose: 'brace', moving: false, speed: 0, carrying: false, period: 1 },
   extinguish: { pose: 'extinguish', moving: false, speed: 0, carrying: false, period: 1 },
   throw: { pose: 'throw', moving: false, speed: 0, carrying: false, period: 1.15 },
+  guide: { pose: 'guide', moving: false, speed: 0, carrying: false, period: Math.PI * 2 },
+  flee: { pose: 'flee', moving: true, speed: 3.4, carrying: false, period: (Math.PI * 2) / (9.5 * 1.13) },
 };
 
 /** Bake the procedural poses (rebuilt from action sheets 37-42) into looping keyframe clips on the named joints. */
@@ -76,17 +78,18 @@ export function bakeClips(h: Humanoid): THREE.AnimationClip[] {
 }
 
 /** Slot name for a unit: streetwear outfits have their own slots, other looters use the class slot. */
-export function characterSlot(kind: UnitKind, variant: number): string {
+export function characterSlot(kind: AnyKind, variant: number): string {
   const o = outfitFor(kind, variant);
   return o ? `char.looter.${o.ref}` : `char.${kind}`;
 }
 
 function rng(seed: number) { let s = seed % 2147483647 || 1; return () => { s = (s * 48271) % 2147483647; return s / 2147483647; }; }
 
-function makeIcon(kind: UnitKind): THREE.Sprite {
+function makeIcon(kind: AnyKind): THREE.Sprite {
   const isDef = kind === 'security' || kind === 'shield' || kind === 'firefighter';
   const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTexture(kind, isDef ? '#36e0ff' : '#ff9a2e'), depthTest: false, transparent: true }));
   icon.scale.set(0.42, 0.42, 1); icon.position.y = 2.15; icon.renderOrder = 10;
+  icon.visible = !(kind === 'civilian' || kind === 'shopkeeper' || kind === 'helper');
   return icon;
 }
 
@@ -100,7 +103,7 @@ class GltfCharacter implements CharacterVisual {
   private carry: THREE.Object3D | null;
   private held: HeldObject;
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
-  constructor(kind: UnitKind, variant: number, scene: THREE.Object3D, clips: THREE.AnimationClip[]) {
+  constructor(kind: AnyKind, variant: number, scene: THREE.Object3D, clips: THREE.AnimationClip[]) {
     const model = skeletonClone(scene);
     const r = rng(variant + 91);
     // per-unit recolouring of named materials: skin tone always varies; casual clothing varies
@@ -145,7 +148,8 @@ class GltfCharacter implements CharacterVisual {
       if (a) { this.play('throw', 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
     }
     let clip: string = pose;
-    if (pose === 'walk' || pose === 'idle') clip = moving ? (speed > 3.3 ? 'run' : carrying ? 'carry_walk' : 'walk') : carrying ? 'carry_idle' : 'idle';
+    if (pose === 'flee') clip = carrying ? 'carry_walk' : 'flee';
+    else if (pose === 'walk' || pose === 'idle') clip = moving ? (speed > 3.3 ? 'run' : carrying ? 'carry_walk' : 'walk') : carrying ? 'carry_idle' : 'idle';
     const ts = clip === 'walk' ? speed / 3 : clip === 'run' ? speed / 4.2 : clip === 'carry_walk' ? speed / 2.4 : 1;
     this.play(clip, Math.max(0.4, ts));
     this.mixer.update(dt);
@@ -180,7 +184,7 @@ class ProcCharacter implements CharacterVisual {
 }
 
 /** Use the GLB in the unit's slot when it is loaded, otherwise fall back to the procedural figure. */
-export function createCharacter(kind: UnitKind, variant: number): CharacterVisual {
+export function createCharacter(kind: AnyKind, variant: number): CharacterVisual {
   const m = getModel(characterSlot(kind, variant)) ?? getModel(`char.${kind}`);
   if (m) return new GltfCharacter(kind, variant, m.scene, m.animations);
   return new ProcCharacter(buildHumanoid(kind, variant));
