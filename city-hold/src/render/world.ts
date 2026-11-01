@@ -427,7 +427,21 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const fadeables: Fadeable[] = [];
   map.buildings.forEach((bd, i) => { if (!(reducedFx && bd.backdrop)) buildBuilding(bd, group, i, fadeables, map, reducedFx); });
   const stores: ShopLike[] = map.stores.map((s, i) => {
-    if (map.id === 'paris') { const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: !reducedFx }); group.add(sm.group); return sm; }
+    if (map.id === 'paris') {
+      const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: !reducedFx }); group.add(sm.group);
+      const fslot = `shop.${s.kind === 'jewellery' ? 'jewelry' : s.kind}.facade`;
+      if (slotStatus(fslot) === 'final') { const fm = cloneModel(fslot); if (fm) sm.setFacade(fm); }
+      else {
+        // the shopfront painted in concept 03, cleaned of UI badges and figures, as a flat skin over the untouched shop
+        const kind = s.kind === 'jewellery' ? 'jewelry' : s.kind;
+        new THREE.TextureLoader().loadAsync(`textures/shopfronts/${kind}.jpg`).then((t) => {
+          t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+          const plane = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.02), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.8, roughness: 0.5 }));
+          sm.setFacade(plane);
+        }).catch(() => { /* no picture: the 3D module stays */ });
+      }
+      return sm;
+    }
     const v = buildStore(s, i, group, !reducedFx);
     return { hit: v.hit, update: (a: number, b: number, c: number, d: boolean) => updateStoreVisual(v, a, b, c, d) };
   });

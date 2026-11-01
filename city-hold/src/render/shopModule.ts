@@ -445,7 +445,35 @@ export class ShopModule {
   }
 
   /** Map game state onto the named groups. damage/breach and stock are independent inputs. */
+  // ---- concept facade "skin" (image-to-3D of the shopfront in concept 03): shown only while the shop is untouched
+  private facade: THREE.Object3D | null = null;
+  private scorchedOn = false;
+  /** Fit a facade model over the front (width incl. pilasters, ground to cornice) and light its baked texture a little. */
+  setFacade(model: THREE.Object3D) {
+    const bb = new THREE.Box3().setFromObject(model); const size = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+    const fw = W + 1.1, fh = 4.45, fd = 0.55;
+    const holder = new THREE.Group(); holder.name = 'concept_facade';
+    model.position.set(-c.x, -bb.min.y, -bb.max.z); // front face at z = 0 of the holder
+    const flat = size.z < size.x * 0.05; // a picture plane keeps its thickness, a model is fitted to the depth
+    const k = new THREE.Group(); k.add(model); k.scale.set(fw / size.x, fh / size.y, flat ? 1 : fd / Math.max(size.z, 1e-3)); holder.add(k);
+    holder.position.z = 0.62; // just in front of the cornice line
+    model.traverse((o) => {
+      const m = o as THREE.Mesh; if (!m.isMesh) return;
+      if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals();
+      const src = m.material as THREE.MeshStandardMaterial; const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.6; mm.metalness = 0;
+      if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.75; }
+      m.material = mm; m.receiveShadow = true;
+    });
+    this.group.add(holder); this.facade = holder;
+  }
+
   update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio = 0) {
+    if (this.facade) {
+      // untouched shop: the concept facade; any damage, boards, soot, theft or a lowered shutter: the full 3D module with its states
+      const intact = structureRatio >= 0.999 && stockRatio >= 0.999 && boardRatio <= 0 && !breached && level <= 1 && !this.scorchedOn;
+      this.facade.visible = intact; this.groups.shell.visible = !intact;
+      if (intact) { for (const name of SHOP_GROUPS) if (name !== 'shell') this.groups[name].visible = false; this.justBroke = false; return; }
+    }
     const v = getShopVisualState({ damage: 1 - structureRatio, stockRatio, boardHealth: boardRatio, breach: breached });
     this.referenceState = v.referenceState;
     for (const name of SHOP_GROUPS) this.groups[name].visible = v.groups[name] && (this.lod < 2 || !['stock', 'fixtures'].includes(name));
@@ -469,6 +497,7 @@ export class ShopModule {
   private soot: THREE.Mesh | null = null;
   /** lasting fire damage: soot over the fascia and window heads (stays after extinguishing) */
   setScorched(on: boolean) {
+    this.scorchedOn = on;
     if (on && !this.soot) {
       const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d')!;
       for (let i = 0; i < 9; i++) { const x = 20 + Math.random() * 216, gr = g.createRadialGradient(x, 128, 0, x, 70, 90); gr.addColorStop(0, 'rgba(15,12,10,0.85)'); gr.addColorStop(1, 'rgba(15,12,10,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128); }

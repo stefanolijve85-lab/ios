@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris shopfronts from concept 03
+
+- The three shopfronts in concept 03 were cropped, and the shield badges and the two officers in front of the electronics window were retouched out (OpenCV inpainting). Results: `assets/model_refs/shop_*_clean.png`, `public/textures/shopfronts/*.jpg`, about 90 KB each.
+- Tried first: Higgsfield SAM-3D models of the cropped shopfronts (3 credits). Their texture is smeared, so window displays turn into orange blobs, and they read worse than the procedural shop. They were not kept (`docs/screenshots/shopfront_ai_model_rejected.jpg`, left procedural, right AI model).
+- Used instead: the cleaned crop as a flat "concept facade" skin over each untouched shop (`ShopModule.setFacade`). As soon as a shop is damaged, boarded, scorched, loses stock or gets a lowered shutter, the skin hides and the full 3D module with its damage, loot and repair states takes over. A final `shop.<kind>.facade` GLB would be used instead of the picture.
+- Known: the electronics window shows a soft smudge where the officers were removed. The fashion front is stretched sideways (narrower in the concept than the game's shop). The switch from painted facade to 3D module is a visible change of style.
+- Comparison: `docs/screenshots/shopfronts_concept_intact_damaged.jpg` (concept, intact, after damage).
+
 ## Paris: the user's Higgsfield characters in the game
 
 - Seven auto-rigged figures from the user's Higgsfield account are installed as final models:
