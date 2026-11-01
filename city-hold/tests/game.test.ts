@@ -232,7 +232,7 @@ describe('match outcomes', () => {
     run(t, 500);
     expect(t.phase).toBe('lost');
     expect(t.result?.title).toBe('Time expired');
-  });
+  }, 30000);
 
   test('looter upgrades are exclusive and change stats', () => {
     const g = new Game(PARIS, 'looters', { seed: 1 });

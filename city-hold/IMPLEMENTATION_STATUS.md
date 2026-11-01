@@ -14,6 +14,15 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris toward concept images 02/03 (pass 1)
+
+- Camera: lower, oblique view (pitch 54° → 46°, default distance 52 → 44) so the shopfronts read as in 02/03; default target keeps the staging team clear of the HUD.
+- Shops: concept colours (jewellery red, electronics navy, fashion green) and warm, glowing interiors; store labels are now compact shield badges with two thin bars (details on hover/selection).
+- Square: extra double-globe lamps between the shops and on the foreground pavement, bigger warm light pools and more real lights (desktop), warmer sky/ground light, crowd-control fences at the side facades, two more trees, lower foreground roofs.
+- Fountain: weathered limestone, darker water lit by warm underwater lights, lighter falling-water sheets.
+- Cobbles: the dark diamond grid between the fan patterns is filled with loose setts.
+- Still different from the concept: far fewer pedestrians, plainer window displays, the fountain has no sculpture group, the square is larger and emptier, no café furniture or police line. The final GLB models (shops, fountain, people) remain the biggest step. Comparison: `docs/screenshots/paris_concept_before_after.jpg`.
+
 ## RIOTS menu (RIOTS_UI_Package, references 01–04)
 
 - Game is now called **RIOTS** (page title, HUD, menu). The save key `cityhold.progress.v1` is unchanged, so existing progress stays.

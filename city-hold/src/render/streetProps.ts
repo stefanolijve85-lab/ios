@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Circle } from '../maps/types';
-import { fallingWaterTexture, rippleTexture } from './textures';
+import { fallingWaterTexture, radialTexture, rippleTexture } from './textures';
 import type { Scroll } from './street';
 
 // Street objects from the street-props pack (assets/street_props): real procedural geometry following the
@@ -13,7 +13,7 @@ const castIron = () => M('castIron', () => new THREE.MeshStandardMaterial({ colo
 const galv = () => M('galv', () => new THREE.MeshStandardMaterial({ color: 0xa9b0b6, roughness: 0.38, metalness: 0.85 }));
 const darkSteel = () => M('dsteel', () => new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.4, metalness: 0.7 }));
 const timber = () => M('timber', () => new THREE.MeshStandardMaterial({ color: 0x7a4c2a, roughness: 0.62 }));
-const stone = () => M('fstone2', () => new THREE.MeshStandardMaterial({ color: 0xd9ccb0, roughness: 0.82 }));
+const stone = () => M('fstone2', () => new THREE.MeshStandardMaterial({ color: 0xbfae8e, roughness: 0.82 })); // weathered limestone (images 02/03)
 const clearGlass = () => M('clearGlass', () => new THREE.MeshStandardMaterial({ color: 0xcfe2ee, roughness: 0.06, transparent: true, opacity: 0.22, depthWrite: false, envMapIntensity: 1.2, side: THREE.DoubleSide }));
 const lampGlow = () => M('lampGlow', () => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd28c).multiplyScalar(4.5) }); m.name = 'glow'; return m; });
 const leafMats = [0x5f7d34, 0x6f8c3a, 0x4f6e2c, 0x7f9842].map((c) => M('leaf' + c, () => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, flatShading: true })));
@@ -248,11 +248,14 @@ export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced:
   }
   add(box(0.01, 0.01, 0.01), stone(), g); // keeps the group non-empty for merging tools
   const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.015, vy: 0.01 });
-  const water = M('fwater', () => new THREE.MeshStandardMaterial({ map: rip, color: 0x6ab0b8, roughness: 0.05, metalness: 0.4, emissive: 0x0c3a40, emissiveIntensity: 0.9 }));
+  const water = M('fwater', () => new THREE.MeshStandardMaterial({ map: rip, color: 0x86a097, roughness: 0.04, metalness: 0.35, emissive: 0x3e4a3a, emissiveIntensity: 0.6 }));
   (water as THREE.MeshStandardMaterial).map = rip;
   add(new THREE.CylinderGeometry(R - 0.12, R - 0.12, 0.02, seg).rotateY(Math.PI / seg), water, g, 0, 0.55, 0, false);
   const glow = M('fglow', () => new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2b0).multiplyScalar(1.6), transparent: true, opacity: 0.7 }));
   for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; add(new THREE.CircleGeometry(0.06, 10).rotateX(-Math.PI / 2), glow, g, Math.cos(a) * (R - 0.6), 0.57, Math.sin(a) * (R - 0.6), false); }
+  // underwater lights: a warm additive glow over the basin (image 03)
+  const uw = M('fUnderGlow', () => new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,214,140,0.22)', 'rgba(255,200,120,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; add(new THREE.CircleGeometry(1.5, 20).rotateX(-Math.PI / 2), uw, g, Math.cos(a) * (R - 0.8), 0.575, Math.sin(a) * (R - 0.8), false); }
   // pedestal and three scalloped bowls, pineapple finial
   add(lathe([[0, 0.5], [0.9, 0.5], [0.9, 0.66], [0.62, 0.78], [0.48, 1.15], [0.6, 1.25], [0.36, 1.38], [0.3, 1.7], [0.42, 1.8], [0, 1.8]], 24), stone(), g);
   const bowls: [number, number][] = [[1.75, 1.85], [1.15, 2.75], [0.62, 3.45]];
@@ -269,7 +272,7 @@ export function buildOctagonFountain(f: Circle, parent: THREE.Object3D, reduced:
       const h = top + 0.42 - (top === bowls[0][1] ? 0.57 : 0) - (top === bowls[0][1] ? 0 : 0);
       const fallTo = top === bowls[0][1] ? 0.57 : bowls[bowls.findIndex((b) => b[1] === top) - 1][1] + 0.42;
       const hh = top + 0.44 - fallTo; void h;
-      const sheet = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.05, r + 0.12, hh, 32, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xdff2ff, opacity: 0.7 }));
+      const sheet = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.05, r + 0.12, hh, 32, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xfff1d8, opacity: 0.32 }));
       sheet.position.y = fallTo + hh / 2; g.add(sheet);
     }
   }
@@ -297,3 +300,4 @@ export function buildExtinguisher(): THREE.Group {
   add(cyl(0.012, 0.016, 0.06, 8), darkSteel(), g, 0.1, 0.1, -0.02);
   return g;
 }
+

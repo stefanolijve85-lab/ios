@@ -57,6 +57,12 @@ export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | '
     if (kind === 'cobble') {
       // Parisian fan pattern (pavés en éventail): concentric arcs of small granite setts, rows overlapping
       g.fillStyle = '#34312f'; g.fillRect(0, 0, 512, 512);
+      // under-layer of loose setts so the gaps where fans meet read as stone, not as a grid of dark diamonds
+      const rr = g as CanvasRenderingContext2D & { roundRect: (x: number, y: number, w: number, h: number, r: number) => void };
+      for (let y = 0; y < 512; y += 12.5) for (let x = 0; x < 512; x += 12.5) {
+        const v = rnd() * 30 - 15; g.save(); g.translate(x + rnd() * 3, y + rnd() * 3); g.rotate(rnd() * 0.5 - 0.25);
+        g.fillStyle = `rgb(${base[0] + v - 6},${base[1] + v - 8},${base[2] + v - 6})`; g.beginPath(); rr.roundRect(-5, -5, 10, 10, 3); g.fill(); g.restore();
+      }
       const R = 128;
       for (let row = -2; row <= 9; row++) {
         const cy = row * (R * 0.5);

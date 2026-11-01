@@ -12,6 +12,11 @@ const props: PropDef[] = [
   { type: 'lamp', x: 16, z: 5, collide: true, r: 0.25 },
   { type: 'lamp', x: -5.6, z: 13, collide: true, r: 0.25 },
   { type: 'lamp', x: 5.6, z: 13, collide: true, r: 0.25 },
+  // double-globe lamps between the shops and along the foreground pavement (images 02/03)
+  { type: 'lamp', x: -5, z: -11.4, collide: true, r: 0.25 },
+  { type: 'lamp', x: 5, z: -11.4, collide: true, r: 0.25 },
+  { type: 'lamp', x: -10.5, z: 8.6, collide: true, r: 0.25 },
+  { type: 'lamp', x: 10.5, z: 8.6, collide: true, r: 0.25 },
   // planters with small trees
   { type: 'planter', x: -5, z: -13.1, collide: true, r: 0.7 },
   { type: 'planter', x: 5, z: -13.1, collide: true, r: 0.7 },
@@ -22,11 +27,16 @@ const props: PropDef[] = [
   { type: 'planter', x: -15.5, z: -13, collide: true, r: 0.8 },
   { type: 'planter', x: 15.5, z: -13, collide: true, r: 0.8 },
   { type: 'tree', x: -11, z: 11, collide: true, r: 0.9 },
+  { type: 'tree', x: -13, z: 12.8, collide: true, r: 0.9 },
+  { type: 'tree', x: 13, z: 12.8, collide: true, r: 0.9 },
   { type: 'tree', x: 11, z: 11, collide: true, r: 0.9 },
   { type: 'tree', x: -23.2, z: 1.2, collide: true, r: 0.8 },
   { type: 'tree', x: 23.2, z: 1.2, collide: true, r: 0.8 },
   // bollards along the foreground pavement (gaps are walkable)
   ...[-9, -7, 7, 9].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
+  // crowd-control fences against the side facades, as in images 02/03 (decor, off the walking lines)
+  { type: 'fence', x: -24.1, z: -9.6, rot: 90, collide: true, r: 0.5 },
+  { type: 'fence', x: 24.1, z: -9.6, rot: 90, collide: true, r: 0.5 },
   // café terraces
   { type: 'umbrella', x: -19, z: 11.5, collide: true, r: 1.5 },
   { type: 'umbrella', x: 19.5, z: 11.5, collide: true, r: 1.5 },
@@ -53,8 +63,8 @@ export const PARIS: MapDef = {
     { rect: { x0: -17, z0: -40, x1: 17, z1: -14 }, height: 19, style: 'haussmann' },
     { rect: { x0: -44, z0: -40, x1: -25, z1: 3 }, height: 17, style: 'haussmann' },
     { rect: { x0: 25, z0: -40, x1: 44, z1: 3 }, height: 17, style: 'haussmann' },
-    { rect: { x0: -44, z0: 15, x1: -5, z1: 34 }, height: 13, style: 'haussmann', fadeable: true },
-    { rect: { x0: 5, z0: 15, x1: 44, z1: 34 }, height: 13, style: 'haussmann', fadeable: true },
+    { rect: { x0: -44, z0: 15, x1: -5, z1: 34 }, height: 10, style: 'haussmann', fadeable: true },
+    { rect: { x0: 5, z0: 15, x1: 44, z1: 34 }, height: 10, style: 'haussmann', fadeable: true },
   ],
   walls: [],
   water: [],
@@ -64,9 +74,9 @@ export const PARIS: MapDef = {
   islands: [],
   props,
   stores: [
-    { name: 'Jewellery', brand: 'LUMIERE', kind: 'jewellery', color: 0x18382c, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
-    { name: 'Electronics', brand: 'VOLT', kind: 'electronics', color: 0x152337, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
-    { name: 'Fashion', brand: 'ATELIER', kind: 'fashion', color: 0x541d2b, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Jewellery', brand: 'LUMIERE', kind: 'jewellery', color: 0x7c1d23, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Electronics', brand: 'VOLT', kind: 'electronics', color: 0x14264a, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Fashion', brand: 'ATELIER', kind: 'fashion', color: 0x17553f, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
   ],
   // decorative shopfronts on the square's side facades (no gameplay stock)
   decorShops: [
@@ -99,7 +109,7 @@ export const PARIS: MapDef = {
   van: { x: 24.5, z: 9, rot: 90 },
   defenderSpawn: { x: 19.5, z: 9 },
   lowSight: [],
-  camera: { x: 0, z: -3, dist: 52 },
+  camera: { x: 0, z: -1.5, dist: 44 },
   playable: true,
   notes: 'Tutorial district. Four attacker approaches; the east service road is the defenders\' staging lane.',
 };

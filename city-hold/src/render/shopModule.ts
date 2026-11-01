@@ -15,9 +15,9 @@ export type Quality = 'mobile' | 'desktop';
 
 interface ShopType { id: ShopId; sign: string; frame: string; trim: string; interior: string; floor: 'tile' | 'wood' | 'marble' | 'checker' | 'concrete' }
 export const SHOP_TYPES: Record<ShopId, ShopType> = {
-  electronics: { id: 'electronics', sign: 'VOLT', frame: '#152337', trim: '#c7ccd4', interior: '#eef1f4', floor: 'concrete' },
-  fashion: { id: 'fashion', sign: 'ATELIER', frame: '#541d2b', trim: '#c9a75a', interior: '#ead9c0', floor: 'wood' },
-  jewelry: { id: 'jewelry', sign: 'LUMIERE', frame: '#18382c', trim: '#c9a75a', interior: '#3a2420', floor: 'marble' },
+  electronics: { id: 'electronics', sign: 'VOLT', frame: '#14264a', trim: '#c7ccd4', interior: '#dfe7ef', floor: 'concrete' },
+  fashion: { id: 'fashion', sign: 'ATELIER', frame: '#17553f', trim: '#c9a75a', interior: '#e8cfa2', floor: 'wood' },
+  jewelry: { id: 'jewelry', sign: 'LUMIERE', frame: '#7c1d23', trim: '#c9a75a', interior: '#c99a5a', floor: 'marble' },
   grocery: { id: 'grocery', sign: 'MARCHE', frame: '#60705a', trim: '#d8c79a', interior: '#e8dcc0', floor: 'checker' },
   cafe: { id: 'cafe', sign: 'CAFE RIVE', frame: '#38261c', trim: '#c9a75a', interior: '#5a3a24', floor: 'checker' },
   sneakers: { id: 'sneakers', sign: 'COURT', frame: '#292b30', trim: '#d0d2d6', interior: '#f0efec', floor: 'concrete' },
@@ -224,7 +224,7 @@ export class ShopModule {
 
     // ---- interior box: floor, side walls, back wall at z = -4, ceiling with recessed lights
     const warm = new THREE.Color(0xffd9a8);
-    const wallMat = M('iw-' + t.id, () => new THREE.MeshStandardMaterial({ color: new THREE.Color(t.interior), roughness: 0.8 }));
+    const wallMat = M('iw-' + t.id, () => new THREE.MeshStandardMaterial({ color: new THREE.Color(t.interior), roughness: 0.8, emissive: new THREE.Color(t.interior).multiply(warm), emissiveIntensity: 0.6 })); // lit shop interiors glow like the concept windows
     const fl = floorTex(t.floor);
     const floorMat = M('if-' + t.id, () => { const tx = fl.clone(); tx.repeat.set(W / 1.6, D / 1.6); tx.needsUpdate = true; return new THREE.MeshStandardMaterial({ map: tx, roughness: 0.3 }); });
     add(PLANE, floorMat, G.interior, 0, 0.01, -D / 2 - 0.15, W - 0.2, D - 0.3).rotation.x = -Math.PI / 2;

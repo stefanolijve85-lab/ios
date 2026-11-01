@@ -28,7 +28,7 @@ export interface ViewInput {
   onTap(p: Pick, sx: number, sy: number): void;
 }
 
-const PITCH = THREE.MathUtils.degToRad(54);
+const PITCH = THREE.MathUtils.degToRad(46); // oblique view of images 02/03: shopfronts readable, fountain in the middle
 
 export class MatchView {
   readonly renderer: THREE.WebGLRenderer;
@@ -82,7 +82,7 @@ export class MatchView {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.0;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.12;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
@@ -99,7 +99,7 @@ export class MatchView {
     }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
-    this.scene.add(new THREE.HemisphereLight(0x6f84c0, 0x5a3a20, 0.75));
+    this.scene.add(new THREE.HemisphereLight(0x8592bc, 0x6a4626, 0.95));
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
     moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);
@@ -130,7 +130,8 @@ export class MatchView {
     this.overlay = document.createElement('div'); this.overlay.className = 'overlay-layer'; container.appendChild(this.overlay);
     map.stores.forEach((s, i) => {
       const el = document.createElement('div'); el.className = 'store-label';
-      el.innerHTML = `<div class="sl-name">${s.name.toUpperCase()}</div><div class="bar struct"><i></i></div><div class="bar stock"><i></i></div><div class="sl-num"></div>`;
+      el.innerHTML = `<svg class="sl-shield" viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 22 5v8.2c0 6.3-4.3 10.9-10 13.3C6.3 24.1 2 19.5 2 13.2V5z"/><path class="sl-check" d="M7.5 13.5l3.2 3.2 5.8-6.4"/></svg><div class="sl-name">${s.name.toUpperCase()}</div><div class="bar struct"><i></i></div><div class="bar stock"><i></i></div><div class="sl-num"></div>`;
+      el.setAttribute('aria-label', s.name);
       el.addEventListener('pointerup', (e) => { e.stopPropagation(); this.input.onTap({ type: 'store', idx: i, x: s.front.x, z: s.front.z }, e.clientX, e.clientY); });
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       this.overlay.appendChild(el); this.storeLabels.push(el);
@@ -426,7 +427,7 @@ export class MatchView {
       v.setScorched?.(s.scorched);
       if (v.justBroke) this.fx.event(`glass:${i}:${Math.round(g.time * 10)}`, 'glass', s.door.x, s.door.z);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
-      const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.8, sd.front.z + sd.normal.z * 0.5);
+      const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.7, sd.front.z + sd.normal.z * 0.5);
       // keep store labels below the top bar on short screens
       const minY = (this.container.querySelector('.topbar') as HTMLElement | null)?.offsetHeight ?? 0;
       el.style.transform = `translate(${scr.x}px, ${Math.max(scr.y, minY + el.offsetHeight + 4)}px) translate(-50%, -100%)`;
@@ -436,6 +437,7 @@ export class MatchView {
       el.classList.toggle('selected', this.selectedStore === i);
       el.classList.toggle('target', this.highlightStore === i);
       el.classList.toggle('empty', s.stock <= 0);
+      el.classList.toggle('damaged', s.structure < s.maxStructure * 0.6 && s.stock > 0);
       if (s.structure < s.maxStructure && s.structure > 0 && g.units.some((u) => u.state === 'breach' && u.targetStore === i)) this.bar('s' + i, s.door.x, 3.2, s.door.z, s.structure / s.maxStructure, '#ff5a3a', 'SHUTTER');
     });
     // barriers

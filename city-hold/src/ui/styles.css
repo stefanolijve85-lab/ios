@@ -48,12 +48,23 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .match { position: absolute; inset: 0; }
 .game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .overlay-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.store-label { position: absolute; left: 0; top: 0; pointer-events: auto; background: rgba(6, 12, 22, 0.82); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; min-width: 96px; font-size: 11px; cursor: pointer; }
-.store-label .sl-name { font-weight: 700; letter-spacing: 0.08em; margin-bottom: 2px; }
-.store-label .sl-num { color: var(--muted); font-size: 10px; white-space: nowrap; margin-top: 2px; }
-.store-label.selected { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
-.store-label.target { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.store-label { position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; width: 74px; padding: 2px 0 4px; font-size: 9px; cursor: pointer; text-shadow: 0 1px 3px #000, 0 0 6px rgba(0, 0, 0, 0.8); }
+/* shield badge over each defended shop, as in concept images 02/03 */
+.store-label .sl-shield { width: 26px; height: 30px; filter: drop-shadow(0 0 5px rgba(54, 224, 255, 0.55)); }
+.store-label .sl-shield path { fill: rgba(8, 34, 44, 0.82); stroke: #4fe3ff; stroke-width: 1.8; stroke-linejoin: round; }
+.store-label .sl-shield .sl-check { fill: none; stroke: #bff6ff; stroke-width: 2.2; stroke-linecap: round; }
+.store-label .sl-name { font-weight: 700; letter-spacing: 0.1em; margin: 2px 0 1px; color: #e9eef2; }
+.store-label .bar { width: 60px; height: 3px; margin-top: 2px; background: rgba(0, 0, 0, 0.55); }
+.store-label .sl-num { display: none; color: var(--muted); font-size: 10px; white-space: nowrap; margin-top: 3px; background: rgba(6, 12, 22, 0.85); padding: 1px 5px; border-radius: 3px; }
+.store-label.selected .sl-num, .store-label:hover .sl-num { display: block; }
+.store-label.selected .sl-shield path:first-child { stroke: #ffffff; fill: rgba(20, 90, 110, 0.9); }
+.store-label.target .sl-shield path:first-child { stroke: var(--orange); }
+.store-label.target .sl-shield { filter: drop-shadow(0 0 6px rgba(255, 150, 30, 0.7)); }
+.store-label.damaged .sl-shield path:first-child { stroke: #ffb03a; }
+.store-label.damaged .sl-shield { filter: drop-shadow(0 0 5px rgba(255, 170, 50, 0.6)); }
 .store-label.empty { opacity: 0.6; }
+.store-label.empty .sl-shield path:first-child { stroke: #ff5a3a; }
+.store-label.empty .sl-check { display: none; }
 .bar { height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 2px; margin-top: 2px; overflow: hidden; }
 .bar i { display: block; height: 100%; }
 .bar.struct i { background: #9fb4c8; }

@@ -318,6 +318,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
+    case 'fence': for (const dx of [-1.27, 1.27]) { const b = buildCrowdBarrier(2.5); b.position.x = dx; g.add(b); } break;
     case 'tree': case 'palm': {
       if (p.type === 'palm') {
         const tr = mesh(cyl, mat(0x6a5440, 0.9), g, 0, 2.6, 0, 0.14, 5.2, 0.14); tr.rotation.z = 0.08;
@@ -480,11 +481,11 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     fadeables.push({ meshes: pf.meshes, box: new THREE.Box3().setFromObject(pf.root), opacity: 1 });
   }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
-  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.32)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.42)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   lampPos.forEach((lp, i) => {
-    const pm = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
-    if (!reducedFx && i < 3) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
+    if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) {
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(s.width + 2, 5), pool); pm.rotation.x = -Math.PI / 2;
