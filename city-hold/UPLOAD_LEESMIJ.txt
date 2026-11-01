@@ -1,0 +1,9 @@
+CITY HOLD — project verdeeld over 4 ZIP-bestanden
+
+Elk deel is zelfstandig uitpakbaar en kleiner dan 30.000.000 bytes. Dit zijn gewone ZIP-bestanden, geen .z01-segmenten.
+
+Aan Claude: lees ALLE 4 delen voordat je begint. Pak ze uit in dezelfde werkmap. Elk deel bevat dezelfde bovenliggende mapnaam CITY_HOLD_Project, met andere bestanden daaronder. Voeg de inhoud samen; vervang niet een hele bestaande map door één deel.
+
+Deel 1 bevat de startinstructies en spelbeschrijving. De assetbestanden staan verspreid over de delen. Na samenvoegen moeten er 40 PNG-bestanden zijn. Controleer assets/manifest.json voor de volledige lijst en controlehashes.
+
+Alle beelden en de video zijn in oorspronkelijke kwaliteit behouden. Dit pakket bevat creatieve input en bouwinstructies; nog geen speelbare gamecode.

@@ -1,0 +1,326 @@
+{
+  "project": "CITY HOLD",
+  "image_count": 40,
+  "assets": [
+    {
+      "file": "assets/maps/01_map_clean.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "3e173993b2076af12d211ff6a74a5fae19158535d92d1d724090ebed1a69ced9"
+    },
+    {
+      "file": "assets/maps/02_map_defence.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "6082d0c70254db1ca74663bdc2963c8e0fd1bcb751a78bd3d90b21c6866e75a7"
+    },
+    {
+      "file": "assets/maps/03_map_zoom.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "23d6911865a3602558154f560a3561b972601a1be8b7451feece32bcbee01366"
+    },
+    {
+      "file": "assets/maps/04_store_intact.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "fe753bef8467af00c7b95d71cb1c4040901695b07e2d53b64f7824bb5d91a782"
+    },
+    {
+      "file": "assets/maps/05_map_damaged.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "02f761c3b63e10bf70496df974e1690a520ba3ec114b1c0d7fccf45a7984eda4"
+    },
+    {
+      "file": "assets/maps/06_store_looted.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "7fa9d73b173efdd16cf5d96b5d9d9d6a46409d81a3f38f2e3586eef4c73d8ccb"
+    },
+    {
+      "file": "assets/maps/07_map_heavy_damage.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "f9c1a4142d9df0bfed28e341f0e398c398daa68afc7586b2bf64fea34c0cfce4"
+    },
+    {
+      "file": "assets/units/10_security_officer.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "26e56aa53fe3d4fec327310282a746a1ff5743fe7b0f1647d6a99189f42bf2c0"
+    },
+    {
+      "file": "assets/units/11_security_officer_b.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "4f7f5d169a353909fdb4d0e9930a5fbfb4bc9f796db74a336230eb83521437b1"
+    },
+    {
+      "file": "assets/units/12_shield_officer.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "31f191b636a3fe6c29f3f856adb2a7848e038aff2e1787331e34509f065b95d7"
+    },
+    {
+      "file": "assets/units/13_looter_box.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "18b17ef85234d9186aba2bb65c3b3acdf2012a4dd5a4c3cf6cb832a54d0ca5ff"
+    },
+    {
+      "file": "assets/units/14_looter_box_b.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "68fc5c55693b8b07fe225c7b0274e3dd85cdad9d6099946629496addc2253c27"
+    },
+    {
+      "file": "assets/props/15_barrier.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "7e4633669c9646ce78ccfb78ab7740a954e612122a210f1508964d57da73e6f5"
+    },
+    {
+      "file": "assets/props/16_camera_mast.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "983ba6986c5cc3f1bb1cd76890f0b54e67da0b2de9a8169b7b1dfc3b9b70e1dd"
+    },
+    {
+      "file": "assets/props/17_police_van.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "eb251fcd363fe4911ebb797fb0748174dbed60e4e731fda02d1c97fed29e10df"
+    },
+    {
+      "file": "assets/props/18_car_intact.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "ba9ad0fed9a3590393dd6e756ef44a4bac96057ff06d3a3f3a1c6e3d548955e7"
+    },
+    {
+      "file": "assets/props/19_car_burned.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "c03855fdd58ed25d7c790525a1ce3c96bc1587599e8a0ec01298e2885c8c5a02"
+    },
+    {
+      "file": "assets/maps/20_paris_boulevard.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "4d9232e32efc647b86d1697f42a4b4bc093f19e86f4f23952cae0e4648c00550"
+    },
+    {
+      "file": "assets/maps/21_amsterdam_canals.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "0da451587784d081c6c835b41b121aa52904eb76acb9b037fbd9bc9a47558f77"
+    },
+    {
+      "file": "assets/maps/22_london_high_street.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "ade757830272f0eae87365ca85f07e5a2014d18b4ebedce8eb761fd2657bae94"
+    },
+    {
+      "file": "assets/maps/23_milan_arcade.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "051c3cecf770d1add9f464a8d65f934c100753cb4b2799b9f9481a858d8d1f32"
+    },
+    {
+      "file": "assets/maps/24_berlin_courtyards.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "6c894bff96a7aaa82425434ed02119647b4119f2c8788d814b51623646a205b5"
+    },
+    {
+      "file": "assets/maps/25_sao_paulo_retail.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "efae312bb7d2085481446e03a984a06ffdd0669a4ba3d3d17726ca0f8b9a528e"
+    },
+    {
+      "file": "assets/units/26_runner.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "be3bc9d8b86e0830da1a38c7a787f81b982667529e132039e4e06703dd108cf4"
+    },
+    {
+      "file": "assets/units/27_carrier_woman.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "a962da852af4e2678fd97399c4249783f33eaf83d8d0f4000ef5a988fda5e2fd"
+    },
+    {
+      "file": "assets/units/28_heavy_carrier.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "2002dd4dca984a22cccb5c92e0992b004455ebee461f634b1a5f94d6b0304796"
+    },
+    {
+      "file": "assets/units/29_firefighter.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "061571b2e7e512f74acf76a14912339c308f0ed400d5c0fd9e5e9e43b5b28d89"
+    },
+    {
+      "file": "assets/props/30_supply_truck.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "488053bb23529565787ac5bc8b2ce4ee4a8de8846effed1602c62b5e87a690ba"
+    },
+    {
+      "file": "assets/props/31_concrete_barriers.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "raster_visual_reference",
+      "sha256": "3924f454b870136aa6ee0a0da4b4ef52695c4c5a7554f974c0acc0b292e6bbfd"
+    },
+    {
+      "file": "assets/maps/32_amsterdam_disorder.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "00a6c504d130b09eaa6aae6ee5bf4f1cc1303c98c87e81c4da29d194e3af0ea2"
+    },
+    {
+      "file": "assets/maps/33_london_disorder.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "1705ad52770572c964095295b4d65ed29a6960ab39ec27ee17ed13522c2334cf"
+    },
+    {
+      "file": "assets/maps/34_milan_disorder.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "0dcfc4c2c81ef5f636143c2403698d5e90adde7520220db94c2416e37ee9c7ac"
+    },
+    {
+      "file": "assets/maps/35_berlin_disorder.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "fbb7d72e00e3b78a9ea59055db0393cc8d19239a43f20b35fccb905586e5b378"
+    },
+    {
+      "file": "assets/maps/36_sao_paulo_disorder.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "role": "raster_visual_reference",
+      "sha256": "a0a6a7d04d1c9a53c3f3b38fb6ee79d72c20e9d5c80da3a12f29ae588440c524"
+    },
+    {
+      "file": "assets/action_references/37_run_cycle_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "557f6094c05a6095043fa2409f3ca69276a22259163bd9132a2b932448cfb46e"
+    },
+    {
+      "file": "assets/action_references/38_collect_loot_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "6b76c2e5e06d2afcb103406abad547f10637143a630573ee87e93e898adaa2d7"
+    },
+    {
+      "file": "assets/action_references/39_shield_contact_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "7bb4850705b9e931999d4bfeb7967be37ccde2374215a587a60832264e42ce24"
+    },
+    {
+      "file": "assets/action_references/40_police_advance_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "9d48b6d2c3671d7182118d7f4736e2077e29d579ea1fae9b88096200b1b3c81a"
+    },
+    {
+      "file": "assets/action_references/41_interception_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "fc858dd2f2693c1935bb124552cb1c1c8e470559289087d94628a796fc036353"
+    },
+    {
+      "file": "assets/action_references/42_drop_loot_reference.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "role": "pose_reference_not_animation_atlas",
+      "sha256": "fba86d9459909ccbb44900e8cc8ac2a47e37342b7d6b3b5581599dd451c216e2"
+    }
+  ]
+}
