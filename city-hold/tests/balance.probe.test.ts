@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { Game } from '../src/sim/game';
 import { PARIS } from '../src/maps/paris';
 import { run, autoDefence, autoLooter, mapReachability } from './helpers';
-test.skipIf(!process.env.PROBE)('balance probe (set PROBE=1 to print)', () => {
+test.skipIf(!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.PROBE)('balance probe (set PROBE=1 to print)', () => {
   console.log('unreachable', mapReachability(PARIS));
   { const g = new Game(PARIS, 'defence', { seed: 5 }); run(g, 3600, (gg) => { if (gg.phase === 'prep') gg.startWave(); });
     console.log('DEF-PASSIVE', g.phase, 'wave', g.wave, 'stock', g.stores.map(s=>s.stock), 't', g.time.toFixed(0)); }

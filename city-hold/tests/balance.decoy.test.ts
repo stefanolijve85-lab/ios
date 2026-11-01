@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { Game } from '../src/sim/game';
 import { PARIS } from '../src/maps/paris';
 import { run } from './helpers';
-test.skipIf(!process.env.PROBE)('decoy strategies (set PROBE=1 to print)', () => {
+test.skipIf(!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.PROBE)('decoy strategies (set PROBE=1 to print)', () => {
   for (const [decoy, main, dr, mr] of [[1,0,'s','nw'],[1,2,'s','ne'],[0,2,'nw','ne'],[2,0,'ne','nw'],[1,0,'ne','w']] as const) {
     const g = new Game(PARIS, 'looters', { seed: 3 });
     let stage = 0; let t0 = 0;

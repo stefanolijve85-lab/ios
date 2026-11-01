@@ -255,7 +255,8 @@ export class Game {
   /** move along path; returns true when arrived */
   private follow(u: Unit, dt: number, speed: number): boolean {
     u.moving = false; u.speedNow = 0;
-    if (!u.path || u.pi >= u.path.length) return true;
+    if (!u.path) return false; // no route yet: callers request a new path
+    if (u.pi >= u.path.length) return true;
     let budget = speed * dt;
     while (budget > 0 && u.pi < u.path.length) {
       const p = u.path[u.pi];
@@ -284,7 +285,7 @@ export class Game {
       budget -= step; u.moving = true; u.speedNow = speed;
       if (step >= d - 1e-6) u.pi++;
     }
-    return u.pi >= u.path.length;
+    return !!u.path && u.pi >= u.path.length;
   }
 
   // ------------------------------------------------------------------ player actions (defence)
