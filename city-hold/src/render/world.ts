@@ -25,7 +25,7 @@ export interface StoreVisual {
 }
 
 /** anything that draws a store and reacts to its state */
-export interface ShopLike { hit: THREE.Mesh; update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio?: number): void; setLod?(dist: number): void; justBroke?: boolean; group?: THREE.Group }
+export interface ShopLike { hit: THREE.Mesh; update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio?: number): void; setLod?(dist: number): void; justBroke?: boolean; group?: THREE.Group; setScorched?(on: boolean): void }
 
 export interface Fadeable { meshes: THREE.Mesh[]; box: THREE.Box3; opacity: number }
 

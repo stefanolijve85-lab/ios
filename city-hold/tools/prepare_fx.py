@@ -24,3 +24,10 @@ for name in ['firefighter', 'firefighter_hose', 'shield_officer', 'evacuating_ci
     im = Image.open(f'{SRC}/figures/{name}.png').convert('RGBA'); im = im.crop(im.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox())
     im.thumbnail((192, 192), Image.LANCZOS); im.save(f'public/ui/fx_{name}.webp', 'WEBP', quality=82)
 print('ok')
+
+# card portraits from the throw-pose sheets (first pose = wind-up)
+import glob
+for f in sorted(glob.glob('assets/throw_poses/*/*.png')):
+    im = Image.open(f).convert('RGBA'); w, h = im.size
+    third = im.crop((0, 0, w // 3, h)); third = third.crop(third.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox())
+    third.thumbnail((192, 192)); third.save('public/ui/thr_' + os.path.basename(f)[:-4] + '.webp', 'WEBP', quality=82)

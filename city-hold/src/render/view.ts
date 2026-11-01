@@ -7,6 +7,7 @@ import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
 import { cloneModel, slotStatus } from './assets';
+import { IncendiaryPool } from './thrown';
 import { createCharacter, type CharacterVisual } from './character';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
@@ -41,6 +42,8 @@ export class MatchView {
   private barriers = new Map<number, THREE.Group>();
   private masts = new Map<number, THREE.Object3D>();
   private dropMarkers = new Map<number, THREE.Group>();
+  private tmpV = new THREE.Vector3();
+  private projPool!: IncendiaryPool;
   private truck: THREE.Group | null = null;
   private rings = new Map<number, THREE.Mesh>();
   private ringGeo = new THREE.RingGeometry(0.55, 0.68, 32).rotateX(-Math.PI / 2);
@@ -100,6 +103,7 @@ export class MatchView {
       this.post = new Post(this.renderer, this.scene, this.camera);
     }
     this.fx = new Effects(this.scene, reducedFx);
+    this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));
     this.destMarker.position.y = 0.05; this.scene.add(this.destMarker);
     this.pathLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0x36e0ff, dashSize: 0.5, gapSize: 0.35, transparent: true, opacity: 0.9 }));
@@ -324,6 +328,7 @@ export class MatchView {
       case 'restrain': return 'restrain';
       case 'escort': return 'escort';
       case 'extinguish': return u.moving ? 'walk' : 'extinguish';
+      case 'throw': return 'throw';
     }
     if (u.kind === 'shield' && !u.moving) return 'brace';
     return u.moving ? 'walk' : 'idle';
@@ -367,7 +372,9 @@ export class MatchView {
       h.root.position.x += (u.x - h.root.position.x) * k; h.root.position.z += (u.z - h.root.position.z) * k;
       let df = u.facing - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       h.root.rotation.y += df * Math.min(1, dt * 12);
-      h.update(this.poseOf(u), u.moving, u.speedNow, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1));
+      h.update(this.poseOf(u), u.moving, u.speedNow, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0);
+      // small flame on the cloth while the object is in the hand
+      if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)
       const det = u.side === 'att' ? g.isDetected(u) : true;
       (h.icon.material as THREE.SpriteMaterial).opacity = det ? 1 : 0.35;
@@ -393,6 +400,7 @@ export class MatchView {
     g.stores.forEach((s, i) => {
       const v = this.world.stores[i];
       v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0, s.boards / s.boardsMax);
+      v.setScorched?.(s.scorched);
       if (v.justBroke) this.fx.event(`glass:${i}:${Math.round(g.time * 10)}`, 'glass', s.door.x, s.door.z);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
       const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.8, sd.front.z + sd.normal.z * 0.5);
@@ -435,10 +443,24 @@ export class MatchView {
     // cars that caught fire
     for (const idx of g.burnedProps) { const c = this.world.cars.get(idx); if (c && c.intact.visible) { c.intact.visible = false; c.burned.visible = true; const pp = this.map.props[idx]; this.fx.event(`car:${idx}`, 'explosion', pp.x, pp.z); } }
     // fires
+    // thrown objects in flight (pooled visuals); flame at the cloth tip and a thin smoke trail
+    const alive = new Set<number>();
+    for (const p of g.projectiles) {
+      alive.add(p.id);
+      const o = this.projPool.get(p.id); if (!o) continue;
+      o.position.set(p.x, p.y, p.z);
+      o.rotation.set(p.t * p.spin, Math.atan2(p.tx - p.sx, p.tz - p.sz), 0);
+      o.getObjectByName('wick')!.getWorldPosition(this.tmpV);
+      this.fx.emit(`proj:${p.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.25);
+      this.fx.emit(`projs:${p.id}`, 'smoke', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.05, 0.6, 0.3);
+    }
+    this.projPool.sweep(alive);
     const activeFires = g.fires.filter((f) => !f.out);
     for (const f of activeFires) {
       this.fx.burn(String(f.id), f.x, f.z, 1 - f.progress * 0.7);
-      if (f.progress > 0) this.bar('f' + f.id, f.x, 2.8, f.z, f.progress, '#9fe3ff', 'EXTINGUISH');
+      // clear indicator on every burning object: remaining fire (red) or extinguishing progress (blue)
+      if (f.progress > 0) this.bar('f' + f.id, f.x, 2.8, f.z, f.progress, '#9fe3ff', 'EXTINGUISHING');
+      else this.bar('f' + f.id, f.x, 2.8, f.z, 1, '#ff5a2a', f.ttl >= 0 ? 'FIRE (burns out)' : '🔥 FIRE — send firefighter');
     }
     this.fx.setFireLights(activeFires, this.time);
     for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }

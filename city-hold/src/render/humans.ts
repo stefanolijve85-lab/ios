@@ -75,6 +75,8 @@ export interface Humanoid {
   icon: THREE.Sprite;
   phase: number;
   recoil: number;
+  /** 0..1 progress of a one-shot action such as a throw */
+  actionT?: number;
   kind: UnitKind;
 }
 
@@ -91,7 +93,7 @@ function m(g: THREE.BufferGeometry, mt: THREE.Material, parent: THREE.Object3D, 
  *  Outfits only change appearance and the look of the carried goods; class stats are unchanged.
  *  Skin tone stays randomised over the full range so the cast remains varied (design rule). */
 type Carry = 'box' | 'bigbox' | 'whitebox' | 'smallbox' | 'bags';
-interface Outfit { ref: string; top: number; legs: number; shoes: number; layer: 'tracksuit' | 'puffer' | 'windbreaker' | 'vest' | 'hoodie'; vest?: number; stripe?: number; pack: 0 | 1 | 2; carry: Carry; kinds: UnitKind[] }
+interface Outfit { ref: string; /** false: hood down, face uncovered */ mask?: boolean; top: number; legs: number; shoes: number; layer: 'tracksuit' | 'puffer' | 'windbreaker' | 'vest' | 'hoodie'; vest?: number; stripe?: number; pack: 0 | 1 | 2; carry: Carry; kinds: UnitKind[] }
 export const STREETWEAR: Outfit[] = [
   { ref: '01_tracksuit_arms_spread', top: 0x313337, legs: 0x313337, shoes: 0x3f3f42, layer: 'tracksuit', stripe: 0x676b71, pack: 0, carry: 'smallbox', kinds: ['vandal', 'runner'] },
   { ref: '02_puffer_large_box', top: 0x2d2e33, legs: 0x393a3f, shoes: 0xb2b5bb, layer: 'puffer', pack: 0, carry: 'bigbox', kinds: ['heavy', 'carrier'] },
@@ -102,6 +104,13 @@ export const STREETWEAR: Outfit[] = [
   { ref: '07_navy_runner', top: 0x3a4d77, legs: 0x808590, shoes: 0x363639, layer: 'hoodie', pack: 0, carry: 'smallbox', kinds: ['runner'] },
   { ref: '08_padded_vest_bags', top: 0x313337, legs: 0x393a3f, shoes: 0x3c3c3f, layer: 'vest', vest: 0x91969f, pack: 0, carry: 'bags', kinds: ['carrier'] },
   { ref: '09_large_backpack', top: 0x4f5056, legs: 0x484a50, shoes: 0x3c3c3f, layer: 'hoodie', pack: 2, carry: 'box', kinds: ['carrier', 'heavy'] },
+  // throw-pose packs (assets/throw_poses): masked variants 1-3 and thrower figures 1-3
+  { ref: 'masked_1', top: 0x2a2b2f, legs: 0x2a2b2f, shoes: 0x3a3b3f, layer: 'hoodie', pack: 0, carry: 'smallbox', kinds: ['thrower'] },
+  { ref: 'masked_2', top: 0x26272b, legs: 0x34363b, shoes: 0x2e2f33, layer: 'puffer', pack: 0, carry: 'smallbox', kinds: ['thrower'] },
+  { ref: 'masked_3', top: 0x2c2d31, legs: 0x303136, shoes: 0x3a3b3f, layer: 'windbreaker', stripe: 0x45484e, pack: 1, carry: 'smallbox', kinds: ['thrower'] },
+  { ref: 'thrower_1', top: 0x232428, legs: 0x26272b, shoes: 0x3c3d41, layer: 'hoodie', pack: 0, carry: 'smallbox', kinds: ['thrower'] },
+  { ref: 'thrower_2', top: 0x2f3034, legs: 0x2b2c30, shoes: 0x8a8d92, layer: 'tracksuit', stripe: 0x3a3c40, mask: false, pack: 0, carry: 'smallbox', kinds: ['thrower'] },
+  { ref: 'thrower_3', top: 0x6a2228, legs: 0x3a3f4a, shoes: 0x2a2b2e, layer: 'vest', vest: 0x3a3c40, mask: false, pack: 0, carry: 'smallbox', kinds: ['thrower'] },
   { ref: '10_windbreaker_small_box', top: 0x2e3034, legs: 0x333439, shoes: 0x999ca2, layer: 'windbreaker', stripe: 0x52555b, pack: 0, carry: 'smallbox', kinds: ['runner', 'vandal'] },
 ];
 
@@ -192,6 +201,8 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
     v.castShadow = false;
   } else if (kind === 'firefighter') {
     m(geo.helmet, mat(0xe3b81a, 0.35), head, 0, 0.11, 0);
+  } else if (outfit && outfit.mask === false) {
+    m(geo.hair, hairM, head, 0, 0.12, 0);
   } else if (outfit) {
     m(geo.hood, topM, head, 0, 0.085, -0.012).scale.set(1.04, 1.02, 1.06);
     m(geo.mask, mat(0x0a0a0b, 0.8), head, 0, 0.055, 0.02);
@@ -209,6 +220,7 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
     const el = new THREE.Group(); el.name = sx < 0 ? 'elbowL' : 'elbowR'; el.position.y = -0.3; arm.add(el);
     const fo = m(geo.fore, kind === 'firefighter' || kind === 'shield' || outfit ? topM : (r() < 0.5 ? topM : skin), el); if (outfit?.layer === 'puffer') fo.scale.set(1.3, 1, 1.3);
     m(geo.hand, skin, el, 0, -0.29, 0);
+    if (sx > 0) { const hs = new THREE.Object3D(); hs.name = 'hand_socket'; hs.position.set(0, -0.3, 0.04); el.add(hs); }
     arms.push(arm); elbows.push(el);
   }
   // carried goods: cardboard box (sized by class) or shopping bags (carrier variant, as in image 27)
@@ -256,12 +268,44 @@ export function buildHumanoid(kind: UnitKind, variant: number, opts: BuildOpts =
   return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon, phase: r() * 6, recoil: 0, kind };
 }
 
-export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier';
+export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw';
+
+/** fraction of the throw clip at which the object leaves the hand (BALANCE.throw.releaseAt / duration) */
+export const THROW_RELEASE = 0.45 / 1.15;
+
+// throw keyframes rebuilt from the throw-pose sheets: wind-up -> whip -> release -> follow-through -> back to idle
+// [t, armR.x, armR.z, elbowR.x, armL.x, armL.z, torso.x, torso.y, legL.x, legR.x, kneeL, kneeR, bodyY]
+const THROW_KEYS: number[][] = [
+  [0.00, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.0],
+  [0.30, -2.9, -0.35, -1.7, -1.35, 0.25, -0.12, 0.65, 0.38, -0.32, 0.12, 0.3, -0.04],
+  [0.36, -2.6, -0.2, -0.9, -1.0, 0.2, 0.05, 0.25, 0.38, -0.3, 0.14, 0.28, -0.05],
+  [THROW_RELEASE, -1.7, 0.05, -0.2, -0.6, 0.15, 0.22, -0.35, 0.38, -0.28, 0.2, 0.22, -0.06],
+  [0.62, -0.55, 0.45, -0.35, -0.2, 0.25, 0.32, -0.6, 0.36, -0.12, 0.28, 0.1, -0.06],
+  [0.82, -0.25, 0.2, -0.3, -0.1, 0.05, 0.12, -0.25, 0.15, -0.05, 0.12, 0.05, -0.02],
+  [1.00, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.0],
+];
+
+function throwPose(h: Humanoid) {
+  const t = Math.max(0, Math.min(1, h.actionT ?? 0));
+  let i = 0; while (i < THROW_KEYS.length - 2 && THROW_KEYS[i + 1][0] < t) i++;
+  const a = THROW_KEYS[i], b = THROW_KEYS[i + 1]; const u = (t - a[0]) / Math.max(1e-4, b[0] - a[0]);
+  const e = u * u * (3 - 2 * u); // smoothstep between keys
+  const v = (k: number) => a[k] + (b[k] - a[k]) * e;
+  h.arms[1].rotation.set(v(1), 0, v(2)); h.elbows[1].rotation.set(v(3), 0, 0);
+  h.arms[0].rotation.set(v(4), 0, v(5)); h.elbows[0].rotation.set(-0.5, 0, 0);
+  h.torso.rotation.set(v(6), v(7), 0); h.head.rotation.set(-v(6) * 0.6, -v(7) * 0.7, 0);
+  // feet stay planted: front (left) leg forward, rear leg back, knees soften; the hips dip slightly
+  h.legs[0].rotation.set(v(8), 0, 0); h.legs[1].rotation.set(v(9), 0, 0);
+  h.knees[0].rotation.set(v(10), 0, 0); h.knees[1].rotation.set(v(11), 0, 0);
+  h.body.position.y = v(12);
+  h.carry.visible = false;
+}
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** Drive joint rotations. Poses are rebuilt from the action references (37-42) as procedural keyframes. */
 export function animate(h: Humanoid, pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number) {
+  if (pose === 'throw') { throwPose(h); return; }
   const run = speed > 3.3;
   h.phase += dt * (moving ? (run ? 9.5 : 7.5) * Math.min(1.3, Math.max(0.6, speed / 3)) : 2);
   const p = h.phase;

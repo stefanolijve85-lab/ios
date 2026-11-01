@@ -1,0 +1,17 @@
+{
+  "method": "built-in image_gen",
+  "items": [
+    {
+      "id": "thrower_1",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet. Three full-body poses of the SAME fictional adult man with dark brown skin, black hooded tracksuit and gray sneakers, arranged left to right with generous space between figures. Pose1 generic empty-handed throw wind-up, pose2 arm extending forward at release, pose3 follow-through. All hands EMPTY, no held objects, no weapons, no fire, no targets, no political symbols, no logos. Whole bodies hands and feet visible inside generous margins. Consistent adult character, outfit, scale and front three-quarter camera across poses. Neutral studio lighting, realistic fabric, premium realistic game rendering. Genuinely transparent background. No text, no scenery. Static pose reference sheet."
+    },
+    {
+      "id": "thrower_2",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet. Three full-body poses of the SAME fictional adult woman with light skin, navy hooded windbreaker, black cargo trousers and dark sneakers, arranged left to right with generous space between figures. Pose1 generic empty-handed throw wind-up, pose2 arm extending forward at release, pose3 follow-through. All hands EMPTY, no held objects, no weapons, no fire, no targets, no political symbols, no logos. Whole bodies hands and feet visible inside generous margins. Consistent adult character, outfit, scale and front three-quarter camera across poses. Neutral studio lighting, realistic fabric, premium realistic game rendering. Genuinely transparent background. No text, no scenery. Static pose reference sheet."
+    },
+    {
+      "id": "thrower_3",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet. Three full-body poses of the SAME fictional adult man with medium brown skin, burgundy hooded sweatshirt, charcoal padded vest, dark jeans and black sneakers, arranged left to right with generous space between figures. Pose1 generic empty-handed throw wind-up, pose2 arm extending forward at release, pose3 follow-through. All hands EMPTY, no held objects, no weapons, no fire, no targets, no political symbols, no logos. Whole bodies hands and feet visible inside generous margins. Consistent adult character, outfit, scale and front three-quarter camera across poses. Neutral studio lighting, realistic fabric, premium realistic game rendering. Genuinely transparent background. No text, no scenery. Static pose reference sheet."
+    }
+  ]
+}

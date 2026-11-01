@@ -1,0 +1,17 @@
+{
+  "method": "built-in image_gen",
+  "items": [
+    {
+      "id": "masked_1",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet: three full-body poses of the SAME original fictional slim adult man wearing black hoodie with hood up, plain black lower-face covering, black joggers and charcoal running shoes. Three separate evenly spaced figures left to right: generic empty-handed throwing wind-up, forward arm extension at release, and follow-through. Both hands visibly EMPTY in all poses. No objects, no weapons, no fire, no targets, no environment, no political symbols, no logos, no text. Maintain consistent character, clothing, scale and front three-quarter camera, realistic anatomy and fabric. Full shoes and hands visible with wide safety margins. Premium realistic game rendering, soft neutral studio illumination with enough fill to read black fabrics. Genuine transparent background. Static animation reference sheet, not a collage of different characters."
+    },
+    {
+      "id": "masked_2",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet: three full-body poses of the SAME original fictional stocky adult man wearing black hooded padded jacket, plain black lower-face covering, black cargo trousers, black work boots. Three separate evenly spaced figures left to right: generic empty-handed throwing wind-up, forward arm extension at release, and follow-through. Both hands visibly EMPTY in all poses. No objects, no weapons, no fire, no targets, no environment, no political symbols, no logos, no text. Maintain consistent character, clothing, scale and front three-quarter camera, realistic anatomy and fabric. Full shoes and hands visible with wide safety margins. Premium realistic game rendering, soft neutral studio illumination with enough fill to read black fabrics. Genuine transparent background. Static animation reference sheet, not a collage of different characters."
+    },
+    {
+      "id": "masked_3",
+      "prompt": "CITY HOLD realistic 3D game animation reference sheet: three full-body poses of the SAME original fictional athletic adult woman wearing black hooded windbreaker with hood up, plain black lower-face covering, black trousers, dark sneakers and a small plain black backpack. Three separate evenly spaced figures left to right: generic empty-handed throwing wind-up, forward arm extension at release, and follow-through. Both hands visibly EMPTY in all poses. No objects, no weapons, no fire, no targets, no environment, no political symbols, no logos, no text. Maintain consistent character, clothing, scale and front three-quarter camera, realistic anatomy and fabric. Full shoes and hands visible with wide safety margins. Premium realistic game rendering, soft neutral studio illumination with enough fill to read black fabrics. Genuine transparent background. Static animation reference sheet, not a collage of different characters."
+    }
+  ]
+}

@@ -452,6 +452,19 @@ export class ShopModule {
     if (this.light) this.light.intensity = v.referenceState === 'looted' ? 4 : 9;
   }
 
+  private soot: THREE.Mesh | null = null;
+  /** lasting fire damage: soot over the fascia and window heads (stays after extinguishing) */
+  setScorched(on: boolean) {
+    if (on && !this.soot) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d')!;
+      for (let i = 0; i < 9; i++) { const x = 20 + Math.random() * 216, gr = g.createRadialGradient(x, 128, 0, x, 70, 90); gr.addColorStop(0, 'rgba(15,12,10,0.85)'); gr.addColorStop(1, 'rgba(15,12,10,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128); }
+      const t = new THREE.CanvasTexture(c);
+      this.soot = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
+      this.soot.position.set(0, 3.7, 0.25); this.soot.scale.set(W + 0.6, 2.2, 1); this.soot.renderOrder = 4; this.group.add(this.soot);
+    }
+    if (this.soot) this.soot.visible = on;
+  }
+
   /** detail level by camera distance: 0 near, 1 mid, 2 far (loose products and fixtures hidden; gameplay unaffected) */
   setLod(dist: number) {
     const near = this.opts.quality === 'mobile' ? 26 : 38, far = this.opts.quality === 'mobile' ? 48 : 75;

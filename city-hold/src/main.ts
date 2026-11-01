@@ -132,4 +132,4 @@ function onExit(_r: MatchResult | null, action: 'menu' | 'restart' | 'next') {
 
 void cityUnlocked;
 // developer showroom: open index.html#showroom (not linked from the player UI)
-if (location.hash === '#showroom') void showroom(app); else if (location.hash === '#fxroom') fxroom(app); else menu();
+if (location.hash === '#showroom') void showroom(app); else if (location.hash === '#fxroom') void fxroom(app); else menu();

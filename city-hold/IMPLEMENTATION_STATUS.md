@@ -14,6 +14,14 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Thrower unit (throw-pose packs)
+
+- New looter class **Thrower** (card; also in defence waves from wave 4). Outfits rebuilt from `assets/throw_poses` (masked 1–3, thrower 1–3). It throws a fictional incendiary game object (procedural exterior only: bottle, cloth, small flame) at its target store or at marked burnable cars — never at people.
+- Animation: procedural keyframes wind-up → whip → **release (39 %)** → follow-through → idle, feet planted, body turned to the aim point; baked as clip `throw` into every character GLB; node `hand_socket` holds the object until release.
+- One release event per throw (an interrupted wind-up never releases); configurable arc (`BALANCE.throw`); collision with buildings/walls along the arc; the AI only throws when the arc is clear; exactly one impact event per projectile (effects deduplicated by projectile id); projectiles pooled and capped (4 mobile / 8 desktop).
+- Fire: store fires burn boards first, then structure, never stock; burning objects show a FIRE indicator; firefighters walk to a reachable spot and extinguish; afterwards flames stop, smoke fades, soot and damage stay. One fire per object, global fire cap; street fires burn out after 5 s.
+- Tested: `tests/throw.test.ts` (release/impact once, interrupted wind-up, building collision, repeated impacts, cars, extinguish keeps damage and stock, caps), browser frame sequence and pose close-ups in `#fxroom`, phone e2e, pause/restart via the existing e2e. Not tested on real devices.
+
 ## Paris realism, street props and effects packs
 
 - **Shops:** six procedural shop modules from `assets/paris_realism` (see `ASSETS_TODO.md`). Damage, boards and stock are independent: `src/render/shopVisualState.ts` is a TypeScript port of the pack's helper; it only reads game state. New gameplay actions in the store panel: **Board up** (120, a 50-point protection layer broken before the shutter) and **Repair** (200, between waves, restores structure only — stock is never refilled). The shutter upgrade, waves, loot accounting (stock → carried → dropped → returned or escaped), routes and the save format are unchanged.

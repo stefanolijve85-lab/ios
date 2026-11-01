@@ -37,7 +37,7 @@ async function run(): Promise<Record<string, string>> {
   const files: Record<string, string> = {};
   const chars: [string, UnitKind, (typeof STREETWEAR)[number] | null][] = [
     ['char.security', 'security', null], ['char.shield', 'shield', null], ['char.firefighter', 'firefighter', null],
-    ['char.runner', 'runner', null], ['char.carrier', 'carrier', null], ['char.heavy', 'heavy', null], ['char.vandal', 'vandal', null],
+    ['char.runner', 'runner', null], ['char.carrier', 'carrier', null], ['char.heavy', 'heavy', null], ['char.vandal', 'vandal', null], ['char.thrower', 'thrower', null],
     ...STREETWEAR.map((o) => [`char.looter.${o.ref}`, o.kinds[0], o] as [string, UnitKind, (typeof STREETWEAR)[number]]),
   ];
   for (const [slot, kind, outfit] of chars) {

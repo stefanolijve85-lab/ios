@@ -20,6 +20,7 @@ const ATT_CARDS: { kind: AttKind; label: string; img: string | null; note: strin
   { kind: 'runner', label: 'Runner', img: 'ui/26_runner.webp', note: `Fast · carries ${BALANCE.units.runner.capacity}` },
   { kind: 'carrier', label: 'Carrier', img: 'ui/06_puffer_electronics_box.webp', note: `Normal · carries ${BALANCE.units.carrier.capacity}` },
   { kind: 'heavy', label: 'Heavy carrier', img: 'ui/28_heavy_carrier.webp', note: `Carries ${BALANCE.units.heavy.capacity} (2× runner) · 20% slower than carrier` },
+  { kind: 'thrower', label: 'Thrower', img: 'ui/thr_masked_1.webp', note: `Throws at the target store or cars · ${BALANCE.throw.throwsPerUnit} throws · carries ${BALANCE.units.thrower.capacity}` },
   { kind: 'vandal', label: 'Vandal', img: 'ui/01_tracksuit_arms_spread.webp', note: `Breaks shutters ${Math.round(BALANCE.units.vandal.breakRate / BALANCE.units.carrier.breakRate)}× faster · carries ${BALANCE.units.vandal.capacity}` },
 ];
 
@@ -47,7 +48,7 @@ export class Match {
 
   constructor(private host: HTMLElement, readonly map: MapDef, readonly side: Side, private settings: Settings, private perks: string[], private tutorial: boolean,
     private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void) {
-    this.game = new Game(map, side, { seed: (Date.now() & 0xffff) + 1, perks });
+    this.game = new Game(map, side, { seed: (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx });
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
@@ -276,6 +277,7 @@ export class Match {
         case 'extract': this.sfx.play('extract'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `−${e.amount} stock`, 'orange'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
         case 'breach': if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
         case 'fire': this.sfx.play('fire'); this.toast(e.text, 'bad'); break;
+        case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('breach'); break;
         case 'held': this.sfx.play('held'); break;
         case 'waveStart': this.toast(e.text, 'info'); break;
         case 'waveEnd': this.sfx.play('win'); this.banner('WAVE SECURED', e.text); break;

@@ -10,7 +10,7 @@ export interface SlotDef { slot: string; group: SlotGroup; label: string; spec: 
 export interface ManifestEntry { file: string; status: 'placeholder' | 'final'; note?: string }
 export interface Manifest { version: 1; units: 'metres'; up: 'Y'; forward: '+Z'; slots: Record<string, ManifestEntry> }
 
-const CHAR_SPEC = 'Rigged GLB, ~1.75 m, origin at feet, faces +Z. Clips: idle, walk, run, carry_idle, carry_walk, breach, collect, held, restrained, escorted, restrain, escort, brace, extinguish. Node "carry" holds the carried goods (shown only when loaded). Materials named "skin" (and "top"/"legs" for casual looters) are recoloured per unit.';
+const CHAR_SPEC = 'Rigged GLB, ~1.75 m, origin at feet, faces +Z. Clips: idle, walk, run, carry_idle, carry_walk, breach, collect, held, restrained, escorted, restrain, escort, brace, extinguish, throw. Node "carry" holds the carried goods (shown only when loaded). Materials named "skin" (and "top"/"legs" for casual looters) are recoloured per unit.';
 
 export const SLOTS: SlotDef[] = [
   { slot: 'char.security', group: 'character', label: 'Security officer (images 10, 11)', spec: CHAR_SPEC },
@@ -20,6 +20,8 @@ export const SLOTS: SlotDef[] = [
   { slot: 'char.carrier', group: 'character', label: 'Carrier, casual (images 13, 14, 27)', spec: CHAR_SPEC },
   { slot: 'char.heavy', group: 'character', label: 'Heavy carrier (image 28)', spec: CHAR_SPEC },
   { slot: 'char.vandal', group: 'character', label: 'Vandal, casual', spec: CHAR_SPEC },
+  { slot: 'char.thrower', group: 'character', label: 'Thrower, casual (throw-pose packs)', spec: CHAR_SPEC + ' Clip "throw" (wind-up, release at 39 %, follow-through, back to idle). Node "hand_socket" in the right hand holds the thrown object until release.' },
+  ...['masked_1', 'masked_2', 'masked_3', 'thrower_1', 'thrower_2', 'thrower_3'].map((r) => ({ slot: `char.looter.${r}`, group: 'character' as const, label: `Thrower ${r.replace(/_/g, ' ')} (throw-pose packs)`, spec: CHAR_SPEC + ' Plus clip "throw" and node "hand_socket".' })),
   ...['01_tracksuit_arms_spread', '02_puffer_large_box', '03_runner_backpack', '04_vest_shopping_bags', '05_hoodie_backpack_walking', '06_puffer_electronics_box', '07_navy_runner', '08_padded_vest_bags', '09_large_backpack', '10_windbreaker_small_box'].map((r) => ({ slot: `char.looter.${r}`, group: 'character' as const, label: `Streetwear looter ${r.replace(/_/g, ' ')}`, spec: CHAR_SPEC })),
   ...([['electronics', 'VOLT'], ['fashion', 'ATELIER'], ['jewelry', 'LUMIERE'], ['grocery', 'MARCHE'], ['cafe', 'CAFE RIVE'], ['sneakers', 'COURT']] as const).map(([id, sign]) => ({
     slot: `shop.${id}`, group: 'shop' as const, optional: true, label: `Paris shop ${sign} (assets/paris_realism)`,

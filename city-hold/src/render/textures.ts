@@ -333,6 +333,7 @@ export function iconTexture(kind: string, color: string): THREE.Texture {
       case 'runner': g.beginPath(); g.moveTo(16, 40); g.lineTo(30, 22); g.lineTo(38, 32); g.lineTo(50, 18); g.stroke(); g.beginPath(); g.moveTo(42, 18); g.lineTo(50, 18); g.lineTo(50, 26); g.stroke(); break;
       case 'carrier': g.fillRect(20, 22, 24, 20); g.fillStyle = 'rgba(8,14,22,0.85)'; g.fillRect(30, 22, 4, 20); break;
       case 'heavy': g.fillRect(14, 26, 18, 18); g.fillRect(34, 18, 18, 26); break;
+      case 'thrower': g.beginPath(); g.moveTo(16, 46); g.quadraticCurveTo(24, 14, 48, 18); g.stroke(); g.beginPath(); g.moveTo(42, 12); g.lineTo(50, 18); g.lineTo(42, 24); g.stroke(); g.fillRect(12, 44, 8, 8); break;
       case 'vandal': g.beginPath(); g.moveTo(20, 20); g.lineTo(44, 44); g.moveTo(44, 20); g.lineTo(20, 44); g.stroke(); break;
     }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;

@@ -28,9 +28,11 @@ export interface Store {
   /** plywood boards over the front (protection layer, separate from structure damage) */
   boards: number;
   boardsMax: number;
+  /** visible fire damage stays after extinguishing (soot); separate from stock */
+  scorched: boolean;
 }
 
-export type AttState = 'approach' | 'breach' | 'collect' | 'extract' | 'flee' | 'barrier' | 'held' | 'restrained' | 'escorted' | 'removed' | 'escaped';
+export type AttState = 'approach' | 'throw' | 'breach' | 'collect' | 'extract' | 'flee' | 'barrier' | 'held' | 'restrained' | 'escorted' | 'removed' | 'escaped';
 export type DefState = 'idle' | 'move' | 'chase' | 'restrain' | 'escort' | 'extinguish' | 'return';
 
 export interface Unit {
@@ -65,6 +67,8 @@ export interface Unit {
   restrainBy: number;
   immuneT: number;
   barrierId: number;
+  /** thrower: throws left, cooldown, release done in the current throw, aim */
+  throwsLeft: number; throwCd: number; released: boolean; aim: ThrowTarget | null;
   stuckT: number; lastX: number; lastZ: number; totalStuck: number;
   // defender
   home: Vec2;
@@ -78,16 +82,20 @@ export interface Unit {
 
 export interface Barrier { id: number; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
-export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number }
+export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number }
+export interface ThrowTarget { kind: 'store' | 'prop' | 'ground'; idx: number; x: number; z: number }
+/** fictional thrown incendiary in flight (game object; physics is a simple configurable arc) */
+export interface Projectile { id: number; owner: number; x: number; y: number; z: number; sx: number; sy: number; sz: number; tx: number; tz: number; t: number; T: number; apex: number; target: ThrowTarget; spin: number }
 export interface Drop { id: number; x: number; z: number; amount: number; t: number }
 export interface Truck { x: number; z: number; facing: number; seg: number; done: boolean; rewarded: boolean; waitT: number; active: boolean; blocked: boolean }
 
-export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect';
-export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att' }
+export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact';
+export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att'; id?: number }
 
 export interface GameOptions {
   seed?: number;
   perks?: string[];
+  mobile?: boolean;
 }
 
 export interface ActionResult { ok: boolean; reason?: string }
@@ -106,6 +114,9 @@ export class Game {
   barriers: Barrier[] = [];
   cameras: CameraMast[] = [];
   fires: Fire[] = [];
+  projectiles: Projectile[] = [];
+  /** projectile budget (lower on phones) */
+  maxProjectiles: number = BALANCE.throw.maxActive.desktop;
   drops: Drop[] = [];
   burnedProps = new Set<number>();
   events: GameEvent[] = [];
@@ -143,10 +154,11 @@ export class Game {
     this.nav = new NavGrid(map);
     this.rng = new Rng(opts.seed ?? 12345);
     this.perks = new Set(opts.perks ?? []);
+    if (opts.mobile) this.maxProjectiles = BALANCE.throw.maxActive.mobile;
     const bonus = this.perks.has('budget') ? 100 : 0;
     this.stores = map.stores.map((s, idx) => ({
       idx, name: s.name, structure: BALANCE.defence.storeStructure, maxStructure: BALANCE.defence.storeStructure,
-      stock: BALANCE.defence.storeStock, reserved: 0, shutterLevel: 1, door: storeDoor(s), lost: 0, boards: 0, boardsMax: BALANCE.defence.boardsHp,
+      stock: BALANCE.defence.storeStock, reserved: 0, shutterLevel: 1, door: storeDoor(s), lost: 0, boards: 0, boardsMax: BALANCE.defence.boardsHp, scorched: false,
     }));
     this.looterRoute = map.entries.find((e) => e.spawn)!.id;
     if (side === 'defence') {
@@ -185,7 +197,7 @@ export class Game {
       id: this.nextId++, side, kind, x: p.x, z: p.z, facing: 0, r: st.radius, variant: Math.floor(this.rng.next() * 1e6),
       state: side === 'def' ? 'idle' : 'approach', stateT: 0, path: null, pi: 0, goal: null, repathT: 0, moving: false, speedNow: 0,
       targetStore: -1, exitId: '', carrying: 0, pending: 0, carryStore: -1, capacity: 0, detectedUntil: -1, camSeen: 0, heldBy: -1, holdT: 0,
-      restrainP: 0, restrainBy: -1, immuneT: 0, barrierId: -1, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
+      restrainP: 0, restrainBy: -1, immuneT: 0, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
       home: { x: p.x, z: p.z }, engage: -1, escortOf: -1, fireId: -1, selected: false, chaseT: 0, escortSolo: false,
     };
   }
@@ -575,6 +587,7 @@ export class Game {
     for (const u of this.units) { if (u.side === 'def') this.stepDefender(u, dt); else this.stepAttacker(u, dt); }
     this.stepShields(dt);
     this.separate();
+    this.stepProjectiles(dt);
     this.stepFires(dt);
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;
@@ -888,12 +901,21 @@ export class Game {
         u.repathT += dt;
         if (u.repathT > 50 || !u.path) this.setAttGoal(u);
         this.maybeIgniteCar(u);
+        if (this.tryStartThrow(u, dt)) break;
         if (this.follow(u, dt, sp)) {
           u.facing = Math.atan2(-this.map.stores[u.targetStore].normal.x, -this.map.stores[u.targetStore].normal.z);
           u.state = s.structure > 0 || s.boards > 0 ? 'breach' : 'collect'; u.stateT = 0;
           if (u.state === 'collect') this.beginCollect(u);
         }
         this.checkStuck(u, dt);
+        break;
+      }
+      case 'throw': {
+        u.moving = false;
+        const a = u.aim!;
+        u.facing = Math.atan2(a.x - u.x, a.z - u.z);
+        if (!u.released && u.stateT >= BALANCE.throw.releaseAt) { u.released = true; this.release(u); }
+        if (u.stateT >= BALANCE.throw.duration) { u.state = 'approach'; u.stateT = 0; u.aim = null; u.throwCd = BALANCE.throw.cooldown; u.path = null; }
         break;
       }
       case 'breach': {
@@ -1016,23 +1038,136 @@ export class Game {
     });
   }
 
-  startFire(x: number, z: number, store: number, prop: number) {
-    if (this.fires.filter((f) => !f.out).length >= BALANCE.fire.max) return;
-    if (store >= 0 && this.fires.some((f) => !f.out && f.store === store)) return;
+  // ------------------------------------------------------------------ throwing
+  /** aim points a thrower may use: its target store (front) and unburnt marked burnable props */
+  throwCandidates(u: Unit): ThrowTarget[] {
+    const out: ThrowTarget[] = [];
+    if (u.targetStore >= 0) {
+      const s = this.stores[u.targetStore]; const sd = this.map.stores[u.targetStore];
+      if (!this.isBurning(s.idx) && (s.structure > 0 || s.boards > 0)) out.push({ kind: 'store', idx: s.idx, x: sd.front.x + sd.normal.x * 0.5, z: sd.front.z + sd.normal.z * 0.5 });
+    }
+    this.map.props.forEach((p, i) => { if (p.burnable && !this.burnedProps.has(i) && !this.fires.some((f) => !f.out && f.prop === i)) out.push({ kind: 'prop', idx: i, x: p.x, z: p.z }); });
+    return out;
+  }
+
+  /** height (m) of solid geometry at a point, for arc collision: buildings and walls */
+  solidHeightAt(x: number, z: number): number {
+    let h = 0;
+    for (const b of this.map.buildings) if (x > b.rect.x0 && x < b.rect.x1 && z > b.rect.z0 && z < b.rect.z1 && !(b.passages ?? []).some((p) => x > p.x0 && x < p.x1 && z > p.z0 && z < p.z1)) h = Math.max(h, b.height + 3);
+    for (const w of this.map.walls) if (x > w.x0 && x < w.x1 && z > w.z0 && z < w.z1) h = Math.max(h, w.h ?? 2.6);
+    return h;
+  }
+
+  private arcPoint(p: { sx: number; sy: number; sz: number; tx: number; tz: number; apex: number }, s: number) {
+    return { x: p.sx + (p.tx - p.sx) * s, y: p.sy * (1 - s) + 0.25 * s + 4 * p.apex * s * (1 - s), z: p.sz + (p.tz - p.sz) * s };
+  }
+
+  /** true if the arc from the unit's hand to the aim point does not hit a building first */
+  arcClear(x: number, z: number, a: { x: number; z: number }): boolean {
+    const arc = { sx: x, sy: BALANCE.throw.handHeight, sz: z, tx: a.x, tz: a.z, apex: BALANCE.throw.apex };
+    for (let i = 1; i < 40; i++) { const q = this.arcPoint(arc, i / 40); if (q.y < this.solidHeightAt(q.x, q.z)) return false; }
+    return true;
+  }
+
+  private tryStartThrow(u: Unit, dt: number): boolean {
+    if (u.kind !== 'thrower' || u.throwsLeft <= 0) return false;
+    u.throwCd -= dt;
+    if (u.throwCd > 0) return false;
+    if (this.projectiles.length >= this.maxProjectiles) return false;
+    const T = BALANCE.throw;
+    for (const c of this.throwCandidates(u)) {
+      const d = Math.hypot(c.x - u.x, c.z - u.z);
+      if (d < T.minRange || d > T.range) continue;
+      if (!this.arcClear(u.x, u.z, c)) continue;
+      u.aim = c; u.state = 'throw'; u.stateT = 0; u.released = false; u.moving = false; u.throwsLeft--;
+      return true;
+    }
+    u.throwCd = 0.5; // re-check twice per second
+    return false;
+  }
+
+  /** the single release event of a throw: the game object leaves the hand socket */
+  private release(u: Unit) {
+    const a = u.aim; if (!a) return;
+    if (this.projectiles.length >= this.maxProjectiles) return;
+    const T = BALANCE.throw;
+    const hx = u.x + Math.sin(u.facing) * 0.3, hz = u.z + Math.cos(u.facing) * 0.3;
+    const dist = Math.hypot(a.x - hx, a.z - hz);
+    const p: Projectile = { id: this.nextId++, owner: u.id, x: hx, y: T.handHeight, z: hz, sx: hx, sy: T.handHeight, sz: hz, tx: a.x, tz: a.z, t: 0, T: Math.max(0.35, dist / T.flightSpeed), apex: T.apex, target: a, spin: 7 + this.rng.next() * 5 };
+    this.projectiles.push(p);
+    this.emit({ type: 'release', text: 'Throw', x: hx, z: hz, id: p.id });
+  }
+
+  /** test/debug helper: launch a projectile from any point towards any aim point */
+  launchProjectile(x: number, z: number, aim: ThrowTarget): Projectile | null {
+    if (this.projectiles.length >= this.maxProjectiles) return null;
+    const T = BALANCE.throw; const dist = Math.hypot(aim.x - x, aim.z - z);
+    const p: Projectile = { id: this.nextId++, owner: -1, x, y: T.handHeight, z, sx: x, sy: T.handHeight, sz: z, tx: aim.x, tz: aim.z, t: 0, T: Math.max(0.35, dist / T.flightSpeed), apex: T.apex, target: aim, spin: 8 };
+    this.projectiles.push(p); return p;
+  }
+
+  private stepProjectiles(dt: number) {
+    const keep: Projectile[] = [];
+    for (const p of this.projectiles) {
+      const s0 = p.t / p.T; p.t += dt; const s1 = Math.min(1, p.t / p.T);
+      // collision along the segment travelled this tick
+      let hit: { x: number; y: number; z: number } | null = null; const N = 6;
+      for (let i = 1; i <= N && !hit; i++) {
+        const q = this.arcPoint(p, s0 + ((s1 - s0) * i) / N);
+        if (q.y < this.solidHeightAt(q.x, q.z)) { const b = this.arcPoint(p, s0 + ((s1 - s0) * (i - 1)) / N); hit = b; }
+      }
+      const q = this.arcPoint(p, s1); p.x = q.x; p.y = q.y; p.z = q.z;
+      if (hit) { this.impact(p, hit.x, hit.z, true); continue; }
+      if (s1 >= 1) { this.impact(p, p.tx, p.tz, false); continue; }
+      keep.push(p);
+    }
+    this.projectiles = keep;
+  }
+
+  /** exactly one impact per projectile; consequences follow the existing fire rules (no stacking) */
+  private impact(p: Projectile, x: number, z: number, blocked: boolean) {
+    const R = BALANCE.throw.igniteRadius;
+    this.emit({ type: 'impact', text: blocked ? 'Hit a wall' : 'Impact', x, z, id: p.id });
+    // the intended target if it was reached, otherwise any marked burnable object near the impact point
+    let store = -1, prop = -1;
+    const near = (tx: number, tz: number) => Math.hypot(tx - x, tz - z) <= R;
+    if (!blocked && p.target.kind === 'store') store = p.target.idx;
+    else if (!blocked && p.target.kind === 'prop') prop = p.target.idx;
+    else {
+      this.map.stores.forEach((sd, i) => { if (store < 0 && near(sd.front.x + sd.normal.x * 0.5, sd.front.z + sd.normal.z * 0.5)) store = i; });
+      if (store < 0) this.map.props.forEach((pp, i) => { if (prop < 0 && pp.burnable && near(pp.x, pp.z)) prop = i; });
+    }
+    if (store >= 0) { const sd = this.map.stores[store]; this.startFire(sd.front.x + sd.normal.x * 0.6, sd.front.z + sd.normal.z * 0.6, store, -1); }
+    else if (prop >= 0) { if (!this.burnedProps.has(prop) && this.startFire(this.map.props[prop].x, this.map.props[prop].z, -1, prop)) this.burnedProps.add(prop); }
+    else if (!blocked && this.nav.walkable(x, z)) this.startFire(x, z, -1, -1);
+  }
+
+  /** returns false when the fire cap or an existing fire on the same object prevents a new one (no stacking) */
+  startFire(x: number, z: number, store: number, prop: number): boolean {
+    if (this.fires.filter((f) => !f.out).length >= BALANCE.fire.max) return false;
+    if (prop >= 0 && this.fires.some((f) => !f.out && f.prop === prop)) return false;
+    if (store >= 0 && this.fires.some((f) => !f.out && f.store === store)) return false;
     const sd = store >= 0 ? this.map.stores[store] : null;
     const fx = sd ? x - sd.normal.x * 0.2 : x, fz = sd ? z - sd.normal.z * 0.2 : z;
-    this.fires.push({ id: this.nextId++, x: fx, z: fz, store, prop, progress: 0, out: false, t: 0 });
-    this.emit({ type: 'fire', text: store >= 0 ? `Fire at ${this.stores[store].name}` : 'Vehicle fire', x, z });
+    this.fires.push({ id: this.nextId++, x: fx, z: fz, store, prop, progress: 0, out: false, t: 0, ttl: store < 0 && prop < 0 ? BALANCE.fire.groundBurnSec : -1 });
+    this.emit({ type: 'fire', text: store >= 0 ? `Fire at ${this.stores[store].name}` : prop >= 0 ? 'Vehicle fire' : 'Small fire on the street', x, z });
+    return true;
   }
+
+  isBurning(store: number) { return this.fires.some((f) => !f.out && f.store === store); }
 
   private stepFires(dt: number) {
     for (const f of this.fires) {
       if (f.out) continue;
       f.t += dt;
+      if (f.ttl >= 0 && f.t >= f.ttl) { f.out = true; continue; }
       if (f.store >= 0) {
         const s = this.stores[f.store];
-        // fire keeps damaging the shopfront; once the shutter is gone it consumes stock until extinguished
-        if (s.structure > 0) s.structure = Math.max(0, s.structure - BALANCE.fire.storeDamagePerSec * dt);
+        // fire damages the boards first, then the shopfront; it never touches stock
+        const d = BALANCE.fire.storeDamagePerSec * dt;
+        if (s.boards > 0) s.boards = Math.max(0, s.boards - d);
+        else if (s.structure > 0) s.structure = Math.max(0, s.structure - d);
+        if (f.t >= BALANCE.fire.scorchAfterSec) s.scorched = true;
       }
     }
     this.fires = this.fires.filter((f) => !f.out || f.t < 0); // keep only active fires

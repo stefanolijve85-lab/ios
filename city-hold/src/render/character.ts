@@ -1,22 +1,26 @@
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import type { UnitKind } from '../config/balance';
-import { animate, buildHumanoid, contactShadow, outfitFor, CASUAL_LEGS, CASUAL_TOPS, SKIN_TONES, type Humanoid, type Pose } from './humans';
+import { THROW_RELEASE, animate, buildHumanoid, contactShadow, outfitFor, CASUAL_LEGS, CASUAL_TOPS, SKIN_TONES, type Humanoid, type Pose } from './humans';
 import { iconTexture } from './textures';
 import { getModel } from './assets';
+import { buildIncendiary } from './thrown';
 
 /** What the match view needs from any character visual (procedural or loaded from a GLB file). */
 export interface CharacterVisual {
   root: THREE.Object3D;
   icon: THREE.Sprite;
   source: 'glb' | 'procedural';
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number): void;
+  /** world position of a held object's flame tip, if one is in hand */
+  heldWick?(out: THREE.Vector3): boolean;
+  /** action: 0..1 progress of a one-shot action (throw) */
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action?: number): void;
 }
 
 const JOINTS = ['torso', 'head', 'legL', 'legR', 'kneeL', 'kneeR', 'armL', 'armR', 'elbowL', 'elbowR'];
 
 /** Animation clips every character GLB should provide (names are the contract with final assets). */
-export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish'] as const;
+export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish', 'throw'] as const;
 export type ClipName = (typeof CLIP_NAMES)[number];
 
 const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; carrying: boolean; period: number }> = {
@@ -34,6 +38,7 @@ const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; 
   escort: { pose: 'escort', moving: true, speed: 1.8, carrying: false, period: (Math.PI * 2) / (7.5 * 0.6) },
   brace: { pose: 'brace', moving: false, speed: 0, carrying: false, period: 1 },
   extinguish: { pose: 'extinguish', moving: false, speed: 0, carrying: false, period: 1 },
+  throw: { pose: 'throw', moving: false, speed: 0, carrying: false, period: 1.15 },
 };
 
 /** Bake the procedural poses (rebuilt from action sheets 37-42) into looping keyframe clips on the named joints. */
@@ -53,11 +58,12 @@ export function bakeClips(h: Humanoid): THREE.AnimationClip[] {
     const q = new THREE.Quaternion();
     for (let f = 0; f <= frames; f++) {
       times.push(f * step);
+      if (name === 'throw') { h.actionT = f / frames; animate(h, 'throw', false, 0, false, 0); }
       joints.forEach((j, k) => { q.setFromEuler(j.rotation); rot[k].push(q.x, q.y, q.z, q.w); });
       bob.push(body.position.x, body.position.y, body.position.z);
-      const sub = 6; for (let s = 0; s < sub; s++) animate(h, sp.pose, sp.moving, sp.speed, sp.carrying, step / sub);
+      if (name !== 'throw') { const sub = 6; for (let s = 0; s < sub; s++) animate(h, sp.pose, sp.moving, sp.speed, sp.carrying, step / sub); }
     }
-    // close the loop exactly
+    // close the loop exactly (the throw clip starts and ends in the idle stance already)
     joints.forEach((_, k) => { const a = rot[k]; a.splice(a.length - 4, 4, a[0], a[1], a[2], a[3]); });
     bob.splice(bob.length - 3, 3, bob[0], bob[1], bob[2]);
     const tracks: THREE.KeyframeTrack[] = joints.map((j, k) => new THREE.QuaternionKeyframeTrack(`${j.name}.quaternion`, times, rot[k]));
@@ -92,6 +98,8 @@ class GltfCharacter implements CharacterVisual {
   private actions = new Map<string, THREE.AnimationAction>();
   private current: THREE.AnimationAction | null = null;
   private carry: THREE.Object3D | null;
+  private held: HeldObject;
+  heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
   constructor(kind: UnitKind, variant: number, scene: THREE.Object3D, clips: THREE.AnimationClip[]) {
     const model = skeletonClone(scene);
     const r = rng(variant + 91);
@@ -112,6 +120,7 @@ class GltfCharacter implements CharacterVisual {
     model.scale.setScalar(0.95 + r() * 0.08);
     this.root.add(model);
     this.carry = model.getObjectByName('carry') ?? null;
+    this.held = new HeldObject(model.getObjectByName('hand_socket'));
     if (this.carry) this.carry.visible = false;
     this.mixer = new THREE.AnimationMixer(model);
     for (const c of clips) this.actions.set(c.name, this.mixer.clipAction(c));
@@ -128,8 +137,13 @@ class GltfCharacter implements CharacterVisual {
     if (this.current) a.crossFadeFrom(this.current, 0.2, false);
     this.current = a;
   }
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number) {
-    if (this.carry) this.carry.visible = carrying;
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
+    if (this.carry) this.carry.visible = carrying && pose !== 'throw';
+    this.held.update(pose === 'throw' && action < THROW_RELEASE);
+    if (pose === 'throw') {
+      const a = this.actions.get('throw');
+      if (a) { this.play('throw', 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
+    }
     let clip: string = pose;
     if (pose === 'walk' || pose === 'idle') clip = moving ? (speed > 3.3 ? 'run' : carrying ? 'carry_walk' : 'walk') : carrying ? 'carry_idle' : 'idle';
     const ts = clip === 'walk' ? speed / 3 : clip === 'run' ? speed / 4.2 : clip === 'carry_walk' ? speed / 2.4 : 1;
@@ -138,11 +152,31 @@ class GltfCharacter implements CharacterVisual {
   }
 }
 
+/** the thrown object while it is still in the hand: a separate object parented to the hand socket until release */
+class HeldObject {
+  private obj: THREE.Group | null = null;
+  constructor(private socket: THREE.Object3D | undefined) {}
+  update(show: boolean) {
+    if (!this.socket) return;
+    if (show && !this.obj) { this.obj = buildIncendiary(); this.obj.rotation.x = Math.PI; this.obj.position.y = -0.04; this.socket.add(this.obj); }
+    if (this.obj) this.obj.visible = show;
+  }
+  /** world position of the cloth tip, for the small flame while held */
+  wickWorld(out: THREE.Vector3): boolean { if (!this.obj || !this.obj.visible) return false; this.obj.getObjectByName('wick')!.getWorldPosition(out); return true; }
+}
+export type { HeldObject };
+
 class ProcCharacter implements CharacterVisual {
   source = 'procedural' as const;
   root: THREE.Object3D; icon: THREE.Sprite;
-  constructor(private h: Humanoid) { this.root = h.root; this.icon = h.icon; }
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number) { animate(this.h, pose, moving, speed, carrying, dt); }
+  heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
+  private held: HeldObject;
+  constructor(private h: Humanoid) { this.root = h.root; this.icon = h.icon; this.held = new HeldObject(h.root.getObjectByName('hand_socket')); }
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
+    this.h.actionT = action;
+    animate(this.h, pose, moving, speed, carrying, dt);
+    this.held.update(pose === 'throw' && action < THROW_RELEASE);
+  }
 }
 
 /** Use the GLB in the unit's slot when it is loaded, otherwise fall back to the procedural figure. */

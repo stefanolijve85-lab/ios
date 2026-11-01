@@ -4,11 +4,14 @@ import { Effects } from './render/effects';
 import { skyTexture } from './render/world';
 import { buildHumanoid, animate } from './render/humans';
 import { buildExtinguisher } from './render/streetProps';
+import { createCharacter } from './render/character';
+import { loadAssets } from './render/assets';
 
 // Developer effect showroom (open  #fxroom ): each effect on a light and a dark pad, in front of and behind a
 // wall, plus bursts, a stress test, pause and quality switch. Not linked from the player UI.
 
-export function fxroom(app: HTMLElement) {
+export async function fxroom(app: HTMLElement) {
+  await loadAssets('models/');
   app.innerHTML = `<div class="showroom"><canvas></canvas><div class="sr-panel">
     <b>EFFECTS SHOWROOM</b>
     <div class="sr-row"><button data-a="explosion">Explosion</button><button data-a="sparks">Sparks</button><button data-a="glass">Glass</button><button data-a="intercept">Intercept</button></div>
@@ -34,6 +37,9 @@ export function fxroom(app: HTMLElement) {
   const wall = new THREE.Mesh(new THREE.BoxGeometry(26, 1.6, 0.4), new THREE.MeshStandardMaterial({ color: 0xcfc2a6, roughness: 0.85 })); wall.position.set(0, 0.8, 0.6); scene.add(wall);
   // firefighter with hose aiming at a fire, and the extinguisher prop
   const ff = buildHumanoid('firefighter', 3); ff.root.position.set(-13, 0, -3); ff.root.rotation.y = Math.PI / 2; scene.add(ff.root);
+  // thrower demo: the in-game character (GLB slot or procedural) loops the throw on a 2.4 s cycle
+  const throwers = [0, 5, 9].map((v, i) => { const c = createCharacter('thrower', v * 5 + 1); c.root.position.set(-6 + i * 3, 0, 9); c.root.rotation.y = Math.PI; scene.add(c.root); return c; });
+  (window as unknown as { __throwers: unknown }).__throwers = throwers;
   const ext = buildExtinguisher(); ext.position.set(-13.8, 0, -2.2); scene.add(ext);
   let fx = new Effects(scene, false);
   let paused = false, fires = true, t = 0;
@@ -60,6 +66,7 @@ export function fxroom(app: HTMLElement) {
       }
       if (fires) fx.sprayAt(-12.6, -3, -10, -3, dt, 'hose');
       animate(ff, 'extinguish', false, 0, false, dt);
+      const cyc = (t % 2.4) / 1.15; for (const c of throwers) c.update(cyc <= 1 ? 'throw' : 'idle', false, 0, false, dt, Math.min(1, cyc));
     }
     fx.update(dt);
     renderer.render(scene, camera);
@@ -68,6 +75,6 @@ export function fxroom(app: HTMLElement) {
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
-  (window as unknown as { __fxroom: unknown }).__fxroom = { get fx() { return fx; }, setPaused: (p: boolean) => (paused = p), setFires: (f: boolean) => (fires = f) };
+  (window as unknown as { __fxroom: unknown }).__fxroom = { get fx() { return fx; }, setPaused: (p: boolean) => (paused = p), setFires: (f: boolean) => (fires = f), look: (px: number, py: number, pz: number, tx: number, ty: number, tz: number) => { camera.position.set(px, py, pz); controls.target.set(tx, ty, tz); controls.update(); } };
   void acc;
 }

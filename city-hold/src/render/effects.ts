@@ -102,7 +102,7 @@ const rnd = () => { seedState = (seedState * 16807) % 2147483647; return seedSta
 const range = (a: [number, number]) => a[0] + rnd() * (a[1] - a[0]);
 
 /** looping emitter with a stable id (one per fire / hose); when its source stops being refreshed it ends */
-interface Emitter { id: string; kind: FxKind; x: number; y: number; z: number; spread: number; strength: number; acc: number; seen: boolean; tail: number; dir?: [number, number, number] }
+interface Emitter { id: string; kind: FxKind; x: number; y: number; z: number; spread: number; strength: number; acc: number; seen: boolean; tail: number; dir?: [number, number, number]; scale: number }
 
 export class Effects {
   readonly group = new THREE.Group();
@@ -151,10 +151,10 @@ export class Effects {
   }
 
   /** keep a looping emitter alive this frame (call every frame while its source exists) */
-  emit(id: string, kind: FxKind, x: number, y: number, z: number, spread = 1, strength = 1) {
+  emit(id: string, kind: FxKind, x: number, y: number, z: number, spread = 1, strength = 1, scale = 1) {
     let e = this.emitters.get(id);
-    if (!e) { e = { id, kind, x, y, z, spread, strength, acc: 0, seen: true, tail: 0 }; this.emitters.set(id, e); }
-    e.x = x; e.y = y; e.z = z; e.strength = strength; e.seen = true; e.tail = 0;
+    if (!e) { e = { id, kind, x, y, z, spread, strength, acc: 0, seen: true, tail: 0, scale }; this.emitters.set(id, e); }
+    e.x = x; e.y = y; e.z = z; e.strength = strength; e.seen = true; e.tail = 0; e.scale = scale;
   }
 
   /** fire = flames + dark smoke column; smoke drifts up and away from street level so routes stay readable */
@@ -215,7 +215,7 @@ export class Effects {
     for (const e of [...this.emitters.values()]) {
       if (!e.seen) {
         // source gone (extinguished / removed): stop now; a fire leaves a short smoke tail, then the emitter is removed
-        if (e.kind === 'fire') {
+        if (e.kind === 'fire' && e.scale >= 1) {
           if (e.tail === 0) e.tail = 2.5;
           e.tail -= dt;
           if (rnd() < dt * (this.reduced ? 1.5 : 3)) this.spawn('smoke', e.x, 0.6, e.z, 0.8, { scaleMul: 0.7 });
@@ -229,8 +229,8 @@ export class Effects {
       while (e.acc >= 1) {
         e.acc -= 1;
         if (e.kind === 'spray' && e.dir) this.spawn('spray', e.x, e.y, e.z, 0.1, { vx: e.dir[0] + (rnd() - 0.5) * 0.6, vy: e.dir[1] + rnd() * 0.4, vz: e.dir[2] + (rnd() - 0.5) * 0.6 });
-        else if (e.kind === 'smoke') this.spawn('smoke', e.x, e.y, e.z, e.spread, { vx: 0.25 + rnd() * 0.3, vz: -0.15 - rnd() * 0.25 });
-        else if (e.kind === 'fire') this.spawn('fire', e.x, e.y, e.z, e.spread, { vx: (rnd() - 0.5) * 0.2, vz: (rnd() - 0.5) * 0.2 });
+        else if (e.kind === 'smoke') this.spawn('smoke', e.x, e.y, e.z, e.spread, { vx: 0.25 + rnd() * 0.3, vz: -0.15 - rnd() * 0.25, scaleMul: e.scale });
+        else if (e.kind === 'fire') this.spawn('fire', e.x, e.y, e.z, e.spread, { vx: (rnd() - 0.5) * 0.2, vz: (rnd() - 0.5) * 0.2, scaleMul: e.scale, vy: e.scale < 1 ? 0.3 : undefined });
         else this.spawn(e.kind, e.x, e.y, e.z, e.spread);
       }
     }

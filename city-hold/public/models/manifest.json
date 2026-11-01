@@ -158,6 +158,41 @@
       "file": "placeholder/prop_delivery_van.glb",
       "status": "placeholder",
       "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.thrower": {
+      "file": "placeholder/char_thrower.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.masked_1": {
+      "file": "placeholder/char_looter_masked_1.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.masked_2": {
+      "file": "placeholder/char_looter_masked_2.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.masked_3": {
+      "file": "placeholder/char_looter_masked_3.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.thrower_1": {
+      "file": "placeholder/char_looter_thrower_1.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.thrower_2": {
+      "file": "placeholder/char_looter_thrower_2.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
+    },
+    "char.looter.thrower_3": {
+      "file": "placeholder/char_looter_thrower_3.glb",
+      "status": "placeholder",
+      "note": "temporary model generated from the procedural figure; replace with a final asset"
     }
   }
 }
