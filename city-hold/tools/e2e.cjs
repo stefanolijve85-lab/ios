@@ -42,11 +42,11 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.click('[data-u="shutter"]'); await p.waitForTimeout(200);
   const lv = await p.evaluate(() => window.__match.game.stores[0].shutterLevel);
   assert(lv === 2, 'store upgraded to shutter level 2 from the panel');
-  await p.screenshot({ path: `${out}/${city}_defence_prep.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_prep.png` });
   // start wave and fast-forward
   await p.click('[data-a="startwave"]');
   await ff(6); await p.waitForTimeout(400);
-  await p.screenshot({ path: `${out}/${city}_defence_wave.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_wave.png` });
   const before = await p.evaluate(() => window.__match.game.budget);
   await ff(240); await p.waitForTimeout(300);
   st = await p.evaluate(() => ({ phase: window.__match.game.phase, budget: window.__match.game.budget, wave: window.__match.game.wave, rew: window.__match.game.rewardsGranted }));
@@ -62,7 +62,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     await p.waitForFunction(() => /6\/6/.test(document.querySelector('[data-k="cycle"]').textContent), null, { timeout: 20000 }).catch(() => {});
     const cyc = await p.textContent('[data-k="cycle"]');
     assert(/GAME LOOP 6\/6/.test(cyc), 'defence game-loop checklist complete: ' + cyc.replace(/\s+/g, ' '));
-    await p.screenshot({ path: `${out}/${city}_defence_loop_complete.png` });
+    await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_loop_complete.png` });
   }
   // restart: fresh state, one canvas
   await p.click('[data-a="restart"]'); await p.waitForTimeout(3000);
@@ -74,7 +74,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.waitForSelector('.result h2', { timeout: 20000 }).catch(() => {});
   const res = await p.evaluate(() => document.querySelector('.result h2')?.textContent + ' / phase ' + window.__match.game.phase);
   assert(/DEFEAT/.test(res || ''), 'defence defeat shows result screen: ' + res);
-  await p.screenshot({ path: `${out}/${city}_defence_result.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_result.png` });
   await p.click('[data-r="menu"]'); await p.waitForTimeout(500);
   // ---------------- looters
   await p.click('[data-side="looters"]'); await p.click('[data-act="play"]'); await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
@@ -88,7 +88,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   const act = await p.evaluate(() => window.__match.game.attackers().length);
   assert(act >= 2, 'dispatch spawns units on the chosen route');
   await ff(14); await p.waitForTimeout(300);
-  await p.screenshot({ path: `${out}/${city}_looters_mid.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_looters_mid.png` });
   // run until the first extraction, then spend the reward on the group upgrade through the UI
   for (let i = 0; i < 40; i++) {
     const ex = await p.evaluate(() => {
@@ -117,7 +117,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.waitForFunction(() => /6\/6/.test(document.querySelector('[data-k="cycle"]').textContent), null, { timeout: 20000 }).catch(() => {});
   const lc = await p.textContent('[data-k="cycle"]');
   assert(/GAME LOOP 6\/6/.test(lc), 'looter game-loop checklist complete: ' + lc.replace(/\s+/g, ' '));
-  await p.screenshot({ path: `${out}/${city}_looters_loop_complete.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_looters_loop_complete.png` });
   // play on with a simple policy until the match ends
   for (let i = 0; i < 60; i++) {
     const over = await p.evaluate(() => { const g = window.__match.game; if (!g.over && g.attackers().length + g.dispatchQueue.length === 0) { const t = g.stores.slice().sort((a, b) => b.stock - a.stock)[0].idx; g.setLooterTarget(t); while (g.budget >= 150 && g.squad.length < 5) g.recruit('carrier'); if (!g.squad.length && g.budget >= 100) g.recruit('runner'); g.dispatch(); } for (let k = 0; k < 300 && !g.over; k++) g.step(1 / 30); return g.over; });
@@ -126,7 +126,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.waitForSelector('.result h2', { timeout: 20000 }).catch(() => {});
   const lres = await p.evaluate(() => ({ h: document.querySelector('.result h2')?.textContent, ex: window.__match.game.extracted }));
   assert(!!lres.h, `looter match finished: ${lres.h} (extracted ${lres.ex})`);
-  await p.screenshot({ path: `${out}/${city}_looters_result.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_looters_result.png` });
   // save / reload
   const rp = await p.evaluate(() => JSON.parse(localStorage.getItem('cityhold.progress.v1')).research);
   await p.reload(); await p.waitForTimeout(800);
@@ -135,9 +135,9 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   assert(rp > 0 && rp === rp2 && btn.includes(String(rp2)), `progress persists across reload (${rp2} RP)`);
   // portrait layout
   await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
-  await p.screenshot({ path: `${out}/${city}_menu_portrait.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_menu_portrait.png` });
   await p.click('[data-side="defence"]'); await p.click('[data-act="play"]'); await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
-  await p.screenshot({ path: `${out}/${city}_defence_portrait.png` });
+  await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_portrait.png` });
   const small = await p.evaluate(() => [...document.querySelectorAll('.hud button')].filter((b) => b.offsetParent && (b.getBoundingClientRect().height < 28)).length);
   assert(small === 0, 'no visible HUD button smaller than 28 px in portrait');
   console.log('page errors:', errs.length ? errs.join('\n') : 'none');

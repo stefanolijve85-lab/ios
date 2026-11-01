@@ -474,7 +474,7 @@ export class Match {
     m.classList.remove('hidden');
     m.innerHTML = `<div class="panel"><h2>Settings</h2>
       <label>Volume <input type="range" min="0" max="1" step="0.05" value="${this.settings.volume}" data-s="vol"></label>
-      <label><input type="checkbox" ${this.settings.reducedFx ? 'checked' : ''} data-s="fx"> Reduced visual effects (applies on restart)</label>
+      <label><input type="checkbox" ${this.settings.reducedFx ? 'checked' : ''} data-s="fx"> Mobile quality — lighter: no reflections, glow or shadows (applies on restart)</label>
       <label><input type="checkbox" ${this.settings.showHints ? 'checked' : ''} data-s="hints"> Show tutorial tips</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;

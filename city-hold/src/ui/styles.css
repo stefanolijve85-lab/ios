@@ -77,12 +77,12 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .stat b { font-size: 16px; }
 .tbtns { margin-left: auto; display: flex; gap: 6px; }
 .tbtns button { min-width: 42px; padding: 6px 8px; }
-.hint { position: absolute; top: 64px; left: 10px; max-width: 360px; background: var(--bg); border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 8px; padding: 8px 10px; }
+.hint { pointer-events: none; position: absolute; top: 64px; left: 10px; max-width: 360px; background: var(--bg); border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 8px; padding: 8px 10px; }
 .side-att .hint { border-left-color: var(--orange); }
 .hint b { color: var(--cyan); font-size: 13px; letter-spacing: 0.06em; }
 .side-att .hint b { color: var(--orange); }
 .hint p { margin: 4px 0 6px; font-size: 13px; }
-.hint button { min-height: 28px; padding: 2px 8px; font-size: 11px; }
+.hint button { pointer-events: auto; min-height: 28px; padding: 2px 8px; font-size: 11px; }
 .toasts { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); display: grid; gap: 4px; pointer-events: none; width: min(460px, 90vw); }
 .toast { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; transition: opacity 0.6s; text-align: center; }
 .toast.bad { border-color: var(--bad); color: #ffc9c2; } .toast.good { border-color: var(--good); color: #c8ffe3; } .toast.fade { opacity: 0; }
@@ -116,7 +116,7 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .tgt button { min-height: 30px; padding: 2px 8px; font-size: 12px; }
 .pausebox { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 800; letter-spacing: 0.2em; display: none; pointer-events: none; text-shadow: 0 2px 8px #000; }
 
-@media (max-width: 900px), (orientation: portrait) {
+@media (max-width: 700px), (orientation: portrait) {
   .menu { grid-template-columns: 1fr; padding: 12px; }
   .menu h1 { font-size: 32px; }
   .citylist { grid-template-columns: repeat(2, 1fr); }
@@ -150,4 +150,27 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .cycle { position: absolute; left: 10px; bottom: 160px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; line-height: 1.55; pointer-events: none; }
 .cycle .done { color: var(--good); }
 .cycle.complete { border-color: var(--good); }
-@media (max-width: 900px), (orientation: portrait) { .cycle { bottom: auto; top: 200px; font-size: 10px; padding: 4px 6px; } }
+@media (max-width: 700px), (orientation: portrait) { .cycle { bottom: auto; top: 200px; font-size: 10px; padding: 4px 6px; } }
+
+/* phones held sideways: short screens get one compact bottom row and small overlays that never cover the cards */
+@media (max-height: 500px) and (orientation: landscape) {
+  .topbar { padding: 2px 6px; gap: 8px; }
+  .brand b { font-size: 14px; } .brand span { display: none; }
+  .badge { font-size: 11px; } .stat b { font-size: 13px; } .stat small { font-size: 8px; }
+  .tbtns button { min-width: 34px; min-height: 34px; padding: 2px 6px; }
+  .hint { top: 44px; left: 6px; max-width: 34vw; padding: 4px 8px; }
+  .hint b { font-size: 11px; } .hint p { font-size: 11px; margin: 2px 0 4px; }
+  .hint button { min-height: 28px; font-size: 10px; }
+  .cycle { top: 44px; bottom: auto; left: auto; right: 6px; font-size: 10px; padding: 3px 6px; line-height: 1.35; }
+  .cycle div { display: none; } .cycle.complete small { color: var(--good); }
+  .info { top: 72px; right: 6px; width: 220px; max-height: calc(100% - 175px); font-size: 11px; }
+  .toasts { bottom: 120px; }
+  .bottom { flex-direction: row; padding: 4px 6px; gap: 6px; }
+  .cards { gap: 4px; }
+  .card { width: 76px; grid-template-rows: 30px auto auto; padding: 2px; }
+  .card img { height: 30px; width: 50px; } .card .glyph { font-size: 22px; line-height: 30px; }
+  .card .cl { font-size: 9px; } .card .cc { font-size: 12px; } .card .cn { display: none; }
+  .actions { flex: 0 0 250px; gap: 4px; font-size: 11px; }
+  .actions .btnrow button { min-height: 32px; padding: 4px 8px; font-size: 12px; }
+  .incoming .from { display: none; }
+}

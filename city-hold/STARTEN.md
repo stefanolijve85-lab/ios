@@ -23,5 +23,8 @@ Bediening: slepen = pannen, scrollen/knijpen = zoomen, P = pauze. Instellingen: 
 - `npm run build` — statische versie in `dist/`; `npm run preview` om die te bekijken.
 - `npm run placeholders` — tijdelijke 3D-modellen opnieuw genereren (dev-server moet draaien; vereist Playwright/Chromium).
 - `npm run e2e` — browsertest van de bediening (dev-server moet draaien; vereist Playwright/Chromium).
+- `npm run e2e:mobile` — dezelfde cyclus op een nagebootste iPhone met alleen tikken.
+
+**Kwaliteit:** op telefoons staat standaard *Mobile quality* aan (geen reflecties, gloed of schaduwen). Op de pc kun je die in Settings aan- of uitzetten.
 
 Welke definitieve 3D-assets nog ontbreken en hoe je ze aanlevert: zie **ASSETS_TODO.md**.

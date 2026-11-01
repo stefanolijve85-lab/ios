@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Game, Unit } from '../sim/game';
 import type { MapDef, Vec2 } from '../maps/types';
-import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, updateStoreVisual, type WorldHandles } from './world';
+import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, type WorldHandles } from './world';
 import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
@@ -51,6 +51,8 @@ export class MatchView {
   private pathLine: THREE.Line;
   private routeLines: THREE.Group = new THREE.Group();
   private socketMarkers = new THREE.Group();
+  /** faint permanent build-spot markers shown during the preparation phase */
+  private idleSockets = new THREE.Group();
   private entryArrows = new THREE.Group();
   private coverage = new THREE.Group();
   private overlay: HTMLDivElement;
@@ -73,7 +75,7 @@ export class MatchView {
 
   constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean) {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -88,7 +90,7 @@ export class MatchView {
     this.scene.add(new THREE.HemisphereLight(0x6f84c0, 0x5a3a20, 0.75));
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
-    moon.castShadow = !reducedFx; moon.shadow.mapSize.set(2048, 2048);
+    moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);
     const sc = moon.shadow.camera; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50; sc.near = 10; sc.far = 160; moon.shadow.bias = -0.0005;
     this.scene.add(moon, moon.target);
     this.world = buildWorld(map, this.scene, reducedFx);
@@ -101,7 +103,15 @@ export class MatchView {
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));
     this.destMarker.position.y = 0.05; this.scene.add(this.destMarker);
     this.pathLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0x36e0ff, dashSize: 0.5, gapSize: 0.35, transparent: true, opacity: 0.9 }));
-    this.scene.add(this.pathLine, this.routeLines, this.socketMarkers, this.entryArrows, this.coverage);
+    this.scene.add(this.pathLine, this.routeLines, this.socketMarkers, this.entryArrows, this.coverage, this.idleSockets);
+    if (side === 'defence') {
+      const plate = new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.22, depthWrite: false });
+      for (const so of map.sockets) {
+        const geo = so.size === 'large' ? new THREE.RingGeometry(1.45, 1.6, 4, 1, Math.PI / 4) : new THREE.RingGeometry(0.62, 0.72, 24);
+        const mk = new THREE.Mesh(geo.rotateX(-Math.PI / 2), plate); mk.position.set(so.x, 0.07, so.z); if (so.rot === 90) mk.rotation.y = Math.PI / 2;
+        this.idleSockets.add(mk);
+      }
+    }
     this.target.set(map.camera.x, map.camera.z); this.dist = map.camera.dist;
     // overlay for labels/bars
     this.overlay = document.createElement('div'); this.overlay.className = 'overlay-layer'; container.appendChild(this.overlay);
@@ -382,10 +392,12 @@ export class MatchView {
     // stores
     g.stores.forEach((s, i) => {
       const v = this.world.stores[i];
-      updateStoreVisual(v, s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0);
+      v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
       const scr = this.toScreen(sd.front.x + sd.normal.x * 0.5, 4.8, sd.front.z + sd.normal.z * 0.5);
-      el.style.transform = `translate(${scr.x}px, ${scr.y}px) translate(-50%, -100%)`;
+      // keep store labels below the top bar on short screens
+      const minY = (this.container.querySelector('.topbar') as HTMLElement | null)?.offsetHeight ?? 0;
+      el.style.transform = `translate(${scr.x}px, ${Math.max(scr.y, minY + el.offsetHeight + 4)}px) translate(-50%, -100%)`;
       (el.querySelector('.struct i') as HTMLElement).style.width = `${(s.structure / s.maxStructure) * 100}%`;
       (el.querySelector('.stock i') as HTMLElement).style.width = `${s.stock}%`;
       (el.querySelector('.sl-num') as HTMLElement).textContent = `${Math.ceil(s.structure)}/${s.maxStructure} · stock ${s.stock}${s.reserved ? ` (−${s.reserved} moving)` : ''}`;
@@ -451,6 +463,7 @@ export class MatchView {
     }
     // van lights flash
     this.world.vanLights.forEach((l, i) => ((l.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(this.time * 9 + i * Math.PI) > 0 ? 0x3a6aff : 0x0a1440)));
+    for (const sc of this.world.animated) { sc.tex.offset.x += sc.vx * dt; sc.tex.offset.y += sc.vy * dt; }
     // fountain spray
     if (this.world.fountainWater) {
       const pa = this.world.fountainWater.geometry.attributes.position as THREE.BufferAttribute;
@@ -462,6 +475,7 @@ export class MatchView {
     }
     // destination marker / path preview fade
     if (this.destT > 0) { this.destT -= dt; (this.destMarker.material as THREE.MeshBasicMaterial).opacity = Math.min(1, this.destT); this.pathLine.visible = this.destT > 0; (this.pathLine.material as THREE.LineDashedMaterial).opacity = Math.min(0.9, this.destT); }
+    this.idleSockets.visible = g.phase === 'prep' && !this.showSockets;
     // socket markers pulse
     this.socketMarkers.children.forEach((m) => m.scale.setScalar(1 + Math.sin(this.time * 5) * 0.06));
     this.entryArrows.children.forEach((m, i) => (m.position.y = 0.07 + Math.abs(Math.sin(this.time * 3 + i)) * 0.0));

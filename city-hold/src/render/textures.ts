@@ -55,18 +55,26 @@ export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | '
     const base = kind === 'brick' ? [120, 72, 58] : kind === 'stone' || kind === 'plaza' ? [150, 140, 125] : [112, 102, 94];
     g.fillStyle = kind === 'brick' ? '#3a2620' : '#25262b'; g.fillRect(0, 0, 512, 512);
     if (kind === 'cobble') {
-      // granite setts in slightly irregular rows: rounded rectangles with tonal variation
-      g.fillStyle = '#1e1f24'; g.fillRect(0, 0, 512, 512);
-      const sw = 26, sh = 22;
-      for (let y = 0; y < 512; y += sh) {
-        const ox = (Math.round(y / sh) % 2) * sw * 0.5 + (rnd() - 0.5) * 4;
-        for (let x = -sw; x < 512 + sw; x += sw) {
-          const w = sw - 3 - rnd() * 3, h = sh - 3 - rnd() * 2;
-          const v = rnd() * 34 - 17; const bl = rnd() * 10 - 2;
-          const cx = x + ox + (rnd() - 0.5) * 2, cy = y + (rnd() - 0.5) * 2;
-          g.fillStyle = `rgb(${base[0] + v},${base[1] + v - 2},${base[2] + v + bl})`;
-          g.beginPath(); (g as CanvasRenderingContext2D & { roundRect: (x: number, y: number, w: number, h: number, r: number) => void }).roundRect(cx + 1.5, cy + 1.5, w, h, 6); g.fill();
-          g.fillStyle = 'rgba(255,235,200,0.07)'; g.beginPath(); g.ellipse(cx + w * 0.45, cy + h * 0.35, w * 0.3, h * 0.2, 0, 0, Math.PI * 2); g.fill();
+      // Parisian fan pattern (pavés en éventail): concentric arcs of small granite setts, rows overlapping
+      g.fillStyle = '#34312f'; g.fillRect(0, 0, 512, 512);
+      const R = 128;
+      for (let row = -2; row <= 9; row++) {
+        const cy = row * (R * 0.5);
+        for (let col = -1; col <= 2; col++) {
+          const cx = col * 2 * R + (((row % 2) + 2) % 2) * R;
+          for (let r = R; r >= 10; r -= 12.5) {
+            const n = Math.max(3, Math.round((Math.PI * r) / 12.5));
+            for (let k = 0; k < n; k++) {
+              const ang = Math.PI + (k + 0.5) * (Math.PI / n);
+              const x = cx + Math.cos(ang) * r, y = cy + R * 0.78 + Math.sin(ang) * r * 0.78; // taller than the row pitch: each row overlaps the feet of the row above
+              const v = rnd() * 34 - 17; const bl = rnd() * 10 - 3;
+              g.save(); g.translate(((x % 512) + 512) % 512, ((y % 512) + 512) % 512); g.rotate(ang + Math.PI / 2);
+              g.fillStyle = `rgb(${base[0] + v},${base[1] + v - 2},${base[2] + v + bl})`;
+              g.beginPath(); (g as CanvasRenderingContext2D & { roundRect: (x: number, y: number, w: number, h: number, r: number) => void }).roundRect(-5.2, -5.2, 10.4, 10.4, 3); g.fill();
+              g.fillStyle = 'rgba(255,235,200,0.08)'; g.fillRect(-3, -4, 5, 3);
+              g.restore();
+            }
+          }
         }
       }
     } else if (kind === 'brick') {
@@ -337,6 +345,43 @@ export function arrowTexture(color: string): THREE.Texture {
     g.fillStyle = color;
     g.beginPath(); g.moveTo(32, 4); g.lineTo(60, 48); g.lineTo(42, 48); g.lineTo(42, 124); g.lineTo(22, 124); g.lineTo(22, 48); g.lineTo(4, 48); g.closePath(); g.fill();
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  });
+}
+
+export function manholeTexture(): THREE.Texture {
+  return cached('manhole', () => {
+    const [c, g] = canvas(128, 128); g.clearRect(0, 0, 128, 128);
+    g.fillStyle = '#3a3a3c'; g.beginPath(); g.arc(64, 64, 62, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#55565a'; g.lineWidth = 4; g.beginPath(); g.arc(64, 64, 56, 0, Math.PI * 2); g.stroke();
+    g.lineWidth = 2; for (let r = 12; r < 52; r += 9) { g.beginPath(); g.arc(64, 64, r, 0, Math.PI * 2); g.stroke(); }
+    for (let a = 0; a < 16; a++) { g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(a * Math.PI / 8) * 52, 64 + Math.sin(a * Math.PI / 8) * 52); g.stroke(); }
+    g.fillStyle = '#6a6b70'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.fillText('EAU', 64, 68);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  });
+}
+
+export function grateTexture(): THREE.Texture {
+  return cached('grate', () => {
+    const [c, g] = canvas(128, 64); g.fillStyle = '#2c2d30'; g.fillRect(0, 0, 128, 64);
+    g.fillStyle = '#0a0a0c'; for (let x = 8; x < 124; x += 12) g.fillRect(x, 8, 6, 48);
+    g.strokeStyle = '#4a4b50'; g.lineWidth = 3; g.strokeRect(2, 2, 124, 60);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  });
+}
+
+export function fallingWaterTexture(): THREE.Texture {
+  return cached('fallwater', () => {
+    const [c, g] = canvas(128, 128); g.clearRect(0, 0, 128, 128);
+    for (let i = 0; i < 70; i++) { const x = rnd() * 128; const grd = g.createLinearGradient(0, 0, 0, 128); grd.addColorStop(0, 'rgba(230,245,255,0.0)'); grd.addColorStop(0.5, `rgba(230,245,255,${0.08 + rnd() * 0.22})`); grd.addColorStop(1, 'rgba(230,245,255,0.02)'); g.fillStyle = grd; g.fillRect(x, rnd() * 40, 1 + rnd() * 2, 60 + rnd() * 68); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  });
+}
+
+export function rippleTexture(): THREE.Texture {
+  return cached('ripple', () => {
+    const [c, g] = canvas(256, 256); g.fillStyle = '#1d4a52'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(160,220,230,${0.08 + rnd() * 0.18})`; g.lineWidth = 1 + rnd() * 1.5; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 256, 6 + rnd() * 26, 2 + rnd() * 8, rnd() * 3, 0, Math.PI * 2); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
   });
 }
 

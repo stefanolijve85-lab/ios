@@ -60,9 +60,9 @@ export const PARIS: MapDef = {
   islands: [],
   props,
   stores: [
-    { name: 'Jewellery', kind: 'jewellery', color: 0x7a1f2b, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
-    { name: 'Electronics', kind: 'electronics', color: 0x1c2a4e, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
-    { name: 'Fashion', kind: 'fashion', color: 0x1d5a3a, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
+    { name: 'Jewellery', brand: 'Maison Aurèle', kind: 'jewellery', color: 0x7a1f2b, front: { x: -10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
+    { name: 'Electronics', brand: 'Volta Électronique', kind: 'electronics', color: 0x1c2a4e, front: { x: 0, z: -14 }, normal: { x: 0, z: 1 }, width: 8 },
+    { name: 'Fashion', brand: 'Atelier Verdier', kind: 'fashion', color: 0x1d5a3a, front: { x: 10, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
   ],
   entries: [
     { id: 'nw', name: 'North-west street', x: -21, z: -29, spawn: true, extract: true, marker: 'street' },

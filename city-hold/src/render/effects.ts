@@ -62,7 +62,7 @@ export class Effects {
     this.spark = new ParticleField(150, flameTexture(), true, 0x66e6ff);
     this.group.add(this.smoke.points, this.fire.points, this.spray.points, this.spark.points);
     scene.add(this.group);
-    if (!reduced) for (let i = 0; i < 3; i++) { const l = new THREE.PointLight(0xff7a2a, 0, 14, 1.6); this.fireLights.push(l); this.group.add(l); }
+    if (!reduced) for (let i = 0; i < 2; i++) { const l = new THREE.PointLight(0xff7a2a, 0, 14, 1.6); this.fireLights.push(l); this.group.add(l); }
   }
 
   setViewport(h: number) { for (const f of [this.fire, this.smoke, this.spray, this.spark]) f.setScale(h); }

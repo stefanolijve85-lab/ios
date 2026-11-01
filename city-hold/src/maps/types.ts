@@ -21,6 +21,8 @@ export type StoreKind = 'jewellery' | 'electronics' | 'fashion' | 'sports' | 'ph
 
 export interface StoreDef {
   name: string;
+  /** fictional brand painted on the fascia (defaults to the name) */
+  brand?: string;
   kind: StoreKind;
   color: number;
   /** centre of the shopfront on the facade line */

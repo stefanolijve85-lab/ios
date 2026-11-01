@@ -88,7 +88,7 @@ function settings() {
   const s = progress.settings;
   const m = modal(`<h2>Settings</h2>
     <label>Volume <input type="range" min="0" max="1" step="0.05" value="${s.volume}" data-s="vol"></label>
-    <label><input type="checkbox" ${s.reducedFx ? 'checked' : ''} data-s="fx"> Reduced visual effects (fewer particles, no shadows)</label>
+    <label><input type="checkbox" ${s.reducedFx ? 'checked' : ''} data-s="fx"> Mobile quality — lighter: no reflections, glow or shadows, fewer particles</label>
     <label><input type="checkbox" ${s.showHints ? 'checked' : ''} data-s="hints"> Show tutorial tips</label>`);
   m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { s.volume = Number((e.target as HTMLInputElement).value); saveProgress(progress); });
   m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { s.reducedFx = (e.target as HTMLInputElement).checked; saveProgress(progress); });

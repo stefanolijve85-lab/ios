@@ -14,6 +14,16 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Paris street realism pass
+
+- **Buildings:** modular Haussmann facade kit with real depth (see `ASSETS_TODO.md` for the full list), drawn as one InstancedMesh per element type per building.
+- **Shops:** shopfronts with real interiors, fictional names, products tied to stock, shutter levels and damage states (cracked, shattered, breached with bent shutter, boxes and shards).
+- **Street:** fan-pattern setts, pavements with kerbs and gutters, manhole covers, drain grates, cast-iron lamps, Davioud-style benches, a moulded fountain with falling water and underwater lights; build sockets are faintly marked during preparation.
+- **Lighting:** blue hour with warm shop and lamp light, soft moon shadows (only the moon casts shadows), wet-street reflections capped so highlights stay controlled; fire and smoke stay local.
+- **Performance:** shared geometry/materials, instancing for facades and products, static props/fountain/shop interiors merged per material (phone draw calls 718 → 394), point lights capped (3 lamps + 3 shops + 2 fire). **Mobile quality** (default on touch devices): no reflections, bloom or shadows, pixel ratio ≤ 1.5. Measured in software rendering: ~4 ms per frame in mobile quality.
+- **Phone layout:** compact layout for phones held sideways (cards in one row, tips and loop checklist never cover the cards); `tools/e2e-mobile.cjs` plays the defence loop on an emulated iPhone with taps only.
+- Screenshots: `docs/screenshots/paris_street_kit_overview.png`, `paris_street_kit_damage.png`, `paris_phone_landscape.png`.
+
 ## Paris-street milestone: temporary 3D models and the complete loop
 
 - Characters and props are loaded from **model slots** (`src/render/assets.ts`, `public/models/manifest.json`). All 29 slots are filled with temporary GLB models generated from the procedural figures (`npm run placeholders`), including 14 baked animation clips per character. Final GLBs replace them without code changes; the menu **3D assets** and `ASSETS_TODO.md` list what is still missing. If a model cannot be loaded the game falls back to the procedural figure.

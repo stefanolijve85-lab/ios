@@ -45,19 +45,25 @@ The in-game menu **3D assets** shows the live status per slot.
 `prop.van` (image 17, light bar meshes named `beacon*`), `prop.barrier` (image 15), `prop.concrete` (image 31),
 `prop.camera_mast` (image 16).
 
-## Missing — still generated in code (no slot yet; I add the slot when the asset arrives)
+## Built in code for the Paris street (no slot yet — final assets would still look better)
 
-These have the biggest visual impact on matching concept art 01–07:
+These are now real 3D geometry instead of painted textures, but they are procedural stand-ins:
 
-1. **Haussmann building kit** (Paris street): facade bay with real window depth and iron balcony, corner module,
-   ground-floor module, mansard roof module with dormers, chimney stack with pots. Limestone / slate / zinc PBR.
-2. **Three shopfronts** at human scale, fixed order left → right: burgundy jewellery, navy electronics,
-   green fashion. Each with: interior with displays, door, roll-down shutter (levels 1–3 look), and damage states
-   intact / cracked glass / shattered + bent shutter (images 04–06). Interior should come in 3–5 "stock" states.
-3. **Fountain** (central, tiered, lit basin — image 01/03).
-4. **Ground materials** (PBR, tileable, with height/normal): wet cobbles, pavement slabs, kerb stones.
-5. **HDRI** of a blue-hour sky for reflections and ambient light.
-6. Optional: café terrace set, flower beds, debris / glass-shard set, fire and smoke flipbook textures.
+1. **Haussmann facade kit** (`src/render/haussmann.ts`): houses of 3–5 bays with varying stone tint and storey
+   height, recessed windows with casements, stone surrounds and pediments, string courses, main cornice, continuous
+   wrought-iron balconies on the noble and top floors, balconettes, rusticated ground floor, mansard roof with lit
+   dormers and chimney stacks. *Final asset wanted:* modular GLB kit (bay, corner, ground floor, roof, dormer,
+   chimney) with sculpted mouldings, consoles and PBR limestone/zinc.
+2. **Shopfronts** (`src/render/shopfront.ts`): painted timber fronts with fictional names (Maison Aurèle, Volta
+   Électronique, Atelier Verdier), framed glazing, recessed glazed door, lit interior (floor, back wall, ceiling,
+   counters, racks, screens, mannequins) with products that disappear as stock is taken, roller shutter (levels 1–3)
+   and damage states (cracked → shattered → breached with bent shutter, boxes and glass shards). *Final asset wanted:*
+   three shop GLBs with interiors and the same damage states.
+3. **Fountain** (`src/render/street.ts`): moulded lathe basin, two bowls, bronze finial, falling-water sheets,
+   underwater lights. *Final asset wanted:* sculpted fountain GLB.
+4. **Street surface:** Parisian fan-pattern setts with a generated normal map, slab pavements, kerbs, gutters,
+   manhole covers and drain grates. *Final asset wanted:* scanned PBR materials (setts, slabs, kerb) and decals.
+5. **Sky / ambient light:** procedural gradient and a generic environment. *Final asset wanted:* blue-hour HDRI.
 
 Other cities (Amsterdam, London, Milan, Berlin, São Paulo) need their own building kits; they are out of scope
 for this Paris-street milestone.

@@ -3,6 +3,10 @@ import type { BuildingDef, MapDef, PropDef, StoreDef } from '../maps/types';
 import { mat } from './humans';
 import { VAN } from '../sim/nav';
 import { cloneModel } from './assets';
+import { buildHaussmann } from './haussmann';
+import { ShopVisual } from './shopfront';
+import { mergeStatic } from './merge';
+import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
 import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, radialTexture, roofTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
@@ -19,18 +23,22 @@ export interface StoreVisual {
   level: number;
 }
 
+/** anything that draws a store and reacts to its state */
+export interface ShopLike { hit: THREE.Mesh; update(structureRatio: number, stockRatio: number, level: number, breached: boolean): void }
+
 export interface Fadeable { meshes: THREE.Mesh[]; box: THREE.Box3; opacity: number }
 
 export interface WorldHandles {
   group: THREE.Group;
   ground: THREE.Mesh;
-  stores: StoreVisual[];
+  stores: ShopLike[];
   fadeables: Fadeable[];
   cars: Map<number, { intact: THREE.Group; burned: THREE.Group }>;
   van: THREE.Group;
   vanLights: THREE.Mesh[];
   water: THREE.Mesh[];
   fountainWater: THREE.Points | null;
+  animated: Scroll[];
   lampLights: THREE.PointLight[];
 }
 
@@ -70,7 +78,25 @@ function facadeMat(b: BuildingDef, width: number, variant: number): THREE.MeshSt
 /** chimney row sits near the street-facing (south) edge so it reads from the camera */
 function side0(r: { z0: number; z1: number }, idx: number) { const c = (r.z0 + r.z1) / 2; return c > 0 ? r.z0 + 2.2 + (idx % 2) * 1.5 : r.z1 - 2.2 - (idx % 2) * 1.5; }
 
-function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeables: Fadeable[]) {
+function registerFade(b: BuildingDef, meshes: THREE.Mesh[], fadeables: Fadeable[]) {
+  if (!b.fadeable) return;
+  const r = b.rect;
+  const bx = new THREE.Box3(new THREE.Vector3(r.x0, 0, r.z0), new THREE.Vector3(r.x1, b.height + 4, r.z1));
+  for (const m of meshes) {
+    const ms = Array.isArray(m.material) ? m.material : [m.material];
+    m.material = ms.map((mm) => { const c = (mm as THREE.Material).clone(); c.transparent = true; return c; });
+    if ((m.material as THREE.Material[]).length === 1) m.material = (m.material as THREE.Material[])[0];
+  }
+  fadeables.push({ meshes, box: bx, opacity: 1 });
+}
+
+function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeables: Fadeable[], map?: MapDef, mobile = false) {
+  // Paris uses the modular Haussmann facade kit (real window depth, balconies, cornices)
+  if (map && map.id === 'paris' && b.style === 'haussmann' && !(b.passages?.length)) {
+    const res = buildHaussmann(b, map, parent, { stores: map.stores, mobile, index: idx });
+    registerFade(b, res.meshes, fadeables);
+    return;
+  }
   const r = b.rect; const w = r.x1 - r.x0, d = r.z1 - r.z0; const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
   const g = new THREE.Group(); parent.add(g);
   const sideMat = facadeMat(b, d, idx % 3), frontMat = facadeMat(b, w, (idx + 1) % 3);
@@ -141,15 +167,7 @@ function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeabl
     meshes.push(mesh(box, mat(0x6d7176, 0.8), g, cx, b.height + 0.4, cz, w * 0.96, 0.8, d * 0.96));
     meshes.push(mesh(box, mat(0x8a8e94, 0.6, 0.3), g, cx + w * 0.2, b.height + 1.2, cz, 2.5, 1.2, 1.8));
   }
-  if (b.fadeable) {
-    const bx = new THREE.Box3(new THREE.Vector3(r.x0, 0, r.z0), new THREE.Vector3(r.x1, b.height + 4, r.z1));
-    for (const m of meshes) {
-      const ms = Array.isArray(m.material) ? m.material : [m.material];
-      m.material = ms.map((mm) => { const c = (mm as THREE.Material).clone(); c.transparent = true; return c; });
-      if ((m.material as THREE.Material[]).length === 1) m.material = (m.material as THREE.Material[])[0];
-    }
-    fadeables.push({ meshes, box: bx, opacity: 1 });
-  }
+  registerFade(b, meshes, fadeables);
 }
 
 function buildStore(s: StoreDef, idx: number, parent: THREE.Group, withLight: boolean): StoreVisual {
@@ -282,15 +300,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
   if (glb) { g.add(glb); if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, 4.3, p.z)); return; }
   switch (p.type) {
     case 'lamp': {
-      // Parisian-style cast-iron lamppost with a glowing lantern
-      const iron = mat(0x16181c, 0.45, 0.7);
-      mesh(cyl, iron, g, 0, 0.25, 0, 0.16, 0.5, 0.16);
-      mesh(new THREE.CylinderGeometry(0.05, 0.08, 3.6, 8), iron, g, 0, 2.2, 0);
-      mesh(cyl, iron, g, 0, 4.0, 0, 0.09, 0.12, 0.09);
-      const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(5) }); glow.name = 'glow';
-      mesh(new THREE.CylinderGeometry(0.2, 0.13, 0.5, 6), glow, g, 0, 4.35, 0, 1, 1, 1, false);
-      mesh(new THREE.ConeGeometry(0.3, 0.28, 6), iron, g, 0, 4.74, 0);
-      mesh(new THREE.SphereGeometry(0.05, 6, 4), iron, g, 0, 4.92, 0);
+      buildLamp(g);
       lamps.push(new THREE.Vector3(p.x, 4.3, p.z));
       break;
     }
@@ -312,7 +322,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'planter': mesh(box, mat(0x2e3034, 0.6, 0.2), g, 0, 0.35, 0, 1.4, 0.7, 1.4); bush(g, 0, 0.75, 0, 0.62, i); break;
-    case 'bench': mesh(box, mat(0x5a3a22, 0.8), g, 0, 0.45, 0, 1.8, 0.08, 0.5); mesh(box, mat(0x5a3a22, 0.8), g, 0, 0.75, -0.22, 1.8, 0.5, 0.06); break;
+    case 'bench': buildBench(g); break;
     case 'bollard': mesh(cyl, mat(0x202226, 0.6, 0.3), g, 0, 0.45, 0, 0.12, 0.9, 0.12); break;
     case 'umbrella': {
       mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 1.2, 0, 0.04, 2.4, 0.04);
@@ -354,8 +364,12 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     mesh(box, kerb, group, kx + kw / 2, 0.06, kz, 0.18, 0.12, kd, false); mesh(box, kerb, group, kx - kw / 2, 0.06, kz, 0.18, 0.12, kd, false);
   }
   const fadeables: Fadeable[] = [];
-  map.buildings.forEach((bd, i) => buildBuilding(bd, group, i, fadeables));
-  const stores = map.stores.map((s, i) => buildStore(s, i, group, !reducedFx));
+  map.buildings.forEach((bd, i) => buildBuilding(bd, group, i, fadeables, map, reducedFx));
+  const stores: ShopLike[] = map.stores.map((s, i) => {
+    if (map.id === 'paris') { const sv = new ShopVisual(s, i, reducedFx); group.add(sv.group); return sv; }
+    const v = buildStore(s, i, group, !reducedFx);
+    return { hit: v.hit, update: (a: number, b: number, c: number, d: boolean) => updateStoreVisual(v, a, b, c, d) };
+  });
   // walls / railings / quays
   for (const w of map.walls) {
     const h = w.h ?? 2.6;
@@ -416,48 +430,33 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // fountain
   let fountainWater: THREE.Points | null = null;
+  const animated: Scroll[] = [];
   if (map.fountain) {
-    const f = map.fountain; const stone = mat(0xc9bb9e, 0.8);
-    const fg = new THREE.Group(); fg.position.set(f.x, 0, f.z); group.add(fg);
-    mesh(new THREE.CylinderGeometry(f.r * 0.86, f.r * 0.88, 0.7, 40, 1, true), stone, fg, 0, 0.35, 0);
-    mesh(new THREE.TorusGeometry(f.r * 0.87, 0.16, 8, 48).rotateX(Math.PI / 2), stone, fg, 0, 0.7, 0);
-    mesh(new THREE.CylinderGeometry(f.r * 1.0, f.r * 1.0, 0.08, 40), mat(0x8f8676, 0.85), fg, 0, 0.04, 0);
-    const wmat = new THREE.MeshStandardMaterial({ color: 0x1f4a50, roughness: 0.04, metalness: 0.45, emissive: 0x0a2c32, emissiveIntensity: 0.7 });
-    mesh(new THREE.CylinderGeometry(f.r * 0.84, f.r * 0.84, 0.05, 40), wmat, fg, 0, 0.6, 0);
-    mesh(new THREE.CylinderGeometry(0.5, 0.7, 1.8, 12), stone, fg, 0, 1.3, 0);
-    mesh(new THREE.CylinderGeometry(1.6, 0.4, 0.35, 20), mat(0xa89a80, 0.8), fg, 0, 2.2, 0);
-    mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.04, 20), wmat, fg, 0, 2.39, 0);
-    mesh(new THREE.CylinderGeometry(0.25, 0.35, 1.1, 10), stone, fg, 0, 2.9, 0);
-    mesh(new THREE.CylinderGeometry(0.85, 0.25, 0.25, 16), stone, fg, 0, 3.45, 0);
-    mesh(new THREE.SphereGeometry(0.3, 10, 8), mat(0xb8a27a, 0.6, 0.3), fg, 0, 3.85, 0);
-    const lightRing = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2a8).multiplyScalar(4) });
+    const f = map.fountain;
+    const fh = buildFountain(f, group, reducedFx);
+    animated.push(...fh.animated); fountainWater = fh.spray;
+    // ring of planters with benches between them, all inside the fountain's collision circle
     for (let k = 0; k < 8; k++) {
       const a = (k / 8) * Math.PI * 2;
-      mesh(box, mat(0x3a3a3c, 0.8), fg, Math.cos(a) * (f.r - 0.35), 0.35, Math.sin(a) * (f.r - 0.35), 1.0, 0.7, 1.0).rotation.y = -a;
-      bush(fg, Math.cos(a) * (f.r - 0.35), 0.7, Math.sin(a) * (f.r - 0.35), 0.5, k);
-      // bench between planters, facing out to the square
-      const ab = a + Math.PI / 8; const bg = new THREE.Group(); bg.position.set(Math.cos(ab) * (f.r - 0.3), 0, Math.sin(ab) * (f.r - 0.3)); bg.rotation.y = -ab + Math.PI / 2; fg.add(bg);
-      const wood = mat(0x5a3a22, 0.8), iron = mat(0x1a1a1c, 0.5, 0.6);
-      mesh(box, wood, bg, 0, 0.45, 0.05, 1.5, 0.06, 0.45); mesh(box, wood, bg, 0, 0.75, -0.17, 1.5, 0.4, 0.05);
-      for (const sx of [-0.65, 0.65]) mesh(box, iron, bg, sx, 0.22, 0, 0.06, 0.44, 0.45);
-      mesh(box, lightRing, fg, Math.cos(a + 0.4) * f.r * 0.86, 0.72, Math.sin(a + 0.4) * f.r * 0.86, 0.15, 0.06, 0.15, false);
+      mesh(box, mat(0x2e3034, 0.6, 0.2), fh.group, Math.cos(a) * (f.r - 0.35), 0.35, Math.sin(a) * (f.r - 0.35), 1.0, 0.7, 1.0).rotation.y = -a;
+      bush(fh.group, Math.cos(a) * (f.r - 0.35), 0.7, Math.sin(a) * (f.r - 0.35), 0.5, k);
+      const ab = a + Math.PI / 8; const bg = new THREE.Group(); bg.position.set(Math.cos(ab) * (f.r - 0.32), 0, Math.sin(ab) * (f.r - 0.32)); bg.rotation.y = -ab - Math.PI / 2; fh.group.add(bg);
+      buildBench(bg, 1.5);
     }
-    if (!reducedFx) {
-      const n = 160; const pos = new Float32Array(n * 3);
-      const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      fountainWater = new THREE.Points(geom, new THREE.PointsMaterial({ color: 0xcfeaff, size: 0.09, transparent: true, opacity: 0.8 }));
-      fountainWater.position.set(f.x, 0, f.z); group.add(fountainWater);
-    }
+    mergeStatic(fh.group);
   }
   const cars: WorldHandles['cars'] = new Map();
   const lampPos: THREE.Vector3[] = [];
-  map.props.forEach((p, i) => buildProp(p, group, i, cars, lampPos));
+  // static props are merged per material after building (cars stay separate: they can catch fire)
+  const propGroup = new THREE.Group(); group.add(propGroup);
+  map.props.forEach((p, i) => buildProp(p, p.type === 'car' ? group : propGroup, i, cars, lampPos));
+  mergeStatic(propGroup);
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
   const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.32)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   lampPos.forEach((lp, i) => {
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), pool); pm.rotation.x = -Math.PI / 2; pm.position.set(lp.x, 0.03, lp.z); group.add(pm);
-    if (!reducedFx && i < 7) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
+    if (!reducedFx && i < 3) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) {
     const pm = new THREE.Mesh(new THREE.PlaneGeometry(s.width + 2, 5), pool); pm.rotation.x = -Math.PI / 2;
@@ -474,7 +473,8 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     const lm = new THREE.Mesh(new THREE.PlaneGeometry(r.x1 - r.x0, r.z1 - r.z0), new THREE.MeshBasicMaterial({ color: 0xe0b020, transparent: true, opacity: 0.18, depthWrite: false }));
     lm.rotation.x = -Math.PI / 2; lm.position.set((r.x0 + r.x1) / 2, 0.04, (r.z0 + r.z1) / 2); group.add(lm);
   }
-  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights };
+  buildStreetDetails(map, group);
+  return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated };
 }
 
 export function skyTexture(): THREE.Texture {

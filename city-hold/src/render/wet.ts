@@ -8,7 +8,7 @@ const WetShader = {
   name: 'WetStreet',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 0.75 },
+    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 0.55 },
   },
   vertexShader: `uniform mat4 textureMatrix; uniform vec2 repeat; varying vec4 vR; varying vec2 vUv; varying vec2 vBig;
     void main(){ vR = textureMatrix * vec4(position, 1.0); vUv = uv * repeat; vBig = uv * 3.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -30,7 +30,8 @@ const WetShader = {
       acc /= wsum;
       // keep mostly the bright light sources: dull facades should not wash the street out
       float peak = max(acc.r, max(acc.g, acc.b));
-      acc *= smoothstep(0.12, 0.9, peak) * 1.6;
+      acc *= smoothstep(0.12, 0.9, peak) * 1.15;
+      acc = min(acc, vec3(0.9)); // controlled highlights: no blown-out puddles
       float puddle = smoothstep(-0.2, 0.6, n2(vBig * 2.0));
       float wet = strength * mix(0.35, 1.0, puddle) * mix(1.0, 0.55, smoothstep(0.25, 0.6, lum));
       gl_FragColor = vec4(acc * color * wet, 1.0);
