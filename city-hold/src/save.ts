@@ -13,8 +13,13 @@ export interface Progress {
 
 const KEY = 'cityhold.progress.v1';
 
+/** phones/tablets start with reduced effects (no shadows, fewer particles); can be changed in Settings */
+function coarsePointer(): boolean {
+  try { return typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches; } catch { return false; }
+}
+
 export function defaultProgress(): Progress {
-  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: false, showHints: true } };
+  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: coarsePointer(), showHints: true } };
 }
 
 export interface StorageLike { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }

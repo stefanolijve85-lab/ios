@@ -83,7 +83,7 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .side-att .hint b { color: var(--orange); }
 .hint p { margin: 4px 0 6px; font-size: 13px; }
 .hint button { min-height: 28px; padding: 2px 8px; font-size: 11px; }
-.toasts { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: grid; gap: 4px; pointer-events: none; width: min(460px, 90vw); }
+.toasts { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); display: grid; gap: 4px; pointer-events: none; width: min(460px, 90vw); }
 .toast { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; transition: opacity 0.6s; text-align: center; }
 .toast.bad { border-color: var(--bad); color: #ffc9c2; } .toast.good { border-color: var(--good); color: #c8ffe3; } .toast.fade { opacity: 0; }
 .banner { position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%); background: var(--bg); border: 1px solid var(--cyan); border-radius: 10px; padding: 14px 24px; text-align: center; pointer-events: none; }

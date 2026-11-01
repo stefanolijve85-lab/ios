@@ -67,7 +67,10 @@ export interface Humanoid {
 function rng(seed: number) { let s = seed % 2147483647 || 1; return () => { s = (s * 48271) % 2147483647; return s / 2147483647; }; }
 
 function m(g: THREE.BufferGeometry, mt: THREE.Material, parent: THREE.Object3D, x = 0, y = 0, z = 0) {
-  const mesh = new THREE.Mesh(g, mt); mesh.position.set(x, y, z); mesh.castShadow = true; parent.add(mesh); return mesh;
+  const mesh = new THREE.Mesh(g, mt); mesh.position.set(x, y, z);
+  // only the large body parts cast shadows: keeps the shadow pass cheap with many units
+  mesh.castShadow = g === geo.torso || g === geo.thigh || g === geo.shin || g === geo.head || g === geo.box;
+  parent.add(mesh); return mesh;
 }
 
 export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
