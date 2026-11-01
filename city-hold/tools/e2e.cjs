@@ -59,8 +59,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   // lose quickly: remove defenders and run
   await p.evaluate(() => { const g = window.__match.game; g.units = []; });
   for (let w = 0; w < 12; w++) { await p.evaluate(() => window.__match.game.startWave()); await ff(200); if (await p.evaluate(() => window.__match.game.over)) break; }
-  await p.waitForTimeout(1500);
-  const res = await p.evaluate(() => document.querySelector('.result h2')?.textContent);
+  await p.waitForSelector('.result h2', { timeout: 20000 }).catch(() => {});
+  const res = await p.evaluate(() => document.querySelector('.result h2')?.textContent + ' / phase ' + window.__match.game.phase);
   assert(/DEFEAT/.test(res || ''), 'defence defeat shows result screen: ' + res);
   await p.screenshot({ path: `${out}/${city}_defence_result.png` });
   await p.click('[data-r="menu"]'); await p.waitForTimeout(500);
@@ -82,7 +82,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     const over = await p.evaluate(() => { const g = window.__match.game; if (!g.over && g.attackers().length + g.dispatchQueue.length === 0) { const t = g.stores.slice().sort((a, b) => b.stock - a.stock)[0].idx; g.setLooterTarget(t); while (g.budget >= 150 && g.squad.length < 5) g.recruit('carrier'); if (!g.squad.length && g.budget >= 100) g.recruit('runner'); g.dispatch(); } for (let k = 0; k < 300 && !g.over; k++) g.step(1 / 30); return g.over; });
     if (over) break;
   }
-  await p.waitForTimeout(1500);
+  await p.waitForSelector('.result h2', { timeout: 20000 }).catch(() => {});
   const lres = await p.evaluate(() => ({ h: document.querySelector('.result h2')?.textContent, ex: window.__match.game.extracted }));
   assert(!!lres.h, `looter match finished: ${lres.h} (extracted ${lres.ex})`);
   await p.screenshot({ path: `${out}/${city}_looters_result.png` });

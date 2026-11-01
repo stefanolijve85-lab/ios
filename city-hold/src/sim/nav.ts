@@ -94,7 +94,9 @@ export class NavGrid {
       const x = this.ox + (i + 0.5) * CELL, z = this.oz + (j + 0.5) * CELL;
       const k = j * this.w + i;
       let bl = false;
-      const inPassage = passages.some((p) => rectContains(p, x, z));
+      // a passage counts from just outside the facade so the inflated wall band does not seal its mouths
+      const grow = (p: Rect): Rect => (p.x1 - p.x0 > p.z1 - p.z0 ? { x0: p.x0 - AGENT_R - 0.05, z0: p.z0, x1: p.x1 + AGENT_R + 0.05, z1: p.z1 } : { x0: p.x0, z0: p.z0 - AGENT_R - 0.05, x1: p.x1, z1: p.z1 + AGENT_R + 0.05 });
+      const inPassage = passages.some((p) => rectContains(grow(p), x, z));
       for (const r of obs.rects) {
         if (x > r.x0 - AGENT_R && x < r.x1 + AGENT_R && z > r.z0 - AGENT_R && z < r.z1 + AGENT_R) {
           // building rects can be cut by passages
@@ -108,7 +110,7 @@ export class NavGrid {
       }
       // passages must stay clear of the passage's own side walls
       if (!bl && inPassage) {
-        const p = passages.find((pp) => rectContains(pp, x, z))!;
+        const p = passages.find((pp) => rectContains(grow(pp), x, z))!;
         const horizontal = p.x1 - p.x0 > p.z1 - p.z0;
         if (horizontal ? (z < p.z0 + AGENT_R || z > p.z1 - AGENT_R) : (x < p.x0 + AGENT_R || x > p.x1 - AGENT_R)) bl = true;
       }

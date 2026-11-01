@@ -1,10 +1,11 @@
 import type { MapDef } from './types';
 import { PARIS } from './paris';
+import { AMSTERDAM, BERLIN, LONDON, MILAN, SAOPAULO } from './cities';
 
 /** campaign order; a city is only selectable when `playable` is true and it has been unlocked */
 export const CITY_ORDER = ['paris', 'amsterdam', 'london', 'milan', 'berlin', 'saopaulo'];
 
-export const MAPS: Record<string, MapDef> = { paris: PARIS };
+export const MAPS: Record<string, MapDef> = { paris: PARIS, amsterdam: AMSTERDAM, london: LONDON, milan: MILAN, berlin: BERLIN, saopaulo: SAOPAULO };
 
 export const CITY_INFO: Record<string, { label: string; country: string; image: string }> = {
   paris: { label: 'Paris', country: 'France', image: 'ui/01_map_clean.jpg' },

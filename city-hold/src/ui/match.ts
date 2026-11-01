@@ -336,6 +336,8 @@ export class Match {
     }
   }
 
+  private lastPhase = '';
+
   private refreshDynamicInfo() {
     const dyn = this.el.info.querySelector('[data-dyn]');
     if (dyn) dyn.innerHTML = this.dynInfo();
@@ -343,8 +345,7 @@ export class Match {
       const sw = this.el.actions.querySelector<HTMLButtonElement>('[data-a="startwave"]');
       if (sw) sw.disabled = this.game.phase !== 'prep';
       const inc = this.el.actions.querySelector('[data-inc]'); if (inc) inc.innerHTML = this.incomingHtml();
-      if (this.game.phase === 'prep' && !this.el.actions.dataset.prep) { this.el.actions.dataset.prep = '1'; this.refreshHud(true); }
-      if (this.game.phase !== 'prep' && this.el.actions.dataset.prep) { delete this.el.actions.dataset.prep; this.refreshHud(true); }
+      if (this.game.phase !== this.lastPhase) { this.lastPhase = this.game.phase; this.refreshHud(true); }
     } else {
       const sq = this.el.actions.querySelector('[data-squad]'); if (sq && sq.childElementCount !== this.game.squad.length) this.renderActions();
     }
@@ -391,7 +392,7 @@ export class Match {
     return s || '<div class="muted">Tap a unit or store for details.</div>';
   }
 
-  infoCollapsed = window.innerWidth < 700 || window.innerHeight > window.innerWidth;
+  infoCollapsed = true;
 
   private renderInfo() {
     const g = this.game; const i = this.el.info;

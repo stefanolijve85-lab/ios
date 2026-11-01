@@ -465,8 +465,10 @@ export class MatchView {
     const ray = new THREE.Ray(); const cam = this.camera.position; const tmp = new THREE.Vector3();
     for (const f of this.world.fadeables) {
       let occl = false;
-      for (const u of g.units) {
-        tmp.set(u.x, 1, u.z);
+      // units and store entrances must stay readable
+      const pts = g.units.map((u) => [u.x, 1, u.z]).concat(g.stores.map((s) => [s.door.x, 1.5, s.door.z]));
+      for (const [px, py, pz] of pts) {
+        tmp.set(px, py, pz);
         ray.origin.copy(cam); ray.direction.copy(tmp).sub(cam).normalize();
         const hit = ray.intersectBox(f.box, new THREE.Vector3());
         if (hit && hit.distanceTo(cam) < tmp.distanceTo(cam) - 0.5) { occl = true; break; }

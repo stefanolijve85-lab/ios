@@ -306,7 +306,7 @@ export class Game {
 
   /** check that every spawn can still reach every store and every store an exit with barriers treated as walls */
   routesOpenWith(extra: Rect | null): boolean {
-    let id = -999;
+    const id = 2_000_000_000; // temporary barrier id (must be >= 0 to count as a barrier)
     if (extra) this.nav.setBarrier(id, extra, true);
     let ok = true;
     const spawns = this.map.entries.filter((e) => e.spawn);
@@ -592,6 +592,7 @@ export class Game {
       this.spawnAttacker(q.kind, q.entry, q.store, q.entry);
     }
     this.stepAiDefence(dt);
+    if (this.truck && !this.truck.active && !this.truck.rewarded && this.time > 60) this.truck.active = true;
   }
 
   private setupAiDefence() {
@@ -1029,6 +1030,19 @@ export class Game {
 
   private separate() {
     const us = this.units;
+    // the supply truck is a solid moving body: nudge people sideways out of its footprint
+    const t = this.truck;
+    if (t && t.active && !t.done) {
+      const fx = Math.sin(t.facing), fz = Math.cos(t.facing);
+      for (const u of us) {
+        const rx = u.x - t.x, rz = u.z - t.z; const along = rx * fx + rz * fz; const side = rx * fz - rz * fx;
+        if (Math.abs(along) < 3.2 && Math.abs(side) < 1.6) {
+          const push = (1.6 - Math.abs(side)) * Math.sign(side || 1);
+          const nx = u.x + fz * push, nz = u.z - fx * push;
+          if (this.nav.walkable(nx, nz)) { u.x = nx; u.z = nz; }
+        }
+      }
+    }
     for (let i = 0; i < us.length; i++) {
       const a = us[i];
       if (a.state === 'escorted') continue;

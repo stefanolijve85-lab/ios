@@ -301,17 +301,13 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const water: THREE.Mesh[] = [];
   for (const wr of map.water) {
     const wt = waterTexture().clone(); wt.repeat.set((wr.x1 - wr.x0) / 8, (wr.z1 - wr.z0) / 8); wt.needsUpdate = true;
-    const wm = new THREE.Mesh(new THREE.PlaneGeometry(wr.x1 - wr.x0, wr.z1 - wr.z0), new THREE.MeshStandardMaterial({ map: wt, color: 0x6a8aa0, roughness: 0.08, metalness: 0.6, envMapIntensity: 1.2 }));
+    const wm = new THREE.Mesh(new THREE.PlaneGeometry(wr.x1 - wr.x0, wr.z1 - wr.z0), new THREE.MeshStandardMaterial({ map: wt, color: 0x9fc0d0, roughness: 0.12, metalness: 0.15, emissive: 0x0d2a38, emissiveIntensity: 1.0, envMapIntensity: 1.5 }));
     wm.rotation.x = -Math.PI / 2; wm.position.set((wr.x0 + wr.x1) / 2, -0.9, (wr.z0 + wr.z1) / 2); group.add(wm); water.push(wm);
     // dark pit walls so the canal reads as a cut below street level
-    const quay = mat(0x5a4a3a, 0.9);
-    mesh(box, quay, group, (wr.x0 + wr.x1) / 2, -0.45, wr.z0 + 0.05, wr.x1 - wr.x0, 0.9, 0.1, false);
-    mesh(box, quay, group, (wr.x0 + wr.x1) / 2, -0.45, wr.z1 - 0.05, wr.x1 - wr.x0, 0.9, 0.1, false);
-    // hide the ground over the water by drawing the water above a mask: lower the ground locally
-    const mask = new THREE.Mesh(new THREE.PlaneGeometry(wr.x1 - wr.x0, wr.z1 - wr.z0), new THREE.MeshBasicMaterial({ color: 0x0b141c, polygonOffset: true, polygonOffsetFactor: -2 }));
-    mask.rotation.x = -Math.PI / 2; mask.position.set((wr.x0 + wr.x1) / 2, 0.02, (wr.z0 + wr.z1) / 2); mask.renderOrder = -1;
-    (mask.material as THREE.MeshBasicMaterial).colorWrite = true;
-    // water surface drawn at street level with depth-faded colour (simpler than a stencil cut)
+    const quay = mat(0x6a5a48, 0.9);
+    mesh(box, quay, group, (wr.x0 + wr.x1) / 2, 0.08, wr.z0 + 0.15, wr.x1 - wr.x0, 0.16, 0.3, false);
+    mesh(box, quay, group, (wr.x0 + wr.x1) / 2, 0.08, wr.z1 - 0.15, wr.x1 - wr.x0, 0.16, 0.3, false);
+    // water surface drawn just above street level (the quay edge and railings mark the drop)
     wm.position.y = 0.03;
   }
   for (const br of map.bridges) {

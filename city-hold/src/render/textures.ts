@@ -26,8 +26,8 @@ export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | '
   return cached('ground-' + kind, () => {
     const [c, g] = canvas(512, 512);
     if (kind === 'asphalt') {
-      g.fillStyle = '#2b2e33'; g.fillRect(0, 0, 512, 512);
-      for (let i = 0; i < 9000; i++) { const v = 35 + rnd() * 30; g.fillStyle = `rgb(${v},${v + 2},${v + 6})`; g.fillRect(rnd() * 512, rnd() * 512, 2, 2); }
+      g.fillStyle = '#4a4d52'; g.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 9000; i++) { const v = 60 + rnd() * 35; g.fillStyle = `rgb(${v},${v + 2},${v + 6})`; g.fillRect(rnd() * 512, rnd() * 512, 2, 2); }
       return tex(c);
     }
     const base = kind === 'brick' ? [120, 72, 58] : kind === 'stone' || kind === 'plaza' ? [150, 140, 125] : [104, 98, 94];
@@ -239,8 +239,9 @@ export function arrowTexture(color: string): THREE.Texture {
 export function waterTexture(): THREE.Texture {
   return cached('water', () => {
     const [c, g] = canvas(256, 256);
-    g.fillStyle = '#0d1a24'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(${150 + rnd() * 100},${120 + rnd() * 80},80,${rnd() * 0.25})`; g.fillRect(rnd() * 256, rnd() * 256, 10 + rnd() * 30, 1.5); }
+    g.fillStyle = '#2a4a5c'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${200 + rnd() * 55},${160 + rnd() * 60},90,${0.1 + rnd() * 0.3})`; g.fillRect(rnd() * 256, rnd() * 256, 10 + rnd() * 30, 1.5); }
+    for (let i = 0; i < 200; i++) { g.fillStyle = `rgba(20,40,55,${rnd() * 0.5})`; g.fillRect(rnd() * 256, rnd() * 256, 20 + rnd() * 40, 2); }
     return tex(c);
   });
 }
