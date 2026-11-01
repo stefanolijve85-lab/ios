@@ -44,6 +44,7 @@ const geo = {
   backpack: cap(0.11, 0.12, 10).scale(1.2, 1, 0.6).translate(0, 0.32, -0.15),
   stripe: new THREE.CylinderGeometry(0.17, 0.17, 0.035, 14).scale(1.05, 1, 0.68),
   bag: new THREE.BoxGeometry(0.16, 0.2, 0.06),
+  mask: new THREE.SphereGeometry(0.108, 14, 8, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.4).scale(0.95, 1.12, 1.05),
   collar: new THREE.TorusGeometry(0.075, 0.025, 6, 12).rotateX(Math.PI / 2),
 };
 
@@ -85,6 +86,31 @@ function m(g: THREE.BufferGeometry, mt: THREE.Material, parent: THREE.Object3D, 
   parent.add(mesh); return mesh;
 }
 
+/** Streetwear outfits rebuilt from the extra character sheets (assets/units/extra_streetwear 01-10).
+ *  Outfits only change appearance and the look of the carried goods; class stats are unchanged.
+ *  Skin tone stays randomised over the full range so the cast remains varied (design rule). */
+type Carry = 'box' | 'bigbox' | 'whitebox' | 'smallbox' | 'bags';
+interface Outfit { ref: string; top: number; legs: number; shoes: number; layer: 'tracksuit' | 'puffer' | 'windbreaker' | 'vest' | 'hoodie'; vest?: number; stripe?: number; pack: 0 | 1 | 2; carry: Carry; kinds: UnitKind[] }
+export const STREETWEAR: Outfit[] = [
+  { ref: '01_tracksuit_arms_spread', top: 0x313337, legs: 0x313337, shoes: 0x3f3f42, layer: 'tracksuit', stripe: 0x676b71, pack: 0, carry: 'smallbox', kinds: ['vandal', 'runner'] },
+  { ref: '02_puffer_large_box', top: 0x2d2e33, legs: 0x393a3f, shoes: 0xb2b5bb, layer: 'puffer', pack: 0, carry: 'bigbox', kinds: ['heavy', 'carrier'] },
+  { ref: '03_runner_backpack', top: 0x394564, legs: 0x363a45, shoes: 0x4f5258, layer: 'windbreaker', stripe: 0xe3f6ff, pack: 1, carry: 'smallbox', kinds: ['runner'] },
+  { ref: '04_vest_shopping_bags', top: 0x303136, legs: 0x36373c, shoes: 0x424448, layer: 'vest', vest: 0x52555b, pack: 0, carry: 'bags', kinds: ['carrier'] },
+  { ref: '05_hoodie_backpack_walking', top: 0x333439, legs: 0x333439, shoes: 0x3f3f42, layer: 'tracksuit', stripe: 0x787d86, pack: 1, carry: 'box', kinds: ['carrier', 'vandal'] },
+  { ref: '06_puffer_electronics_box', top: 0x2b2d31, legs: 0x37393e, shoes: 0xfcffff, layer: 'puffer', pack: 0, carry: 'whitebox', kinds: ['carrier', 'heavy'] },
+  { ref: '07_navy_runner', top: 0x3a4d77, legs: 0x808590, shoes: 0x363639, layer: 'hoodie', pack: 0, carry: 'smallbox', kinds: ['runner'] },
+  { ref: '08_padded_vest_bags', top: 0x313337, legs: 0x393a3f, shoes: 0x3c3c3f, layer: 'vest', vest: 0x91969f, pack: 0, carry: 'bags', kinds: ['carrier'] },
+  { ref: '09_large_backpack', top: 0x4f5056, legs: 0x484a50, shoes: 0x3c3c3f, layer: 'hoodie', pack: 2, carry: 'box', kinds: ['carrier', 'heavy'] },
+  { ref: '10_windbreaker_small_box', top: 0x2e3034, legs: 0x333439, shoes: 0x999ca2, layer: 'windbreaker', stripe: 0x52555b, pack: 0, carry: 'smallbox', kinds: ['runner', 'vandal'] },
+];
+
+export function outfitFor(kind: UnitKind, variant: number): Outfit | null {
+  if (kind === 'security' || kind === 'shield' || kind === 'firefighter') return null;
+  if (variant % 5 === 4) return null; // one in five keeps the earlier casual clothing (images 13, 14, 26-28)
+  const list = STREETWEAR.filter((o) => o.kinds.includes(kind));
+  return list[Math.floor(variant / 5) % list.length];
+}
+
 export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   const r = rng(variant + 17);
   const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
@@ -97,7 +123,10 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   else if (kind === 'shield') { top = 0x232b3c; legsC = 0x1f2633; }
   else if (kind === 'firefighter') { top = 0x2a2a28; legsC = 0x2a2a28; }
   else { top = pick(HOODIES); legsC = pick(JEANS); shoes = pick([0xdedede, 0x2a2a2a, 0x8a8a8a, 0xc9c0b0]); }
-  const topM = mat(top, 0.85), legM = mat(legsC, 0.85), shoeM = mat(shoes, 0.6);
+  const outfit = outfitFor(kind, variant);
+  if (outfit) { top = outfit.top; legsC = outfit.legs; shoes = outfit.shoes; }
+  // nylon / puffer fabric catches the street light (glossier than cotton)
+  const topM = mat(top, outfit && (outfit.layer === 'puffer' || outfit.layer === 'windbreaker') ? 0.45 : 0.75), legM = mat(legsC, 0.8), shoeM = mat(shoes, 0.6);
 
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
@@ -113,6 +142,7 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
     m(geo.shin, legM, knee);
     const foot = m(geo.foot, shoeM, knee, 0, -0.46, 0);
     if (kind === 'firefighter') { const st = m(geo.stripe, mat(0xd8e04a, 0.4), knee, 0, -0.3, 0); st.scale.set(0.38, 1, 0.6); }
+    if (outfit?.layer === 'tracksuit' && outfit.stripe) { m(geo.box, mat(outfit.stripe, 0.6), leg, sx * 0.079, -0.23, 0).scale.set(0.012, 0.42, 0.035); m(geo.box, mat(outfit.stripe, 0.6), knee, sx * 0.062, -0.22, 0).scale.set(0.012, 0.38, 0.03); }
     void foot;
     legs.push(leg); knees.push(knee);
   }
@@ -123,7 +153,20 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
   if (kind === 'security') m(geo.vest, mat(0x111316, 0.7), torso);
   if (kind === 'shield') { m(geo.vest, mat(0x2a3346, 0.6), torso); }
   if (kind === 'firefighter') { for (const y of [0.16, 0.4]) m(geo.stripe, mat(0xd8e04a, 0.35), torso, 0, y, 0); }
-  if (!isDef && r() < 0.6) m(geo.backpack, mat(pick([0x222222, 0x3a3020, 0x2a3a2a]), 0.8), torso);
+  if (outfit) {
+    if (outfit.layer === 'puffer') {
+      torsoMesh.scale.set(1.16, 1.04, 1.22);
+      for (const y of [0.1, 0.22, 0.34, 0.46]) m(geo.stripe, mat(0x0c0d0f, 0.5), torso, 0, y, 0).scale.set(1.13, 1, 1.14);
+    } else if (outfit.layer === 'vest') {
+      m(geo.vest, mat(outfit.vest!, 0.55), torso).scale.set(1.08, 1.04, 1.12);
+      for (const y of [0.2, 0.32, 0.44]) m(geo.stripe, mat(0x0e0f11, 0.5), torso, 0, y, 0).scale.set(1.1, 1, 1.06);
+    } else if (outfit.layer === 'windbreaker' && outfit.stripe) {
+      m(geo.stripe, mat(outfit.stripe, 0.4, 0.3), torso, 0, 0.4, 0).scale.set(1.02, 0.4, 1.02);
+    } else if (outfit.layer === 'tracksuit' && outfit.stripe) {
+      for (const sx of [-1, 1]) m(geo.box, mat(outfit.stripe, 0.6), torso, sx * 0.17, 0.32, 0).scale.set(0.012, 0.42, 0.04);
+    }
+    if (outfit.pack) { const bp = m(geo.backpack, mat(0x111214, 0.7), torso); if (outfit.pack === 2) bp.scale.set(1.35, 1.45, 1.4); }
+  } else if (!isDef && r() < 0.6) m(geo.backpack, mat(pick([0x222222, 0x3a3020, 0x2a3a2a]), 0.8), torso);
   m(geo.neck, skin, torso, 0, 0.6, 0);
   if (!isDef) m(geo.collar, topM, torso, 0, 0.6, 0);
   const head = new THREE.Group(); head.position.y = 0.66; torso.add(head);
@@ -138,31 +181,40 @@ export function buildHumanoid(kind: UnitKind, variant: number): Humanoid {
     v.castShadow = false;
   } else if (kind === 'firefighter') {
     m(geo.helmet, mat(0xe3b81a, 0.35), head, 0, 0.11, 0);
+  } else if (outfit) {
+    m(geo.hood, topM, head, 0, 0.085, -0.012).scale.set(1.04, 1.02, 1.06);
+    m(geo.mask, mat(0x0a0a0b, 0.8), head, 0, 0.055, 0.02);
   } else if (kind === 'vandal' || r() < 0.35) {
     m(geo.hood, topM, head, 0, 0.08, -0.01);
   } else {
     m(geo.hair, hairM, head, 0, 0.12, 0);
   }
-  if (female && kind !== 'shield' && kind !== 'firefighter' && r() < 0.7) m(geo.hairLong, hairM, head, 0, 0.12, 0);
+  if (!outfit && female && kind !== 'shield' && kind !== 'firefighter' && r() < 0.7) m(geo.hairLong, hairM, head, 0, 0.12, 0);
 
   const arms: THREE.Group[] = [], elbows: THREE.Group[] = [];
   for (const sx of [-1, 1]) {
     const arm = new THREE.Group(); arm.position.set(sx * 0.245, 0.54, 0); torso.add(arm);
-    m(geo.upper, topM, arm);
+    const up = m(geo.upper, topM, arm); if (outfit?.layer === 'puffer') up.scale.set(1.35, 1, 1.35);
     const el = new THREE.Group(); el.position.y = -0.3; arm.add(el);
-    m(geo.fore, kind === 'firefighter' || kind === 'shield' ? topM : (r() < 0.5 ? topM : skin), el);
+    const fo = m(geo.fore, kind === 'firefighter' || kind === 'shield' || outfit ? topM : (r() < 0.5 ? topM : skin), el); if (outfit?.layer === 'puffer') fo.scale.set(1.3, 1, 1.3);
     m(geo.hand, skin, el, 0, -0.29, 0);
     arms.push(arm); elbows.push(el);
   }
   // carried goods: cardboard box (sized by class) or shopping bags (carrier variant, as in image 27)
   const carry = new THREE.Group(); carry.visible = false; torso.add(carry);
   let bags: THREE.Group | null = null;
-  const boxSize = kind === 'heavy' ? [0.6, 0.42, 0.42] : kind === 'runner' ? [0.32, 0.22, 0.24] : kind === 'vandal' ? [0.22, 0.16, 0.18] : [0.44, 0.3, 0.32];
-  if (kind === 'carrier' && r() < 0.35) {
+  const carryKind: Carry = outfit ? outfit.carry : kind === 'carrier' && r() < 0.35 ? 'bags' : kind === 'heavy' ? 'bigbox' : kind === 'runner' || kind === 'vandal' ? 'smallbox' : 'box';
+  if (carryKind === 'bags') {
     bags = new THREE.Group();
-    for (const sx of [-1, 1]) { const b = m(geo.bag, mat(pick([0xb08a5a, 0xd8d0c0, 0x8a6a4a]), 0.9), bags, sx * 0.3, 0.12, 0.02); b.rotation.y = 0.2 * sx; }
+    const bagM = outfit ? mat(0x111113, 0.55) : mat(pick([0xb08a5a, 0xd8d0c0, 0x8a6a4a]), 0.9);
+    for (const sx of [-1, 1]) { const b = m(geo.bag, bagM, bags, sx * 0.3, 0.12, 0.02); b.rotation.y = 0.2 * sx; b.scale.set(1.5, 1.6, 1.3); }
     carry.add(bags);
+  } else if (carryKind === 'whitebox') {
+    // boxed television / monitor (image 06)
+    const bx = m(geo.box, mat(0xeeeeec, 0.7), carry, 0, 0.26, 0.27); bx.scale.set(0.62, 0.44, 0.2);
+    const scr = m(geo.box, mat(0x2a2c30, 0.4), carry, 0.03, 0.26, 0.375); scr.scale.set(0.4, 0.28, 0.005);
   } else {
+    const boxSize = carryKind === 'bigbox' ? [0.6, 0.42, 0.42] : carryKind === 'smallbox' ? (kind === 'vandal' ? [0.22, 0.16, 0.18] : [0.3, 0.2, 0.22]) : [0.44, 0.3, 0.32];
     const bx = m(geo.box, mat(0xa77d4e, 0.95), carry, 0, 0.28, 0.27); bx.scale.set(boxSize[0], boxSize[1], boxSize[2]);
     const tape = m(geo.box, mat(0xc8b48a, 0.6), carry, 0, 0.28 + boxSize[1] / 2 + 0.002, 0.27); tape.scale.set(boxSize[0] * 0.15, 0.004, boxSize[2]);
   }

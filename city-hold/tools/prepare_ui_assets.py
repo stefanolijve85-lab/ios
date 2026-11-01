@@ -5,7 +5,7 @@ import glob, os
 from PIL import Image
 OUT = 'public/ui'
 os.makedirs(OUT, exist_ok=True)
-for f in glob.glob('assets/units/*.png') + glob.glob('assets/props/*.png'):
+for f in glob.glob('assets/units/*.png') + glob.glob('assets/units/extra_streetwear/*.png') + glob.glob('assets/props/*.png'):
     im = Image.open(f).convert('RGBA')
     bbox = im.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox()
     if bbox: im = im.crop(bbox)

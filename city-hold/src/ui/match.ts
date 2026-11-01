@@ -18,9 +18,9 @@ const DEF_CARDS: { kind: DefKind | BuildKind; label: string; img: string; note: 
 
 const ATT_CARDS: { kind: AttKind; label: string; img: string | null; note: string }[] = [
   { kind: 'runner', label: 'Runner', img: 'ui/26_runner.webp', note: `Fast · carries ${BALANCE.units.runner.capacity}` },
-  { kind: 'carrier', label: 'Carrier', img: 'ui/13_looter_box.webp', note: `Normal · carries ${BALANCE.units.carrier.capacity}` },
+  { kind: 'carrier', label: 'Carrier', img: 'ui/06_puffer_electronics_box.webp', note: `Normal · carries ${BALANCE.units.carrier.capacity}` },
   { kind: 'heavy', label: 'Heavy carrier', img: 'ui/28_heavy_carrier.webp', note: `Carries ${BALANCE.units.heavy.capacity} (2× runner) · 20% slower than carrier` },
-  { kind: 'vandal', label: 'Vandal', img: null, note: `Breaks shutters ${Math.round(BALANCE.units.vandal.breakRate / BALANCE.units.carrier.breakRate)}× faster · carries ${BALANCE.units.vandal.capacity}` },
+  { kind: 'vandal', label: 'Vandal', img: 'ui/01_tracksuit_arms_spread.webp', note: `Breaks shutters ${Math.round(BALANCE.units.vandal.breakRate / BALANCE.units.carrier.breakRate)}× faster · carries ${BALANCE.units.vandal.capacity}` },
 ];
 
 interface Hint { title: string; text: string; done: (m: Match) => boolean }

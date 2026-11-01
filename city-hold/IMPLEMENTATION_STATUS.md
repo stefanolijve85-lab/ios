@@ -56,6 +56,9 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 - Foreground roofs, the Berlin front block and arcade roofs fade when they hide units or shop entrances.
 - Balancing values are in `src/config/balance.ts`.
 
+### Extra streetwear characters
+`assets/units/extra_streetwear/01-10` (see `docs/EXTRA_STREETWEAR_README.txt`) are rebuilt as ten 3D outfits for the looter classes in `src/render/humans.ts` (`STREETWEAR`): tracksuits with side stripes, quilted puffer jackets, padded vests over hoodies, windbreakers, raised hoods with face coverings, small/large backpacks, black shopping bags, cardboard boxes and a boxed television. Four in five attackers wear one of these outfits; the rest keep the earlier casual clothing. Outfits change appearance and the look of carried goods only; class stats are unchanged. The supplied sheets all show one skin tone, so skin tone is still randomised over the full range in game, as `docs/GAME_DESIGN.md` requires a varied cast on both sides. The carrier and vandal cards now use images 06 and 01.
+
 ## How it was tested
 
 - `npm test` — 36 Vitest tests on the simulation (no rendering):
