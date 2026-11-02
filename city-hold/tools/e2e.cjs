@@ -116,7 +116,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     });
     if (ex > 0) break;
   }
-  const lb = await p.evaluate(() => { const g = window.__match.game; if (g.budget < 300) g.budget = 300; /* top-up only so the UI button can be exercised */ return { b: g.budget, ex: g.extracted }; });
+  const lb = await p.evaluate(() => { window.__match.paused = true; /* no income while the UI is clicked */ const g = window.__match.game; if (g.budget < 300) g.budget = 300; /* top-up only so the UI button can be exercised */ return { b: g.budget, ex: g.extracted }; });
   if (!(lb.ex > 0)) console.log("debug", await p.evaluate(() => { const g = window.__match.game; return JSON.stringify({ over: g.over, phase: g.phase, t: Math.round(g.time), budget: g.budget, att: g.attackers().length, defs: g.defenders().length, stock: g.stores.map((s) => s.stock) }); }));
   assert(lb.ex > 0, `looters extracted stock (${lb.ex}) and were paid for it`);
   await p.waitForTimeout(400);
@@ -124,6 +124,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.click('[data-u="capacity"]'); await p.waitForTimeout(400);
   const lu = await p.evaluate(() => ({ b: window.__match.game.budget, u: window.__match.game.looterUpgrade }));
   assert(lu.u === 'capacity' && lu.b === lb.b - 300, `looter upgrade bought from the panel (${lb.b} -> ${lu.b})`);
+  await p.evaluate(() => { window.__match.paused = false; });
   await p.waitForFunction(() => /6\/6/.test(document.querySelector('[data-k="cycle"]').textContent), null, { timeout: 20000 }).catch(() => {});
   const lc = await p.textContent('[data-k="cycle"]');
   assert(/(GAME LOOP|SPELVERLOOP) 6\/6/.test(lc), 'looter game-loop checklist complete: ' + lc.replace(/\s+/g, ' '));

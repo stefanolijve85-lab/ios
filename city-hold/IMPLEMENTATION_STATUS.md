@@ -14,6 +14,21 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Gameplay check for all six cities, options, Dutch HUD
+
+- An automatic probe (bot play, 3 seeds per city, side and difficulty) ran on every city:
+  - Defence, Normal: the bot wins all 12 waves everywhere. With no defenders at all, every city is lost.
+  - Defence, Hard and Expert: more and faster attackers. Milan and Berlin are clearly harder on Expert, and the bot loses some of them there. The other cities stay winnable for the bot.
+  - Looting, Normal: won in most runs, with between 34 and 66 stock extracted.
+  - Looting, Hard and Expert: the AI defence earns more, reinforces sooner and may have one more guard. Paris and Amsterdam become hard; London, Milan and São Paulo stay winnable. Expert is close to Hard on the looter side.
+  - Before this pass, one extra start guard on Hard made looting nearly impossible (10–26 of 60).
+- Campaign: a win on either side unlocks the next city (`recordResult`). Paris also marks the tutorial done.
+- Language NL now covers the whole match: HUD, cards, tutorial, messages, labels, results (`src/ui/i18n_nl.ts`, phrase table with a test).
+- New options in the menu and in the match settings panel:
+  - HUD size: 100, 115 or 130 %
+  - Vibrate on events: intercept, breach, fire, wave end, win, loss
+- `?seed=N` fixes the match seed. `tools/e2e.cjs` uses seed 7, and in the extraction step it only tops up looter budget.
+
 ## Night run (2 November): city landmarks, storefront states, animations
 
 - Credits used (Higgsfield), about 58 in total:
