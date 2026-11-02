@@ -118,11 +118,12 @@ export function loadCityAssets(city: string, base = 'models/', onProgress?: (don
 }
 
 /** Auto-rigged models (Meshy/Higgsfield "Armature|Idle|baselayer") use their own clip names; map them to the game's contract. */
-const RIG_CLIP_NAMES: Record<string, string> = { Idle: 'idle', Run_02: 'run', Run: 'run', Walking: 'walk', Casual_Walk: 'walk', Step_Forward_and_Push: 'restrain', Kneel_on_One_Knee_and_Stand: 'collect' };
+const RIG_CLIP_NAMES: Record<string, string> = { Idle: 'idle', Run_02: 'run', Run: 'run', Walking: 'walk', Casual_Walk: 'walk', Step_Forward_and_Push: 'restrain', Kneel_on_One_Knee_and_Stand: 'breach',
+  Carry_Heavy_Object_Walk_inplace: 'carry_walk', Carry_Heavy_Object_Walk: 'carry_walk', Male_Bend_Over_Pick_Up: 'collect', Over_Shoulder_Throw: 'throw' };
 /** when a clip is missing the closest one stands in (walk-like states use the run cycle slowed down by the caller) */
 const CLIP_STAND_IN: Record<string, string[]> = {
   walk: ['run'], flee: ['run'], carry_walk: ['walk', 'run'], escort: ['walk', 'run'], escorted: ['walk', 'run'],
-  carry_idle: ['idle'], held: ['idle'], restrained: ['idle'], guide: ['idle'], extinguish: ['idle'], breach: ['restrain', 'idle'], brace: ['restrain', 'idle'], collect: ['idle'],
+  carry_idle: ['idle'], held: ['idle'], restrained: ['idle'], guide: ['idle'], extinguish: ['idle'], breach: ['restrain', 'idle'], brace: ['restrain', 'idle'], collect: ['breach', 'idle'], throw: ['restrain'],
 };
 /** Rename rig clips, then let characters with the same skeleton borrow clips they lack (rotations and hip motion only, so
  *  another body's bone lengths are never applied). */
@@ -131,7 +132,11 @@ function shareCharacterClips() {
   const boneSet = (sc: THREE.Object3D) => { const n = new Set<string>(); sc.traverse((o) => { if ((o as THREE.Bone).isBone) n.add(o.name); }); return n; };
   for (const [slot, m] of all) if (slot.startsWith('char.') || slot.startsWith('anim.')) for (const c of m.animations) { const k = c.name.split('|')[1]; if (k && RIG_CLIP_NAMES[k]) c.name = RIG_CLIP_NAMES[k]; }
   // rotations and hip motion only: another body's bone lengths (translation/scale tracks) are never applied
-  const keep = (c: THREE.AnimationClip) => new THREE.AnimationClip(c.name, c.duration, c.tracks.filter((tr) => tr.name.endsWith('.quaternion') || tr.name === 'Hips.position'));
+  const keep = (c: THREE.AnimationClip) => new THREE.AnimationClip(c.name, c.duration, c.tracks.filter((tr) => tr.name.endsWith('.quaternion') || tr.name === 'Hips.position').map((tr) => {
+    if (tr.name !== 'Hips.position') return tr;
+    // in-place: the game moves the unit; keep the hip bounce (y) but pin x/z to the first frame
+    const t = tr.clone(); const v = t.values; for (let i = 3; i < v.length; i += 3) { v[i] = v[0]; v[i + 2] = v[2]; } return t;
+  }));
   const donorClips = all.filter(([slot]) => slot.startsWith('anim.') || slot.startsWith('char.')).flatMap(([, d]) => d.animations.filter((c) => Object.values(RIG_CLIP_NAMES).includes(c.name)));
   for (const [slot, m] of all) {
     if (!slot.startsWith('char.')) continue;

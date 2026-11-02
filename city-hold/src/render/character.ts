@@ -132,7 +132,7 @@ class GltfCharacter implements CharacterVisual {
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 }));
       box.position.set(0, 1.08, 0.32); box.castShadow = true; box.name = 'carry'; this.root.add(box); this.carry = box;
     }
-    this.held = new HeldObject(model.getObjectByName('hand_socket'));
+    this.held = new HeldObject(model.getObjectByName('hand_socket') ?? model.getObjectByName('RightHand') ?? undefined);
     if (this.carry) this.carry.visible = false;
     this.mixer = new THREE.AnimationMixer(model);
     for (const c of clips) this.actions.set(c.name, this.mixer.clipAction(c));

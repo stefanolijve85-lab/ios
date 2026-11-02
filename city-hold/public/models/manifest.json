@@ -300,6 +300,26 @@
       "status": "final",
       "note": "Higgsfield SAM-3D from berlin/recycling_bins (one bin)",
       "city": "berlin"
+    },
+    "anim.walk": {
+      "file": "final/anim.walk.glb",
+      "status": "final",
+      "note": "Higgsfield 3d_rigging animation on the security rig (8 credits)"
+    },
+    "anim.carry": {
+      "file": "final/anim.carry.glb",
+      "status": "final",
+      "note": "Higgsfield 3d_rigging animation on the security rig (8 credits)"
+    },
+    "anim.pickup": {
+      "file": "final/anim.pickup.glb",
+      "status": "final",
+      "note": "Higgsfield 3d_rigging animation on the security rig (8 credits)"
+    },
+    "anim.throw": {
+      "file": "final/anim.throw.glb",
+      "status": "final",
+      "note": "Higgsfield 3d_rigging animation on the security rig (8 credits)"
     }
   }
 }
