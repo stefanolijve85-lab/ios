@@ -5,6 +5,7 @@ import '@fontsource/barlow/400.css';
 import '@fontsource/barlow/500.css';
 import './menu.css';
 import { BALANCE, DIFFICULTY, type Difficulty } from '../config/balance';
+import { Sfx } from '../audio/sfx';
 import { renderBriefing } from './briefing';
 
 /** one-line explanation of what a difficulty changes, per side */
@@ -81,8 +82,14 @@ export class Menu {
     if (!this.app.querySelector('main.rm')) return; // a match or loading screen is showing
     if (e.key === 'Escape' || e.key === 'Backspace' && !(e.target instanceof HTMLInputElement)) { if (menuState.screen !== 'main') { e.preventDefault(); this.back(); } }
   };
-  constructor(private app: HTMLElement, private host: MenuHost) { window.addEventListener('keydown', this.onKey); }
-  dispose() { window.removeEventListener('keydown', this.onKey); }
+  /** soft click on every menu button (same synthesised sounds as in the match) */
+  private ui = new Sfx(0);
+  private onClick = (e: Event) => {
+    if (!(e.target as HTMLElement).closest?.('button')) return;
+    this.ui.volume = this.host.progress().settings.volume; this.ui.play('click');
+  };
+  constructor(private app: HTMLElement, private host: MenuHost) { window.addEventListener('keydown', this.onKey); app.addEventListener('click', this.onClick, true); }
+  dispose() { window.removeEventListener('keydown', this.onKey); this.app.removeEventListener('click', this.onClick, true); this.ui.dispose(); }
 
   private get t() { return T[this.host.progress().settings.language ?? 'nl']; }
   private get lang(): Lang { return this.host.progress().settings.language ?? 'nl'; }

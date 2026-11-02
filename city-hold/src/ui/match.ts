@@ -2,7 +2,7 @@ import { BALANCE, KIND_LABEL, type AttKind, type DefKind } from '../config/balan
 import { Game, type GameEvent, type Side } from '../sim/game';
 import type { MapDef } from '../maps/types';
 import { MatchView, type Pick } from '../render/view';
-import { Sfx } from '../audio/sfx';
+import { Sfx, type Listener } from '../audio/sfx';
 import type { Settings } from '../save';
 import { translateLive } from './i18n_nl';
 import { setFigureChoices } from '../render/character';
@@ -63,6 +63,8 @@ export class Match {
     // overlays sit right under the top bar, whatever its height (it wraps to two or three rows on narrow phones)
     const tb = this.root.querySelector<HTMLElement>('.topbar');
     if (tb && 'ResizeObserver' in window) { const ro = new ResizeObserver(() => this.root.style.setProperty('--tb', `${tb.offsetHeight}px`)); ro.observe(tb); this.stopTb = () => ro.disconnect(); }
+    // iOS only plays Web Audio after a touch: unlock on the first one (also starts the street ambience)
+    this.root.addEventListener('pointerdown', () => this.sfx.unlock(), { capture: true });
     this.renderCycle();
     this.setupHints();
     this.refreshHud(true);
@@ -74,7 +76,7 @@ export class Match {
   private stopTb: (() => void) | null = null;
   private buzz(ms: number | number[]) { if (this.settings.vibration) try { navigator.vibrate?.(ms); } catch { /* not supported */ } }
   dispose() {
-    this.stopI18n?.(); this.stopTb?.();
+    this.stopI18n?.(); this.stopTb?.(); this.sfx.dispose();
     cancelAnimationFrame(this.raf);
     this.view.dispose();
     this.root.remove();
@@ -90,6 +92,7 @@ export class Match {
     }
     this.handleEvents(this.game.drainEvents());
     this.view.render(this.game, this.paused ? 0 : dt * this.speed);
+    this.updateAudio(dt);
     this.hudRefreshT -= dt;
     if (this.hudRefreshT <= 0) { this.refreshHud(false); this.hudRefreshT = 0.15; }
     if (this.game.over && !this.resultShown) { this.resultShown = true; setTimeout(() => this.showResult(), 900); }
@@ -163,8 +166,8 @@ export class Match {
       case 'menu': this.onExit(null, 'menu'); return;
       case 'settings': this.showSettings(); return;
       case 'skiphint': this.hints = []; this.el.hint.style.display = 'none'; break;
-      case 'startwave': { const r = this.game.startWave(); if (r.ok) this.sfx.play('wave'); break; }
-      case 'dispatch': { const r = this.game.dispatch(); if (r.ok) this.sfx.play('wave'); break; }
+      case 'startwave': { this.game.startWave(); break; } // the waveStart event plays the siren
+      case 'dispatch': { this.game.dispatch(); break; } // the dispatch event plays the crowd
       case 'cancel': this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); break;
       case 'selall': this.view.selected = new Set(this.game.defenders().filter((d) => d.kind === 'security').map((d) => d.id)); break;
       case 'selsquad': this.view.selected = new Set(this.game.attackers().filter((u) => u.state === 'approach').map((d) => d.id)); break;
@@ -198,7 +201,7 @@ export class Match {
     if (this.placing) {
       if (p.type === 'socket') {
         const r = g.place(this.placing, p.id);
-        if (r.ok) { this.sfx.play('buy'); this.placing = null; this.view.showSockets = null; }
+        if (r.ok) { this.sfx.play('place'); this.placing = null; this.view.showSockets = null; }
         else this.sfx.play('deny');
         this.view.refreshSockets(g);
       } else { this.toast('Not a legal build socket — placement cancelled', 'bad'); this.placing = null; this.view.showSockets = null; this.view.refreshSockets(g); }
@@ -280,27 +283,55 @@ export class Match {
     }
   }
 
+  /** where a sound at (x, z) sits for the listener: stereo position from the screen, quieter off-screen and zoomed out */
+  private hear(x: number, z: number): Listener {
+    const sc = this.view.toScreen(x, 0.8, z); const w = this.root.clientWidth || 1, h = this.root.clientHeight || 1;
+    const pan = Math.max(-1, Math.min(1, (sc.x / w) * 2 - 1)) * 0.85;
+    const out = Math.max(0, -sc.x, sc.x - w, -sc.y, sc.y - h) / Math.max(w, h); // how far off-screen (screen sizes)
+    const zoom = Math.max(0.45, Math.min(1.15, 48 / this.view.dist));
+    return { pan, gain: zoom * Math.max(0.25, 1 - out * 1.5) };
+  }
+  private updateAudio(dt: number) {
+    const g = this.game;
+    const near = (list: { x: number; z: number }[], max: number) => list.slice(0, max).map((p) => this.hear(p.x, p.z));
+    const hammering = g.units.filter((u) => (u.state === 'barrier' || u.state === 'breach') && !u.moving);
+    const hoses = g.units.filter((u) => u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving);
+    this.sfx.update(dt, {
+      crowd: g.attackers().length,
+      fires: near(g.fires.filter((f) => !f.out), 4),
+      hammering: near(hammering, 4),
+      hoses: near(hoses, 2),
+      active: g.phase === 'wave' || g.phase === 'running',
+      paused: this.paused || g.over,
+      fountain: this.map.fountain ? this.hear(this.map.fountain.x, this.map.fountain.z) : null,
+    });
+  }
+
   private handleEvents(evs: GameEvent[]) {
     for (const e of evs) {
       this.trackCycle(e);
       switch (e.type) {
         case 'denied': this.toast(e.text, 'bad'); this.sfx.play('deny'); break;
-        case 'intercept': this.sfx.play('intercept'); this.buzz(20); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;
-        case 'recovered': if (e.x !== undefined) this.view.floatText(e.x, e.z! + 0.6, `+${e.amount} recovered`, 'cyan'); break;
-        case 'extract': this.sfx.play('extract'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `−${e.amount} stock`, 'orange'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
-        case 'breach': this.buzz(60); if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
-        case 'fire': this.sfx.play('fire'); this.buzz([40, 40, 40]); this.toast(e.text, 'bad'); break;
-        case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('breach'); break;
-        case 'held': this.sfx.play('held'); break;
-        case 'waveStart': this.toast(e.text, 'info'); break;
+        case 'intercept': this.sfx.play('intercept', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.buzz(20); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;
+        case 'recovered': if (e.x !== undefined) this.sfx.play('recovered', this.hear(e.x, e.z!)); if (e.x !== undefined) this.view.floatText(e.x, e.z! + 0.6, `+${e.amount} recovered`, 'cyan'); break;
+        case 'extract': this.sfx.play('extract', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `−${e.amount} stock`, 'orange'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
+        case 'breach': this.buzz(60); if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
+        case 'fire': this.sfx.play('fire', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.buzz([40, 40, 40]); this.toast(e.text, 'bad'); break;
+        case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('impact', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
+        case 'held': this.sfx.play('held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
+        case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
         case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
-        case 'supply': this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
+        case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
         case 'won': this.sfx.play('win'); this.buzz([60, 60, 120]); break;
         case 'lost': this.sfx.play('lose'); this.buzz(250); break;
         case 'upgrade': this.sfx.play('upgrade'); this.toast(e.text, 'good'); break;
         case 'purchase': if (e.x !== undefined && e.amount) this.view.floatText(e.x, e.z!, `−${e.amount}`, 'muted'); break;
-        case 'barrierBroken': this.toast(e.text, 'info'); break;
-        case 'dispatch': case 'info': case 'extinguished': this.toast(e.text, 'info'); break;
+        case 'barrierBroken': this.sfx.play('barrierBroken', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'info'); break;
+        case 'extinguished': this.sfx.play('extinguished', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'info'); break;
+        case 'dispatch': this.sfx.play('dispatch'); this.toast(e.text, 'info'); break;
+        case 'info': this.toast(e.text, 'info'); break;
+        case 'collect': if (e.x !== undefined) this.sfx.play('collect', this.hear(e.x, e.z!)); break;
+        case 'release': if (e.x !== undefined) this.sfx.play('release', this.hear(e.x, e.z!)); break;
       }
     }
   }

@@ -324,3 +324,28 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
   - the side-select screen has a "STADSINFO" button next to the city name;
   - the first START of each city shows the briefing with a START MISSIE button (`settings.briefed`, same save key).
 - e2e and e2e-mobile click through the briefing; e2e asserts that it shows a map.
+
+## Sound (synthesised, no audio files)
+
+- `src/audio/sfx.ts` was rebuilt on Web Audio: a compressor on the master, with separate UI, world and ambience buses. White, pink and brown noise buffers are generated at start.
+- **World cues** are placed in stereo from the screen position (`MatchHud.hear`). They are quieter off-screen and when zoomed out:
+  - glass with shards (store breach, molotov impact);
+  - thud and debris (barrier knocked over);
+  - police whistle (intercept), shield thud;
+  - fire whoosh, steam hiss when a fire is put out;
+  - rustle (collect/extract), recovered chime;
+  - two-tone truck horn (São Paulo supply);
+  - crowd swell (dispatch), distant two-tone siren (wave start);
+  - win/lose chords.
+- **Ambience** follows the game every frame:
+  - city hum;
+  - a crowd that grows with the number of rioters;
+  - fire roar and crackle panned to the fires;
+  - hose hiss while firefighters spray;
+  - hammering while units break boards or barriers;
+  - fountain water;
+  - distant sirens and shouts during a wave.
+
+  It is quieter while paused and suspended when the tab is hidden.
+- **iOS:** the audio is unlocked on the first touch in the match. Menu buttons click softly.
+- **Verified:** every cue was rendered offline in Chromium and measured. All are audible, none clip (peak ≤ 0.3), panning works, and calm-street vs riot ambience is about 0.010 vs 0.025 RMS.
