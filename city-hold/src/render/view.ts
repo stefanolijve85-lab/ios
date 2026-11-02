@@ -99,7 +99,7 @@ export class MatchView {
     }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
-    this.scene.add(new THREE.HemisphereLight(0x8a9ac8, 0x323a4c, 0.85)); // blue-hour sky, cool wet ground bounce
+    this.scene.add(new THREE.HemisphereLight(0x8a9ac8, 0x4a3e30, 0.85)); // blue-hour sky, cool wet ground bounce
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
     moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);

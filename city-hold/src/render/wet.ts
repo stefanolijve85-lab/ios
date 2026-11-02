@@ -8,7 +8,7 @@ const WetShader = {
   name: 'WetStreet',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 1.05 },
+    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 1.3 },
   },
   vertexShader: `uniform mat4 textureMatrix; uniform vec2 repeat; varying vec4 vR; varying vec2 vUv; varying vec2 vBig;
     void main(){ vR = textureMatrix * vec4(position, 1.0); vUv = uv * repeat; vBig = uv * 3.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,

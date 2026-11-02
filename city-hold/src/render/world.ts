@@ -467,7 +467,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     const load = (f: string, srgb: boolean) => { const t = tl.load(`textures/${f}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.copy(rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
     const gm = ground.material as THREE.MeshStandardMaterial;
     gm.map = load('paris_setts_albedo.jpg', true); gm.normalMap = load('paris_setts_normal.jpg', false); gm.roughnessMap = load('paris_setts_rough.jpg', false);
-    gm.color.set(0xdfe4ea); gm.roughness = 1; gm.metalness = 0.25; gm.normalScale.set(1.1, 1.1); gm.needsUpdate = true;
+    gm.color.set(0xd9cbb6); gm.roughness = 0.85; gm.metalness = 0.3; gm.envMapIntensity = 2.4; gm.normalScale.set(1.1, 1.1); gm.needsUpdate = true;
   }
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
@@ -612,13 +612,13 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     fadeables.push({ meshes: pf.meshes, box: new THREE.Box3().setFromObject(pf.root), opacity: 1 });
   }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
-  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.2)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.24)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   // light pools and wet-street streaks are each merged into one mesh (one draw call each, whatever the lamp count)
   const flat = (w: number, d: number, x: number, y: number, z: number, rotY = 0) => new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).rotateY(rotY).translate(x, y, z);
   const pools: THREE.BufferGeometry[] = []; const streaks: THREE.BufferGeometry[] = [];
   lampPos.forEach((lp, i) => {
-    pools.push(flat(6, 6, lp.x, 0.03, lp.z));
+    pools.push(flat(9, 9, lp.x, 0.03, lp.z));
     if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) pools.push(flat(s.width + 2, 5, s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4, Math.atan2(s.normal.x, s.normal.z)));
