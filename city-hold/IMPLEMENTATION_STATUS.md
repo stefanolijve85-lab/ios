@@ -369,3 +369,10 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 - **Camera:** pitch 46° → 40° for all cities. The Paris framing is `{0, -4, 56}`: the whole main building with its roof is in view and the reserve team stays clear of the HUD.
 - **Fountain:** a new ornate three-tier fountain with bronze figures (generated reference, then Tripo H3.1 at 24k faces) replaces the earlier SAM-3D crop. It is lit warmly with a lower emissive.
 - **Roofs:** large Haussmann blocks break their flat zinc deck into the pitched roofs of separate houses, with party walls and chimney stacks.
+
+## ElevenLabs sound effects (pending download)
+
+- 18 effects were generated with eleven_text_to_sound_v2 (about 300 ElevenLabs credits). Names and signed links are in `tools/sfx/elevenlabs_urls.txt`.
+- Run `bash city-hold/tools/sfx/fetch.sh` from a session that can reach `elevenlabsusercontent.com`. The links expire on 2026-11-03 00:00 UTC; after that, download the files from the ElevenLabs flow by hand.
+- `src/audio/sfx.ts` already loads `public/audio/<name>.mp3` and falls back to the synthesis when a file is missing.
+- After the download, check the mix with the offline render: every cue should peak at about 0.3 or less.
