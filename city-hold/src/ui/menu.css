@@ -234,3 +234,31 @@
   .rm-galwrap { top: calc(12vh + var(--st)); }
   .gal-roles { max-height: 30vh; overflow-y: auto; }
 }
+
+/* ---------------- city briefing ---------------- */
+.rm-info { margin-left: 0.6em; vertical-align: middle; font: 700 clamp(11px, 1.6vh, 15px)/1 Barlow, system-ui, sans-serif; letter-spacing: 0.06em; color: var(--r-accent); background: transparent; border: 1px solid var(--r-accent); border-radius: 3px; padding: 0.45em 0.8em; cursor: pointer; }
+.rm-info:hover, .rm-info:focus-visible { background: var(--r-accent); color: var(--r-accent-text); }
+.bf-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(6, 8, 11, 0.78); padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.bf-box { width: min(1100px, 100%); max-height: 100%; display: flex; flex-direction: column; background: #12161c; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; overflow: hidden; }
+.bf-body { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 22px; padding: 22px; overflow: auto; min-height: 0; }
+.bf-map canvas { display: block; margin: 0 auto; max-width: 100%; border-radius: 4px; }
+.bf-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; color: #a9a59c; font-size: 13px; }
+.bf-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.bf-title { margin: 0 0 6px; font-family: inherit; font-size: clamp(26px, 4vh, 40px); color: #f3eee4; }
+.bf-intro { margin: 0 0 14px; color: #c9c5bc; font-size: 15px; line-height: 1.45; }
+.bf-feat { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+.bf-feat li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+.bf-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 6px; background: rgba(255, 150, 29, 0.14); color: var(--r-accent); font-size: 18px; }
+.bf-feat b, .bf-tips b { color: #f3eee4; font-size: 15px; }
+.bf-feat p, .bf-tips p { margin: 2px 0 0; color: #b7b2a8; font-size: 14px; line-height: 1.4; }
+.bf-tips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bf-tips > div { padding: 10px 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); border-left: 3px solid var(--r-accent); }
+.bf-tips > div:first-child { border-left-color: #4f8cff; }
+.bf-foot { display: flex; justify-content: flex-end; gap: 12px; padding: 12px 22px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.bf-foot button { min-height: 48px; padding: 0 1.4em; font-size: 18px; display: inline-flex; align-items: center; gap: 0.4em; }
+.bf-foot .rm-ghost { background: transparent; color: #e8e3d9; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 3px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; }
+.bf-foot svg { width: 1em; height: 1em; }
+@media (max-width: 760px), (orientation: portrait) {
+  .bf-body { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 14px; }
+  .bf-tips { grid-template-columns: 1fr; }
+}

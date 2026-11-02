@@ -19,6 +19,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   const play = async (side) => {
     if (!(await p.$('main.rm-side'))) { if (await p.$('main.rm-main')) await p.click('.rm-cta'); await p.click(`[data-city="${city}"]`); await p.click('[data-next]'); }
     await p.click(`[data-side="${side}"]`); await p.click('[data-start]');
+    // first start of a city shows its briefing (map + notes); it must offer a start button
+    if (await p.$('.bf-overlay')) { assert(await p.$('.bf-overlay canvas'), 'city briefing shows a map'); await p.click('[data-bf-start]'); }
     await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
   };
   // ---------------- defence

@@ -5,6 +5,7 @@ import '@fontsource/barlow/400.css';
 import '@fontsource/barlow/500.css';
 import './menu.css';
 import { BALANCE, DIFFICULTY, type Difficulty } from '../config/balance';
+import { renderBriefing } from './briefing';
 
 /** one-line explanation of what a difficulty changes, per side */
 const DIFF_NOTE: Record<'nl' | 'en', Record<Side, Record<Difficulty, string>>> = {
@@ -190,7 +191,7 @@ export class Menu {
       <section class="rm-mission">
         <span class="rm-mthumb" style="background-image:url(${thumb})" aria-hidden="true"></span>
         <div class="rm-mtext">
-          <h2 class="rm-mcity">${this.cityName(id)}</h2>
+          <h2 class="rm-mcity">${this.cityName(id)} <button class="rm-info" data-brief>${this.lang === 'nl' ? 'STADSINFO' : 'CITY INFO'}</button></h2>
           <div class="rm-diff" role="radiogroup" aria-label="${t.difficulty}"><span class="rm-difflabel">${t.difficulty}</span>${diffs.map((d) => `<button role="radio" aria-checked="${p.settings.difficulty === d}" class="rm-diffbtn ${p.settings.difficulty === d ? 'on' : ''}" data-diff="${d}">${t[d]}</button>`).join('')}</div>
           <p class="rm-obj">${sd === 'defence' ? t.objDef : t.objLoot.replace('{n}', String(Math.round(BALANCE.looters.targetStock * DIFFICULTY[p.settings.difficulty].lootTargetMul)))}${DIFF_NOTE[p.settings.language === 'en' ? 'en' : 'nl'][sd][p.settings.difficulty] ? `<span class="rm-objnote">${DIFF_NOTE[p.settings.language === 'en' ? 'en' : 'nl'][sd][p.settings.difficulty]}</span>` : ''}</p>
         </div>
@@ -199,7 +200,31 @@ export class Menu {
     this.wire('[data-back]', () => this.back());
     this.wire('[data-side]', (el) => { menuState.side = el.dataset.side as Side; this.render(); });
     this.wire('[data-diff]', (el) => { p.settings.difficulty = el.dataset.diff as Difficulty; this.host.save(); this.render(); });
-    this.wire('[data-start]', () => { if (this.cityStatus(menuState.city).usable) this.host.start(menuState.city, menuState.side); });
+    const go = () => { if (this.cityStatus(menuState.city).usable) this.host.start(menuState.city, menuState.side); };
+    this.wire('[data-brief]', () => this.briefing(id, null));
+    this.wire('[data-start]', () => {
+      // the first time a city is started its briefing comes first
+      const seen = p.settings.briefed ?? [];
+      if (!seen.includes(id)) { p.settings.briefed = [...seen, id]; this.host.save(); this.briefing(id, go); } else go();
+    });
+  }
+
+  /** city briefing overlay: schematic map + what is special about this city; `onStart` adds a start button */
+  private briefing(id: string, onStart: (() => void) | null) {
+    const nl = this.lang === 'nl';
+    const ov = document.createElement('div'); ov.className = 'bf-overlay'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = `<div class="bf-box"><div class="bf-body"></div><footer class="bf-foot">
+      <button class="rm-ghost" data-bf-close>${onStart ? (nl ? 'TERUG' : 'BACK') : (nl ? 'SLUITEN' : 'CLOSE')}</button>
+      ${onStart ? `<button class="rm-cta" data-bf-start>${nl ? 'START MISSIE' : 'START MISSION'}${CHEV_R}</button>` : ''}</footer></div>`;
+    this.app.appendChild(ov);
+    renderBriefing(ov.querySelector('.bf-body')!, MAPS[id], id, this.lang, this.cityName(id));
+    const close = () => { ov.remove(); document.removeEventListener('keydown', key); };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', key);
+    ov.querySelector('[data-bf-close]')!.addEventListener('click', close);
+    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+    ov.querySelector('[data-bf-start]')?.addEventListener('click', () => { close(); onStart?.(); });
+    (ov.querySelector<HTMLElement>('[data-bf-start]') ?? ov.querySelector<HTMLElement>('[data-bf-close]'))?.focus();
   }
 
   // ---------------------------------------------------------------- progress (campaign + research)

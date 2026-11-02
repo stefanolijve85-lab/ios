@@ -1,7 +1,8 @@
 // Local progress and settings (localStorage). Explicit reset is available from the menu.
 export interface Settings { volume: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
   /** HUD size multiplier (phones benefit from larger) */ uiScale: number; /** short vibrations on key events (phones that support it) */ vibration: boolean;
-  /** chosen figures per role (model slots); appearance only */ figures?: Record<string, string[]> }
+  /** chosen figures per role (model slots); appearance only */ figures?: Record<string, string[]>;
+  /** cities whose briefing has been shown once */ briefed?: string[] }
 export interface Progress {
   version: 1;
   unlocked: string[];

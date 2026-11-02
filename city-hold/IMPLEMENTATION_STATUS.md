@@ -306,3 +306,21 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 - Bot probe across 6 cities × 4 seeds, looter wins out of 24: Normal 17, Hard 10, Expert 6. Before this pass: Normal 17, Hard 12, Expert 10. Milan is still the easiest city on Expert.
 - Rejected: an extra AI guard from the start on Expert. It dropped the bot below 15 % of the target in 5 of 6 cities.
 - The side-select screen shows the target for the chosen difficulty plus a one-line explanation of what the difficulty changes.
+
+## Authored animations for the Higgsfield figures
+
+- `src/render/rigPoses.ts` adds `addPosedClips()`, which builds the clips the auto-rigged figures lack. It runs from `shareCharacterClips` before the idle/run stand-ins.
+  - **Clips:** `held` / `restrained` (hands behind the back, head down), `escorted` (walk with hands behind the back), `escort` (walk with one arm forward), `extinguish` (both arms forward, torso sweeps), `flee` (run with the arms over the head), `guide` (raised waving arm), `carry_idle` (box held at the chest).
+  - **Method:** the base clip (idle, walk or run) is sampled on the real bones. The arm chain is then aimed at directions given in the character's own frame (forward from the toes, left from the shoulders). This works for any bone orientation the auto-rigger produced.
+- Collectie lists all of these clips per figure.
+- **Known issue:** the deformed left hand of `char.security` (an auto-rig weight fault) shows more in arm-forward poses.
+
+## City briefing
+
+- `src/ui/briefing.ts` has a short text per city (intro, three features, one defence tip and one looting tip, in NL and EN) and `drawMinimap()`.
+  - **Minimap:** drawn straight from the `MapDef`: buildings, walls, passages, water, bridges, arcades and columns, poor-visibility zones, sockets, the defence staging point, target stores, entries (stairs in purple) and the supply-truck route with its loading bay.
+  - **Legend:** only lists the features the map actually has.
+- **Entry points:**
+  - the side-select screen has a "STADSINFO" button next to the city name;
+  - the first START of each city shows the briefing with a START MISSIE button (`settings.briefed`, same save key).
+- e2e and e2e-mobile click through the briefing; e2e asserts that it shows a map.
