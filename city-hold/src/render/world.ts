@@ -488,17 +488,9 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const stores: ShopLike[] = map.stores.map((s, i) => {
     if (map.id === 'paris') {
       const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: !reducedFx }); group.add(sm.group);
-      const fslot = `shop.${s.kind === 'jewellery' ? 'jewelry' : s.kind}.facade`;
-      if (slotStatus(fslot) === 'final') { const fm = cloneModel(fslot); if (fm) sm.setFacade(fm); }
-      else {
-        // the shopfront painted in concept 03, cleaned of UI badges and figures, as a flat skin over the untouched shop
-        const kind = s.kind === 'jewellery' ? 'jewelry' : s.kind;
-        new THREE.TextureLoader().loadAsync(`textures/shopfronts/${kind}.jpg`).then((t) => {
-          t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-          const plane = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.02), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.8, roughness: 0.5 }));
-          sm.setFacade(plane);
-        }).catch(() => { /* no picture: the 3D module stays */ });
-      }
+      // painted storefront per state (intact / boarded / damaged / looted), generated from concept 03 in one consistent set
+      sm.setStateFront(`paris_${s.kind}`, s.width + 1.3, (s.width + 1.3) * 0.46); // a touch taller than the picture: fills the ground floor up to the cornice
+      sm.group.position.x += s.normal.x * 0.5; sm.group.position.z += s.normal.z * 0.5; // in front of the ground-floor stone
       return sm;
     }
     const lmk = (map.landmarks ?? []).find((l) => l.store === i && slotStatus(l.slot) === 'final');

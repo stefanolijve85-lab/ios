@@ -478,6 +478,30 @@ export class ShopModule {
     const mat = new THREE.MeshStandardMaterial({ map: tex.intact, emissive: 0xffffff, emissiveMap: tex.intact, emissiveIntensity: 0.75, roughness: 0.6 });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat); mesh.position.set(0, height / 2, 0.05); mesh.renderOrder = 1; this.group.add(mesh);
     this.stateFront = { mesh, tex, cur: 'intact' };
+    this.buildStreetLoot(width);
+  }
+
+  /** the aftermath on the pavement in front of a painted storefront (concept 03): product boxes, cardboard, clothes, glass */
+  private streetLoot: { damaged: THREE.InstancedMesh[]; looted: THREE.InstancedMesh[] } | null = null;
+  private buildStreetLoot(width: number) {
+    let seed = 7 + this.opts.seed * 13; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const mobile = this.opts.quality === 'mobile';
+    const mk = (geo: THREE.BufferGeometry, mat: THREE.Material, n: number, size: () => [number, number, number], spread: number, depth: number, y: (s: number) => number, cols?: number[]) => {
+      const im = new THREE.InstancedMesh(geo, mat, n); const m4 = new THREE.Matrix4(); const q = new THREE.Quaternion(); const e = new THREE.Euler(); const c = new THREE.Color();
+      for (let k = 0; k < n; k++) {
+        const [sx, sy, sz] = size(); const x = (rnd() - 0.5) * spread; const z = 0.3 + Math.pow(rnd(), 0.8) * depth;
+        e.set(0, rnd() * Math.PI * 2, 0); q.setFromEuler(e);
+        m4.compose(new THREE.Vector3(x, y(sy), z), q, new THREE.Vector3(sx, sy, sz)); im.setMatrixAt(k, m4);
+        if (cols) im.setColorAt(k, c.setHex(cols[Math.floor(rnd() * cols.length)]));
+      }
+      im.castShadow = !mobile; im.receiveShadow = true; im.visible = false; this.group.add(im); return im;
+    };
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const card = mk(box, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 }), mobile ? 8 : 18, () => { const s = 0.14 + rnd() * 0.22; return [s * (1 + rnd() * 0.6), s * 0.65, s]; }, width * 1.0, 3.2, (sy) => sy / 2, [0xb98b5a, 0xa77a4c, 0xc89d6a, 0xe8e6e0, 0xf2f1ec, 0x2a2c30]);
+    const flat = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const cloth = mk(flat, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, side: THREE.DoubleSide }), mobile ? 8 : 22, () => { const s = 0.12 + rnd() * 0.2; return [s * 1.3, 1, s]; }, width * 1.05, 3.6, () => 0.03, [0xb3253a, 0x2b3a6a, 0xe6e2da, 0x1f1f22, 0x7a1c2a, 0x3a5a3a, 0xd2c8b0]);
+    const glass = mk(flat, new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0.7, envMapIntensity: 2 }), mobile ? 20 : 60, () => { const s = 0.03 + rnd() * 0.08; return [s, 1, s * 0.7]; }, width * 1.0, 2.6, () => 0.028);
+    this.streetLoot = { damaged: [glass, card], looted: [glass, card, cloth] };
   }
 
   update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio = 0) {
@@ -487,6 +511,7 @@ export class ShopModule {
       const f = this.stateFront;
       if (st !== f.cur) { const m = f.mesh.material as THREE.MeshStandardMaterial; m.map = f.tex[st]; m.emissiveMap = f.tex[st]; m.needsUpdate = true; this.justBroke = (st === 'damaged' || st === 'looted') && (f.cur === 'intact' || f.cur === 'boarded'); f.cur = st; } else this.justBroke = false;
       for (const name of SHOP_GROUPS) this.groups[name].visible = false;
+      if (this.streetLoot) { for (const m of this.streetLoot.looted) m.visible = false; for (const m of (st === 'looted' ? this.streetLoot.looted : st === 'damaged' ? this.streetLoot.damaged : [])) m.visible = true; }
       if (this.soot) this.soot.visible = this.scorchedOn;
       if (this.light) this.light.intensity = 0;
       return;
