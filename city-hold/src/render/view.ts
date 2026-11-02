@@ -342,14 +342,17 @@ export class MatchView {
     return { moving: m.on, speed: m.v };
   }
 
+  /** a scenery fire keeps burning until a firefighter has put out the game fire at that spot */
+  private ambientBurning(g: Game, f: { x: number; z: number }) { return g.fires.some((ff) => ff.ambient && !ff.out && Math.hypot(ff.x - f.x, ff.z - f.z) < 0.5); }
+
   private poseOf(u: Unit): Pose {
     switch (u.state) {
       case 'breach': return 'breach';
       case 'barrier': return 'barrier';
       case 'collect': return 'collect';
       case 'held': return 'held';
-      case 'restrained': return 'restrained';
-      case 'escorted': return 'escorted';
+      case 'restrained': return 'brace'; // pushed back by the officer, bracing
+      case 'escorted': return u.escortSolo ? 'flee' : 'walk'; // pushed ahead by the officer, then runs off empty-handed
       case 'restrain': return 'restrain';
       case 'escort': return 'escort';
       case 'extinguish': return u.moving ? 'walk' : 'extinguish';
@@ -395,8 +398,14 @@ export class MatchView {
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
       h.root.position.x += (u.x - h.root.position.x) * k; h.root.position.z += (u.z - h.root.position.z) * k;
-      let df = u.facing - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
-      h.root.rotation.y += df * Math.min(1, dt * 12);
+      // standing guards watch the street: they turn towards a rioter nearby, otherwise look around on their own rhythm
+      let face = u.facing;
+      if (u.side === 'def' && !u.moving && (u.state === 'idle' || u.state === 'return')) {
+        let best = 12; for (const a of g.units) if (a.side === 'att') { const d = Math.hypot(a.x - u.x, a.z - u.z); if (d < best) { best = d; face = Math.atan2(a.x - u.x, a.z - u.z); } }
+        if (best >= 12) face += Math.sin(this.time * (0.18 + (u.id % 5) * 0.04) + u.id * 1.7) * 0.55;
+      }
+      let df = face - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
+      h.root.rotation.y += df * Math.min(1, dt * (u.moving ? 12 : 3)); // standing turns are unhurried
       const mv = this.motion(u.id, h.root.position, dt);
       let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
       else if (pose === 'brace' && mv.moving) pose = 'walk';
@@ -504,14 +513,14 @@ export class MatchView {
     this.projPool.sweep(alive);
     const activeFires = g.fires.filter((f) => !f.out);
     for (const f of activeFires) {
-      this.fx.burn(String(f.id), f.x, f.z, 1 - f.progress * 0.7);
+      if (!f.ambient) this.fx.burn(String(f.id), f.x, f.z, 1 - f.progress * 0.7); // scenery fires keep their own bigger blaze
       // clear indicator on every burning object: remaining fire (red) or extinguishing progress (blue)
       if (f.progress > 0) this.bar('f' + f.id, f.x, 2.8, f.z, f.progress, '#9fe3ff', 'EXTINGUISHING');
-      else this.bar('f' + f.id, f.x, 2.8, f.z, 1, '#ff5a2a', f.ttl >= 0 ? 'FIRE (burns out)' : '🔥 FIRE — send firefighter');
+      else if (!f.ambient) this.bar('f' + f.id, f.x, 2.8, f.z, 1, '#ff5a2a', f.ttl >= 0 ? 'FIRE (burns out)' : '🔥 FIRE — send firefighter');
     }
     // decorative fires (burning barricade far up the side street): flames, smoke and flicker, never part of the game
-    this.world.ambientFires.forEach((f, i) => { this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); });
-    this.fx.setFireLights([...activeFires, ...this.world.ambientFires], this.time);
+    this.world.ambientFires.forEach((f, i) => { if (!this.ambientBurning(g, f)) return; this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); });
+    this.fx.setFireLights([...activeFires.filter((f) => !f.ambient), ...this.world.ambientFires.filter((f) => this.ambientBurning(g, f))], this.time);
     for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }
     (window as unknown as { __fx?: unknown }).__fx = this.fx;
     // dropped goods markers
@@ -536,7 +545,7 @@ export class MatchView {
     }
     // van lights flash
     this.world.vanLights.forEach((l, i) => ((l.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(this.time * 9 + i * Math.PI) > 0 ? 0x3a6aff : 0x0a1440)));
-    this.world.fireGlows.forEach((gl, i) => { const k = 1 + Math.sin(this.time * 17 + i) * 0.08 + Math.sin(this.time * 5.3) * 0.06; gl.scale.set(7 * k, 7 * k, 1); });
+    this.world.fireGlows.forEach((gl, i) => { gl.visible = this.ambientBurning(g, this.world.ambientFires[i]); const k = 1 + Math.sin(this.time * 17 + i) * 0.08 + Math.sin(this.time * 5.3) * 0.06; gl.scale.set(7 * k, 7 * k, 1); });
     this.world.policeLights.forEach((l, i) => { (l.material as THREE.MeshBasicMaterial).opacity = Math.sin(this.time * 9 + i) > 0 ? 1 : 0.15; });
     // shop detail levels by camera distance (decoration only; gameplay objects are unaffected)
     for (const sh of [...this.world.stores, ...this.world.decorShops]) if (sh.setLod && sh.group) sh.setLod(this.camera.position.distanceTo(sh.group.position));

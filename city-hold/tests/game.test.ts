@@ -117,7 +117,8 @@ describe('stores and stock', () => {
     expect(u.state).toBe('escorted');
     g.intercept(u, sec); // second call must not double count
     expect(g.intercepted).toBe(1);
-    for (let i = 0; i < 30 * 5; i++) g.step(dt);
+    // pushed away by the officer, then runs off the map empty-handed (nobody is arrested)
+    for (let i = 0; i < 30 * 20 && g.units.includes(u); i++) g.step(dt);
     expect(g.units.includes(u)).toBe(false);
     expect(g.extracted).toBe(0);
   });
@@ -161,8 +162,8 @@ describe('stores and stock', () => {
     for (let i = 0; i < 30 * 3; i++) g.step(dt);
     expect(s.structure).toBeLessThan(100);
     const ff = g.spawnDefender('firefighter', g.map.defenderSpawn);
-    for (let i = 0; i < 30 * 40 && g.fires.length; i++) g.step(dt);
-    expect(g.fires.length).toBe(0);
+    for (let i = 0; i < 30 * 40 && g.fires.some((f) => !f.ambient); i++) g.step(dt);
+    expect(g.fires.filter((f) => !f.ambient).length).toBe(0); // the scenery barricade keeps burning until a firefighter comes
     const after = s.structure;
     for (let i = 0; i < 30 * 3; i++) g.step(dt);
     expect(s.structure).toBe(after);

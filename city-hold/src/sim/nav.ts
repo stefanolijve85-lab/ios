@@ -204,7 +204,7 @@ export class NavGrid {
         if (this.blocked[nk]) continue;
         if (d >= 4 && (this.blocked[j * W + ni] || this.blocked[nj * W + i])) continue; // no corner cutting
         let c = d >= 4 ? Math.SQRT2 : 1;
-        if (this.barrier[nk] >= 0) { if (mode === 'solid') continue; if (mode === 'att') c += extraCost; }
+        if (this.barrier[nk] >= 0) { if (mode === 'solid') continue; c += mode === 'att' ? extraCost : 40; } // defenders walk around barriers and concrete too (through only if there is no way round)
         const ng = g[k] + c;
         if (stamp[nk] !== run || ng < g[nk]) { stamp[nk] = run; g[nk] = ng; came[nk] = k; heap.push(nk, ng + hfn(nk)); }
       }
@@ -223,7 +223,7 @@ export class NavGrid {
   los(a: Vec2, b: Vec2, mode: 'att' | 'def' | 'solid' = 'att'): boolean {
     const bad = (i: number, j: number) => {
       if (i < 0 || j < 0 || i >= this.w || j >= this.h) return true;
-      const k = j * this.w + i; return this.blocked[k] !== 0 || (mode !== 'def' && this.barrier[k] >= 0);
+      const k = j * this.w + i; return this.blocked[k] !== 0 || this.barrier[k] >= 0;
     };
     const fx = (a.x - this.ox) / CELL, fz = (a.z - this.oz) / CELL, tx = (b.x - this.ox) / CELL, tz = (b.z - this.oz) / CELL;
     let i = Math.floor(fx), j = Math.floor(fz); const ti = Math.floor(tx), tj = Math.floor(tz);

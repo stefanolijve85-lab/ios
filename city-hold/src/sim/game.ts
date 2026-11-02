@@ -84,7 +84,7 @@ export interface Unit {
 
 export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
-export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number }
+export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number; /** a burning barricade placed in the scenery: harmless, burns until a firefighter puts it out */ ambient?: boolean }
 /** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
 export type NpcRole = 'civilian' | 'shopkeeper' | 'helper' | 'patron' | 'police';
 /** neutral person: never targeted, never counted, only reacts to danger */
@@ -190,6 +190,8 @@ export class Game {
     }
     this.npcRng = new Rng(((opts.seed ?? 12345) * 7919) ^ 0x5bd1e995);
     this.initNpcs();
+    // burning street barricades are real fires a firefighter can put out (they never spread or damage anything)
+    this.map.props.forEach((p, i) => { if (p.type === 'barricade_fire') this.fires.push({ id: this.nextId++, x: p.x, z: p.z, store: -1, prop: i, progress: 0, out: false, t: 0, ttl: -1, ambient: true }); });
     if (map.supply) {
       const p = map.supply.route[0];
       this.truck = { x: p.x, z: p.z, facing: 0, seg: 0, done: false, rewarded: false, waitT: 0, active: false, blocked: false };
@@ -819,16 +821,18 @@ export class Game {
       }
       case 'escort': {
         const t = this.unit(u.escortOf);
-        if (!u.path) this.setPath(u, this.map.defenderSpawn);
+        // the officer pushes the offender a few metres towards the nearest exit, one hand on the back (no arrest)
+        if (!u.path && t) { const ex = this.nearestExit(t); this.setPath(u, { x: ex.x, z: ex.z }); }
         this.follow(u, dt, sp * 0.55);
         if (t) {
-          // offender walks upright beside the officer
-          const bx = u.x - Math.sin(u.facing) * 0.2 + Math.cos(u.facing) * 0.7, bz = u.z - Math.cos(u.facing) * 0.2 - Math.sin(u.facing) * 0.7;
-          if (this.nav.walkable(bx, bz)) { t.x = bx; t.z = bz; }
+          const bx = u.x + Math.sin(u.facing) * 0.75, bz = u.z + Math.cos(u.facing) * 0.75;
+          const nx = t.x + (bx - t.x) * 0.35, nz = t.z + (bz - t.z) * 0.35; // eased: no snapping
+          if (this.nav.walkable(nx, nz)) { t.x = nx; t.z = nz; }
           t.facing = u.facing; t.moving = u.moving;
         }
         if (u.stateT > 3.5) {
-          if (t) { t.state = 'removed'; }
+          // let go: the offender runs off the map empty-handed
+          if (t) { t.escortSolo = true; t.stateT = 0; const ex = this.nearestExit(t); this.setPath(t, { x: ex.x, z: ex.z }); }
           u.escortOf = -1; this.goHome(u);
         }
         break;
@@ -873,10 +877,11 @@ export class Game {
     a.state = 'escorted'; a.stateT = 0; a.restrainBy = -1; a.heldBy = -1; a.moving = false;
     this.intercepted++;
     this.emit({ type: 'intercept', text: `${a.kind} intercepted`, x: a.x, z: a.z, side: 'def' });
-    if (by.kind === 'security') { by.state = 'escort'; by.stateT = 0; by.escortOf = a.id; by.engage = -1; by.path = null; }
-    else { // shield: offender is led away by itself
-      a.stateT = 0; a.escortSolo = true;
-    }
+    // security pushes the offender away (never arrests or carries anyone off): the offender, empty-handed, runs off the
+    // map by the nearest exit and is out of the match; the officer goes back to the post
+    const ex = this.nearestExit(a);
+    if (by.kind === 'security') { by.state = 'escort'; by.stateT = 0; by.escortOf = a.id; by.engage = -1; this.setPath(by, { x: ex.x, z: ex.z }); }
+    else { a.stateT = 0; a.escortSolo = true; this.setPath(a, { x: ex.x, z: ex.z }); }
   }
 
   private stepShields(dt: number) {
@@ -915,14 +920,21 @@ export class Game {
       if (this.follow(u, dt, sp)) u.state = 'idle';
     }
     if (u.state === 'idle' || u.state === 'return') {
-      const fire = this.fires.filter((f) => !f.out).sort((a, b) => (a.store < 0 ? 1 : 0) - (b.store < 0 ? 1 : 0) || Math.hypot(a.x - u.x, a.z - u.z) - Math.hypot(b.x - u.x, b.z - u.z))[0];
+      // a fire right where he was sent (within 8 m) first; otherwise burning shops before cars and street fires, nearest first
+      const key = (f: Fire) => { const d = Math.hypot(f.x - u.x, f.z - u.z); return d < 8 ? d - 1000 : (f.store < 0 ? 500 : 0) + d; };
+      const fire = this.fires.filter((f) => !f.out && (!f.ambient || Math.hypot(f.x - u.x, f.z - u.z) < 8)).sort((a, b) => key(a) - key(b))[0];
       if (fire && Math.hypot(fire.x - u.x, fire.z - u.z) < 40) { u.fireId = fire.id; u.state = 'extinguish'; this.setPath(u, fire); }
     }
     if (u.state === 'extinguish') {
       const f = this.fires.find((ff) => ff.id === u.fireId);
       if (!f || f.out) { u.fireId = -1; this.goHome(u); return; }
       const d = Math.hypot(f.x - u.x, f.z - u.z);
-      if (d > 2.6) { if (this.follow(u, dt, sp) || u.repathT > 50) this.setPath(u, f); }
+      // a car or street fire sits on ground he cannot stand on: the hose reaches further, and once he is as close as
+      // he can get (path finished) he sprays from there instead of standing next to it
+      const reach = f.store >= 0 ? 2.6 : 4.2;
+      if (!u.path && d > reach) this.setPath(u, this.nav.nearestWalkable(f.x, f.z, 4) ?? f);
+      const arrived = d > reach && !!u.path && this.follow(u, dt, sp);
+      if (d > reach && !(arrived && d < 6)) { if (u.repathT > 50) this.setPath(u, this.nav.nearestWalkable(f.x, f.z, 4) ?? f); }
       else {
         u.moving = false; u.facing = Math.atan2(f.x - u.x, f.z - u.z);
         f.progress += dt / BALANCE.units.firefighter.extinguishTime;
@@ -1012,7 +1024,7 @@ export class Game {
       case 'escorted': {
         u.moving = false;
         const solo = u.escortSolo;
-        if (solo && u.stateT > 2.5) u.state = 'removed';
+        if (solo) { if (this.follow(u, dt, this.speedOf(u) * 1.1) || u.stateT > 9 || !u.path) u.state = 'removed'; break; }
         if (!solo && !this.units.some((d) => d.escortOf === u.id)) { if (u.stateT > 3) u.state = 'removed'; }
         break;
       }

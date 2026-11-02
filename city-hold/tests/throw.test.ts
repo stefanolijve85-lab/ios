@@ -33,7 +33,7 @@ describe('thrower unit', () => {
     const rel = ev.filter((e) => e.type === 'release').length, imp = ev.filter((e) => e.type === 'impact').length;
     expect(rel).toBeLessThanOrEqual(6 * BALANCE.throw.throwsPerUnit);
     expect(imp).toBe(rel - g.projectiles.length);
-    expect(g.fires.filter((f) => !f.out).length).toBeLessThanOrEqual(BALANCE.fire.max);
+    expect(g.fires.filter((f) => !f.out && !f.ambient).length).toBeLessThanOrEqual(BALANCE.fire.max);
   });
 
   test('a throw interrupted during the wind-up never releases', () => {
@@ -112,9 +112,9 @@ describe('thrower unit', () => {
     g.units = []; g.phase = 'wave';
     g.launchProjectile(-4, 6, { kind: 'ground', idx: -1, x: 4, z: 6 });
     run(g, 2);
-    expect(g.fires.filter((f) => !f.out).length).toBe(1);
+    expect(g.fires.filter((f) => !f.out && !f.ambient).length).toBe(1);
     run(g, BALANCE.fire.groundBurnSec + 1);
-    expect(g.fires.filter((f) => !f.out).length).toBe(0);
+    expect(g.fires.filter((f) => !f.out && !f.ambient).length).toBe(0);
     expect(waveComposition(1).includes('thrower')).toBe(false);
     expect(waveComposition(7).filter((k) => k === 'thrower').length).toBeGreaterThan(0);
   });
