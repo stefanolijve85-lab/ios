@@ -626,6 +626,19 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.7 : 0.6 });
   const addStreak = (x: number, z: number, w: number, len: number) => streaks.push(flat(w, len, x, 0.035, z + len / 2 - 0.3));
   for (const lp of lampPos) addStreak(lp.x, lp.z, 1.7, 7);
+  // decorative lamp rows down the side streets (images 01/02): instanced poles and lanterns, merged pools and reflections
+  const gl = map.glowLamps ?? [];
+  if (gl.length) {
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.11, 3.8, 6).translate(0, 1.9, 0), new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.5, metalness: 0.6 }), gl.length);
+    const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd29a).multiplyScalar(3) }), gl.length * 2);
+    const m4 = new THREE.Matrix4();
+    gl.forEach((p, i) => {
+      poles.setMatrixAt(i, m4.makeTranslation(p.x, 0, p.z));
+      bulbs.setMatrixAt(i * 2, m4.makeTranslation(p.x - 0.32, 3.75, p.z)); bulbs.setMatrixAt(i * 2 + 1, m4.makeTranslation(p.x + 0.32, 3.75, p.z));
+      pools.push(flat(8, 8, p.x, 0.03, p.z)); addStreak(p.x, p.z, 1.6, 7);
+    });
+    group.add(poles, bulbs);
+  }
   for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 2.6, 8);
   if (pools.length) group.add(new THREE.Mesh(mergeGeometries(pools)!, pool));
   if (streaks.length) { const sm = new THREE.Mesh(mergeGeometries(streaks)!, streak); sm.renderOrder = 2; group.add(sm); }

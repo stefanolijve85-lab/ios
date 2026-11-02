@@ -96,6 +96,8 @@ export interface MapDef {
   /** ambient life (no gameplay effect): café guests at terrace tables, a decorative police line, points where passers-by stop */
   ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
   facadeDecals?: FacadeDecal[];
+  /** decorative street lamps for depth (side streets beyond the play area): pole, glow, pool and reflection only */
+  glowLamps?: Vec2[];
   landmarks?: LandmarkDef[];
   entries: EntryDef[];
   sockets: SocketDef[];
