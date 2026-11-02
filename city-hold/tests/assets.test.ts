@@ -26,7 +26,8 @@ describe('model slots', () => {
       const names = (gltf.animations ?? []).map((a: { name: string }) => a.name);
       if (gltf.nodes.some((n: { name?: string }) => n.name === 'Hips')) {
         // auto-rigged final model (Meshy/Higgsfield): needs its idle clip; walk/run/etc. are shared at load time from anim.* slots
-        expect(names.some((n: string) => /\|Idle\|/.test(n) || n === 'idle'), `${s.slot} idle clip`).toBe(true);
+        // its own idle, or none at all (a rig-only model): then the idle is shared from another auto-rigged figure
+        expect(names.length === 0 || names.some((n: string) => /\|Idle\|/.test(n) || n === 'idle'), `${s.slot} idle clip`).toBe(true);
         expect(manifest.slots['anim.run'], 'anim.run donor for auto-rigged characters').toBeTruthy();
         continue;
       }
