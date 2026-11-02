@@ -3,7 +3,7 @@ import { CITY_INFO, CITY_ORDER, MAPS } from './maps';
 import { Match, type MatchResult } from './ui/match';
 import { loadProgress, recordResult, resetProgress, saveProgress, type Progress } from './save';
 import type { Side } from './sim/game';
-import { loadAssets, SLOTS, slotStatus } from './render/assets';
+import { loadAssets, loadCityAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
 import { Menu, menuState } from './ui/menu';
 import { fxroom } from './fxroom';
@@ -55,6 +55,7 @@ async function start() {
   const nl = progress.settings.language !== 'en';
   app.innerHTML = `<div class="rm-loading" role="status"><span data-l>${nl ? 'Laden' : 'Loading'}…</span></div>`;
   await loadAssets('models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${d}/${t}`; });
+  await loadCityAssets(map.id, 'models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`; });
   app.innerHTML = '';
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);
   match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action));

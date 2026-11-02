@@ -467,7 +467,15 @@ export class ShopModule {
     this.group.add(holder); this.facade = holder;
   }
 
+  /** a landmark building shows this shop while it is untouched: hide the whole module until something changes */
+  private landmarkSkin = false;
+  setLandmarkSkin(on: boolean) { this.landmarkSkin = on; }
+
   update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio = 0) {
+    if (this.landmarkSkin) {
+      const intact = structureRatio >= 0.999 && stockRatio >= 0.999 && boardRatio <= 0 && !breached && level <= 1 && !this.scorchedOn;
+      if (intact) { for (const name of SHOP_GROUPS) this.groups[name].visible = false; this.justBroke = false; if (this.light) this.light.intensity = 0; return; }
+    }
     if (this.facade) {
       // untouched shop: the concept facade; any damage, boards, soot, theft or a lowered shutter: the full 3D module with its states
       const intact = structureRatio >= 0.999 && stockRatio >= 0.999 && boardRatio <= 0 && !breached && level <= 1 && !this.scorchedOn;

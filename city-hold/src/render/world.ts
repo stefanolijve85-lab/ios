@@ -105,7 +105,9 @@ function buildBuilding(b: BuildingDef, parent: THREE.Group, idx: number, fadeabl
     registerFade(b, res.meshes, fadeables);
     return;
   }
-  const r = b.rect; const w = r.x1 - r.x0, d = r.z1 - r.z0; const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
+  const ri = b.renderInset ?? 0;
+  const r = ri ? { x0: b.rect.x0 + ri, z0: b.rect.z0 + ri, x1: b.rect.x1 - ri, z1: b.rect.z1 - ri } : b.rect;
+  const w = r.x1 - r.x0, d = r.z1 - r.z0; const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
   const g = new THREE.Group(); parent.add(g);
   const sideMat = facadeMat(b, d, idx % 3), frontMat = facadeMat(b, w, (idx + 1) % 3);
   const roofTop = new THREE.MeshStandardMaterial({ map: roofTexture(b.style), roughness: 0.7 });
@@ -451,6 +453,12 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       }
       return sm;
     }
+    if ((map.landmarks ?? []).some((l) => l.store === i && slotStatus(l.slot) === 'final')) {
+      // a landmark building is this shop's look; the full 3D module (states) appears in front of it once touched
+      const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: false }); sm.setLandmarkSkin(true); group.add(sm.group);
+      sm.group.position.x += s.normal.x * 0.6; sm.group.position.z += s.normal.z * 0.6; // in front of the landmark's own ground floor
+      return sm;
+    }
     const v = buildStore(s, i, group, !reducedFx);
     return { hit: v.hit, update: (a: number, b: number, c: number, d: boolean) => updateStoreVisual(v, a, b, c, d) };
   });
@@ -579,6 +587,26 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 1.6, 7);
   if (pools.length) group.add(new THREE.Mesh(mergeGeometries(pools)!, pool));
   if (streaks.length) { const sm = new THREE.Mesh(mergeGeometries(streaks)!, streak); sm.renderOrder = 2; group.add(sm); }
+  // landmark buildings (image-to-3D models of the city references): front on the street face, scaled to the given width
+  for (const lm of map.landmarks ?? []) {
+    if (slotStatus(lm.slot) !== 'final') continue;
+    const m = cloneModel(lm.slot); if (!m) continue;
+    const bb = new THREE.Box3().setFromObject(m); const size = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+    const k = lm.width / Math.max(size.x, 1e-3);
+    m.position.set(-c.x, -bb.min.y, -bb.max.z); // front face at z = 0, standing on the ground
+    m.traverse((o) => {
+      const me = o as THREE.Mesh; if (!me.isMesh) return;
+      if (!me.geometry.attributes.normal) me.geometry.computeVertexNormals();
+      const src = me.material as THREE.MeshStandardMaterial; if (!src.isMeshStandardMaterial) return;
+      const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.75; mm.metalness = 0;
+      if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.55; } // the texture carries the painting's own night light
+      me.material = mm; me.castShadow = !reducedFx; me.receiveShadow = true;
+    });
+    const holder = new THREE.Group(); const scaled = new THREE.Group(); scaled.scale.setScalar(k); scaled.add(m); holder.add(scaled);
+    const a = (lm.rot * Math.PI) / 180; const inset = lm.inset ?? -0.12; // just in front of the block face it stands on
+    holder.rotation.y = a; holder.position.set(lm.x - Math.sin(a) * inset, 0, lm.z - Math.cos(a) * inset);
+    group.add(holder);
+  }
   // painted facades from the concept art (front faces facing +z), slightly self-lit because the painting carries its own light
   for (const fd of map.facadeDecals ?? []) {
     new THREE.TextureLoader().loadAsync(fd.texture).then((t) => {

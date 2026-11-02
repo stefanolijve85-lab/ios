@@ -1,0 +1,19 @@
+<!doctype html><html><body style="margin:0;background:#202630"><canvas id="c" width="1200" height="400"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search); const url = q.get('f');
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true }); r.setSize(1200, 400, false); r.outputColorSpace = THREE.SRGBColorSpace;
+const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(3, 5, 4); sc.add(dl);
+const g = await new GLTFLoader().loadAsync(url); const m = g.scene; sc.add(m);
+const bb = new THREE.Box3().setFromObject(m); const s = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3());
+window.__info = { size: s.toArray().map((v) => +v.toFixed(3)), tris: 0 };
+m.traverse((o) => { if (o.isMesh) { window.__info.tris += o.geometry.index ? o.geometry.index.count / 3 : o.geometry.attributes.position.count / 3; if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals(); } });
+const R = Math.max(s.x, s.y, s.z) * 1.6; const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+r.setScissorTest(true);
+[[0, 0.3], [Math.PI / 4, 0.5], [Math.PI / 2, 0.3]].forEach(([a, e], i) => {
+  r.setViewport(i * 400, 0, 400, 400); r.setScissor(i * 400, 0, 400, 400);
+  cam.position.set(c.x + Math.sin(a) * R * Math.cos(e), c.y + R * Math.sin(e), c.z + Math.cos(a) * R * Math.cos(e)); cam.lookAt(c); r.render(sc, cam);
+});
+window.__done = true;
+</script></body></html>

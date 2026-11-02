@@ -228,6 +228,78 @@
       "file": "final/anim.kneel.glb",
       "status": "final",
       "note": "kneel clip donor"
+    },
+    "building.blad": {
+      "file": "final/building.blad.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference canal_shop (BLAD)",
+      "city": "amsterdam"
+    },
+    "building.kade": {
+      "file": "final/building.kade.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference corner_cafe (KADE)",
+      "city": "amsterdam"
+    },
+    "prop.bike_rack": {
+      "file": "final/prop.bike_rack.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference bicycle_rack",
+      "city": "amsterdam"
+    },
+    "prop.bollard_ams": {
+      "file": "final/prop.bollard_ams.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference bollard",
+      "city": "amsterdam"
+    },
+    "building.alder": {
+      "file": "final/building.alder.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference 01_london_brick_shop (ALDER)",
+      "city": "london"
+    },
+    "building.lantern": {
+      "file": "final/building.lantern.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference 02_london_corner_pub (THE LANTERN)",
+      "city": "london"
+    },
+    "prop.shelter_london": {
+      "file": "final/prop.shelter_london.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference 04_london_bus_shelter",
+      "city": "london"
+    },
+    "building.vetro": {
+      "file": "final/building.vetro.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference arcade_shop/vetro_intact (VETRO)",
+      "city": "milan"
+    },
+    "building.kante": {
+      "file": "final/building.kante.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference courtyard_building (KANTE)",
+      "city": "berlin"
+    },
+    "building.ponto": {
+      "file": "final/building.ponto.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from the city-pack reference ponto_intact (PONTO)",
+      "city": "saopaulo"
+    },
+    "prop.tram_stop": {
+      "file": "final/prop.tram_stop.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from milan/tram_stop",
+      "city": "milan"
+    },
+    "prop.wheelie_bin": {
+      "file": "final/prop.wheelie_bin.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from berlin/recycling_bins (one bin)",
+      "city": "berlin"
     }
   }
 }

@@ -14,6 +14,25 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## All six cities playable again, with city-pack landmark buildings
+
+- 3D models from the RIOTS city-pack references, made with Higgsfield SAM-3D at 1 credit each:
+  - Amsterdam: BLAD, KADE, bike rack, bollard
+  - London: ALDER, THE LANTERN, bus shelter
+  - Milan: VETRO, tram shelter
+  - Berlin: KANTE, wheelie bin
+  - São Paulo: PONTO
+- They are slots tagged with `city` in `public/models/manifest.json` and are loaded only when a match in that city starts (`loadCityAssets`).
+- `MapDef.landmarks` places them along the street faces (front on the face, scaled to a width). The old blocks behind them are lower and drawn 1.6 m inset (`renderInset`); navigation still uses the full block.
+- A landmark can be a shop's look (`store`). The shop module is then hidden while the shop is untouched, and its full 3D states (glass, boards, stock, soot) appear in front of the building once something happens.
+- Amsterdam, London, Milan, Berlin and São Paulo are playable again. Their gameplay maps are unchanged (all navigation and city tests pass).
+- Known limits:
+  - One model per building is repeated along a street.
+  - The textures carry the painting's lighting.
+  - The courtyard archway in Berlin is hidden behind a KANTE front.
+  - The final models now total about 31 MB, but each city only loads its own.
+- Screenshot: `docs/screenshots/cities_landmarks.jpg`.
+
 ## Paris: police van and burning barricade (decor)
 
 - Police van (`police_van` prop, `buildPoliceVan`) by the crowd fence in the east side street: white van, blue band with a yellow line, POLICE lettering, light bar with flashing blue beacons and a flashing blue pool on the wet street. There is no real light, because an extra light would recompile every shader. Two decorative officers stand by the fence. It uses the delivery van's navigation footprint.

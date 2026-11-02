@@ -11,6 +11,8 @@ export interface BuildingDef {
   rect: Rect;
   /** scenery outside the play area only (skipped in mobile quality) */
   backdrop?: boolean;
+  /** draw the block this much smaller on every side (landmark buildings stand in front of it); navigation keeps the full rect */
+  renderInset?: number;
   height: number;
   style: BuildingStyle;
   /** fade when it occludes the view (foreground roofs) */
@@ -60,6 +62,10 @@ export interface Spot { x: number; z: number; facing: number }
 /** a painted facade from the concept art laid over a building front (x0..x1 along the face, y0..y1 height, at depth z) */
 export interface FacadeDecal { texture: string; x0: number; x1: number; y0: number; y1: number; z: number }
 
+/** a whole building model (city landmark) standing with its front on a street face; `store` makes it the look of that
+ *  store while it is untouched (the 3D shop module with its states takes over in front of the ground floor otherwise) */
+export interface LandmarkDef { slot: string; x: number; z: number; /** facing direction in degrees: 0 = +z */ rot: number; width: number; store?: number; inset?: number }
+
 export interface MapDef {
   id: string;
   city: string;
@@ -86,6 +92,7 @@ export interface MapDef {
   /** ambient life (no gameplay effect): café guests at terrace tables, a decorative police line, points where passers-by stop */
   ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
   facadeDecals?: FacadeDecal[];
+  landmarks?: LandmarkDef[];
   entries: EntryDef[];
   sockets: SocketDef[];
   van: { x: number; z: number; rot: number };

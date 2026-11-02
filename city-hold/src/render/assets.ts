@@ -7,7 +7,7 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 
 export type SlotGroup = 'character' | 'prop' | 'shop';
 export interface SlotDef { slot: string; group: SlotGroup; label: string; spec: string; /** built in code until a final GLB is supplied */ optional?: boolean }
-export interface ManifestEntry { file: string; status: 'placeholder' | 'final'; note?: string }
+export interface ManifestEntry { file: string; status: 'placeholder' | 'final'; note?: string; /** loaded only when a match in this city starts */ city?: string }
 export interface Manifest { version: 1; units: 'metres'; up: 'Y'; forward: '+Z'; slots: Record<string, ManifestEntry> }
 
 const CHAR_SPEC = 'Rigged GLB, ~1.75 m, origin at feet, faces +Z. Clips: idle, walk, run, carry_idle, carry_walk, breach, collect, held, restrained, escorted, restrain, escort, brace, extinguish, throw, guide, flee. Node "carry" holds the carried goods (shown only when loaded). Materials named "skin" (and "top"/"legs" for casual looters) are recoloured per unit.';
@@ -86,7 +86,7 @@ export async function loadAssets(base = 'models/', onProgress?: (done: number, t
     manifest = (await res.json()) as Manifest;
   } catch { manifest = { version: 1, units: 'metres', up: 'Y', forward: '+Z', slots: {} }; return; }
   const loader = new GLTFLoader();
-  const entries = Object.entries(manifest.slots);
+  const entries = Object.entries(manifest.slots).filter(([, e]) => !e.city); // city landmarks load per city (loadCityAssets)
   let done = 0;
   await Promise.all(entries.map(async ([slot, e]) => {
     try {
@@ -97,6 +97,24 @@ export async function loadAssets(base = 'models/', onProgress?: (done: number, t
     onProgress?.(++done, entries.length);
   }));
   shareCharacterClips();
+}
+
+const cityLoads = new Map<string, Promise<void>>();
+/** Load the model slots tagged with this city (landmark buildings, local props) once, on first use. */
+export function loadCityAssets(city: string, base = 'models/', onProgress?: (done: number, total: number) => void): Promise<void> {
+  let p = cityLoads.get(city);
+  if (!p) {
+    p = (async () => {
+      const entries = Object.entries(manifest?.slots ?? {}).filter(([, e]) => e.city === city);
+      const loader = new GLTFLoader(); let done = 0;
+      await Promise.all(entries.map(async ([slot, e]) => {
+        try { const g = await loader.loadAsync(base + e.file); loaded.set(slot, { scene: g.scene, animations: g.animations }); } catch (err) { console.warn('model failed', slot, err); }
+        onProgress?.(++done, entries.length);
+      }));
+    })();
+    cityLoads.set(city, p);
+  }
+  return p;
 }
 
 /** Auto-rigged models (Meshy/Higgsfield "Armature|Idle|baselayer") use their own clip names; map them to the game's contract. */

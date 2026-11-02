@@ -1,4 +1,8 @@
-import type { MapDef, PropDef } from './types';
+import type { LandmarkDef, MapDef, PropDef } from './types';
+
+/** landmark buildings along one street face: [centre along the face, slot, width, store index?] */
+const row = (axis: 'x' | 'z', at: number, rot: number, items: [number, string, number, number?][]): LandmarkDef[] =>
+  items.map(([c, slot, width, store]) => ({ slot, width, rot, store, x: axis === 'x' ? c : at, z: axis === 'x' ? at : c }));
 
 // Five further districts built on the shared systems. Geometry is a fictional layout derived from the clean
 // reference paintings (21-25); each has its own navigation, entrances, sockets, AI routes and extraction points.
@@ -13,7 +17,7 @@ export const AMSTERDAM: MapDef = {
   refImage: 'ui/21_amsterdam_canals.jpg', damageImage: 'ui/32_amsterdam_disorder.jpg',
   bounds: { x0: -32, z0: -30, x1: 32, z1: 24 }, ground: 'brick',
   buildings: [
-    { rect: { x0: -44, z0: -42, x1: 44, z1: -15 }, height: 15, style: 'canal' },
+    { rect: { x0: -44, z0: -42, x1: 44, z1: -15 }, height: 8, style: 'canal', renderInset: 1.6 },
     { rect: { x0: -44, z0: 15, x1: -18, z1: 34 }, height: 12, style: 'canal', fadeable: true },
     { rect: { x0: 18, z0: 15, x1: 44, z1: 34 }, height: 12, style: 'canal', fadeable: true },
   ],
@@ -35,6 +39,13 @@ export const AMSTERDAM: MapDef = {
     { type: 'kiosk', x: -12, z: 17, collide: true, r: 1.3 },
     { type: 'car', x: 6, z: -9, rot: 0, collide: true, burnable: true },
   ],
+  // canal houses from the Amsterdam pack (BLAD trapgevel, KADE hoekpand) along the shop quay, plus bike racks and bollards
+  landmarks: [
+    ...row('x', -15, 0, [[-39.5, 'building.kade', 9], [-31.5, 'building.blad', 7], [-24.75, 'building.kade', 6.5], [-18, 'building.blad', 7, 0], [-11, 'building.blad', 7], [-3, 'building.kade', 9, 1],
+      [5, 'building.blad', 7], [12, 'building.kade', 7, 2], [19, 'building.blad', 7], [27, 'building.kade', 9], [35, 'building.blad', 7], [41.25, 'building.kade', 5.5]]),
+    { slot: 'prop.bike_rack', x: -25, z: -13.6, rot: 90, width: 0.9 }, { slot: 'prop.bike_rack', x: 21, z: -13.6, rot: 90, width: 0.9 },
+    ...[-28, -22, -6, 0, 6, 22, 28].map((x) => ({ slot: 'prop.bollard_ams', x, z: -4.9, rot: 0, width: 0.3 })),
+  ],
   stores: [
     { name: 'Phones', kind: 'phones', color: 0x23345a, front: { x: -18, z: -15 }, normal: { x: 0, z: 1 }, width: 6 },
     { name: 'Jewellery', kind: 'jewellery', color: 0x6a2232, front: { x: -3, z: -15 }, normal: { x: 0, z: 1 }, width: 6 },
@@ -54,7 +65,7 @@ export const AMSTERDAM: MapDef = {
     { id: 'L3', x: 0, z: 18, size: 'large', rot: 0 },
   ],
   van: { x: 26, z: -10, rot: 90 }, defenderSpawn: { x: 21, z: -8 },
-  lowSight: [], camera: { x: 0, z: -3, dist: 54 }, playable: false, // Paris first: this city waits for its own asset pack
+  lowSight: [], camera: { x: 0, z: -3, dist: 54 }, playable: true, // landmarks from the city pack are in
   notes: 'Canal is impassable; only the two bridges connect the banks. Blocking both bridges is refused.',
 };
 
@@ -64,9 +75,9 @@ export const LONDON: MapDef = {
   refImage: 'ui/22_london_high_street.jpg', damageImage: 'ui/33_london_disorder.jpg',
   bounds: { x0: -32, z0: -34, x1: 32, z1: 24 }, ground: 'stone',
   buildings: [
-    { rect: { x0: -44, z0: -46, x1: 8, z1: -12 }, height: 15, style: 'brick' },
+    { rect: { x0: -44, z0: -46, x1: 8, z1: -12 }, height: 8, style: 'brick', renderInset: 1.6 },
     { rect: { x0: 8, z0: -28, x1: 20, z1: -12 }, height: 13, style: 'brick', passages: [{ x0: 12, z0: -28, x1: 16, z1: -12 }] },
-    { rect: { x0: 20, z0: -46, x1: 44, z1: -6 }, height: 16, style: 'brick' },
+    { rect: { x0: 20, z0: -46, x1: 44, z1: -6 }, height: 8, style: 'brick', renderInset: 1.6 },
     { rect: { x0: 8, z0: 8, x1: 44, z1: 34 }, height: 13, style: 'brick', fadeable: true },
     { rect: { x0: -44, z0: 14, x1: -34, z1: 34 }, height: 12, style: 'brick', fadeable: true },
   ],
@@ -87,6 +98,12 @@ export const LONDON: MapDef = {
     { type: 'bench', x: -20, z: 6, collide: true, r: 0.8 },
     { type: 'car', x: 26, z: 4.6, rot: 0, collide: true, burnable: true },
   ],
+  // London pack: ALDER brick shop and THE LANTERN corner pub along the high street, a red bus shelter
+  landmarks: [
+    ...row('x', -12, 0, [[-40, 'building.alder', 8], [-32, 'building.lantern', 8], [-24, 'building.alder', 7, 0], [-17.75, 'building.lantern', 5.5], [-12, 'building.alder', 6, 1], [-6, 'building.alder', 6], [2, 'building.lantern', 10, 2]]),
+    ...row('x', -6, 0, [[24, 'building.alder', 8], [32, 'building.lantern', 8], [40, 'building.alder', 8]]),
+    { slot: 'prop.shelter_london', x: -31, z: -9.2, rot: 0, width: 4.2 },
+  ],
   stores: [
     { name: 'Department', kind: 'department', color: 0x2a4a3a, front: { x: -24, z: -12 }, normal: { x: 0, z: 1 }, width: 7 },
     { name: 'Phones', kind: 'phones', color: 0x24324e, front: { x: -12, z: -12 }, normal: { x: 0, z: 1 }, width: 6 },
@@ -105,7 +122,7 @@ export const LONDON: MapDef = {
     { id: 'L1', x: 14, z: -10, size: 'large', rot: 0 }, { id: 'L2', x: 19, z: 1, size: 'large', rot: 90 }, { id: 'L3', x: -27, z: -2, size: 'large', rot: 90 },
   ],
   van: { x: 26, z: 0.5, rot: 90 }, defenderSpawn: { x: 21, z: 2 },
-  lowSight: [{ x0: 12, z0: -28, x1: 16, z1: -12 }], camera: { x: -2, z: -6, dist: 54 }, playable: false, // Paris first: this city waits for its own asset pack
+  lowSight: [{ x0: 12, z0: -28, x1: 16, z1: -12 }], camera: { x: -2, z: -6, dist: 54 }, playable: true, // landmarks from the city pack are in
   notes: 'Two surface streets plus the covered passage give separate approaches; the underground stairs are a marked spawn.',
 };
 
@@ -116,9 +133,9 @@ export const MILAN: MapDef = {
   refImage: 'ui/23_milan_arcade.jpg', damageImage: 'ui/34_milan_disorder.jpg',
   bounds: { x0: -32, z0: -30, x1: 32, z1: 24 }, ground: 'plaza',
   buildings: [
-    { rect: { x0: -44, z0: -44, x1: 18, z1: -14 }, height: 17, style: 'italian' },
-    { rect: { x0: 26, z0: -44, x1: 44, z1: 34 }, height: 17, style: 'italian' },
-    { rect: { x0: -44, z0: -14, x1: -26, z1: 10 }, height: 15, style: 'italian' },
+    { rect: { x0: -44, z0: -44, x1: 18, z1: -14 }, height: 9, style: 'italian', renderInset: 1.6 },
+    { rect: { x0: 26, z0: -44, x1: 44, z1: 34 }, height: 9, style: 'italian', renderInset: 1.6 },
+    { rect: { x0: -44, z0: -14, x1: -26, z1: 10 }, height: 9, style: 'italian', renderInset: 1.6 },
     { rect: { x0: -44, z0: 16, x1: -6, z1: 34 }, height: 12, style: 'italian', fadeable: true },
     { rect: { x0: 6, z0: 16, x1: 18, z1: 34 }, height: 12, style: 'italian', fadeable: true },
   ],
@@ -130,6 +147,13 @@ export const MILAN: MapDef = {
     ...planters([[-14, -2], [-2, -2], [10, -2], [-14, 8], [10, 8]]),
     ...lamps([[-20, -10], [12, -10], [-20, 12], [0, 12]]),
     { type: 'bench', x: -6, z: 6, collide: true, r: 0.8 },
+  ],
+  // Milan pack: VETRO ochre arcade houses with terracotta roofs around the piazza, a historic tram shelter
+  landmarks: [
+    ...row('x', -14, 0, [[-38, 'building.vetro', 12], [-26, 'building.vetro', 12], [-14, 'building.vetro', 12, 0], [2, 'building.vetro', 12, 1], [13, 'building.vetro', 10]]),
+    ...row('z', 26, -90, [[-34, 'building.vetro', 12], [-22, 'building.vetro', 12], [-4, 'building.vetro', 12, 2], [8, 'building.vetro', 12], [22, 'building.vetro', 12]]),
+    ...row('z', -26, 90, [[-8, 'building.vetro', 12], [4, 'building.vetro', 12]]),
+    { slot: 'prop.tram_stop', x: -8, z: 14.2, rot: 180, width: 5 },
   ],
   stores: [
     { name: 'Jewellery', kind: 'jewellery', color: 0x5a1e28, front: { x: -14, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
@@ -148,7 +172,7 @@ export const MILAN: MapDef = {
     { id: 'L1', x: 22, z: -24, size: 'large', rot: 0 }, { id: 'L2', x: 0, z: 18, size: 'large', rot: 0 }, { id: 'L3', x: -24, z: 13, size: 'large', rot: 90 },
   ],
   van: { x: -20, z: 2, rot: 0 }, defenderSpawn: { x: -17, z: 3 },
-  lowSight: [{ x0: 18.2, z0: -30, x1: 26, z1: 16 }], camera: { x: 4, z: -4, dist: 56 }, playable: false, // Paris first: this city waits for its own asset pack
+  lowSight: [{ x0: 18.2, z0: -30, x1: 26, z1: 16 }], camera: { x: 4, z: -4, dist: 56 }, playable: true, // landmarks from the city pack are in
   notes: 'Arcade is walkable underneath; columns block. Detection is halved under the arcade roof.',
 };
 
@@ -158,10 +182,10 @@ export const BERLIN: MapDef = {
   refImage: 'ui/24_berlin_courtyards.jpg', damageImage: 'ui/35_berlin_disorder.jpg',
   bounds: { x0: -32, z0: -40, x1: 32, z1: 24 }, ground: 'asphalt',
   buildings: [
-    { rect: { x0: -44, z0: -26, x1: 44, z1: -14 }, height: 11, style: 'berlin', fadeable: true, passages: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }] },
+    { rect: { x0: -44, z0: -26, x1: 44, z1: -14 }, height: 7, style: 'berlin', fadeable: true, renderInset: 1.6, passages: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }] },
     { rect: { x0: -44, z0: -54, x1: -14, z1: -26 }, height: 18, style: 'berlin' },
     { rect: { x0: 14, z0: -54, x1: 44, z1: -26 }, height: 18, style: 'berlin' },
-    { rect: { x0: -14, z0: -54, x1: 14, z1: -38 }, height: 18, style: 'berlin' },
+    { rect: { x0: -14, z0: -54, x1: 14, z1: -38 }, height: 8, style: 'berlin', renderInset: 1.6 },
     { rect: { x0: -44, z0: 16, x1: -12, z1: 34 }, height: 14, style: 'berlin', fadeable: true },
     { rect: { x0: 12, z0: 16, x1: 44, z1: 34 }, height: 14, style: 'berlin', fadeable: true },
   ],
@@ -172,6 +196,13 @@ export const BERLIN: MapDef = {
     ...lamps([[-14, -11], [14, -11], [-12, 12], [12, 12], [-12, -28]]),
     { type: 'bench', x: -6, z: -36, collide: true, r: 0.8 },
     { type: 'car', x: -20, z: -9, rot: 0, collide: true, burnable: true },
+  ],
+  // Berlin pack: KANTE plastered Gründerzeit houses (archway house over the courtyard passage), wheelie bins
+  landmarks: [
+    ...row('x', -14, 0, [[-37, 'building.kante', 14], [-26.5, 'building.kante', 7], [-16, 'building.kante', 14, 0], [0, 'building.kante', 14], [16, 'building.kante', 14, 1], [26.5, 'building.kante', 7], [37, 'building.kante', 14]]),
+    ...row('x', -38, 0, [[-10, 'building.kante', 8], [0, 'building.kante', 12, 2], [10, 'building.kante', 8]]),
+    ...[-11.2, -10.4, -9.6].map((x) => ({ slot: 'prop.wheelie_bin', x, z: -38.4, rot: 0, width: 0.6 })),
+    ...[22.4, 23.2].map((x) => ({ slot: 'prop.wheelie_bin', x, z: -13.5, rot: 0, width: 0.6 })),
   ],
   stores: [
     { name: 'Electronics', kind: 'electronics', color: 0x1c2a4e, front: { x: -16, z: -14 }, normal: { x: 0, z: 1 }, width: 7 },
@@ -190,7 +221,7 @@ export const BERLIN: MapDef = {
     { id: 'L1', x: 0, z: -12.5, size: 'large', rot: 0 }, { id: 'L2', x: -26, z: -7, size: 'large', rot: 90 }, { id: 'L3', x: 0, z: 13, size: 'large', rot: 0 },
   ],
   van: { x: 24, z: 7, rot: 90 }, defenderSpawn: { x: 19, z: 5 },
-  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -16, dist: 64 }, playable: false, // Paris first: this city waits for its own asset pack
+  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -16, dist: 64 }, playable: true, // landmarks from the city pack are in
   notes: 'The courtyard is a real navigable area reached only through the archway; walls are solid.',
 };
 
@@ -200,10 +231,10 @@ export const SAOPAULO: MapDef = {
   refImage: 'ui/25_sao_paulo_retail.jpg', damageImage: 'ui/36_sao_paulo_disorder.jpg',
   bounds: { x0: -32, z0: -36, x1: 32, z1: 24 }, ground: 'stone',
   buildings: [
-    { rect: { x0: -10, z0: -30, x1: 20, z1: -10 }, height: 12, style: 'modern' },
-    { rect: { x0: 26, z0: -48, x1: 44, z1: 34 }, height: 16, style: 'modern' },
-    { rect: { x0: -44, z0: -48, x1: -18, z1: 0 }, height: 18, style: 'modern' },
-    { rect: { x0: -18, z0: -48, x1: 20, z1: -34 }, height: 10, style: 'modern' },
+    { rect: { x0: -10, z0: -30, x1: 20, z1: -10 }, height: 7, style: 'modern', renderInset: 1.6 },
+    { rect: { x0: 26, z0: -48, x1: 44, z1: 34 }, height: 7, style: 'modern', renderInset: 1.6 },
+    { rect: { x0: -44, z0: -48, x1: -18, z1: 0 }, height: 7, style: 'modern', renderInset: 1.6 },
+    { rect: { x0: -18, z0: -48, x1: 20, z1: -34 }, height: 7, style: 'modern', renderInset: 1.6 },
     { rect: { x0: -44, z0: 14, x1: -6, z1: 34 }, height: 12, style: 'modern', fadeable: true },
     { rect: { x0: 6, z0: 14, x1: 20, z1: 34 }, height: 12, style: 'modern', fadeable: true },
   ],
@@ -214,6 +245,14 @@ export const SAOPAULO: MapDef = {
     ...planters([[-4, 6], [4, 6]]),
     ...lamps([[-12, -12], [16, -6], [-12, 12], [17, 6]]),
     { type: 'car', x: -22, z: 3, rot: 90, collide: true, burnable: true },
+  ],
+  // São Paulo pack: PONTO concrete corner buildings (teal fascia, sun fins, air-conditioners) around the forecourt
+  landmarks: [
+    ...row('x', -10, 0, [[-1, 'building.ponto', 10, 1], [12, 'building.ponto', 10, 2]]),
+    ...row('z', -10, -90, [[-20, 'building.ponto', 12, 0]]),
+    ...row('z', 26, -90, [[-36, 'building.ponto', 12], [-24, 'building.ponto', 12], [-12, 'building.ponto', 12], [0, 'building.ponto', 12], [12, 'building.ponto', 12]]),
+    ...row('z', -18, 90, [[-42, 'building.ponto', 12], [-30, 'building.ponto', 12], [-18, 'building.ponto', 12], [-6, 'building.ponto', 12]]),
+    ...row('x', -34, 0, [[-12, 'building.ponto', 12], [0, 'building.ponto', 12], [12, 'building.ponto', 12]]),
   ],
   stores: [
     { name: 'Sports', kind: 'sports', color: 0x7a2a1a, front: { x: -10, z: -20 }, normal: { x: -1, z: 0 }, width: 6 },
@@ -235,6 +274,6 @@ export const SAOPAULO: MapDef = {
   lowSight: [],
   loadingLane: { x0: 20.2, z0: -28, x1: 25.8, z1: -14 },
   supply: { route: [{ x: 23, z: 23 }, { x: 23, z: -21 }, { x: 23, z: -35 }], loadIndex: 1 },
-  camera: { x: 0, z: -6, dist: 56 }, playable: false, // Paris first: this city waits for its own asset pack
+  camera: { x: 0, z: -6, dist: 56 }, playable: true, // landmarks from the city pack are in
   notes: 'Rear service lane doubles as the supply-truck route; the truck stops for anyone in front and pays once.',
 };
