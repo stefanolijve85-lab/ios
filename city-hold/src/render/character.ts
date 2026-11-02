@@ -134,6 +134,23 @@ class GltfCharacter implements CharacterVisual {
     }
     this.held = new HeldObject(model.getObjectByName('hand_socket') ?? model.getObjectByName('RightHand') ?? undefined);
     if (this.carry) this.carry.visible = false;
+    if (kind === 'shield' && model.getObjectByName('Hips')) {
+      // riot shield (London shield officer reference): clear polycarbonate with a dark rim, carried on the left forearm
+      const arm = model.getObjectByName('LeftForeArm');
+      if (arm) {
+        const sh = new THREE.Group(); sh.name = 'shield';
+        const pane = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.0, 0.02), new THREE.MeshStandardMaterial({ color: 0xcfe0ec, transparent: true, opacity: 0.45, roughness: 0.15, metalness: 0.2, depthWrite: false }));
+        const rim = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.04, 0.012), new THREE.MeshStandardMaterial({ color: 0x1c1f24, roughness: 0.6 }));
+        rim.position.z = -0.008; rim.scale.set(1, 1, 1); sh.add(rim, pane); rim.visible = true;
+        (rim.material as THREE.MeshStandardMaterial).wireframe = false;
+        // the arm bone's scale is in the rig's units: undo it so the shield is 0.6 x 1.0 m
+        arm.updateWorldMatrix(true, false); const ws = new THREE.Vector3(); arm.getWorldScale(ws); const rs = new THREE.Vector3(); model.getWorldScale(rs);
+        sh.scale.setScalar(rs.x / ws.x); sh.position.set(0, 0, 0); arm.add(sh);
+        // in bone space the forearm points along +Y: offset the shield in front of the forearm
+        sh.position.set(0.12 / (rs.x / ws.x) * (rs.x / ws.x), 0.05, 0.12).multiplyScalar(ws.x > 0 ? 1 / ws.x : 1);
+        sh.rotation.set(0, Math.PI / 2, 0);
+      }
+    }
     this.mixer = new THREE.AnimationMixer(model);
     for (const c of clips) this.actions.set(c.name, this.mixer.clipAction(c));
     this.root.add(contactShadow());

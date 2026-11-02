@@ -119,7 +119,7 @@ export function loadCityAssets(city: string, base = 'models/', onProgress?: (don
 
 /** Auto-rigged models (Meshy/Higgsfield "Armature|Idle|baselayer") use their own clip names; map them to the game's contract. */
 const RIG_CLIP_NAMES: Record<string, string> = { Idle: 'idle', Run_02: 'run', Run: 'run', Walking: 'walk', Casual_Walk: 'walk', Step_Forward_and_Push: 'restrain', Kneel_on_One_Knee_and_Stand: 'breach',
-  Carry_Heavy_Object_Walk_inplace: 'carry_walk', Carry_Heavy_Object_Walk: 'carry_walk', Male_Bend_Over_Pick_Up: 'collect', Over_Shoulder_Throw: 'throw' };
+  Carry_Heavy_Object_Walk_inplace: 'carry_walk', Carry_Heavy_Object_Walk: 'carry_walk', Male_Bend_Over_Pick_Up: 'collect', Over_Shoulder_Throw: 'throw', Block1: 'brace' };
 /** when a clip is missing the closest one stands in (walk-like states use the run cycle slowed down by the caller) */
 const CLIP_STAND_IN: Record<string, string[]> = {
   walk: ['run'], flee: ['run'], carry_walk: ['walk', 'run'], escort: ['walk', 'run'], escorted: ['walk', 'run'],

@@ -320,6 +320,11 @@
       "file": "final/anim.throw.glb",
       "status": "final",
       "note": "Higgsfield 3d_rigging animation on the security rig (8 credits)"
+    },
+    "anim.block": {
+      "file": "final/anim.block.glb",
+      "status": "final",
+      "note": "Higgsfield 3d_rigging Block1 on the security rig (8 credits)"
     }
   }
 }
