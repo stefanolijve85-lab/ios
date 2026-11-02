@@ -12,7 +12,7 @@ const PHRASES: [string, string][] = [
   ['Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.',
     'Bediening: slepen om te schuiven · scrollen/knijpen om te zoomen · tik een eenheid, dan de grond om te verplaatsen · P pauze · WASD schuiven.'],
   ['Mobile quality — lighter: no reflections, glow or shadows (applies on restart)', 'Mobiele kwaliteit — lichter: geen reflecties, gloed of schaduwen (na herstart)'],
-  ['Show tutorial tips', 'Speltips tonen'], ['HUD size', 'HUD-grootte'], ['Vibrate on events', 'Trillen bij gebeurtenissen'], ['Volume', 'Volume'],
+  ['Show tutorial tips', 'Speltips tonen'], ['HUD size', 'HUD-grootte'], ['Vibrate on events', 'Trillen bij gebeurtenissen'], ['Volume', 'Volume'], ['Music', 'Muziek'],
   // cards
   ['Security team', 'Beveiligingsteam'], ['Shield team', 'Schildteam'], ['Firefighter', 'Brandweer'], ['Heavy carrier', 'Zware drager'],
   ['Security', 'Beveiliging'], ['Barrier', 'Dranghek'], ['Concrete', 'Betonblok'], ['Camera', 'Camera'],

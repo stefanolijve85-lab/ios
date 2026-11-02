@@ -3,6 +3,7 @@ import { Game, type GameEvent, type Side } from '../sim/game';
 import type { MapDef } from '../maps/types';
 import { MatchView, type Pick } from '../render/view';
 import { Sfx, type Listener } from '../audio/sfx';
+import { music } from '../audio/music';
 import type { Settings } from '../save';
 import { translateLive } from './i18n_nl';
 import { setFigureChoices } from '../render/character';
@@ -93,6 +94,7 @@ export class Match {
     this.handleEvents(this.game.drainEvents());
     this.view.render(this.game, this.paused ? 0 : dt * this.speed);
     this.updateAudio(dt);
+    music.setIntensity(this.paused || this.game.over ? 0.2 : (this.game.phase === 'wave' || this.game.phase === 'running') ? 1 : 0.3);
     this.hudRefreshT -= dt;
     if (this.hudRefreshT <= 0) { this.refreshHud(false); this.hudRefreshT = 0.15; }
     if (this.game.over && !this.resultShown) { this.resultShown = true; setTimeout(() => this.showResult(), 900); }
@@ -525,12 +527,14 @@ export class Match {
     m.classList.remove('hidden');
     m.innerHTML = `<div class="panel"><h2>Settings</h2>
       <label>Volume <input type="range" min="0" max="1" step="0.05" value="${this.settings.volume}" data-s="vol"></label>
+      <label>Music <input type="range" min="0" max="1" step="0.05" value="${this.settings.music ?? 0.5}" data-s="mus"></label>
       <label><input type="checkbox" ${this.settings.reducedFx ? 'checked' : ''} data-s="fx"> Mobile quality — lighter: no reflections, glow or shadows (applies on restart)</label>
       <label><input type="checkbox" ${this.settings.showHints ? 'checked' : ''} data-s="hints"> Show tutorial tips</label>
       <label>HUD size <select data-s="ui">${[[1, '100%'], [1.15, '115%'], [1.3, '130%']].map(([v, l]) => `<option value="${v}" ${Number(this.settings.uiScale || 1) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label><input type="checkbox" ${this.settings.vibration ? 'checked' : ''} data-s="vib"> Vibrate on events</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
+    m.querySelector<HTMLInputElement>('[data-s="mus"]')!.addEventListener('input', (e) => { this.settings.music = Number((e.target as HTMLInputElement).value); music.setVolume(this.settings.music); this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { this.settings.volume = Number((e.target as HTMLInputElement).value); this.sfx.volume = this.settings.volume; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { this.settings.reducedFx = (e.target as HTMLInputElement).checked; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { this.settings.showHints = (e.target as HTMLInputElement).checked; this.el.hint.style.display = this.settings.showHints && this.hints.length ? '' : 'none'; this.onSettings?.(); });

@@ -6,6 +6,7 @@ import '@fontsource/barlow/500.css';
 import './menu.css';
 import { BALANCE, DIFFICULTY, type Difficulty } from '../config/balance';
 import { Sfx } from '../audio/sfx';
+import { music } from '../audio/music';
 import { renderBriefing } from './briefing';
 
 /** one-line explanation of what a difficulty changes, per side */
@@ -35,7 +36,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'MOEILIJKHEID', normal: 'NORMAAL', hard: 'MOEILIJK', expert: 'EXPERT', start: 'START MISSIE',
     objDef: `Bescherm de winkels tegen ${BALANCE.defence.waves} opeenvolgende golven.`, objLoot: `Buit {n} voorraad en ontsnap binnen ${BALANCE.looters.timeLimit / 60} minuten.`,
     notPlayable: 'Nog niet speelbaar', lockedWin: 'Win {prev} om {city} vrij te spelen.',
-    volume: 'Geluid', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
+    volume: 'Geluid', musicVol: 'Muziek', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
     danger: 'Gevarenzone', reset: 'VOORTGANG WISSEN', resetConfirm: 'Weet je het zeker? Alle steden, onderzoek en instellingen worden gewist.', resetYes: 'JA, WISSEN', cancel: 'ANNULEREN',
     campaign: 'CAMPAGNE', research: 'ONDERZOEK', points: 'punten', buy: 'KOPEN', owned: 'IN BEZIT', won: 'gewonnen', matches: 'Gespeelde missies',
     defShort: 'verdedigd', lootShort: 'geplunderd', hudNote: 'De speelinterface is (nog) Engelstalig.',
@@ -47,7 +48,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'DIFFICULTY', normal: 'NORMAL', hard: 'HARD', expert: 'EXPERT', start: 'START MISSION',
     objDef: `Protect the shops through ${BALANCE.defence.waves} consecutive waves.`, objLoot: `Loot {n} stock and escape within ${BALANCE.looters.timeLimit / 60} minutes.`,
     notPlayable: 'Not playable yet', lockedWin: 'Win {prev} to unlock {city}.',
-    volume: 'Sound', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
+    volume: 'Sound', musicVol: 'Music', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
     danger: 'Danger zone', reset: 'ERASE PROGRESS', resetConfirm: 'Are you sure? All cities, research and settings will be erased.', resetYes: 'YES, ERASE', cancel: 'CANCEL',
     campaign: 'CAMPAIGN', research: 'RESEARCH', points: 'points', buy: 'BUY', owned: 'OWNED', won: 'won', matches: 'Missions played',
     defShort: 'defended', lootShort: 'looted', hudNote: 'The in-game interface is in English.',
@@ -266,6 +267,7 @@ export class Menu {
       <h1 class="rm-h1">${t.settings}</h1>
       <div class="rm-panels one"><section class="rm-panel">
         <label class="rm-row"><span>${t.volume}</span><input type="range" min="0" max="1" step="0.05" value="${s.volume}" data-s="vol"></label>
+        <label class="rm-row"><span>${t.musicVol}</span><input type="range" min="0" max="1" step="0.05" value="${s.music ?? 0.5}" data-s="mus"></label>
         <div class="rm-row"><span>${t.language}</span><span class="rm-seg">${(['nl', 'en'] as Lang[]).map((l) => `<button class="rm-diffbtn ${s.language === l ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</span></div>
         <div class="rm-row"><span>${t.quality}</span><span class="rm-seg"><button class="rm-diffbtn ${!s.reducedFx ? 'on' : ''}" data-q="high">${t.qHigh}</button><button class="rm-diffbtn ${s.reducedFx ? 'on' : ''}" data-q="mobile">${t.qMobile}</button></span></div>
         <label class="rm-row"><span>${t.hints}</span><input type="checkbox" ${s.showHints ? 'checked' : ''} data-s="hints"></label>
@@ -277,6 +279,7 @@ export class Menu {
         </details>
       </section></div></main>`;
     this.wire('[data-back]', () => this.back());
+    this.app.querySelector<HTMLInputElement>('[data-s="mus"]')!.addEventListener('input', (e) => { s.music = Number((e.target as HTMLInputElement).value); music.setVolume(s.music); this.host.save(); });
     this.app.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { s.volume = Number((e.target as HTMLInputElement).value); this.host.save(); });
     this.app.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { s.showHints = (e.target as HTMLInputElement).checked; this.host.save(); });
     this.wire('[data-lang]', (el) => { s.language = el.dataset.lang as Lang; this.host.save(); this.settings(); });

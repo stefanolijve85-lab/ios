@@ -7,6 +7,7 @@ import { loadAssets, loadCityAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
 import { Menu, menuState } from './ui/menu';
 import { fxroom } from './fxroom';
+import { music } from './audio/music';
 
 const app = document.getElementById('app')!;
 let progress: Progress = loadProgress();
@@ -30,6 +31,7 @@ function menu() {
   menuState.city = chosenCity; menuState.side = chosenSide;
   if (menuState.screen === 'side' || menuState.screen === 'cities') { /* return to where the player left */ }
   menuUi.render();
+  music.setVolume(progress.settings.music ?? 0.5); music.setIntensity(0.4); music.play('menu');
 }
 
 function modal(html: string): HTMLDivElement {
@@ -70,6 +72,7 @@ async function start() {
     if (g.looterUpgrade !== 'none') specs.push(g.looterUpgrade === 'capacity' ? 'Capacity' : 'Speed');
     return { unlocked, research: progress.research, specs };
   };
+  music.setVolume(progress.settings.music ?? 0.5); music.play('mission');
   (window as unknown as { __match: Match }).__match = match; // exposed for automated browser checks
 }
 
