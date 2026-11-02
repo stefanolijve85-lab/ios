@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { addPosedClips } from './rigPoses';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 
@@ -147,6 +148,9 @@ function shareCharacterClips() {
       const k = keep(c); if (!k.tracks.length || !k.tracks.every((tr) => bones.has(tr.name.split('.')[0]))) continue;
       m.animations.push(k); have.add(c.name);
     }
+    // authored poses (hands behind back, hose, cover head, wave…) before falling back to a plain stand-in
+    addPosedClips(m.scene, m.animations);
+    for (const c of m.animations) have.add(c.name);
     for (const [want, from] of Object.entries(CLIP_STAND_IN)) {
       if (have.has(want)) continue;
       const src = from.map((f) => m.animations.find((c) => c.name === f)).find(Boolean);

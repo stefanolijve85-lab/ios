@@ -167,8 +167,8 @@ export async function mountGallery(el: HTMLElement, host: GalleryHost): Promise<
     // tools: animations for figures, states for shops
     if (figure?.clipNames) {
       const names = figure.clipNames().filter((n) => !/\|/.test(n));
-      const nl: Record<string, string> = { idle: 'Stilstaan', walk: 'Lopen', run: 'Rennen', carry_walk: 'Dragen', carry_idle: 'Dragen (stil)', collect: 'Oppakken', throw: 'Gooien', brace: 'Blokkeren', restrain: 'Duwen', breach: 'Knielen/inbreken', flee: 'Vluchten', guide: 'Wijzen', extinguish: 'Blussen', escort: 'Wegleiden', escorted: 'Weggeleid', held: 'Vastgehouden', restrained: 'Vastgehouden', escorted_: '' };
-      const order = ['idle', 'walk', 'run', 'carry_walk', 'collect', 'throw', 'brace', 'restrain', 'breach', 'flee', 'extinguish'];
+      const nl: Record<string, string> = { idle: 'Stilstaan', walk: 'Lopen', run: 'Rennen', carry_walk: 'Dragen', carry_idle: 'Dragen (stil)', collect: 'Oppakken', throw: 'Gooien', brace: 'Blokkeren', restrain: 'Duwen', breach: 'Knielen/inbreken', flee: 'Vluchten', guide: 'Wijzen', extinguish: 'Blussen', escort: 'Wegleiden', escorted: 'Weggeleid', held: 'Vastgehouden', restrained: 'Geboeid' };
+      const order = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'collect', 'throw', 'brace', 'restrain', 'escort', 'breach', 'flee', 'extinguish', 'guide', 'held', 'escorted'];
       const list = order.filter((n) => names.includes(n));
       $('tools').innerHTML = list.map((n) => `<button data-clip="${n}" class="${n === 'idle' ? 'on' : ''}">${nl[n] ?? n}</button>`).join('');
       clip = 'idle';
