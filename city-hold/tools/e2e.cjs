@@ -58,7 +58,9 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await ff(240); await p.waitForTimeout(300);
   st = await p.evaluate(() => ({ phase: window.__match.game.phase, budget: window.__match.game.budget, wave: window.__match.game.wave, rew: window.__match.game.rewardsGranted }));
   assert(st.phase === 'prep' || st.phase === 'lost', `wave 1 resolved (phase ${st.phase}, wave ${st.wave}, rewards ${st.rew})`);
-  if (st.phase === 'prep') assert(st.budget === before + 350 && st.rew === 1, 'wave reward applied exactly once');
+  // São Paulo's supply truck also pays out during a wave; the wave reward itself must be granted exactly once
+  const truckPay = await p.evaluate(() => window.__match.game.truck?.rewarded ? 1 : 0);
+  if (st.phase === 'prep') assert(st.rew === 1 && (st.budget === before + 350 || (truckPay > 0 && st.budget > before + 350)), `wave reward applied exactly once (${before} -> ${st.budget}${truckPay ? ', supply truck delivered' : ''})`);
   if (st.phase === 'prep') {
     // spend the reward: upgrade a second store through the UI
     await p.click('.store-label >> nth=1'); await p.waitForTimeout(300);

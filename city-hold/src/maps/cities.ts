@@ -223,7 +223,7 @@ export const BERLIN: MapDef = {
     { id: 'L1', x: 0, z: -12.5, size: 'large', rot: 0 }, { id: 'L2', x: -26, z: -7, size: 'large', rot: 90 }, { id: 'L3', x: 0, z: 13, size: 'large', rot: 0 },
   ],
   van: { x: 24, z: 7, rot: 90 }, defenderSpawn: { x: 19, z: 5 },
-  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -16, dist: 64 }, playable: true, // landmarks from the city pack are in
+  lowSight: [{ x0: -2.5, z0: -26, x1: 2.5, z1: -14 }], camera: { x: 0, z: -10, dist: 62 }, playable: true, // landmarks from the city pack are in
   notes: 'The courtyard is a real navigable area reached only through the archway; walls are solid.',
 };
 
