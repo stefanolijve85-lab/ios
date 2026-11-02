@@ -15,6 +15,9 @@ export interface CharacterVisual {
   heldWick?(out: THREE.Vector3): boolean;
   /** action: 0..1 progress of a one-shot action (throw) */
   update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action?: number): void;
+  /** gallery playback (rigged GLB figures) */
+  clipNames?(): string[];
+  previewClip?(name: string, dt: number): void;
 }
 
 const JOINTS = ['torso', 'head', 'legL', 'legR', 'kneeL', 'kneeR', 'armL', 'armR', 'elbowL', 'elbowR'];
@@ -157,6 +160,9 @@ class GltfCharacter implements CharacterVisual {
     this.icon = makeIcon(kind); this.root.add(this.icon);
     this.mixer.setTime(r() * 3);
   }
+  /** gallery: names of the clips this figure can play, and direct playback */
+  clipNames(): string[] { return [...this.actions.keys()]; }
+  previewClip(name: string, dt: number) { this.play(name, 1); this.mixer.update(dt); if (this.carry) this.carry.visible = name.startsWith('carry'); }
   private play(name: string, timeScale: number) {
     const a = this.actions.get(name) ?? this.actions.get(name.startsWith('carry') ? name.replace('carry_', '') : 'idle') ?? this.actions.get('idle');
     if (!a) return;
@@ -210,7 +216,18 @@ class ProcCharacter implements CharacterVisual {
 }
 
 /** Use the GLB in the unit's slot when it is loaded, otherwise fall back to the procedural figure. */
+/** player's figure choice per role (Collectie screen): slot lists; empty or missing = the default look */
+let figureChoice: Record<string, string[]> = {};
+export function setFigureChoices(c: Record<string, string[]> | undefined) { figureChoice = c ?? {}; }
+
+/** a figure from a specific model slot (gallery, and roles with a chosen look); appearance only, never stats */
+export function createCharacterFromSlot(slot: string, kind: AnyKind, variant = 1): CharacterVisual | null {
+  const m = getModel(slot); return m ? new GltfCharacter(kind, variant, m.scene, m.animations) : null;
+}
+
 export function createCharacter(kind: AnyKind, variant: number): CharacterVisual {
+  const chosen = (figureChoice[kind] ?? []).filter((sl) => getModel(sl));
+  if (chosen.length) { const c = createCharacterFromSlot(chosen[variant % chosen.length], kind, variant); if (c) return c; }
   // a final model for the unit class wins over a temporary outfit placeholder; civilians alternate between the final street figures
   const own = characterSlot(kind, variant);
   const civ = kind === 'civilian' ? ['char.civilian', 'char.carrier', 'char.heavy'].filter((sl) => slotStatus(sl) === 'final') : [];

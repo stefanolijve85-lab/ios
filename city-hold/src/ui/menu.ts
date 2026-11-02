@@ -13,7 +13,7 @@ import type { Side } from '../sim/game';
 // (tools/prepare_menu_art.py) and existing city concept images. Screen order:
 // main → cities → side → mission (existing preparation phase). Progress and settings branch off the main menu.
 
-type Screen = 'main' | 'cities' | 'side' | 'progress' | 'settings';
+type Screen = 'main' | 'cities' | 'side' | 'progress' | 'settings' | 'gallery';
 type Lang = 'nl' | 'en';
 
 /** Dutch names for the research perks (the config keeps the English ones used in the HUD). */
@@ -21,7 +21,7 @@ const PERK_NL: Record<string, string> = { budget: '+100 startbudget (beide kante
 
 const T: Record<Lang, Record<string, string>> = {
   nl: {
-    tagline: 'Elke straat telt.', play: 'SPELEN', progress: 'VOORTGANG', settings: 'INSTELLINGEN', footer: 'Tactische stadsstrategie',
+    tagline: 'Elke straat telt.', play: 'SPELEN', progress: 'VOORTGANG', collection: 'COLLECTIE', settings: 'INSTELLINGEN', footer: 'Tactische stadsstrategie',
     back: 'TERUG', chooseCity: 'KIES JE STAD', next: 'VERDER', available: 'Beschikbaar', chooseSide: 'KIES JE KANT',
     defend: 'VERDEDIGEN', loot: 'PLUNDEREN', defendDesc: 'Bescherm winkels en houd de straat veilig.', lootDesc: 'Verzamel buit en bereik de uitgang.',
     difficulty: 'MOEILIJKHEID', normal: 'NORMAAL', hard: 'MOEILIJK', expert: 'EXPERT', start: 'START MISSIE',
@@ -33,7 +33,7 @@ const T: Record<Lang, Record<string, string>> = {
     defShort: 'verdedigd', lootShort: 'geplunderd', hudNote: 'De speelinterface is (nog) Engelstalig.',
   },
   en: {
-    tagline: 'Every street counts.', play: 'PLAY', progress: 'PROGRESS', settings: 'SETTINGS', footer: 'Tactical city strategy',
+    tagline: 'Every street counts.', play: 'PLAY', progress: 'PROGRESS', collection: 'COLLECTION', settings: 'SETTINGS', footer: 'Tactical city strategy',
     back: 'BACK', chooseCity: 'CHOOSE YOUR CITY', next: 'NEXT', available: 'Available', chooseSide: 'CHOOSE YOUR SIDE',
     defend: 'DEFEND', loot: 'LOOT', defendDesc: 'Protect shops and keep the street safe.', lootDesc: 'Collect loot and reach the exit.',
     difficulty: 'DIFFICULTY', normal: 'NORMAL', hard: 'HARD', expert: 'EXPERT', start: 'START MISSION',
@@ -97,7 +97,8 @@ export class Menu {
   render() {
     document.title = 'RIOTS';
     const s = menuState.screen;
-    if (s === 'main') this.main(); else if (s === 'cities') this.cities(); else if (s === 'side') this.side(); else if (s === 'progress') this.progress(); else this.settings();
+    this.galleryOff?.(); this.galleryOff = null;
+    if (s === 'main') this.main(); else if (s === 'cities') this.cities(); else if (s === 'side') this.side(); else if (s === 'progress') this.progress(); else if (s === 'gallery') this.gallery(); else this.settings();
     const first = this.app.querySelector<HTMLElement>('[data-autofocus]');
     // focus for keyboard/screen readers without drawing the focus ring on a mouse/touch visit
     first?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
@@ -105,6 +106,21 @@ export class Menu {
 
   private wire(sel: string, fn: (el: HTMLElement) => void) { this.app.querySelectorAll<HTMLElement>(sel).forEach((el) => el.addEventListener('click', () => fn(el))); }
   private backBtn() { return `<button class="rm-back" data-back aria-label="${this.t.back}">${CHEV_L}<span>${this.t.back}</span></button>`; }
+
+  // ---------------------------------------------------------------- collection: every figure, object, building and shop
+  private galleryOff: (() => void) | null = null;
+  private gallery() {
+    const t = this.t;
+    this.app.innerHTML = `<main class="rm rm-sub rm-gallery">
+      <header class="rm-top"><div class="rm-logo-sm">RIOTS</div>${this.backBtn()}</header>
+      <h1 class="rm-h1">${t.collection}</h1>
+      <div class="rm-galwrap" data-gal></div></main>`;
+    this.wire('[data-back]', () => this.back());
+    const host = this.app.querySelector<HTMLElement>('[data-gal]')!;
+    let off: (() => void) | null = null; let gone = false;
+    this.galleryOff = () => { gone = true; off?.(); };
+    void import('./gallery').then((g) => g.mountGallery(host, { settings: this.host.progress().settings, save: () => this.host.save(), lang: this.lang })).then((d) => { if (gone) d(); else off = d; });
+  }
 
   // ---------------------------------------------------------------- 02 main menu
   private main() {
@@ -118,6 +134,7 @@ export class Menu {
         <nav class="rm-nav">
           <button class="rm-cta" data-go="cities" data-autofocus>${t.play}</button>
           <button class="rm-link" data-go="progress">${t.progress}</button>
+          <button class="rm-link" data-go="gallery">${t.collection}</button>
           <button class="rm-link" data-go="settings">${t.settings}</button>
         </nav>
         <p class="rm-foot">${t.footer}</p>

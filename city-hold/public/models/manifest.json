@@ -337,6 +337,48 @@
       "status": "final",
       "note": "Higgsfield SAM-3D from london/03_london_damaged_shop (CIRCUIT, already damaged)",
       "city": "london"
+    },
+    "char.alt.security": {
+      "file": "placeholder/char_security.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.shield": {
+      "file": "placeholder/char_shield.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.firefighter": {
+      "file": "placeholder/char_firefighter.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.runner": {
+      "file": "placeholder/char_runner.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.carrier": {
+      "file": "placeholder/char_carrier.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.heavy": {
+      "file": "placeholder/char_heavy.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
+    },
+    "char.alt.civilian": {
+      "file": "placeholder/char_civilian.glb",
+      "status": "final",
+      "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
+      "city": "collection"
     }
   }
 }

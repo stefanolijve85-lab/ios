@@ -55,6 +55,7 @@ async function start() {
   const nl = progress.settings.language !== 'en';
   app.innerHTML = `<div class="rm-loading" role="status"><span data-l>${nl ? 'Laden' : 'Loading'}…</span></div>`;
   await loadAssets('models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${d}/${t}`; });
+  if (Object.values(progress.settings.figures ?? {}).flat().some((sl) => sl.startsWith('char.alt.'))) await loadCityAssets('collection', 'models/'); // chosen earlier figures
   await loadCityAssets(map.id, 'models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`; });
   app.innerHTML = '';
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);

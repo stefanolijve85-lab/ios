@@ -14,6 +14,19 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Collectie: every figure, object, building and shop, large and with a role choice
+
+- New menu item COLLECTIE (`src/ui/gallery.ts`), with four tabs:
+  - Personen: 34 figures. The 7 Higgsfield models, 16 streetwear, masked and thrower figures, vandal, thrower, shopkeeper, helper and 7 earlier procedural figures.
+  - Objecten: manifest props, city-pack props and props built in code (police van, terrace set, barricade, …).
+  - Gebouwen: the 9 city-pack buildings.
+  - Winkels: the 6 shop modules with intact, boarded, damaged, looted and shutter states.
+- The viewer turns and zooms (drag, scroll or pinch) and shows source, height and triangle count. Figures play every clip they have.
+- "Gebruik in het spel als": any figure can be chosen for any role, and several choices per role alternate. Only the look changes, never the stats. It is saved in `settings.figures` and applied by `createCharacter` through `setFigureChoices`. Verified: civilians set to the tracksuit figure appear as such in a match.
+- The earlier procedural figures are selectable again as `char.alt.*` (collection group). They are loaded only in Collectie, or when chosen.
+- Known: the Higgsfield security model has a deformed hand from auto-rigging. The streetwear figures are the simple procedural versions (no image-to-3D models of them yet).
+- Screenshots: `docs/screenshots/collection_*.png|jpg`.
+
 ## Gameplay check for all six cities, options, Dutch HUD
 
 - An automatic probe (bot play, 3 seeds per city, side and difficulty) ran on every city:

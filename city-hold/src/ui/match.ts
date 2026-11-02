@@ -5,6 +5,7 @@ import { MatchView, type Pick } from '../render/view';
 import { Sfx } from '../audio/sfx';
 import type { Settings } from '../save';
 import { translateLive } from './i18n_nl';
+import { setFigureChoices } from '../render/character';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
 
@@ -49,6 +50,7 @@ export class Match {
 
   constructor(private host: HTMLElement, readonly map: MapDef, readonly side: Side, private settings: Settings, private perks: string[], private tutorial: boolean,
     private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void) {
+    setFigureChoices(settings.figures);
     const urlSeed = Number(new URLSearchParams(location.search).get('seed')); // fixed seed for automated tests (?seed=N)
     this.game = new Game(map, side, { seed: urlSeed > 0 ? urlSeed : (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty });
     this.sfx = new Sfx(settings.volume);
