@@ -82,7 +82,7 @@ export interface Unit {
   escortSolo: boolean;
 }
 
-export interface Barrier { id: number; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
+export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number }
 /** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
@@ -409,7 +409,7 @@ export class Game {
     const hp = kind === 'concrete' ? BALANCE.barrier.concreteHp : BALANCE.barrier.hp;
     // remove a previously broken barrier from this socket
     this.barriers = this.barriers.filter((b) => b.socketId !== s.id);
-    const b: Barrier = { id: this.nextId++, socketId: s.id, x: s.x, z: s.z, size, rot: s.rot, hp, maxHp: hp, rect: barrierRect(s.x, s.z, size, s.rot), broken: false, brokenT: 0 };
+    const b: Barrier = { id: this.nextId++, kind, socketId: s.id, x: s.x, z: s.z, size, rot: s.rot, hp, maxHp: hp, rect: barrierRect(s.x, s.z, size, s.rot), broken: false, brokenT: 0 };
     this.barriers.push(b);
     this.nav.setBarrier(b.id, b.rect, true);
     for (const u of this.units) u.repathT = 99;
@@ -1149,8 +1149,23 @@ export class Game {
         n.x = n.home.x; n.z = n.home.z; n.facing = n.home.facing; n.state = 'idle'; n.path = null; n.repaths = 0; // guests come back to the terrace once it is calm
       }
       if (n.state === 'browse') { n.moving = false; n.wait = (n.wait ?? 0) - dt; if (n.wait <= 0) { n.state = 'stroll'; n.browsed = true; const e = this.map.entries.find((en) => en.id === n.exit); if (e) this.npcGo(n, e.x, e.z); } continue; }
+      // decorative police: each officer on their own rhythm looks around, takes a few steps and drifts back to their post
+      if (n.role === 'police' && n.state === 'idle' && n.home) {
+        n.moving = false; n.wait = (n.wait ?? this.npcRng.next() * 4) - dt;
+        if (n.wait <= 0) {
+          const r = this.npcRng.next(); const h = n.home;
+          if (r < 0.5) { n.facing = h.facing + (this.npcRng.next() - 0.5) * 2.4; n.wait = 2 + this.npcRng.next() * 5; }
+          else {
+            const away = Math.hypot(n.x - h.x, n.z - h.z) > 0.8;
+            const a = this.npcRng.next() * Math.PI * 2, d = 0.8 + this.npcRng.next() * 1.4;
+            const t = r < 0.85 && !away ? this.nav.nearestWalkable(h.x + Math.cos(a) * d, h.z + Math.sin(a) * d, 1.5) : { x: h.x, z: h.z };
+            if (t) { n.state = 'stroll'; this.npcGo(n, t.x, t.z); n.repaths = 0; } else n.wait = 2;
+          }
+        }
+        continue;
+      }
       if (n.state === 'gone' || n.state === 'idle') { n.moving = false; continue; }
-      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : N.walkSpeed;
+      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : n.role === 'police' ? 0.9 : N.walkSpeed;
       n.moving = false; n.speed = 0;
       if (n.path && n.pi < n.path.length) {
         let budget = sp * dt;
@@ -1162,6 +1177,7 @@ export class Game {
           n.x = nx; n.z = nz; n.facing = Math.atan2(dx, dzz); budget -= st; n.moving = true; n.speed = sp; if (st >= d - 1e-6) n.pi++;
         }
       } else if (n.role === 'helper') { n.state = n.state === 'guide' ? 'guide' : 'idle'; }
+      else if (n.role === 'police') { n.state = 'idle'; n.wait = 3 + this.npcRng.next() * 6; if (n.home && Math.hypot(n.x - n.home.x, n.z - n.home.z) < 0.5) n.facing = n.home.facing; }
       else if (n.state === 'stroll' && n.role === 'civilian' && !n.browsed) {
         n.state = 'browse'; n.wait = N.browseSec[0] + this.npcRng.next() * (N.browseSec[1] - N.browseSec[0]); // stop and look
         const sx = this.map.stores.reduce((b, sd) => (Math.hypot(sd.front.x - n.x, sd.front.z - n.z) < Math.hypot(b.front.x - n.x, b.front.z - n.z) ? sd : b), this.map.stores[0]);

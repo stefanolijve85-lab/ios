@@ -467,7 +467,7 @@ export class MatchView {
     for (const b of g.barriers) {
       bseen.add(b.id);
       let m = this.barriers.get(b.id);
-      if (!m) { const slot = b.size === 'small' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.size); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
+      if (!m) { const slot = b.kind === 'barrier' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.kind === 'barrier' ? 'small' : 'large', b.size === 'large'); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
       if (b.broken) { m.rotation.z = Math.min(1.45, b.brokenT * 4) * (b.size === 'small' ? 1 : 0.15); m.position.y = b.size === 'small' ? 0.05 : 0; if (b.size === 'large') m.children.forEach((c, i) => { c.rotation.y = i * 0.4; c.position.z = (i % 2) * 0.8; }); }
       else if (b.hp < b.maxHp) this.bar('b' + b.id, b.x, 1.6, b.z, b.hp / b.maxHp, '#e0e0e0');
     }

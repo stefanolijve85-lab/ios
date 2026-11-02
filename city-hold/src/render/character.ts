@@ -181,9 +181,12 @@ class GltfCharacter implements CharacterVisual {
     }
     let clip: string = pose;
     if (pose === 'flee') clip = carrying ? 'carry_walk' : 'flee';
-    else if (pose === 'walk' || pose === 'idle') clip = moving ? (speed > 3.3 ? 'run' : carrying ? 'carry_walk' : 'walk') : carrying ? 'carry_idle' : 'idle';
-    const ts = clip === 'walk' ? speed / 3 : clip === 'run' ? speed / 4.2 : clip === 'carry_walk' ? speed / 2.4 : 1;
-    this.play(clip, Math.max(0.4, ts));
+    // auto-rigged clips: casual walk ~0.75 m/s, carry walk ~0.35 m/s, run ~2.4 m/s at speed 1 (measured from the foot travel).
+    // Above ~1.9 m/s a walk would need more than 2.5x playback: switch to the run cycle so the feet keep up with the body.
+    else if (pose === 'walk' || pose === 'idle') clip = moving ? (speed > 1.9 ? 'run' : carrying && speed < 0.9 ? 'carry_walk' : 'walk') : carrying ? 'carry_idle' : 'idle';
+    const natural: Record<string, number> = { walk: 0.75, run: 2.4, carry_walk: 0.35, flee: 2.4, escort: 0.75, escorted: 0.75 };
+    const ts = natural[clip] ? speed / natural[clip] : 1;
+    this.play(clip, Math.min(2.6, Math.max(0.5, ts)));
     this.mixer.update(dt);
   }
 }

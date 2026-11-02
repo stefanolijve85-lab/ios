@@ -265,6 +265,23 @@ export function buildCar(color: number, burned: boolean): THREE.Group {
   return g;
 }
 
+/** the police van of the concept (image-to-3D, slot prop.police_van): 5.8 m long, nose to +z, with two flashing
+ *  beacon blocks laid over its own light bar so the view can blink them like the procedural van's */
+function policeVanModel(): { group: THREE.Group; beacons: THREE.Mesh[] } | null {
+  if (slotStatus('prop.police_van') !== 'final') return null;
+  const m = cloneModel('prop.police_van'); if (!m) return null;
+  const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+  const along = sz.z >= sz.x; const k = 5.8 / Math.max(sz.x, sz.z);
+  const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m); inner.scale.setScalar(k);
+  inner.rotation.y = (along ? 0 : -Math.PI / 2) + POLICE_VAN_YAW;
+  const group = new THREE.Group(); group.add(inner);
+  const h = sz.y * k; const beacons: THREE.Mesh[] = [];
+  for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.24), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x, h + 0.02, 1.45); b.name = 'beacon'; group.add(b); beacons.push(b); }
+  return { group, beacons };
+}
+/** turn applied to the police van model so its nose points to +z (set after looking at the model) */
+const POLICE_VAN_YAW = 0;
+
 function beaconsOf(o: THREE.Object3D): THREE.Mesh[] {
   const out: THREE.Mesh[] = [];
   o.traverse((c) => { if (c.name.startsWith('beacon') && (c as THREE.Mesh).isMesh) { const m = c as THREE.Mesh; m.material = (m.material as THREE.Material).clone(); out.push(m); } });
@@ -368,7 +385,10 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       break;
     }
     case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
-    case 'police_van': { const pv = buildPoliceVan(); pv.group.children.slice().forEach((c) => g.add(c)); for (const b of pv.beacons) { b.userData.noMerge = true; policeBeacons.push(b); } policeSpots.push(new THREE.Vector3(p.x, 2.6, p.z)); break; }
+    case 'police_van': {
+      const pm = policeVanModel();
+      if (pm) { g.add(pm.group); for (const b of pm.beacons) { b.userData.noMerge = true; policeBeacons.push(b); } policeSpots.push(new THREE.Vector3(p.x, 2.6, p.z)); break; }
+      const pv = buildPoliceVan(); pv.group.children.slice().forEach((c) => g.add(c)); for (const b of pv.beacons) { b.userData.noMerge = true; policeBeacons.push(b); } policeSpots.push(new THREE.Vector3(p.x, 2.6, p.z)); break; }
     case 'barricade_fire': buildBarricade(i).children.slice().forEach((c) => g.add(c)); ambientFires.push({ x: p.x, z: p.z }); break;
     case 'cafe_table': buildBistroSet(g, 2 + (i % 2), i); break;
     case 'fence': for (const dx of [-1.27, 1.27]) { const b = buildCrowdBarrier(2.5); b.position.x = dx; g.add(b); } break;
@@ -678,7 +698,8 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // support van (staging point)
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
-  const { g: van, lights: vanLights } = vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
+  const pvm = map.id === 'paris' ? policeVanModel() : null; // Paris: the staging van is the concept's police van
+  const { g: van, lights: vanLights } = pvm ? { g: pvm.group, lights: pvm.beacons } : vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
   van.position.set(map.van.x, 0, map.van.z); van.rotation.y = (map.van.rot * Math.PI) / 180; group.add(van);
   // extinguishers at the staging van (decorative, firefighters carry the hose)
   for (const dx of [-0.25, 0.25]) { const e = buildExtinguisher(); e.position.set(1.35, 0, dx + 1.6); van.add(e); }
@@ -717,8 +738,13 @@ export function skyTexture(): THREE.Texture {
 }
 
 // ---- placeholder builders shared by the game (fallback) and the GLB export tool
-export function buildBarrierModel(size: 'small' | 'large'): THREE.Group {
+export function buildBarrierModel(size: 'small' | 'large', wide = false): THREE.Group {
     const g = new THREE.Group();
+    if (size === 'small' && wide) {
+      // a crowd barrier on a large socket: two sections side by side, as wide as the concrete row
+      for (const dx of [-1.27, 1.27]) { const s = buildBarrierModel('small'); s.position.x = dx; g.add(s); }
+      return g;
+    }
     if (size === 'small') {
       const metal = mat(0xb9bec4, 0.35, 0.8);
       const bar = new THREE.BoxGeometry(1, 1, 1);

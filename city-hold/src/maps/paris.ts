@@ -5,18 +5,13 @@ import type { MapDef, PropDef } from './types';
 // and an open pedestrian street in the foreground between two roof blocks.
 
 const props: PropDef[] = [
-  // lamps around the square
-  { type: 'lamp', x: -14.5, z: -11, collide: true, r: 0.25 },
-  { type: 'lamp', x: 14.5, z: -11, collide: true, r: 0.25 },
-  { type: 'lamp', x: -16, z: 5, collide: true, r: 0.25 },
-  { type: 'lamp', x: 16, z: 5, collide: true, r: 0.25 },
-  { type: 'lamp', x: -5.6, z: 13, collide: true, r: 0.25 },
-  { type: 'lamp', x: 5.6, z: 13, collide: true, r: 0.25 },
-  // double-globe lamps between the shops and along the foreground pavement (images 02/03)
-  { type: 'lamp', x: -5, z: -11.4, collide: true, r: 0.25 },
-  { type: 'lamp', x: 5, z: -11.4, collide: true, r: 0.25 },
-  { type: 'lamp', x: -10.5, z: 8.6, collide: true, r: 0.25 },
-  { type: 'lamp', x: 10.5, z: 8.6, collide: true, r: 0.25 },
+  // street lamps where a city would put them: on the pavement edge in front of the shops, on the kerbs of the side
+  // pavements, as a ring of four around the fountain basin, and along the foreground pavement flanking the street
+  ...([[-14.5, -11.6], [-5, -11.6], [5, -11.6], [14.5, -11.6], // shop pavement
+    [-22.8, -4], [22.8, -6], // side kerbs
+    [-5.4, -7.4], [5.4, -7.4], [-5.4, 3.4], [5.4, 3.4], // around the fountain
+    [-13.5, 13.4], [-6.2, 13.4], [6.2, 13.4], [13.5, 13.4]] as const) // foreground pavement
+    .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
   // side streets lit along both kerbs and lined with trees; the far lamps sit outside the play area and only add depth
   ...([[-17.7, -20], [17.7, -20], [-24.3, -32], [24.3, -31], [-17.7, -38], [17.7, -38], [-24.3, -47], [24.3, -47], [-17.7, -55], [17.7, -55]] as const)
     .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
@@ -25,8 +20,6 @@ const props: PropDef[] = [
   // trees and double lamps in front of and beside the fountain, as in images 01/02
   { type: 'tree', x: -7.2, z: 5.2, collide: true, r: 0.8 },
   { type: 'tree', x: 7.2, z: 5.2, collide: true, r: 0.8 },
-  { type: 'lamp', x: -4.6, z: 7.2, collide: true, r: 0.25 },
-  { type: 'lamp', x: 4.6, z: 7.2, collide: true, r: 0.25 },
   { type: 'tree', x: -11.5, z: -2.5, collide: true, r: 0.8 },
   { type: 'tree', x: 11.5, z: -2.5, collide: true, r: 0.8 },
   // planters with small trees

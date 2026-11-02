@@ -53,7 +53,7 @@ describe('neutral people', () => {
     g.step(dt);
     expect(guest.state).toBe('flee');
     for (let i = 0; i < 30 * 30; i++) g.step(dt);
-    expect(cop.state).toBe('idle'); expect(cop.x).toBe(copPos.x); expect(cop.z).toBe(copPos.z);
+    expect(cop.state).not.toBe('flee'); expect(Math.hypot(cop.x - copPos.x, cop.z - copPos.z)).toBeLessThan(3.2); // police shuffle around their post, never leave it
     g.units = []; g.phase = 'prep';
     for (let i = 0; i < 30 * 40 && guest.state !== 'idle'; i++) g.step(dt);
     expect(guest.state).toBe('idle');

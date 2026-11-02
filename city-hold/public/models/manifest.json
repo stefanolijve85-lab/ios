@@ -389,6 +389,12 @@
       "status": "final",
       "note": "Tripo H3.1 image-to-3D from a generated reference (Higgsfield), textures shrunk to 1024 px",
       "city": "paris"
+    },
+    "prop.police_van": {
+      "file": "final/prop.police_van.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D of the concept police van (17_police_van), textures 1024 px",
+      "city": "paris"
     }
   }
 }
