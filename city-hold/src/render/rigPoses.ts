@@ -53,6 +53,19 @@ export const POSED_CLIPS: Record<string, PoseSpec> = {
     },
     spineYaw: (ph) => (ph < 0.35 ? 0.3 * (ph / 0.35) : ph < 0.55 ? 0.3 - 0.6 * ((ph - 0.35) / 0.2) : -0.3 * (1 - (ph - 0.55) / 0.45)),
   },
+  // looter breaking a shop front or a barrier: crowbar in both hands, raised over the head and brought down hard
+  smash: {
+    base: ['idle'], period: 0.95, spinePitch: 0.18, headPitch: 0.15,
+    ...both((ph) => {
+      const up: ArmPose = { upper: [0.35, 0.05, 1], fore: [0.2, -0.35, 1] }, down: ArmPose = { upper: [1, -0.05, -0.35], fore: [0.85, -0.45, -0.75] };
+      // slow wind-up, fast blow, short recoil
+      const k = ph < 0.55 ? ph / 0.55 : ph < 0.7 ? 1 - (ph - 0.55) / 0.15 : ((ph - 0.7) / 0.3) * 0.15;
+      const e = ph < 0.55 ? k * k * (3 - 2 * k) : k;
+      const m = (x: V3, y: V3) => x.map((v, i) => y[i] + (v - y[i]) * e) as V3; // e = 1 -> up, 0 -> down
+      return { upper: m(up.upper, down.upper), fore: m(up.fore, down.fore) };
+    }),
+    spineYaw: (ph) => Math.sin(ph * TAU) * 0.08,
+  },
   // standing still with a box in both arms
   carry_idle: { base: ['idle'], ...both(() => ({ upper: [0.35, 0.25, -0.9], fore: [0.95, -0.45, 0.25] })) },
 };

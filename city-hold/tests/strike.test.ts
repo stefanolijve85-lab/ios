@@ -35,3 +35,14 @@ test('a guard sent across the square grabs a rioter he passes', () => {
   }
   expect(chased).toBe(true);
 });
+
+test('a camera that spots an intruder sends guards running at him', () => {
+  const g = new Game(PARIS, 'defence', { seed: 7 });
+  g.buyUnit('security'); g.buyUnit('security');
+  const sock = PARIS.sockets.find((s) => s.size === 'small')!;
+  g.place('camera', sock.id);
+  g.startWave();
+  let alarm = false;
+  for (let i = 0; i < 30 * 120 && !alarm; i++) { g.step(1 / 30); alarm = g.events.some((e) => e.type === 'alarm'); }
+  expect(alarm).toBe(true);
+});

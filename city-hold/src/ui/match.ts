@@ -332,6 +332,7 @@ export class Match {
         case 'extinguished': this.sfx.play('extinguished', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'info'); break;
         case 'dispatch': this.sfx.play('dispatch'); this.toast(e.text, 'info'); break;
         case 'info': this.toast(e.text, 'info'); break;
+        case 'alarm': if (this.side === 'defence') { this.toast(e.text, 'bad'); if (e.x !== undefined) this.view.showDestination(e.x, e.z!, null, 0xff4a3a); this.sfx.play('deny'); } break;
         case 'collect': if (e.x !== undefined) this.sfx.play('collect', this.hear(e.x, e.z!)); break;
         case 'release': if (e.x !== undefined) this.sfx.play('release', this.hear(e.x, e.z!)); break;
       }

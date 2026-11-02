@@ -105,6 +105,7 @@ class GltfCharacter implements CharacterVisual {
   private actions = new Map<string, THREE.AnimationAction>();
   private current: THREE.AnimationAction | null = null;
   private carry: THREE.Object3D | null;
+  private bar: THREE.Object3D | null = null;
   private held: HeldObject;
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
   constructor(kind: AnyKind, variant: number, scene: THREE.Object3D, clips: THREE.AnimationClip[]) {
@@ -140,6 +141,13 @@ class GltfCharacter implements CharacterVisual {
       box.position.set(0, 1.08, 0.32); box.castShadow = true; box.name = 'carry'; this.root.add(box); this.carry = box;
     }
     this.held = new HeldObject(model.getObjectByName('hand_socket') ?? model.getObjectByName('RightHand') ?? undefined);
+    const rh = model.getObjectByName('RightHand');
+    if (rh && kind !== 'shield' && kind !== 'security' && kind !== 'firefighter' && kind !== 'civilian') {
+      // crowbar, only in the hand while breaking something
+      rh.updateWorldMatrix(true, false); const ws = new THREE.Vector3(); rh.getWorldScale(ws); const rs = new THREE.Vector3(); model.getWorldScale(rs);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.75, 6), new THREE.MeshStandardMaterial({ color: 0x8a1f1a, roughness: 0.45, metalness: 0.6 }));
+      bar.scale.setScalar(rs.x / ws.x); bar.position.set(0, (0.2 / ws.x) * rs.x, 0); bar.visible = false; rh.add(bar); this.bar = bar;
+    }
     if (this.carry) this.carry.visible = false;
     if (kind === 'shield' && model.getObjectByName('Hips')) {
       // riot shield (London shield officer reference): clear polycarbonate with a dark rim, carried on the left forearm
@@ -191,6 +199,8 @@ class GltfCharacter implements CharacterVisual {
       if (a) { this.play(pose, 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
     }
     let clip: string = pose;
+    if ((pose === 'breach' || pose === 'barrier') && this.actions.has('smash')) clip = 'smash'; // crowbar blows on the shutter / barrier
+    if (this.bar) this.bar.visible = clip === 'smash';
     if (pose === 'flee') clip = carrying ? 'carry_walk' : 'flee';
     // auto-rigged clips: casual walk ~0.75 m/s, carry walk ~0.35 m/s, run ~2.4 m/s at speed 1 (measured from the foot travel).
     // Above ~1.9 m/s a walk would need more than 2.5x playback: switch to the run cycle so the feet keep up with the body.

@@ -397,9 +397,21 @@ export class MatchView {
       if (!h) { h = createCharacter(u.kind, u.variant); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
-      h.root.position.x += (u.x - h.root.position.x) * k; h.root.position.z += (u.z - h.root.position.z) * k;
+      // looting: the looter walks in through the broken front, grabs the goods inside and comes back out carrying them
+      // (cosmetic only: the sim keeps him at the door). in = 0..1 how far inside he is, phase drives pose and facing.
+      let tx = u.x, tz = u.z; let lootPhase: 'in' | 'inside' | 'out' | null = null;
+      if (u.state === 'collect' && u.targetStore >= 0) {
+        const sd = this.map.stores[u.targetStore]; const total = u.pending * BALANCE.collectTimePerStock + 0.6; const p = u.stateT / Math.max(0.5, total);
+        const inn = p < 0.28 ? p / 0.28 : p < 0.72 ? 1 : Math.max(0, 1 - (p - 0.72) / 0.28);
+        lootPhase = p < 0.28 ? 'in' : p < 0.72 ? 'inside' : 'out';
+        const lat = Math.max(-sd.width / 2 + 0.9, Math.min(sd.width / 2 - 0.9, (u.x - sd.front.x) * sd.normal.z - (u.z - sd.front.z) * sd.normal.x));
+        const ix = sd.front.x + sd.normal.z * lat - sd.normal.x * 1.7, iz = sd.front.z - sd.normal.x * lat - sd.normal.z * 1.7;
+        const e = inn * inn * (3 - 2 * inn); tx = u.x + (ix - u.x) * e; tz = u.z + (iz - u.z) * e;
+      }
+      h.root.position.x += (tx - h.root.position.x) * k; h.root.position.z += (tz - h.root.position.z) * k;
       // standing guards watch the street: they turn towards a rioter nearby, otherwise look around on their own rhythm
       let face = u.facing;
+      if (lootPhase === 'out' && u.targetStore >= 0) { const n = this.map.stores[u.targetStore].normal; face = Math.atan2(n.x, n.z); } // walking back out
       if (u.side === 'def' && !u.moving && (u.state === 'idle' || u.state === 'return')) {
         let best = 12; for (const a of g.units) if (a.side === 'att') { const d = Math.hypot(a.x - u.x, a.z - u.z); if (d < best) { best = d; face = Math.atan2(a.x - u.x, a.z - u.z); } }
         if (best >= 12) face += Math.sin(this.time * (0.18 + (u.id % 5) * 0.04) + u.id * 1.7) * 0.55;
@@ -409,9 +421,10 @@ export class MatchView {
       const mv = this.motion(u.id, h.root.position, dt);
       let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
       else if (pose === 'brace' && mv.moving) pose = 'walk';
+      if (lootPhase) pose = mv.moving ? 'walk' : 'collect'; // walks in/out, rummages inside
       let action = u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0;
       if (u.kind === 'shield' && g.time - u.strikeAt < 0.6) { pose = 'strike'; action = (g.time - u.strikeAt) / 0.6; } // baton swing
-      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), action);
+      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)

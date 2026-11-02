@@ -97,7 +97,7 @@ export interface Projectile { id: number; owner: number; x: number; y: number; z
 export interface Drop { id: number; x: number; z: number; amount: number; t: number }
 export interface Truck { x: number; z: number; facing: number; seg: number; done: boolean; rewarded: boolean; waitT: number; active: boolean; blocked: boolean }
 
-export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact';
+export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm';
 export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att'; id?: number }
 
 export interface GameOptions {
@@ -447,6 +447,7 @@ export class Game {
     let any = false;
     for (const id of ids) {
       const u = this.unit(id);
+      if (u && u.kind === 'shield') { this.moveUnits([u.id], t.x, t.z); u.strikeAt = Math.min(u.strikeAt, this.time - 9); any = true; t.detectedUntil = this.time + 6; continue; }
       if (!u || u.kind !== 'security' || u.state === 'escort' || u.state === 'restrain') continue;
       u.state = 'chase'; u.engage = t.id; u.chaseT = 0; this.setPath(u, t); any = true;
       t.detectedUntil = this.time + 6;
@@ -748,7 +749,11 @@ export class Game {
     const delay = this.cameraSpec === 'fast' ? BALANCE.camera.fastDelay : BALANCE.camera.detectDelay;
     const defs = this.defenders();
     for (const a of this.attackers()) {
-      if (this.inCamera(a.x, a.z)) { a.camSeen += dt; if (a.camSeen >= delay) a.detectedUntil = this.time + 4; } else a.camSeen = 0;
+      if (this.inCamera(a.x, a.z)) {
+        const was = a.camSeen; a.camSeen += dt;
+        if (a.camSeen >= delay) a.detectedUntil = this.time + 4;
+        if (was < delay && a.camSeen >= delay) this.cameraAlarm(a); // crossed the camera's watch zone: guards respond
+      } else a.camSeen = 0;
       const low = this.nav.lowSight[this.nav.idx(a.x, a.z)] === 1;
       for (const d of defs) {
         const sight = (BALANCE.units[d.kind] as { sight: number }).sight * (low ? 0.5 : 1);
@@ -758,6 +763,21 @@ export class Game {
   }
 
   isDetected(a: Unit) { return a.detectedUntil >= this.time; }
+
+  private lastAlarm = -99;
+  /** a camera spotted an intruder: the nearest free guards (at most two) run at him, wherever they stand */
+  private cameraAlarm(a: Unit) {
+    if (a.state === 'escorted' || a.state === 'restrained' || a.restrainBy >= 0) return;
+    if (this.side !== 'defence') return; // the player's own cameras; the scripted AI defence keeps its old reach (looting balance)
+    const busy = this.units.filter((o) => o.kind === 'security' && o.engage === a.id && (o.state === 'chase' || o.state === 'restrain')).length;
+    const free = this.defenders().filter((d) => d.kind === 'security' && (d.state === 'idle' || d.state === 'return')
+      && !(this.securitySpec === 'fixed' && Math.hypot(a.x - d.home.x, a.z - d.home.z) > BALANCE.upgrades.securitySpec.fixed.leash * 2)
+      && Math.hypot(a.x - d.x, a.z - d.z) < BALANCE.camera.alarmRange)
+      .sort((p, q) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(a.x - q.x, a.z - q.z));
+    const n = Math.max(0, BALANCE.camera.alarmResponders - busy);
+    for (const d of free.slice(0, n)) { d.state = 'chase'; d.engage = a.id; d.chaseT = 0; d.repathT = 99; }
+    if (this.time - this.lastAlarm > 4) { this.lastAlarm = this.time; this.emit({ type: 'alarm', text: n && free.length ? 'Camera alarm: guards responding' : 'Camera alarm', x: a.x, z: a.z, side: 'def' }); }
+  }
 
   private responseRange(d: Unit, a: Unit) {
     let r = BALANCE.units.security.sight;
@@ -935,7 +955,7 @@ export class Game {
     a.detectedUntil = Math.max(a.detectedUntil, this.time + 6);
     if (!knock) return;
     const d = Math.hypot(a.x - s.x, a.z - s.z) || 1;
-    for (const k of [0.9, 0.6, 0.3]) { const nx = a.x + ((a.x - s.x) / d) * k, nz = a.z + ((a.z - s.z) / d) * k; if (this.nav.walkable(nx, nz)) { a.x = nx; a.z = nz; break; } }
+    for (const k of [0.5, 0.3]) { const nx = a.x + ((a.x - s.x) / d) * k, nz = a.z + ((a.z - s.z) / d) * k; if (this.nav.walkable(nx, nz)) { a.x = nx; a.z = nz; break; } }
     a.staggerUntil = this.time + BALANCE.units.shield.strikeStagger; a.moving = false;
     a.restrainP = Math.min(0.9, a.restrainP + 0.1);
   }
