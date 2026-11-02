@@ -325,6 +325,18 @@
       "file": "final/anim.block.glb",
       "status": "final",
       "note": "Higgsfield 3d_rigging Block1 on the security rig (8 credits)"
+    },
+    "building.noord": {
+      "file": "final/building.noord.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from amsterdam/damaged_shop (NOORD, already damaged)",
+      "city": "amsterdam"
+    },
+    "building.circuit": {
+      "file": "final/building.circuit.glb",
+      "status": "final",
+      "note": "Higgsfield SAM-3D from london/03_london_damaged_shop (CIRCUIT, already damaged)",
+      "city": "london"
     }
   }
 }

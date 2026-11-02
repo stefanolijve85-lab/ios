@@ -44,7 +44,7 @@ export const AMSTERDAM: MapDef = {
   // canal houses from the Amsterdam pack (BLAD trapgevel, KADE hoekpand) along the shop quay, plus bike racks and bollards
   landmarks: [
     ...row('x', -15, 0, [[-39.5, 'building.kade', 9], [-31.5, 'building.blad', 7], [-25, 'building.kade', 6], [-18, 'building.blad', 7, 0], [-11, 'building.kade', 7],
-      [-3, 'building.blad', 7, 1], [4.5, 'building.kade', 8], [12, 'building.blad', 7, 2], [19, 'building.kade', 7], [27, 'building.blad', 9], [35, 'building.kade', 7], [41.25, 'building.blad', 5.5]]),
+      [-3, 'building.blad', 7, 1], [4.5, 'building.kade', 8], [12, 'building.blad', 7, 2], [19, 'building.noord', 7], [27, 'building.blad', 9], [35, 'building.kade', 7], [41.25, 'building.blad', 5.5]]),
     { slot: 'prop.bike_rack', x: -25, z: -13.6, rot: 90, width: 0.9 }, { slot: 'prop.bike_rack', x: 21, z: -13.6, rot: 90, width: 0.9 },
     ...[-28, -22, -6, 0, 6, 22, 28].map((x) => ({ slot: 'prop.bollard_ams', x, z: -4.9, rot: 0, width: 0.3 })),
   ],
@@ -102,8 +102,8 @@ export const LONDON: MapDef = {
   ],
   // London pack: ALDER brick shop and THE LANTERN corner pub along the high street, a red bus shelter
   landmarks: [
-    ...row('x', -12, 0, [[-40, 'building.alder', 8], [-32, 'building.lantern', 8], [-24, 'building.alder', 7, 0], [-17.75, 'building.lantern', 5.5], [-12, 'building.alder', 6, 1], [-6, 'building.alder', 6], [2, 'building.lantern', 10, 2]]),
-    ...row('x', -6, 0, [[24, 'building.alder', 8], [32, 'building.lantern', 8], [40, 'building.alder', 8]]),
+    ...row('x', -12, 0, [[-40, 'building.alder', 8], [-32, 'building.lantern', 8], [-24, 'building.alder', 7, 0], [-17.75, 'building.lantern', 5.5], [-12, 'building.alder', 6, 1], [-6, 'building.circuit', 6], [2, 'building.lantern', 10, 2]]),
+    ...row('x', -6, 0, [[24, 'building.alder', 8], [32, 'building.circuit', 8], [40, 'building.alder', 8]]),
     { slot: 'prop.shelter_london', x: -31, z: -9.2, rot: 0, width: 4.2 },
   ],
   stores: [
