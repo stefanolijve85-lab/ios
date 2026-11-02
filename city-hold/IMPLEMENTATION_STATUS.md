@@ -303,6 +303,6 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 
 - `DIFFICULTY` adds `aiDefenderSpeedMul` (AI defenders only, looter mode) and `lootTargetMul`. `Game.lootTarget` is the target the HUD, tutorial, result and menu show.
 - The loot target is 60 on Normal, 66 on Hard and 78 on Expert. AI security is ×1.1 faster on Expert.
-- Bot probe across 6 cities × 4 seeds, looter wins out of 24: Normal 15, Hard 10, Expert 6. Before this pass: Normal 15, Hard 13, Expert 13. Milan is still the easiest city on Expert.
+- Bot probe across 6 cities × 4 seeds, looter wins out of 24: Normal 17, Hard 10, Expert 6. Before this pass: Normal 17, Hard 12, Expert 10. Milan is still the easiest city on Expert.
 - Rejected: an extra AI guard from the start on Expert. It dropped the bot below 15 % of the target in 5 of 6 cities.
 - The side-select screen shows the target for the chosen difficulty plus a one-line explanation of what the difficulty changes.
