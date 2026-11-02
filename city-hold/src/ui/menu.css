@@ -22,6 +22,9 @@
   font-family: var(--r-display); font-weight: 400; color: var(--r-text); letter-spacing: 0.01em; line-height: 0.9; margin: 0;
   -webkit-mask-image: url(/menu/grunge.png); mask-image: url(/menu/grunge.png); -webkit-mask-size: 420px auto; mask-size: 420px auto;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  /* the mask only covers the element's box: with a tight line-height the glyphs (and Safari's taller font metrics)
+     stick out above and below and were cut off. Pad the box and pull it back so the layout does not move. */
+  padding: 0.18em 0.08em; margin: -0.18em -0.08em; -webkit-mask-repeat: repeat; mask-repeat: repeat;
 }
 .rm-brush { height: clamp(5px, 0.85vh, 9px); background: linear-gradient(90deg, rgba(255, 150, 29, 0) 0%, var(--r-accent) 4%, #ff7a12 70%, rgba(255, 120, 20, 0.0) 100%);
   -webkit-mask-image: url(/menu/grunge.png); mask-image: url(/menu/grunge.png); -webkit-mask-size: 120px auto; mask-size: 120px auto; border-radius: 2px; }
@@ -138,8 +141,8 @@
   .rm-col { left: calc(7vw + var(--sl)); right: calc(7vw + var(--sr)); width: auto; }
   .rm-title { top: calc(9vh + var(--st)); }
   .rm-title span { font-size: clamp(64px, 27vw, 160px); }
-  .rm-col > .rm-brush { top: calc(9vh + var(--st) + 27vw * 0.86); width: 62vw; }
-  .rm-tag { top: calc(11vh + var(--st) + 27vw * 0.86); font-size: clamp(18px, 5.4vw, 28px); }
+  .rm-col > .rm-brush { top: calc(9vh + var(--st) + min(27vw, 160px) * 0.86); width: min(62vw, 420px); }
+  .rm-tag { top: calc(11vh + var(--st) + min(27vw, 160px) * 0.86); font-size: clamp(18px, 5.4vw, 28px); }
   .rm-nav { top: auto; bottom: calc(14vh + var(--sb)); left: 0; right: 0; }
   .rm-nav .rm-cta { width: 100%; height: 60px; font-size: 28px; margin-bottom: 18px; }
   .rm-link { height: 50px; font-size: 20px; }
@@ -169,8 +172,15 @@
 }
 /* phones held sideways: short screens, keep two columns where there is room */
 @media (orientation: landscape) and (max-height: 500px) {
-  .rm-nav .rm-cta { height: 52px; margin-bottom: 4vh; }
-  .rm-link { min-height: 44px; height: 46px; }
+  /* main menu: logo, tagline and all four menu items must fit in ~360 px */
+  .rm-title { top: calc(6vh + var(--st)); }
+  .rm-title span { font-size: clamp(56px, 22vh, 110px); }
+  .rm-col > .rm-brush { top: calc(6vh + var(--st) + min(22vh, 110px) * 0.86); }
+  .rm-tag { top: calc(8vh + var(--st) + min(22vh, 110px) * 0.86); font-size: clamp(15px, 4.4vh, 22px); }
+  .rm-nav { top: calc(19vh + var(--st) + min(22vh, 110px) * 0.86); }
+  .rm-foot { display: none; }
+  .rm-nav .rm-cta { height: 50px; margin-bottom: 2.5vh; }
+  .rm-link { min-height: 44px; height: 44px; }
   .rm-cards { top: 70vh; height: 27vh; }
   .rm-card-label { font-size: 14px; }
   .rm-mission { top: 74vh; height: 24vh; grid-template-columns: 18vw 1fr auto; padding: 6px 12px; }
@@ -261,4 +271,13 @@
 @media (max-width: 760px), (orientation: portrait) {
   .bf-body { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 14px; }
   .bf-tips { grid-template-columns: 1fr; }
+}
+
+/* tablets held upright: larger menu items than on a phone */
+@media (orientation: portrait) and (min-width: 700px) {
+  .rm-nav .rm-cta { height: 84px; font-size: 38px; margin-bottom: 26px; }
+  .rm-link { height: 64px; font-size: 28px; }
+  .rm-tag { font-size: 30px; }
+  .rm-next { height: 76px; font-size: 34px; }
+  .rm-start { height: 76px; font-size: 34px; }
 }

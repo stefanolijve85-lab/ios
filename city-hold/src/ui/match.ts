@@ -60,6 +60,9 @@ export class Match {
     this.buildHud();
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
+    // overlays sit right under the top bar, whatever its height (it wraps to two or three rows on narrow phones)
+    const tb = this.root.querySelector<HTMLElement>('.topbar');
+    if (tb && 'ResizeObserver' in window) { const ro = new ResizeObserver(() => this.root.style.setProperty('--tb', `${tb.offsetHeight}px`)); ro.observe(tb); this.stopTb = () => ro.disconnect(); }
     this.renderCycle();
     this.setupHints();
     this.refreshHud(true);
@@ -68,9 +71,10 @@ export class Match {
   }
 
   private stopI18n: (() => void) | null = null;
+  private stopTb: (() => void) | null = null;
   private buzz(ms: number | number[]) { if (this.settings.vibration) try { navigator.vibrate?.(ms); } catch { /* not supported */ } }
   dispose() {
-    this.stopI18n?.();
+    this.stopI18n?.(); this.stopTb?.();
     cancelAnimationFrame(this.raf);
     this.view.dispose();
     this.root.remove();
