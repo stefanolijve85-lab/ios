@@ -204,6 +204,9 @@ export class Game {
   storesWithStock() { return this.stores.filter((s) => s.stock > 0).length; }
   socket(id: string): SocketDef | undefined { return this.map.sockets.find((s) => s.id === id); }
   socketUsed(id: string) { return this.barriers.some((b) => b.socketId === id && !b.broken) || this.cameras.some((c) => c.socketId === id); }
+  /** stock the looters must extract (scaled by difficulty) */
+  get lootTarget() { return Math.round(BALANCE.looters.targetStock * DIFFICULTY[this.difficulty].lootTargetMul); }
+
   get over() { return this.phase === 'won' || this.phase === 'lost'; }
 
   private baseUnit(side: 'def' | 'att', kind: UnitKind, p: Vec2): Unit {
@@ -260,7 +263,10 @@ export class Game {
       if (u.carrying > 0) s *= BALANCE.loadedSpeedFactor;
       if (this.side === 'looters' && this.looterUpgrade === 'speed') s *= BALANCE.looters.speedUpgrade;
       if (this.side === 'defence') s *= DIFFICULTY[this.difficulty].attackerSpeedMul; // AI attackers only
-    } else if (u.kind === 'security') {
+    } else {
+      if (this.side === 'looters') s *= DIFFICULTY[this.difficulty].aiDefenderSpeedMul; // AI defenders only
+    }
+    if (u.side !== 'att' && u.kind === 'security') {
       if (this.securityTrained) s *= BALANCE.upgrades.securityTraining.speedMul;
       if (this.securitySpec === 'mobile') s *= BALANCE.upgrades.securitySpec.mobile.speedMul;
     }
@@ -1371,12 +1377,12 @@ export class Game {
         this.finish(true, 'District held', `All ${BALANCE.defence.waves} waves repelled with ${this.storesWithStock()} stores holding stock.`);
       }
     } else {
-      if (this.extracted >= BALANCE.looters.targetStock) this.finish(true, 'Objective complete', `${this.extracted} stock extracted in ${Math.floor(this.time / 60)}:${String(Math.floor(this.time % 60)).padStart(2, '0')}.`);
-      else if (this.timeLeft <= 0) this.finish(false, 'Time expired', `Only ${this.extracted} / ${BALANCE.looters.targetStock} stock extracted.`);
+      if (this.extracted >= this.lootTarget) this.finish(true, 'Objective complete', `${this.extracted} stock extracted in ${Math.floor(this.time / 60)}:${String(Math.floor(this.time % 60)).padStart(2, '0')}.`);
+      else if (this.timeLeft <= 0) this.finish(false, 'Time expired', `Only ${this.extracted} / ${this.lootTarget} stock extracted.`);
       else {
         const minCost = Math.min(...Object.values(BALANCE.looters.costs));
         if (this.attackers().length === 0 && this.squad.length === 0 && this.dispatchQueue.length === 0 && this.budget < minCost) {
-          this.finish(false, 'No units left', `No active units and not enough budget to recruit. ${this.extracted} / ${BALANCE.looters.targetStock} extracted.`);
+          this.finish(false, 'No units left', `No active units and not enough budget to recruit. ${this.extracted} / ${this.lootTarget} extracted.`);
         }
       }
     }

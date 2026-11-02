@@ -329,7 +329,7 @@ export class Match {
       { title: 'CHOOSE A ROUTE', text: 'Tap an orange arrow (or Route) to pick the approach and extraction route.', done: (m) => m.game.looterRoute !== m.map.entries[0].id || m.game.squad.length > 0 },
       { title: 'RECRUIT A GROUP', text: 'Recruit runners and carriers. Carriers are slower but hold more.', done: (m) => m.game.squad.length > 0 || m.game.attackers().length > 0 },
       { title: 'DISPATCH', text: 'Press Dispatch. You can retarget approaching units by selecting them and tapping another store.', done: (m) => m.game.attackers().length > 0 || m.game.extracted > 0 },
-      { title: 'ESCAPE WITH THE LOOT', text: `Carriers move slower when loaded. Only extracted goods count — reach ${BALANCE.looters.targetStock}.`, done: (m) => m.game.extracted > 0 },
+      { title: 'ESCAPE WITH THE LOOT', text: `Carriers move slower when loaded. Only extracted goods count — reach ${this.game.lootTarget}.`, done: (m) => m.game.extracted > 0 },
     ];
   }
 
@@ -351,7 +351,7 @@ export class Match {
       this.el.obj.textContent = `${g.storesWithStock()} / ${g.stores.length} (need ${BALANCE.defence.storesNeededToWin})`;
     } else {
       const t = Math.ceil(g.timeLeft); this.el.wave.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-      this.el.obj.textContent = `${g.extracted} / ${BALANCE.looters.targetStock}`;
+      this.el.obj.textContent = `${g.extracted} / ${g.lootTarget}`;
     }
     this.el.pausebox.style.display = this.paused ? 'block' : 'none';
     // cards affordability
@@ -515,7 +515,7 @@ export class Match {
     const isDef = this.side === 'defence';
     m.innerHTML = `<div class="panel result ${res.won ? 'won' : 'lost'}"><h2>${res.won ? 'VICTORY' : 'DEFEAT'} — ${r.title}</h2><p>${r.detail}</p>
       <ul class="stats">
-        ${isDef ? `<li>Stores holding stock: <b>${r.storesHeld} / ${g.stores.length}</b></li><li>Waves cleared: <b>${g.wavesCleared} / ${BALANCE.defence.waves}</b></li><li>Stock lost (extracted): <b>${g.extracted}</b></li>` : `<li>Stock extracted: <b>${g.extracted} / ${BALANCE.looters.targetStock}</b></li><li>Time used: <b>${Math.floor(g.time / 60)}:${String(Math.floor(g.time % 60)).padStart(2, '0')}</b></li>`}
+        ${isDef ? `<li>Stores holding stock: <b>${r.storesHeld} / ${g.stores.length}</b></li><li>Waves cleared: <b>${g.wavesCleared} / ${BALANCE.defence.waves}</b></li><li>Stock lost (extracted): <b>${g.extracted}</b></li>` : `<li>Stock extracted: <b>${g.extracted} / ${g.lootTarget}</b></li><li>Time used: <b>${Math.floor(g.time / 60)}:${String(Math.floor(g.time % 60)).padStart(2, '0')}</b></li>`}
         <li>Interceptions: <b>${g.intercepted}</b> · goods recovered: <b>${g.recovered}</b></li>
         <li>Research points earned: <b>+${r.research}</b> (total ${extra.research})</li>
         ${extra.specs.length ? `<li>Specialisations used: <b>${extra.specs.join(', ')}</b></li>` : ''}

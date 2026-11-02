@@ -103,10 +103,10 @@ export type Difficulty = 'normal' | 'hard' | 'expert';
 /** mission difficulty: defence waves grow, looter-mode AI defence gets more income and guards */
 /** Difficulty only scales the opposition (stats of the player's own units never change).
  *  defence: more and faster attackers per wave; looters: richer AI defence, sooner reinforcement, one extra guard on expert. */
-export const DIFFICULTY: Record<Difficulty, { waveMul: number; attackerSpeedMul: number; aiIncomeMul: number; aiExtraSecurity: number; aiMaxSecurityBonus: number; aiReinforceAfter: number }> = {
-  normal: { waveMul: 1, attackerSpeedMul: 1, aiIncomeMul: 1, aiExtraSecurity: 0, aiMaxSecurityBonus: 0, aiReinforceAfter: 45 },
-  hard: { waveMul: 1.45, attackerSpeedMul: 1.08, aiIncomeMul: 1.4, aiExtraSecurity: 0, aiMaxSecurityBonus: 1, aiReinforceAfter: 35 },
-  expert: { waveMul: 1.9, attackerSpeedMul: 1.15, aiIncomeMul: 1.8, aiExtraSecurity: 0, aiMaxSecurityBonus: 2, aiReinforceAfter: 25 },
+export const DIFFICULTY: Record<Difficulty, { waveMul: number; attackerSpeedMul: number; aiIncomeMul: number; aiExtraSecurity: number; aiMaxSecurityBonus: number; aiReinforceAfter: number; aiDefenderSpeedMul: number; lootTargetMul: number }> = {
+  normal: { waveMul: 1, attackerSpeedMul: 1, aiIncomeMul: 1, aiExtraSecurity: 0, aiMaxSecurityBonus: 0, aiReinforceAfter: 45, aiDefenderSpeedMul: 1, lootTargetMul: 1 },
+  hard: { waveMul: 1.45, attackerSpeedMul: 1.08, aiIncomeMul: 1.4, aiExtraSecurity: 0, aiMaxSecurityBonus: 1, aiReinforceAfter: 35, aiDefenderSpeedMul: 1, lootTargetMul: 1.1 },
+  expert: { waveMul: 1.9, attackerSpeedMul: 1.15, aiIncomeMul: 1.8, aiExtraSecurity: 0, aiMaxSecurityBonus: 2, aiReinforceAfter: 25, aiDefenderSpeedMul: 1.1, lootTargetMul: 1.3 },
 };
 
 export const KIND_LABEL: Record<UnitKind, string> = {

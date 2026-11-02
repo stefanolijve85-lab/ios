@@ -4,7 +4,13 @@ import '@fontsource/barlow-condensed/700.css';
 import '@fontsource/barlow/400.css';
 import '@fontsource/barlow/500.css';
 import './menu.css';
-import { BALANCE, type Difficulty } from '../config/balance';
+import { BALANCE, DIFFICULTY, type Difficulty } from '../config/balance';
+
+/** one-line explanation of what a difficulty changes, per side */
+const DIFF_NOTE: Record<'nl' | 'en', Record<Side, Record<Difficulty, string>>> = {
+  nl: { defence: { normal: '', hard: 'Meer en snellere relschoppers per golf.', expert: 'Bijna dubbele golven, nog sneller.' }, looters: { normal: '', hard: 'Rijkere beveiliging, sneller versterking, hoger buitdoel.', expert: 'Snellere beveiliging, meer versterking, veel hoger buitdoel.' } },
+  en: { defence: { normal: '', hard: 'More and faster rioters per wave.', expert: 'Nearly double waves, even faster.' }, looters: { normal: '', hard: 'Richer security, faster reinforcements, higher loot target.', expert: 'Faster security, more reinforcements, much higher loot target.' } },
+};
 import { CITY_ORDER, MAPS } from '../maps';
 import type { Progress } from '../save';
 import type { Side } from '../sim/game';
@@ -25,7 +31,7 @@ const T: Record<Lang, Record<string, string>> = {
     back: 'TERUG', chooseCity: 'KIES JE STAD', next: 'VERDER', available: 'Beschikbaar', chooseSide: 'KIES JE KANT',
     defend: 'VERDEDIGEN', loot: 'PLUNDEREN', defendDesc: 'Bescherm winkels en houd de straat veilig.', lootDesc: 'Verzamel buit en bereik de uitgang.',
     difficulty: 'MOEILIJKHEID', normal: 'NORMAAL', hard: 'MOEILIJK', expert: 'EXPERT', start: 'START MISSIE',
-    objDef: `Bescherm de winkels tegen ${BALANCE.defence.waves} opeenvolgende golven.`, objLoot: `Buit ${BALANCE.looters.targetStock} voorraad en ontsnap binnen ${BALANCE.looters.timeLimit / 60} minuten.`,
+    objDef: `Bescherm de winkels tegen ${BALANCE.defence.waves} opeenvolgende golven.`, objLoot: `Buit {n} voorraad en ontsnap binnen ${BALANCE.looters.timeLimit / 60} minuten.`,
     notPlayable: 'Nog niet speelbaar', lockedWin: 'Win {prev} om {city} vrij te spelen.',
     volume: 'Geluid', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
     danger: 'Gevarenzone', reset: 'VOORTGANG WISSEN', resetConfirm: 'Weet je het zeker? Alle steden, onderzoek en instellingen worden gewist.', resetYes: 'JA, WISSEN', cancel: 'ANNULEREN',
@@ -37,7 +43,7 @@ const T: Record<Lang, Record<string, string>> = {
     back: 'BACK', chooseCity: 'CHOOSE YOUR CITY', next: 'NEXT', available: 'Available', chooseSide: 'CHOOSE YOUR SIDE',
     defend: 'DEFEND', loot: 'LOOT', defendDesc: 'Protect shops and keep the street safe.', lootDesc: 'Collect loot and reach the exit.',
     difficulty: 'DIFFICULTY', normal: 'NORMAL', hard: 'HARD', expert: 'EXPERT', start: 'START MISSION',
-    objDef: `Protect the shops through ${BALANCE.defence.waves} consecutive waves.`, objLoot: `Loot ${BALANCE.looters.targetStock} stock and escape within ${BALANCE.looters.timeLimit / 60} minutes.`,
+    objDef: `Protect the shops through ${BALANCE.defence.waves} consecutive waves.`, objLoot: `Loot {n} stock and escape within ${BALANCE.looters.timeLimit / 60} minutes.`,
     notPlayable: 'Not playable yet', lockedWin: 'Win {prev} to unlock {city}.',
     volume: 'Sound', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
     danger: 'Danger zone', reset: 'ERASE PROGRESS', resetConfirm: 'Are you sure? All cities, research and settings will be erased.', resetYes: 'YES, ERASE', cancel: 'CANCEL',
@@ -186,7 +192,7 @@ export class Menu {
         <div class="rm-mtext">
           <h2 class="rm-mcity">${this.cityName(id)}</h2>
           <div class="rm-diff" role="radiogroup" aria-label="${t.difficulty}"><span class="rm-difflabel">${t.difficulty}</span>${diffs.map((d) => `<button role="radio" aria-checked="${p.settings.difficulty === d}" class="rm-diffbtn ${p.settings.difficulty === d ? 'on' : ''}" data-diff="${d}">${t[d]}</button>`).join('')}</div>
-          <p class="rm-obj">${sd === 'defence' ? t.objDef : t.objLoot}</p>
+          <p class="rm-obj">${sd === 'defence' ? t.objDef : t.objLoot.replace('{n}', String(Math.round(BALANCE.looters.targetStock * DIFFICULTY[p.settings.difficulty].lootTargetMul)))}${DIFF_NOTE[p.settings.language === 'en' ? 'en' : 'nl'][sd][p.settings.difficulty] ? `<span class="rm-objnote">${DIFF_NOTE[p.settings.language === 'en' ? 'en' : 'nl'][sd][p.settings.difficulty]}</span>` : ''}</p>
         </div>
         <button class="rm-cta rm-start" data-start>${t.start}${CHEV_R}</button>
       </section></main>`;

@@ -93,15 +93,16 @@
 .rm-sidedesc { position: absolute; left: 5.5%; bottom: 5.2%; z-index: 1; font-family: var(--r-body); font-weight: 500; font-size: clamp(14px, 2.7vh, 26px); color: var(--r-text); }
 .rm-sidecard.on { border: 3px solid var(--r-sel); box-shadow: 0 0 0 1px rgba(255, 167, 39, 0.4), 0 0 34px rgba(255, 140, 20, 0.45); }
 .rm-sidecard:not(.on) .rm-sideart { filter: saturate(0.85) brightness(0.85); }
-.rm-mission { position: absolute; left: 4.9vw; right: 4.8vw; top: 76.7vh; height: 18.4vh; background: rgba(16, 20, 26, 0.92); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;
+.rm-mission { position: absolute; left: 4.9vw; right: 4.8vw; top: 75.2vh; height: 20.6vh; background: rgba(16, 20, 26, 0.92); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;
   display: grid; grid-template-columns: 22vw 1fr auto; align-items: center; gap: 1.5vw; padding: 1.4vh 1.4vw; }
 .rm-mthumb { align-self: stretch; border-radius: 3px; background: center / cover no-repeat; }
 .rm-mcity { font-size: clamp(22px, 4.6vh, 44px); }
-.rm-diff { display: flex; align-items: center; gap: 1vw; margin: 1.6vh 0 1.2vh; flex-wrap: wrap; }
+.rm-diff { display: flex; align-items: center; gap: 1vw; margin: 1.2vh 0 1vh; flex-wrap: wrap; }
 .rm-difflabel { font-family: var(--r-cond); font-weight: 700; letter-spacing: 0.04em; font-size: clamp(13px, 2.1vh, 20px); color: #d0cbc0; }
 .rm-diffbtn { background: rgba(255, 255, 255, 0.03); border: 2px solid #4a4e55; border-radius: 4px; color: #cfcbc2; font-weight: 700; letter-spacing: 0.04em; font-size: clamp(13px, 2vh, 19px); padding: 0 1.2em; min-width: 8vw; height: 4.3vh; min-height: 44px; }
 .rm-diffbtn.on { border-color: var(--r-sel); color: var(--r-sel); box-shadow: 0 0 12px rgba(255, 150, 29, 0.25) inset; }
 .rm-obj { margin: 0; color: #c9c5bc; font-size: clamp(13px, 2vh, 19px); }
+.rm-objnote { display: block; margin-top: .2em; color: #f6a13a; font-size: .85em; }
 .rm-start { height: 9.4vh; min-width: 18.5vw; padding: 0 1.4em; font-size: clamp(20px, 4.4vh, 42px); }
 
 /* ---------------- progress & settings ---------------- */
