@@ -132,8 +132,8 @@ export const PARIS: MapDef = {
     { id: 'L3', x: 0, z: 18, size: 'large', rot: 0 },
     { id: 'L4', x: -28.5, z: 9, size: 'large', rot: 90 },
   ],
-  van: { x: 24.5, z: 9, rot: 90 },
-  defenderSpawn: { x: 19.5, z: 9 },
+  van: { x: 22.6, z: 1.5, rot: 0 },
+  defenderSpawn: { x: 19.2, z: 0.5 }, // far enough from the foreground block that its roof never hides the staging team
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
   glowLamps: ([[-16.2, -24], [-16.2, -30], [-16.2, -37], [-16.2, -44], [-16.2, -50], [-16.2, -56], [-16.2, -63], [-16.2, -70], [-23.6, -24], [-23.6, -30], [-23.6, -37], [-23.6, -44], [-23.6, -50], [-23.6, -56], [-23.6, -63], [-23.6, -70], [16.2, -24], [16.2, -30], [16.2, -37], [16.2, -44], [16.2, -50], [16.2, -56], [16.2, -63], [16.2, -70], [23.6, -24], [23.6, -30], [23.6, -37], [23.6, -44], [23.6, -50], [23.6, -56], [23.6, -63], [23.6, -70], [-36, -43.5], [-8, -43.5], [8, -43.5], [36, -43.5]] as const).map(([x, z]) => ({ x, z })),
