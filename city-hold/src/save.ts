@@ -1,5 +1,6 @@
 // Local progress and settings (localStorage). Explicit reset is available from the menu.
-export interface Settings { volume: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert' }
+export interface Settings { volume: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
+  /** HUD size multiplier (phones benefit from larger) */ uiScale: number; /** short vibrations on key events (phones that support it) */ vibration: boolean }
 export interface Progress {
   version: 1;
   unlocked: string[];
@@ -19,7 +20,7 @@ function coarsePointer(): boolean {
 }
 
 export function defaultProgress(): Progress {
-  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: coarsePointer(), showHints: true, language: 'nl', difficulty: 'normal' } };
+  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: coarsePointer(), showHints: true, language: 'nl', difficulty: 'normal', uiScale: 1, vibration: true } };
 }
 
 export interface StorageLike { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }

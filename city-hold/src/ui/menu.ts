@@ -27,7 +27,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'MOEILIJKHEID', normal: 'NORMAAL', hard: 'MOEILIJK', expert: 'EXPERT', start: 'START MISSIE',
     objDef: `Bescherm de winkels tegen ${BALANCE.defence.waves} opeenvolgende golven.`, objLoot: `Buit ${BALANCE.looters.targetStock} voorraad en ontsnap binnen ${BALANCE.looters.timeLimit / 60} minuten.`,
     notPlayable: 'Nog niet speelbaar', lockedWin: 'Win {prev} om {city} vrij te spelen.',
-    volume: 'Geluid', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal',
+    volume: 'Geluid', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
     danger: 'Gevarenzone', reset: 'VOORTGANG WISSEN', resetConfirm: 'Weet je het zeker? Alle steden, onderzoek en instellingen worden gewist.', resetYes: 'JA, WISSEN', cancel: 'ANNULEREN',
     campaign: 'CAMPAGNE', research: 'ONDERZOEK', points: 'punten', buy: 'KOPEN', owned: 'IN BEZIT', won: 'gewonnen', matches: 'Gespeelde missies',
     defShort: 'verdedigd', lootShort: 'geplunderd', hudNote: 'De speelinterface is (nog) Engelstalig.',
@@ -39,7 +39,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'DIFFICULTY', normal: 'NORMAL', hard: 'HARD', expert: 'EXPERT', start: 'START MISSION',
     objDef: `Protect the shops through ${BALANCE.defence.waves} consecutive waves.`, objLoot: `Loot ${BALANCE.looters.targetStock} stock and escape within ${BALANCE.looters.timeLimit / 60} minutes.`,
     notPlayable: 'Not playable yet', lockedWin: 'Win {prev} to unlock {city}.',
-    volume: 'Sound', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language',
+    volume: 'Sound', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
     danger: 'Danger zone', reset: 'ERASE PROGRESS', resetConfirm: 'Are you sure? All cities, research and settings will be erased.', resetYes: 'YES, ERASE', cancel: 'CANCEL',
     campaign: 'CAMPAIGN', research: 'RESEARCH', points: 'points', buy: 'BUY', owned: 'OWNED', won: 'won', matches: 'Missions played',
     defShort: 'defended', lootShort: 'looted', hudNote: 'The in-game interface is in English.',
@@ -214,6 +214,8 @@ export class Menu {
         <div class="rm-row"><span>${t.language}</span><span class="rm-seg">${(['nl', 'en'] as Lang[]).map((l) => `<button class="rm-diffbtn ${s.language === l ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</span></div>
         <div class="rm-row"><span>${t.quality}</span><span class="rm-seg"><button class="rm-diffbtn ${!s.reducedFx ? 'on' : ''}" data-q="high">${t.qHigh}</button><button class="rm-diffbtn ${s.reducedFx ? 'on' : ''}" data-q="mobile">${t.qMobile}</button></span></div>
         <label class="rm-row"><span>${t.hints}</span><input type="checkbox" ${s.showHints ? 'checked' : ''} data-s="hints"></label>
+        <div class="rm-row"><span>${t.uiScale}</span><span class="rm-seg">${[1, 1.15, 1.3].map((v) => `<button class="rm-diffbtn ${Number(s.uiScale || 1) === v ? 'on' : ''}" data-ui="${v}">${Math.round(v * 100)}%</button>`).join('')}</span></div>
+        <label class="rm-row"><span>${t.vibration}</span><input type="checkbox" ${s.vibration ? 'checked' : ''} data-s="vib"></label>
         <p class="rm-muted">${t.hudNote}</p>
         <details class="rm-danger" ${confirmReset ? 'open' : ''}><summary>${t.danger}</summary>
           ${confirmReset ? `<p>${t.resetConfirm}</p><div class="rm-seg"><button class="rm-small warn" data-reset-yes>${t.resetYes}</button><button class="rm-small" data-reset-no>${t.cancel}</button></div>` : `<button class="rm-small warn" data-reset>${t.reset}</button>`}
@@ -224,6 +226,8 @@ export class Menu {
     this.app.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { s.showHints = (e.target as HTMLInputElement).checked; this.host.save(); });
     this.wire('[data-lang]', (el) => { s.language = el.dataset.lang as Lang; this.host.save(); this.settings(); });
     this.wire('[data-q]', (el) => { s.reducedFx = el.dataset.q === 'mobile'; this.host.save(); this.settings(); });
+    this.wire('[data-ui]', (el) => { s.uiScale = Number(el.dataset.ui); this.host.save(); this.settings(); });
+    this.app.querySelector<HTMLInputElement>('[data-s="vib"]')!.addEventListener('change', (e) => { s.vibration = (e.target as HTMLInputElement).checked; this.host.save(); try { if (s.vibration) navigator.vibrate?.(30); } catch { /* not supported */ } });
     this.wire('[data-reset]', () => this.settings(true));
     this.wire('[data-reset-no]', () => this.settings(false));
     this.wire('[data-reset-yes]', () => { this.host.reset(); menuState.city = 'paris'; menuState.history = []; menuState.screen = 'main'; this.render(); });

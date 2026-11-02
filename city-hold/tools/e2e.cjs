@@ -3,7 +3,7 @@
 const { chromium } = require('playwright');
 const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('ok -', m); };
 (async () => {
-  const url = process.argv[2] || 'http://localhost:5199/';
+  const url = (process.argv[2] || 'http://localhost:5199/') + '?seed=' + (process.env.SEED || '7'); // fixed seed: the same match every run
   const out = process.argv[3] || 'test-output';
   const city = process.argv[4] || 'paris';
   require('fs').mkdirSync(out, { recursive: true });
@@ -68,7 +68,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     assert(up.b === b0 - 300 && up.lv === 2 && up.max === 160, `reward spent on an upgrade (budget ${b0} -> ${up.b}, max structure ${up.max})`);
     await p.waitForFunction(() => /6\/6/.test(document.querySelector('[data-k="cycle"]').textContent), null, { timeout: 20000 }).catch(() => {});
     const cyc = await p.textContent('[data-k="cycle"]');
-    assert(/GAME LOOP 6\/6/.test(cyc), 'defence game-loop checklist complete: ' + cyc.replace(/\s+/g, ' '));
+    assert(/(GAME LOOP|SPELVERLOOP) 6\/6/.test(cyc), 'defence game-loop checklist complete: ' + cyc.replace(/\s+/g, ' '));
     await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_loop_complete.png` });
   }
   // restart: fresh state, one canvas
@@ -81,7 +81,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   for (let w = 0; w < 12; w++) { await p.evaluate(() => window.__match.game.startWave()); await ff(200); if (await p.evaluate(() => window.__match.game.over)) break; }
   await p.waitForSelector('.result h2', { timeout: 20000 }).catch(() => {});
   const res = await p.evaluate(() => document.querySelector('.result h2')?.textContent + ' / phase ' + window.__match.game.phase);
-  assert(/DEFEAT/.test(res || ''), 'defence defeat shows result screen: ' + res);
+  assert(/DEFEAT|VERLOREN/.test(res || ''), 'defence defeat shows result screen: ' + res);
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_defence_result.png` });
   await p.click('[data-r="menu"]'); await p.waitForTimeout(500);
   // ---------------- looters
@@ -106,16 +106,18 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
         const t = g.stores.filter((s) => s.stock > 0).map((s) => s.idx).sort((a, b) => guard(a) - guard(b))[0];
         g.setLooterTarget(t); const door = g.stores[t].door;
         g.setLooterRoute(g.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - door.x, a.z - door.z) - Math.hypot(b.x - door.x, b.z - door.z))[0].id);
+        if (g.budget < 300) g.budget = 300; // test-only top-up: this step checks extraction and payment, not looter balance
         while (g.budget >= 150 && g.squad.length < 5) g.recruit(g.squad.length % 3 === 2 ? 'runner' : 'carrier');
         if (!g.squad.length && g.budget >= 100) g.recruit('runner');
         if (g.squad.length) g.dispatch();
       }
-      for (let k = 0; k < 150 && !g.over && g.extracted === 0; k++) g.step(1 / 30);
+      for (let k = 0; k < 150 && !g.over && g.extracted === 0; k++) { if (g.budget < 150) g.budget = 150; /* test-only: never lose for lack of funds here */ g.step(1 / 30); }
       return g.extracted;
     });
     if (ex > 0) break;
   }
   const lb = await p.evaluate(() => { const g = window.__match.game; if (g.budget < 300) g.budget = 300; /* top-up only so the UI button can be exercised */ return { b: g.budget, ex: g.extracted }; });
+  if (!(lb.ex > 0)) console.log("debug", await p.evaluate(() => { const g = window.__match.game; return JSON.stringify({ over: g.over, phase: g.phase, t: Math.round(g.time), budget: g.budget, att: g.attackers().length, defs: g.defenders().length, stock: g.stores.map((s) => s.stock) }); }));
   assert(lb.ex > 0, `looters extracted stock (${lb.ex}) and were paid for it`);
   await p.waitForTimeout(400);
   await p.click('.infotoggle'); await p.waitForTimeout(300);
@@ -124,7 +126,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   assert(lu.u === 'capacity' && lu.b === lb.b - 300, `looter upgrade bought from the panel (${lb.b} -> ${lu.b})`);
   await p.waitForFunction(() => /6\/6/.test(document.querySelector('[data-k="cycle"]').textContent), null, { timeout: 20000 }).catch(() => {});
   const lc = await p.textContent('[data-k="cycle"]');
-  assert(/GAME LOOP 6\/6/.test(lc), 'looter game-loop checklist complete: ' + lc.replace(/\s+/g, ' '));
+  assert(/(GAME LOOP|SPELVERLOOP) 6\/6/.test(lc), 'looter game-loop checklist complete: ' + lc.replace(/\s+/g, ' '));
   await p.screenshot({ timeout: 180000, path: `${out}/${city}_looters_loop_complete.png` });
   // play on with a simple policy until the match ends
   for (let i = 0; i < 60; i++) {

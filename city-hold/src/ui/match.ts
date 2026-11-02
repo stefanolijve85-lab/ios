@@ -4,6 +4,7 @@ import type { MapDef } from '../maps/types';
 import { MatchView, type Pick } from '../render/view';
 import { Sfx } from '../audio/sfx';
 import type { Settings } from '../save';
+import { translateLive } from './i18n_nl';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
 
@@ -48,12 +49,15 @@ export class Match {
 
   constructor(private host: HTMLElement, readonly map: MapDef, readonly side: Side, private settings: Settings, private perks: string[], private tutorial: boolean,
     private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void) {
-    this.game = new Game(map, side, { seed: (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty });
+    const urlSeed = Number(new URLSearchParams(location.search).get('seed')); // fixed seed for automated tests (?seed=N)
+    this.game = new Game(map, side, { seed: urlSeed > 0 ? urlSeed : (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty });
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx);
     this.buildHud();
+    if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
+    this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
     this.renderCycle();
     this.setupHints();
     this.refreshHud(true);
@@ -61,7 +65,10 @@ export class Match {
     this.raf = requestAnimationFrame(this.loop);
   }
 
+  private stopI18n: (() => void) | null = null;
+  private buzz(ms: number | number[]) { if (this.settings.vibration) try { navigator.vibrate?.(ms); } catch { /* not supported */ } }
   dispose() {
+    this.stopI18n?.();
     cancelAnimationFrame(this.raf);
     this.view.dispose();
     this.root.remove();
@@ -272,18 +279,18 @@ export class Match {
       this.trackCycle(e);
       switch (e.type) {
         case 'denied': this.toast(e.text, 'bad'); this.sfx.play('deny'); break;
-        case 'intercept': this.sfx.play('intercept'); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;
+        case 'intercept': this.sfx.play('intercept'); this.buzz(20); if (e.x !== undefined) { this.view.fx.burst(e.x, e.z!, 'cyan'); this.view.floatText(e.x, e.z!, 'INTERCEPTED', 'cyan'); } break;
         case 'recovered': if (e.x !== undefined) this.view.floatText(e.x, e.z! + 0.6, `+${e.amount} recovered`, 'cyan'); break;
         case 'extract': this.sfx.play('extract'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `−${e.amount} stock`, 'orange'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
-        case 'breach': if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
-        case 'fire': this.sfx.play('fire'); this.toast(e.text, 'bad'); break;
+        case 'breach': this.buzz(60); if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach'); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
+        case 'fire': this.sfx.play('fire'); this.buzz([40, 40, 40]); this.toast(e.text, 'bad'); break;
         case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('breach'); break;
         case 'held': this.sfx.play('held'); break;
         case 'waveStart': this.toast(e.text, 'info'); break;
-        case 'waveEnd': this.sfx.play('win'); this.banner('WAVE SECURED', e.text); break;
+        case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
-        case 'won': this.sfx.play('win'); break;
-        case 'lost': this.sfx.play('lose'); break;
+        case 'won': this.sfx.play('win'); this.buzz([60, 60, 120]); break;
+        case 'lost': this.sfx.play('lose'); this.buzz(250); break;
         case 'upgrade': this.sfx.play('upgrade'); this.toast(e.text, 'good'); break;
         case 'purchase': if (e.x !== undefined && e.amount) this.view.floatText(e.x, e.z!, `−${e.amount}`, 'muted'); break;
         case 'barrierBroken': this.toast(e.text, 'info'); break;
@@ -483,11 +490,15 @@ export class Match {
       <label>Volume <input type="range" min="0" max="1" step="0.05" value="${this.settings.volume}" data-s="vol"></label>
       <label><input type="checkbox" ${this.settings.reducedFx ? 'checked' : ''} data-s="fx"> Mobile quality — lighter: no reflections, glow or shadows (applies on restart)</label>
       <label><input type="checkbox" ${this.settings.showHints ? 'checked' : ''} data-s="hints"> Show tutorial tips</label>
+      <label>HUD size <select data-s="ui">${[[1, '100%'], [1.15, '115%'], [1.3, '130%']].map(([v, l]) => `<option value="${v}" ${Number(this.settings.uiScale || 1) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label><input type="checkbox" ${this.settings.vibration ? 'checked' : ''} data-s="vib"> Vibrate on events</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
     m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { this.settings.volume = Number((e.target as HTMLInputElement).value); this.sfx.volume = this.settings.volume; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { this.settings.reducedFx = (e.target as HTMLInputElement).checked; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { this.settings.showHints = (e.target as HTMLInputElement).checked; this.el.hint.style.display = this.settings.showHints && this.hints.length ? '' : 'none'; this.onSettings?.(); });
+    m.querySelector<HTMLSelectElement>('[data-s="ui"]')!.addEventListener('change', (e) => { this.settings.uiScale = Number((e.target as HTMLSelectElement).value); this.root.style.setProperty('--ui-scale', String(this.settings.uiScale)); this.onSettings?.(); });
+    m.querySelector<HTMLInputElement>('[data-s="vib"]')!.addEventListener('change', (e) => { this.settings.vibration = (e.target as HTMLInputElement).checked; this.buzz(30); this.onSettings?.(); });
     m.querySelector('[data-s="close"]')!.addEventListener('click', () => { m.classList.add('hidden'); this.paused = false; });
   }
   onSettings: (() => void) | null = null;

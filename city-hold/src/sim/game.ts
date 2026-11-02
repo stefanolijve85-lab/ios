@@ -259,6 +259,7 @@ export class Game {
     if (u.side === 'att') {
       if (u.carrying > 0) s *= BALANCE.loadedSpeedFactor;
       if (this.side === 'looters' && this.looterUpgrade === 'speed') s *= BALANCE.looters.speedUpgrade;
+      if (this.side === 'defence') s *= DIFFICULTY[this.difficulty].attackerSpeedMul; // AI attackers only
     } else if (u.kind === 'security') {
       if (this.securityTrained) s *= BALANCE.upgrades.securityTraining.speedMul;
       if (this.securitySpec === 'mobile') s *= BALANCE.upgrades.securitySpec.mobile.speedMul;
@@ -686,7 +687,8 @@ export class Game {
     }
     // reinforce when threatened
     const secCount = this.defenders().filter((d) => d.kind === 'security').length;
-    if (threat[hot] > 0 && this.time > BALANCE.looters.ai.reinforceAfter && this.aiBudget >= BALANCE.defence.costs.security && secCount < BALANCE.looters.ai.maxSecurity) {
+    const dif = DIFFICULTY[this.difficulty];
+    if (threat[hot] > 0 && this.time > dif.aiReinforceAfter && this.aiBudget >= BALANCE.defence.costs.security && secCount < BALANCE.looters.ai.maxSecurity + dif.aiMaxSecurityBonus) {
       this.aiBudget -= BALANCE.defence.costs.security;
       const u = this.spawnDefender('security', this.map.defenderSpawn);
       const sd = this.map.stores[hot]; const s = this.stores[hot];

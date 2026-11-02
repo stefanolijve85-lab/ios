@@ -191,3 +191,6 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .sr-panel label { display: flex; gap: 6px; align-items: center; } .sr-panel input[type=range] { flex: 1; }
 .sr-row { display: flex; flex-wrap: wrap; gap: 4px; } .sr-row button { min-height: 30px; padding: 2px 8px; font-size: 11px; }
 .sr-panel pre { margin: 0; font-size: 11px; white-space: pre-wrap; }
+
+/* HUD size setting (Instellingen > HUD-grootte) */
+.hud > .topbar, .hud > .bottom, .hud > .info, .hud > .cycle, .hud > .hint, .hud > .toasts { zoom: var(--ui-scale, 1); }
