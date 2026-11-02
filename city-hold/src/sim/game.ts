@@ -52,6 +52,8 @@ export interface Unit {
   repathT: number;
   moving: boolean;
   speedNow: number;
+  /** stuck detection while following a path: last sampled position and time since */
+  stallT?: number; stallX?: number; stallZ?: number;
   // attacker
   targetStore: number;
   exitId: string;
@@ -294,6 +296,18 @@ export class Game {
     u.moving = false; u.speedNow = 0;
     if (!u.path) return false; // no route yet: callers request a new path
     if (u.pi >= u.path.length) return true;
+    // defenders that cannot reach their exact spot (someone stands on it, or the crowd keeps pushing them back) stop
+    // where they are instead of walking on the spot forever
+    if (u.side === 'def') {
+      const end = u.path[u.path.length - 1]; const left = Math.hypot(end.x - u.x, end.z - u.z);
+      if (left < 0.35) { u.pi = u.path.length; return true; }
+      u.stallT = (u.stallT ?? 0) + dt;
+      if (u.stallT > 1.2) {
+        const gained = Math.hypot(u.x - (u.stallX ?? 1e9), u.z - (u.stallZ ?? 1e9));
+        u.stallT = 0; u.stallX = u.x; u.stallZ = u.z;
+        if (gained < 0.3 && left < 2.5) { u.pi = u.path.length; u.home = { x: u.x, z: u.z }; return true; }
+      }
+    }
     let budget = speed * dt;
     while (budget > 0 && u.pi < u.path.length) {
       const p = u.path[u.pi];

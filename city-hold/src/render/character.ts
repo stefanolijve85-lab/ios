@@ -169,7 +169,7 @@ class GltfCharacter implements CharacterVisual {
     a.timeScale = timeScale;
     if (a === this.current) return;
     a.reset().play();
-    if (this.current) a.crossFadeFrom(this.current, 0.2, false);
+    if (this.current) a.crossFadeFrom(this.current, 0.3, false);
     this.current = a;
   }
   update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {

@@ -327,6 +327,21 @@ export class MatchView {
   refreshSockets(g: Game) { this.rebuildSockets(g); }
 
   // ------------------------------------------------------------------ per-frame sync
+  /** visual motion from how far the figure really travelled (not the sim's "moving" flag): no walking on the spot when
+   *  someone is blocked, and the step slows down with the body before it settles into idle */
+  private motionState = new Map<number, { x: number; z: number; v: number; on: boolean }>();
+  private motion(id: number, p: THREE.Vector3, dt: number): { moving: boolean; speed: number } {
+    let m = this.motionState.get(id);
+    if (!m) { m = { x: p.x, z: p.z, v: 0, on: false }; this.motionState.set(id, m); }
+    if (dt > 1e-4) {
+      const inst = Math.hypot(p.x - m.x, p.z - m.z) / dt;
+      m.v += (Math.min(inst, 8) - m.v) * Math.min(1, dt * 9);
+    }
+    m.x = p.x; m.z = p.z;
+    m.on = m.on ? m.v > 0.22 : m.v > 0.55; // hysteresis: no flicker between walk and idle
+    return { moving: m.on, speed: m.v };
+  }
+
   private poseOf(u: Unit): Pose {
     switch (u.state) {
       case 'breach': return 'breach';
@@ -382,7 +397,10 @@ export class MatchView {
       h.root.position.x += (u.x - h.root.position.x) * k; h.root.position.z += (u.z - h.root.position.z) * k;
       let df = u.facing - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       h.root.rotation.y += df * Math.min(1, dt * 12);
-      h.update(this.poseOf(u), u.moving, u.speedNow, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0);
+      const mv = this.motion(u.id, h.root.position, dt);
+      let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
+      else if (pose === 'brace' && mv.moving) pose = 'walk';
+      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)
@@ -415,11 +433,12 @@ export class MatchView {
       c.root.position.x += (n.x - c.root.position.x) * k; c.root.position.z += (n.z - c.root.position.z) * k;
       let df = n.facing - c.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       c.root.rotation.y += df * Math.min(1, dt * 10);
-      c.update(n.state === 'flee' ? 'flee' : n.state === 'guide' ? 'guide' : n.moving ? 'walk' : 'idle', n.moving, n.speed, n.carrying, dt);
+      const nm = this.motion(-n.id, c.root.position, dt);
+      c.update(n.state === 'flee' && nm.moving ? 'flee' : n.state === 'guide' ? 'guide' : nm.moving ? 'walk' : 'idle', nm.moving, nm.speed, n.carrying, dt);
     }
-    for (const [id, c] of this.npcVis) if (!nseen.has(id)) { this.scene.remove(c.root); this.npcVis.delete(id); }
+    for (const [id, c] of this.npcVis) if (!nseen.has(id)) { this.scene.remove(c.root); this.npcVis.delete(id); this.motionState.delete(-id); }
     for (const [id, h] of this.humans) if (!seen.has(id)) {
-      this.scene.remove(h.root); this.humans.delete(id);
+      this.scene.remove(h.root); this.humans.delete(id); this.motionState.delete(id);
       const ring = this.rings.get(id); if (ring) { this.scene.remove(ring); this.rings.delete(id); }
       this.selected.delete(id);
     }
