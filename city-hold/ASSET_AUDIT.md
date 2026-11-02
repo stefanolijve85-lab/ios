@@ -1,5 +1,15 @@
 # RIOTS — asset-audit (peildatum 1 november 2026)
 
+> **Update 2 november (nacht):** Na deze audit zijn ingebouwd en in de game gecontroleerd (screenshots):
+> - Landmark-GLB's: BLAD, KADE, NOORD, ALDER, THE LANTERN, CIRCUIT, VETRO, KANTE en PONTO.
+> - Lokale props: fietsenrek, paaltje, Londens bushokje, tramhalte en container.
+> - Vier winkeltoestanden voor BLAD, VETRO en PONTO.
+> - Echte animaties: lopen, dragen-lopen, oppakken, gooien en blokkeren.
+> - Een schild voor het schildteam.
+>
+> Alle zes steden zijn speelbaar. Zie `IMPLEMENTATION_STATUS.md`. De tabellen hieronder geven de stand vóór die update.
+
+
 Deze audit is gemaakt door de code, de configuratie en de bestanden in de repository te lezen en de game te draaien in een headless Chromium (software-rendering). **In deze stap is niets aan de game veranderd.** Bestanden die meegeleverd worden:
 
 - `ASSET_INVENTORY.csv` — één regel per asset (381 regels): stad, categorie, ID, pad, formaat, status, gebruikslocatie, duplicaten, bron.

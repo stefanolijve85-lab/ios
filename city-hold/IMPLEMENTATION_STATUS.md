@@ -14,6 +14,38 @@ Open the URL Vite prints (default http://localhost:5173). `npm run build` produc
 
 Stack: TypeScript 5.9, Three.js 0.187, Vite 8, Vitest 5 — versions pinned exactly in `package.json`, `package-lock.json` included.
 
+## Night run (2 November): city landmarks, storefront states, animations
+
+- Credits used (Higgsfield), about 58 in total:
+  - 12 × SAM-3D buildings/props at 1 credit each, plus failed jobs, which cost nothing.
+  - 5 × `3d_rigging` animations at 8 credits each.
+  - 3.15 credits are left.
+- Buildings:
+  - Amsterdam: BLAD, KADE, NOORD
+  - London: ALDER, THE LANTERN, CIRCUIT
+  - Milan: VETRO
+  - Berlin: KANTE
+  - São Paulo: PONTO
+- Props:
+  - Amsterdam: bike rack, XXX bollard
+  - London: red bus shelter
+  - Milan: tram shelter
+  - Berlin: wheelie bin
+  - Failed: the São Paulo bus stop (two attempts, no charge).
+- Storefront states: BLAD, VETRO and PONTO shops show the pack's own intact, boarded, damaged and looted paintings, picked from the game state. Boards win while they hold, then theft (stock < 50 %), then damage. Soot is a separate layer.
+- Animations shared by all seven rigged characters:
+  - walk (Casual_Walk)
+  - carry_walk (Carry_Heavy_Object_Walk, in place)
+  - collect (Male_Bend_Over_Pick_Up)
+  - throw (Over_Shoulder_Throw)
+  - brace (Block1)
+  - plus the earlier idle, run, push and kneel
+- Root motion is pinned in place, and the thrown object hangs on `RightHand`.
+- The shield team carries a procedural riot shield on the left forearm.
+- Paris: warmer exposure, grey slate roofs, longer wet-street reflections, airy autumn tree crowns.
+- Verified: unit tests (62), build, full desktop e2e and phone e2e (about 440 draw calls). City overviews and state close-ups were checked in screenshots.
+- Not done: a real phone; full matches in the five new cities beyond the existing simulation tests; ALDER and KANTE state paintings (not delivered); local figures (London firefighter and shield officer would cost 35 credits each).
+
 ## All six cities playable again, with city-pack landmark buildings
 
 - 3D models from the RIOTS city-pack references, made with Higgsfield SAM-3D at 1 credit each:
