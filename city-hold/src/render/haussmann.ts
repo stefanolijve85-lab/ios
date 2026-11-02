@@ -242,6 +242,60 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
 
   for (const bt of Object.values(B)) { const m = bt.build(); if (m) { g.add(m); meshes.push(m); } }
 
+  // ---- foreground blocks of Paris (fadeable, nearest the camera): a real Paris roofscape as in the foreground of image 01.
+  // The block is two rows of houses around a courtyard; each house has its own steep slate mansard with dormers on the
+  // street side, a zinc ridge, and stone chimney stacks with rows of terracotta pots on the party walls.
+  if (map.id === 'paris' && b.fadeable) {
+    const sl2 = pbr('slate', 3, 2);
+    const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x8a919b, roughness: 0.42, metalness: 0.25, envMapIntensity: 1.5, emissive: 0x1d2128, emissiveIntensity: 1 });
+    const zincM = new THREE.MeshStandardMaterial({ color: 0xb4bcc6, roughness: 0.32, metalness: 0.8, envMapIntensity: 1.3 });
+    const yardM = new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 0.6, metalness: 0.3 });
+    const stoneM = new THREE.MeshStandardMaterial({ map: T.stone, color: 0xcbbca0, roughness: 0.85 });
+    const potM = new THREE.MeshStandardMaterial({ color: 0xa5532e, roughness: 0.75 });
+    // unit mansard section (depth 1 along z, extruded 1 along x): steep lower slope, shallow top deck
+    const sec = new THREE.Shape([new THREE.Vector2(-0.5, 0), new THREE.Vector2(0.5, 0), new THREE.Vector2(0.34, 0.72), new THREE.Vector2(0, 1), new THREE.Vector2(-0.34, 0.72)]);
+    const mansard = new THREE.ExtrudeGeometry(sec, { depth: 1, bevelEnabled: false }).translate(0, 0, -0.5).rotateY(Math.PI / 2); // section now in the y/z plane, length along x
+    const houses = new Batch(mansard, slateM, true); const caps = new Batch(BOX, zincM); const yard = new Batch(BOX, yardM);
+    const dBox = new Batch(BOX, stoneM, true); const dCap = new Batch(new THREE.CylinderGeometry(Math.SQRT1_2, Math.SQRT1_2, 1, 3, 1).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), slateM, true);
+    const dLit = new Batch(PLANE, litM); const dDk = new Batch(PLANE, darkM);
+    const stacks = new Batch(BOX, stoneM, true); const potsB = new Batch(new THREE.CylinderGeometry(0.11, 0.14, 1, 7), potM, true);
+    const M = (x: number, y: number, z: number, sx: number, sy: number, sz: number, ry = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ry), new THREE.Vector3(sx, sy, sz));
+    const D = Math.min(8, (r.z1 - r.z0) * 0.42); // depth of one row of houses
+    const rows: { zc: number; out: 1 | -1 }[] = [{ zc: r.z1 - D / 2, out: 1 }, { zc: r.z0 + D / 2, out: -1 }];
+    yard.add(M((r.x0 + r.x1) / 2, H + 0.05, (r.z0 + r.z1) / 2, r.x1 - r.x0, 0.1, r.z1 - r.z0 - 2 * D + 0.4));
+    for (const row of rows) {
+      let x = r.x0;
+      const walls: { x: number; top: number }[] = [];
+      while (x < r.x1 - 0.5) {
+        const w = Math.min(r.x1 - x, 5 + rnd() * 3.5); const cx = x + w / 2;
+        const hh = 3.0 + rnd() * 0.9; const y0 = H + (rnd() - 0.5) * 0.5;
+        houses.add(M(cx, y0, row.zc, w - 0.05, hh, D), new THREE.Color().setScalar(0.85 + rnd() * 0.3));
+        caps.add(M(cx, y0 + hh - 0.02, row.zc, w - 0.1, 0.14, 0.3));
+        // dormers along the street-side slope
+        const nd = Math.max(1, Math.floor((w - 0.8) / 2.2));
+        for (let k = 0; k < nd; k++) {
+          const dx = cx - ((nd - 1) * 2.2) / 2 + k * 2.2; const dz = row.zc + row.out * (D * 0.5 - 1.1); const dy = y0 + hh * 0.4;
+          dBox.add(M(dx, dy, dz, 0.95, 1.2, 1.0));
+          dCap.add(M(dx, dy + 0.78, dz, 1.15, 0.45, 1.1));
+          (rnd() < 0.6 ? dLit : dDk).add(M(dx, dy - 0.05, dz + row.out * 0.51, 0.55, 0.8, 1, row.out === 1 ? 0 : Math.PI));
+        }
+        walls.push({ x: x + w, top: y0 + hh });
+        x += w;
+      }
+      walls.pop();
+      for (const wl of walls) {
+        if (rnd() < 0.25) continue;
+        const sz = D * (0.35 + rnd() * 0.3); const off = (rnd() - 0.5) * D * 0.3; const top = wl.top + 0.9 + rnd() * 0.5;
+        stacks.add(M(wl.x, (top + H) / 2, row.zc + off, 0.75, top - H, sz));
+        stacks.add(M(wl.x, top + 0.05, row.zc + off, 0.9, 0.12, sz + 0.15));
+        const np = Math.max(2, Math.floor(sz / 0.45));
+        for (let k = 0; k < np; k++) potsB.add(M(wl.x, top + 0.3, row.zc + off - sz / 2 + 0.25 + k * ((sz - 0.5) / Math.max(1, np - 1)), 1, 0.45, 1));
+      }
+    }
+    for (const bt of [houses, caps, yard, dBox, dCap, dLit, dDk, stacks, potsB]) { const m = bt.build(); if (m) { g.add(m); meshes.push(m); } }
+    return { meshes, lights: [] };
+  }
+
   // ---- mansard roof: slate/zinc slopes, lit dormers, chimney stacks with pots
   const roofH = 3.6;
   const zt = T.zinc.clone(); zt.repeat.set(Math.max(1, (r.x1 - r.x0) / 4), Math.max(1, (r.z1 - r.z0) / 4)); zt.needsUpdate = true;
