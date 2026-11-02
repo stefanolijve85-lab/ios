@@ -373,6 +373,6 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 ## ElevenLabs sound effects (pending download)
 
 - 18 effects were generated with eleven_text_to_sound_v2 (about 300 ElevenLabs credits). Names and signed links are in `tools/sfx/elevenlabs_urls.txt`.
-- Run `bash city-hold/tools/sfx/fetch.sh` from a session that can reach `elevenlabsusercontent.com`. The links expire on 2026-11-03 00:00 UTC; after that, download the files from the ElevenLabs flow by hand.
+- Run `bash city-hold/tools/sfx/fetch.sh` from a session that can reach `elevenlabsusercontent.com`. The links expire on 2026-11-02 16:00 UTC (17:00 Dutch time); after that, download the files from the ElevenLabs flow by hand.
 - `src/audio/sfx.ts` already loads `public/audio/<name>.mp3` and falls back to the synthesis when a file is missing.
 - After the download, check the mix with the offline render: every cue should peak at about 0.3 or less.
