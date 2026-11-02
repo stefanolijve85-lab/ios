@@ -31,7 +31,7 @@ describe('model slots', () => {
         expect(manifest.slots['anim.run'], 'anim.run donor for auto-rigged characters').toBeTruthy();
         continue;
       }
-      for (const c of CLIP_NAMES) expect(names, `${s.slot} clip ${c}`).toContain(c);
+      for (const c of CLIP_NAMES) if (c !== 'strike' || s.slot.includes('shield')) expect(names, `${s.slot} clip ${c}`).toContain(c); // the baton strike is the shield officer's only
       expect(gltf.nodes.some((n: { name?: string }) => n.name === 'carry'), `${s.slot} carry node`).toBe(true);
     }
   });

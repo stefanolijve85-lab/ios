@@ -42,6 +42,17 @@ export const POSED_CLIPS: Record<string, PoseSpec> = {
     base: ['idle'], period: 1.2,
     right: (ph) => ({ upper: [0.25, 0.85, 0.4], fore: [0.3, 0.2 + Math.sin(ph * TAU) * 0.55, 1] }),
   },
+  // shield officer: shield arm up in front, baton raised over the shoulder and chopped down (played as a one-shot, ph = progress)
+  strike: {
+    base: ['idle'], period: 99, spinePitch: 0.12,
+    left: () => ({ upper: [0.9, 0.15, 0.1], fore: [0.3, -0.9, 0.35] }),
+    right: (ph) => {
+      const up: ArmPose = { upper: [0.25, -0.35, 1], fore: [-0.4, -0.2, 1] }, hit: ArmPose = { upper: [1, -0.1, -0.15], fore: [0.9, 0.1, -0.6] }, rest: ArmPose = { upper: [0.2, -0.2, -1], fore: [0.8, 0, -0.5] };
+      const mix = (a: ArmPose, b: ArmPose, k: number): ArmPose => { const e = k * k * (3 - 2 * k); const m = (x: V3, y: V3) => x.map((v, i) => v + (y[i] - v) * e) as V3; return { upper: m(a.upper, b.upper), fore: m(a.fore, b.fore) }; };
+      return ph < 0.35 ? mix(rest, up, ph / 0.35) : ph < 0.55 ? mix(up, hit, (ph - 0.35) / 0.2) : mix(hit, rest, (ph - 0.55) / 0.45);
+    },
+    spineYaw: (ph) => (ph < 0.35 ? 0.3 * (ph / 0.35) : ph < 0.55 ? 0.3 - 0.6 * ((ph - 0.35) / 0.2) : -0.3 * (1 - (ph - 0.55) / 0.45)),
+  },
   // standing still with a box in both arms
   carry_idle: { base: ['idle'], ...both(() => ({ upper: [0.35, 0.25, -0.9], fore: [0.95, -0.45, 0.25] })) },
 };

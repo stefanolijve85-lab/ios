@@ -68,6 +68,8 @@ export interface Unit {
   restrainP: number;
   restrainBy: number;
   immuneT: number;
+  /** shield officer: time of the last baton strike (view plays the swing); rioter: knocked off balance until this time */
+  strikeAt: number; staggerUntil: number;
   barrierId: number;
   /** thrower: throws left, cooldown, release done in the current throw, aim */
   throwsLeft: number; throwCd: number; released: boolean; aim: ThrowTarget | null;
@@ -219,7 +221,7 @@ export class Game {
       id: this.nextId++, side, kind, x: p.x, z: p.z, facing: 0, r: st.radius, variant: Math.floor(this.rng.next() * 1e6),
       state: side === 'def' ? 'idle' : 'approach', stateT: 0, path: null, pi: 0, goal: null, repathT: 0, moving: false, speedNow: 0,
       targetStore: -1, exitId: '', carrying: 0, pending: 0, carryStore: -1, capacity: 0, detectedUntil: -1, camSeen: 0, heldBy: -1, holdT: 0,
-      restrainP: 0, restrainBy: -1, immuneT: 0, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
+      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
       home: { x: p.x, z: p.z }, engage: -1, escortOf: -1, fireId: -1, selected: false, chaseT: 0, escortSolo: false,
     };
   }
@@ -307,7 +309,7 @@ export class Game {
       if (u.stallT > 1.2) {
         const gained = Math.hypot(u.x - (u.stallX ?? 1e9), u.z - (u.stallZ ?? 1e9));
         u.stallT = 0; u.stallX = u.x; u.stallZ = u.z;
-        if (gained < 0.3 && left < 2.5) { u.pi = u.path.length; u.home = { x: u.x, z: u.z }; return true; }
+        if (gained < 0.3 && left < (u.state === 'return' ? 6 : 2.5)) { u.pi = u.path.length; u.home = { x: u.x, z: u.z }; return true; } // a guard heading back stops short when his post is crowded
       }
     }
     let budget = speed * dt;
@@ -783,6 +785,8 @@ export class Game {
         u.repathT += dt;
         if (this.follow(u, dt, sp)) { u.state = 'idle'; u.moving = false; }
         if (u.kind === 'security' && u.state === 'return') this.autoEngage(u);
+        // sent somewhere mid-riot: a guard running past a rioter grabs them on the way, then carries on to the spot
+        else if (u.kind === 'security' && u.state === 'move') this.autoEngage(u, 3.2);
         break;
       }
       case 'idle': {
@@ -830,7 +834,7 @@ export class Game {
           if (this.nav.walkable(nx, nz)) { t.x = nx; t.z = nz; }
           t.facing = u.facing; t.moving = u.moving;
         }
-        if (u.stateT > 3.5) {
+        if (u.stateT > 5.5) { // the push takes as long as the old escort round-trip did: balance unchanged
           // let go: the offender runs off the map empty-handed
           if (t) { t.escortSolo = true; t.stateT = 0; const ex = this.nearestExit(t); this.setPath(t, { x: ex.x, z: ex.z }); }
           u.escortOf = -1; this.goHome(u);
@@ -847,7 +851,7 @@ export class Game {
     if (t && t.restrainBy === u.id) { t.restrainBy = -1; if (t.state === 'restrained') { t.state = t.carrying > 0 ? 'extract' : 'approach'; this.setAttGoal(t); } }
   }
 
-  private autoEngage(u: Unit) {
+  private autoEngage(u: Unit, maxR = Infinity) {
     let best: Unit | null = null; let bd = Infinity;
     for (const a of this.attackers()) {
       if (!this.isDetected(a)) continue;
@@ -858,7 +862,7 @@ export class Game {
       const d = Math.hypot(a.x - u.x, a.z - u.z);
       // prefer loaded offenders: they are the ones causing permanent losses
       const score = d - (a.carrying > 0 ? 4 : 0) - (a.state === 'held' ? 3 : 0);
-      if (d < this.responseRange(u, a) && score < bd) { bd = score; best = a; }
+      if (d < Math.min(maxR, this.responseRange(u, a)) && score < bd) { bd = score; best = a; }
     }
     if (best) { u.state = 'chase'; u.engage = best.id; u.chaseT = 0; u.repathT = 99; }
   }
@@ -889,11 +893,21 @@ export class Game {
     for (const s of this.defenders()) {
       if (s.kind !== 'shield') continue;
       const held = this.attackers().filter((a) => a.heldBy === s.id && a.state === 'held');
+      // a shield officer sent into the crowd strikes the first rioter he reaches with the baton: knocked back and off balance
+      if (s.state === 'move' && this.time - s.strikeAt > st.strikeEvery) {
+        const a = this.attackers().find((o) => o.heldBy < 0 && o.restrainBy < 0 && !['held', 'restrained', 'escorted', 'breach', 'collect', 'removed', 'escaped'].includes(o.state)
+          && (o.x - s.x) ** 2 + (o.z - s.z) ** 2 < st.holdRadius ** 2);
+        if (a) this.strike(s, a);
+      }
+      // holding: a baton blow now and then on one of the held rioters
+      if (held.length && s.state !== 'move' && this.time - s.strikeAt > st.strikeEvery * 1.6) { const a = held[Math.floor(this.time) % held.length]; this.strike(s, a, false); }
       for (const a of this.attackers()) {
         if (held.length >= st.holdMax) break;
         if (a.heldBy >= 0 || a.immuneT > this.time || a.state === 'held' || a.state === 'restrained' || a.state === 'escorted') continue;
         if (a.state === 'breach' || a.state === 'collect') continue;
+        if (s.state === 'move') continue; // on the way: strikes only, the hold starts once he stands
         if ((a.x - s.x) ** 2 + (a.z - s.z) ** 2 < st.holdRadius ** 2) {
+          if (this.time - s.strikeAt > 0.9) this.strike(s, a, false);
           a.heldBy = s.id; a.state = 'held'; a.holdT = 0; a.moving = false; held.push(a);
           a.facing = Math.atan2(s.x - a.x, s.z - a.z);
           s.facing = Math.atan2(a.x - s.x, a.z - s.z);
@@ -912,6 +926,18 @@ export class Game {
         }
       }
     }
+  }
+
+  /** baton strike by a shield officer: the swing, a thud, and (knock) the rioter is pushed back a step and briefly staggered */
+  private strike(s: Unit, a: Unit, knock = true) {
+    s.strikeAt = this.time; s.facing = Math.atan2(a.x - s.x, a.z - s.z);
+    this.emit({ type: 'held', text: 'Baton strike', x: a.x, z: a.z });
+    a.detectedUntil = Math.max(a.detectedUntil, this.time + 6);
+    if (!knock) return;
+    const d = Math.hypot(a.x - s.x, a.z - s.z) || 1;
+    for (const k of [0.9, 0.6, 0.3]) { const nx = a.x + ((a.x - s.x) / d) * k, nz = a.z + ((a.z - s.z) / d) * k; if (this.nav.walkable(nx, nz)) { a.x = nx; a.z = nz; break; } }
+    a.staggerUntil = this.time + BALANCE.units.shield.strikeStagger; a.moving = false;
+    a.restrainP = Math.min(0.9, a.restrainP + 0.1);
   }
 
   private stepFirefighter(u: Unit, dt: number, sp: number) {
@@ -945,6 +971,7 @@ export class Game {
 
   private stepAttacker(u: Unit, dt: number) {
     u.stateT += dt;
+    if (u.staggerUntil > this.time && (u.state === 'approach' || u.state === 'extract')) { u.moving = false; return; } // reeling from a baton strike
     const sp = this.speedOf(u);
     switch (u.state) {
       case 'approach': {
@@ -1134,7 +1161,7 @@ export class Game {
     this.npcSpawnT -= dt;
     const civs = this.npcs.filter((n) => n.role === 'civilian' && n.state !== 'gone');
     if (this.npcSpawnT <= 0 && civs.length < this.maxCivilians) {
-      this.npcSpawnT = N.spawnEvery;
+      this.npcSpawnT = N.spawnEvery * (0.6 + this.npcRng.next() * 0.9); // irregular arrivals, no convoys
       const sp = this.map.entries.filter((e) => e.spawn); const a = sp[this.npcRng.int(sp.length)];
       if (!this.danger(a.x, a.z)) {
         const n = this.newNpc('civilian', a.x, a.z); const b = sp.filter((e) => e !== a)[this.npcRng.int(Math.max(1, sp.length - 1))] ?? a; n.exit = b.id;
@@ -1177,7 +1204,7 @@ export class Game {
         continue;
       }
       if (n.state === 'gone' || n.state === 'idle') { n.moving = false; continue; }
-      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : n.role === 'police' ? 0.9 : N.walkSpeed;
+      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : n.role === 'police' ? 0.9 : N.walkSpeed * (0.8 + ((n.variant % 7) / 6) * 0.35); // everyone walks at their own pace
       n.moving = false; n.speed = 0;
       if (n.path && n.pi < n.path.length) {
         let budget = sp * dt;

@@ -168,9 +168,7 @@ export class Sfx {
       case 'deny': this.tone(o, 220, 0.12, 'square', 0.06); this.tone(o, 185, 0.16, 'square', 0.06, { delay: 0.1 }); break;
       case 'upgrade': [523, 659, 784].forEach((f, i) => this.tone(o, f, 0.22, 'triangle', 0.14, { delay: i * 0.07 })); this.burst(o, 0.3, 0.04, { type: 'highpass', freq: 5000, delay: 0.14 }); break;
       // ---------- world
-      case 'intercept': // police whistle: two short trilled blasts
-        this.tone(o, 2900, 0.16, 'sine', 0.16 * g, { vibrato: [38, 160], attack: 0.01 });
-        this.tone(o, 2900, 0.22, 'sine', 0.16 * g, { vibrato: [38, 160], attack: 0.01, delay: 0.2 });
+      case 'intercept': // no whistle: just the scuffle of the push
         this.burst(o, 0.12, 0.25 * g, { type: 'lowpass', freq: 300, src: this.brown, delay: 0.05 }); // scuffle
         break;
       case 'held': this.burst(o, 0.18, 0.45 * g, { type: 'lowpass', freq: 380, src: this.brown }); this.tone(o, 95, 0.16, 'sine', 0.25 * g, { slide: -30 }); break;
@@ -198,7 +196,7 @@ export class Sfx {
   private recorded(cue: Cue, o: AudioNode, g: number): boolean {
     const v = 0.5 * g;
     switch (cue) {
-      case 'intercept': return this.smp('whistle', o, v * 0.5); // the whistle recording is dense: keep it under the impacts
+      case 'intercept': return this.smp('wood_hit', o, v * 0.35); // a dull shove, no whistle
       case 'held': return this.smp('shield', o, v);
       case 'glass': return this.smp('glass', o, v);
       case 'breach': { const a = this.smp('shutter', o, v * 0.7); const b = this.smp('glass', o, v * 0.6, { delay: 0.12 }); return a || b; }

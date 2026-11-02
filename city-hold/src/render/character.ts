@@ -23,7 +23,7 @@ export interface CharacterVisual {
 const JOINTS = ['torso', 'head', 'legL', 'legR', 'kneeL', 'kneeR', 'armL', 'armR', 'elbowL', 'elbowR'];
 
 /** Animation clips every character GLB should provide (names are the contract with final assets). */
-export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish', 'throw', 'guide', 'flee'] as const;
+export const CLIP_NAMES = ['idle', 'walk', 'run', 'carry_idle', 'carry_walk', 'breach', 'collect', 'held', 'restrained', 'escorted', 'restrain', 'escort', 'brace', 'extinguish', 'throw', 'guide', 'flee', 'strike'] as const;
 export type ClipName = (typeof CLIP_NAMES)[number];
 
 const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; carrying: boolean; period: number }> = {
@@ -43,6 +43,7 @@ const CLIP_SPEC: Record<ClipName, { pose: Pose; moving: boolean; speed: number; 
   extinguish: { pose: 'extinguish', moving: false, speed: 0, carrying: false, period: 1 },
   throw: { pose: 'throw', moving: false, speed: 0, carrying: false, period: 1.15 },
   guide: { pose: 'guide', moving: false, speed: 0, carrying: false, period: Math.PI * 2 },
+  strike: { pose: 'strike', moving: false, speed: 0, carrying: false, period: 0.6 },
   flee: { pose: 'flee', moving: true, speed: 3.4, carrying: false, period: (Math.PI * 2) / (9.5 * 1.13) },
 };
 
@@ -63,10 +64,10 @@ export function bakeClips(h: Humanoid): THREE.AnimationClip[] {
     const q = new THREE.Quaternion();
     for (let f = 0; f <= frames; f++) {
       times.push(f * step);
-      if (name === 'throw') { h.actionT = f / frames; animate(h, 'throw', false, 0, false, 0); }
+      if (name === 'throw' || name === 'strike') { h.actionT = f / frames; animate(h, name, false, 0, false, 0); }
       joints.forEach((j, k) => { q.setFromEuler(j.rotation); rot[k].push(q.x, q.y, q.z, q.w); });
       bob.push(body.position.x, body.position.y, body.position.z);
-      if (name !== 'throw') { const sub = 6; for (let s = 0; s < sub; s++) animate(h, sp.pose, sp.moving, sp.speed, sp.carrying, step / sub); }
+      if (name !== 'throw' && name !== 'strike') { const sub = 6; for (let s = 0; s < sub; s++) animate(h, sp.pose, sp.moving, sp.speed, sp.carrying, step / sub); }
     }
     // close the loop exactly (the throw clip starts and ends in the idle stance already)
     joints.forEach((_, k) => { const a = rot[k]; a.splice(a.length - 4, 4, a[0], a[1], a[2], a[3]); });
@@ -120,7 +121,10 @@ class GltfCharacter implements CharacterVisual {
         const n = mm.name;
         if (model.getObjectByName('Hips') && (mm as THREE.MeshStandardMaterial).map) {
           // auto-rigged photo-textured model: a little self-light keeps it readable on the night street
-          const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0; return c;
+          const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0;
+          // passers-by share three models: each gets its own colour cast and brightness so the crowd does not look cloned
+          if (kind === 'civilian') { const r2 = rng(variant * 7919 + 13); c.color.setHSL(r2(), 0.25 + r2() * 0.3, 0.55 + r2() * 0.35); }
+          return c;
         }
         if (n === 'skin' || n === 'top' || n === 'legs') { const c = (mm as THREE.MeshStandardMaterial).clone(); c.color.setHex(n === 'skin' ? skin : n === 'top' ? top : legs); return c; }
         return mm;
@@ -153,6 +157,13 @@ class GltfCharacter implements CharacterVisual {
         sh.position.set(0.12 / (rs.x / ws.x) * (rs.x / ws.x), 0.05, 0.12).multiplyScalar(ws.x > 0 ? 1 / ws.x : 1);
         sh.rotation.set(0, Math.PI / 2, 0);
       }
+      // baton in the right hand (struck with when sent into the crowd)
+      const hand = model.getObjectByName('RightHand');
+      if (hand) {
+        hand.updateWorldMatrix(true, false); const ws = new THREE.Vector3(); hand.getWorldScale(ws); const rs = new THREE.Vector3(); model.getWorldScale(rs);
+        const bat = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.019, 0.55, 8), new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.5 }));
+        bat.name = 'baton'; bat.scale.setScalar(rs.x / ws.x); bat.position.set(0, (0.12 / ws.x) * rs.x, 0); bat.castShadow = true; hand.add(bat);
+      }
     }
     this.mixer = new THREE.AnimationMixer(model);
     for (const c of clips) this.actions.set(c.name, this.mixer.clipAction(c));
@@ -175,9 +186,9 @@ class GltfCharacter implements CharacterVisual {
   update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
     if (this.carry) this.carry.visible = carrying && pose !== 'throw';
     this.held.update(pose === 'throw' && action < THROW_RELEASE);
-    if (pose === 'throw') {
-      const a = this.actions.get('throw');
-      if (a) { this.play('throw', 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
+    if (pose === 'throw' || pose === 'strike') {
+      const a = this.actions.get(pose);
+      if (a) { this.play(pose, 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
     }
     let clip: string = pose;
     if (pose === 'flee') clip = carrying ? 'carry_walk' : 'flee';

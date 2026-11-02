@@ -409,7 +409,9 @@ export class MatchView {
       const mv = this.motion(u.id, h.root.position, dt);
       let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
       else if (pose === 'brace' && mv.moving) pose = 'walk';
-      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0);
+      let action = u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0;
+      if (u.kind === 'shield' && g.time - u.strikeAt < 0.6) { pose = 'strike'; action = (g.time - u.strikeAt) / 0.6; } // baton swing
+      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || u.state === 'collect' && u.stateT > u.pending * BALANCE.collectTimePerStock * 0.6, dt * (g.over ? 0.3 : 1), action);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)

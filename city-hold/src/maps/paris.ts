@@ -25,8 +25,6 @@ const props: PropDef[] = [
   // planters with small trees
   { type: 'planter', x: -5, z: -13.1, collide: true, r: 0.7 },
   { type: 'planter', x: 5, z: -13.1, collide: true, r: 0.7 },
-  { type: 'lamp', x: -18, z: -21, collide: true, r: 0.25 },
-  { type: 'lamp', x: 18, z: -21, collide: true, r: 0.25 },
   { type: 'tree', x: -24, z: -13, collide: true, r: 0.9 },
   { type: 'tree', x: 24, z: -16, collide: true, r: 0.9 },
   { type: 'planter', x: -15.5, z: -13, collide: true, r: 0.8 },

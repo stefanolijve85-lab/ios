@@ -34,7 +34,7 @@ export const BALANCE = {
   },
   units: {
     security: { speed: 3.6, sight: 9, restrainTime: 2.0, radius: 0.35 },
-    shield: { speed: 2.1, sight: 6, holdRadius: 1.9, holdMax: 3, holdTime: 4, restrainRate: 0.1, radius: 0.45 },
+    shield: { speed: 2.1, sight: 6, holdRadius: 1.9, holdMax: 3, holdTime: 4, restrainRate: 0.1, radius: 0.45, strikeEvery: 1.4, strikeStagger: 1.1 },
     firefighter: { speed: 2.8, sight: 0, extinguishTime: 4, radius: 0.35 },
     runner: { speed: 4.0, capacity: 5, breakRate: 7, resist: 1.25, radius: 0.32 },
     carrier: { speed: 3.0, capacity: 8, breakRate: 9, resist: 1.0, radius: 0.35 },
@@ -49,7 +49,7 @@ export const BALANCE = {
   unloadedSightDetectDelay: 0.6,
   fire: { storeDamagePerSec: 1.2, vandalIgniteChance: 0.55, max: 4, groundBurnSec: 5, scorchAfterSec: 2 },
   /** neutral people: no gameplay effect, they react to danger (design: civilians remain neutral) */
-  npc: { civilians: { mobile: 8, desktop: 24 }, patrons: { mobile: 4, desktop: 10 }, fleeRadius: 7, fireRadius: 8, walkSpeed: 1.4, runSpeed: 3.4, spawnEvery: 1.6, browseChance: 0.6, browseSec: [3, 9] as [number, number] },
+  npc: { civilians: { mobile: 6, desktop: 14 }, patrons: { mobile: 4, desktop: 10 }, fleeRadius: 7, fireRadius: 8, walkSpeed: 1.4, runSpeed: 3.4, spawnEvery: 3.2, browseChance: 0.6, browseSec: [3, 9] as [number, number] },
   /** fictional thrown incendiary (game object only). All values are tunable game balance. */
   throw: {
     range: 12, minRange: 3,            // metres from the thrower to the aim point

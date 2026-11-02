@@ -280,7 +280,7 @@ export function buildHumanoid(kind: AnyKind, variant: number, opts: BuildOpts = 
   return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon, phase: r() * 6, recoil: 0, kind };
 }
 
-export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw' | 'guide' | 'flee';
+export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw' | 'guide' | 'flee' | 'strike';
 
 /** fraction of the throw clip at which the object leaves the hand (BALANCE.throw.releaseAt / duration) */
 export const THROW_RELEASE = 0.45 / 1.15;
@@ -297,10 +297,19 @@ const THROW_KEYS: number[][] = [
   [1.00, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.0],
 ];
 
-function throwPose(h: Humanoid) {
+// shield officer's baton strike: shield arm stays up in front, baton raised over the shoulder, chopped down, back to guard
+const STRIKE_KEYS: number[][] = [
+  [0.00, -0.8, 0.0, -1.0, -1.25, 0.0, 0.2, 0.0, 0.4, -0.35, 0.35, 0.3, 0.0],
+  [0.35, -2.8, -0.25, -1.5, -1.3, 0.1, 0.0, 0.4, 0.42, -0.35, 0.3, 0.3, 0.0],
+  [0.55, -0.9, 0.15, -0.15, -1.2, 0.1, 0.4, -0.35, 0.5, -0.3, 0.4, 0.25, -0.06],
+  [0.78, -0.75, 0.05, -0.6, -1.25, 0.0, 0.3, -0.1, 0.42, -0.35, 0.36, 0.3, -0.03],
+  [1.00, -0.8, 0.0, -1.0, -1.25, 0.0, 0.2, 0.0, 0.4, -0.35, 0.35, 0.3, 0.0],
+];
+
+function throwPose(h: Humanoid, KEYS = THROW_KEYS) {
   const t = Math.max(0, Math.min(1, h.actionT ?? 0));
-  let i = 0; while (i < THROW_KEYS.length - 2 && THROW_KEYS[i + 1][0] < t) i++;
-  const a = THROW_KEYS[i], b = THROW_KEYS[i + 1]; const u = (t - a[0]) / Math.max(1e-4, b[0] - a[0]);
+  let i = 0; while (i < KEYS.length - 2 && KEYS[i + 1][0] < t) i++;
+  const a = KEYS[i], b = KEYS[i + 1]; const u = (t - a[0]) / Math.max(1e-4, b[0] - a[0]);
   const e = u * u * (3 - 2 * u); // smoothstep between keys
   const v = (k: number) => a[k] + (b[k] - a[k]) * e;
   h.arms[1].rotation.set(v(1), 0, v(2)); h.elbows[1].rotation.set(v(3), 0, 0);
@@ -318,6 +327,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Drive joint rotations. Poses are rebuilt from the action references (37-42) as procedural keyframes. */
 export function animate(h: Humanoid, pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number) {
   if (pose === 'throw') { throwPose(h); return; }
+  if (pose === 'strike') { throwPose(h, STRIKE_KEYS); return; }
   const run = speed > 3.3;
   h.phase += dt * (moving ? (run ? 9.5 : 7.5) * Math.min(1.3, Math.max(0.6, speed / 3)) : 2);
   const p = h.phase;
