@@ -160,7 +160,7 @@ export const PARIS: MapDef = {
       { x: -21, z: -18 }, { x: -20, z: -24 }, { x: -21.5, z: -27 }, { x: 21, z: -17 }, { x: 20.5, z: -21 }, { x: 21.5, z: -27 }, { x: -12, z: 10 }, { x: 12, z: 10 },
     ],
   },
-  camera: { x: 0, z: -2, dist: 46 },
+  camera: { x: 0, z: -4, dist: 56 },
   playable: true,
   notes: 'Tutorial district. Four attacker approaches; the east service road is the defenders\' staging lane.',
 };

@@ -90,24 +90,28 @@
       "note": "temporary model generated from the procedural figure; replace with a final asset"
     },
     "prop.lamp": {
-      "file": "placeholder/prop_lamp.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/prop.lamp.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D from a generated reference (Higgsfield), textures shrunk to 1024 px",
+      "city": "paris"
     },
     "prop.tree": {
-      "file": "placeholder/prop_tree.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/prop.tree.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D (golden autumn tree in planter), textures shrunk to 1024 px",
+      "city": "paris"
     },
     "prop.planter": {
-      "file": "placeholder/prop_planter.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/prop.planter.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D from a generated reference (Higgsfield), textures shrunk to 1024 px",
+      "city": "paris"
     },
     "prop.bench": {
-      "file": "placeholder/prop_bench.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/prop.bench.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D from a generated reference (Higgsfield), textures shrunk to 1024 px",
+      "city": "paris"
     },
     "prop.bollard": {
       "file": "placeholder/prop_bollard.glb",
@@ -379,6 +383,12 @@
       "status": "final",
       "note": "earlier procedural figure, selectable in Collectie (loaded on demand)",
       "city": "collection"
+    },
+    "prop.cafe_table": {
+      "file": "final/prop.cafe_table.glb",
+      "status": "final",
+      "note": "Tripo H3.1 image-to-3D from a generated reference (Higgsfield), textures shrunk to 1024 px",
+      "city": "paris"
     }
   }
 }

@@ -349,3 +349,22 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
   It is quieter while paused and suspended when the tab is hidden.
 - **iOS:** the audio is unlocked on the first touch in the match. Menu buttons click softly.
 - **Verified:** every cue was rendered offline in Chromium and measured. All are audible, none clip (peak ≤ 0.3), panning works, and calm-street vs riot ambience is about 0.010 vs 0.025 RMS.
+
+## Paris visual pass (Higgsfield, ~60 credits)
+
+- **Ground:** photographic wet granite setts (`public/textures/paris_setts_{albedo,normal,rough}.jpg`). The texture was generated with gpt_image_2_5 and the normal and roughness maps were derived from it. It replaces the drawn pattern in Paris only.
+- **Image-to-3D props (Tripo H3.1, 9 credits each):**
+  - double-lantern street lamp, golden autumn tree in a wooden planter, green cast-iron bench, boxwood planter, café set with parasol;
+  - all city-tagged `paris`, with textures shrunk to 1024 px (`tools/shrink_glb.py`, 0.5–1 MB each).
+  - `buildProp` scales them to real heights (`PROP_HEIGHT`) and stands them on the ground.
+  - The lamp glass glows through an emissive mask built from the bright texels, so the iron stays dark.
+  - Tree models fade like the old crowns. The separate parasols are skipped when the café-set model brings its own.
+- **Light:**
+  - blue-hour hemisphere (cool ground bounce instead of brown);
+  - wetter, cooler setts;
+  - smaller and softer lamp pools;
+  - soft golden reflection smears instead of dashes;
+  - stronger wet-street reflection;
+  - exposure 1.42.
+- **Camera:** pitch 46° → 40° for all cities. The Paris framing is `{0, -4, 56}`: the whole main building with its roof is in view and the reserve team stays clear of the HUD.
+- **Roofs:** large Haussmann blocks break their flat zinc deck into the pitched roofs of separate houses, with party walls and chimney stacks.

@@ -278,6 +278,33 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
       for (let k = 0; k < 4; k++) pots.add(fm(face2, u - 0.75 + k * 0.5, H + roofH + 2.25, 0, 1, 0.45, 1));
     }
   });
+  // the top deck of a large block is not one flat sheet: it breaks into the pitched roofs of the separate houses,
+  // with party walls carrying chimney stacks between them (the roofscape seen in the foreground of image 01)
+  const tw = (r.x1 - r.x0 + 0.3) * 0.8, td = (r.z1 - r.z0 + 0.3) * 0.8;
+  if (tw * td > 60) {
+    const alongX = tw >= td; const long = alongX ? tw : td, short = alongX ? td : tw;
+    const n = Math.max(2, Math.round(long / 8)); const seg = long / n;
+    const prism = new THREE.CylinderGeometry(1, 1, 1, 3, 1).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2).translate(0, 0.5, 0).scale(1, 1 / 1.5, 1 / 1.732); // ridge along x, base 1 x 1, apex up
+    const ridges = new Batch(prism, slate, true);
+    const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, y0 = H + roofH;
+    const at = (a: number, b: number, y: number, sx: number, sy: number, sz: number) => new THREE.Matrix4().compose(
+      new THREE.Vector3(alongX ? cx + a : cx + b, y, alongX ? cz + b : cz + a),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), alongX ? 0 : Math.PI / 2), new THREE.Vector3(sx, sy, sz));
+    for (let i = 0; i < n; i++) {
+      const a = -long / 2 + seg * (i + 0.5);
+      const hgt = 1.5 + rnd() * 0.9;
+      ridges.add(at(a, 0, y0, seg - 0.35, hgt, short * 0.92), new THREE.Color().setScalar(0.85 + rnd() * 0.25));
+      if (i > 0) {
+        // party wall with a chimney stack and pots
+        const aw = -long / 2 + seg * i; const off = (rnd() - 0.5) * short * 0.5;
+        chim.add(at(aw, 0, y0 + 0.5, 0.45, 1.0 + hgt * 0.6, short * 0.92));
+        chim.add(at(aw, off, y0 + hgt + 0.6, 0.9, 1.6, 2.2));
+        for (let k = 0; k < 4; k++) pots.add(at(aw, off - 0.75 + k * 0.5, y0 + hgt + 1.6, 1, 0.45, 1));
+      }
+    }
+    const m = ridges.build(); if (m) { g.add(m); meshes.push(m); }
+  }
+
   for (const bt of [dB, dRoof, dGlass, dDark, chim, pots]) { const m = bt.build(); if (m) { g.add(m); meshes.push(m); } }
 
   return { meshes, lights: [] };

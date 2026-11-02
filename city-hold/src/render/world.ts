@@ -302,6 +302,25 @@ function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number
   if (seed % 2 === 0) for (let k = 0; k < 5; k++) { const a = k * 1.3 + seed; mesh(new THREE.SphereGeometry(0.05, 5, 4), mat([0xd8c060, 0xe0e0d0, 0xc06050][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.6, y + r * 0.95, z + Math.sin(a) * r * 0.6, 1, 1, 1, false); }
 }
 
+/** emissive mask from a colour map: only the bright parts (lit lantern glass) glow, the dark iron stays dark */
+function brightMask(map: THREE.Texture): THREE.Texture | null {
+  const img = map.image as CanvasImageSource & { width: number; height: number } | undefined;
+  if (!img || !img.width) return null;
+  const c = document.createElement('canvas'); c.width = Math.min(512, img.width); c.height = Math.min(512, img.height);
+  const g = c.getContext('2d'); if (!g) return null;
+  g.drawImage(img, 0, 0, c.width, c.height);
+  const d = g.getImageData(0, 0, c.width, c.height); const px = d.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const l = (px[i] * 0.3 + px[i + 1] * 0.55 + px[i + 2] * 0.15) / 255; const k = Math.max(0, Math.min(1, (l - 0.45) / 0.3));
+    px[i] = px[i + 1] = px[i + 2] = Math.round(k * 255);
+  }
+  g.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.flipY = map.flipY; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/** real-world heights for props replaced by image-to-3D models (metres) */
+const PROP_HEIGHT: Partial<Record<PropDef['type'], number>> = { lamp: 4.2, tree: 5.2, bench: 0.95, planter: 1.3, cafe_table: 2.6 };
+
 /** occluders (tree crowns, shelter roofs) registered while props are built, turned into fadeables afterwards */
 const pendingFades: { meshes: THREE.Mesh[]; root: THREE.Object3D }[] = [];
 
@@ -314,7 +333,28 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
   const slotType = p.type === 'palm' ? null : p.type;
   const finalProp = (slot: string) => (slotStatus(slot) === 'final' ? cloneModel(slot) : null); // placeholders come from this same code
   const glb = slotType && p.type !== 'car' ? finalProp('prop.' + slotType) : null;
-  if (glb) { g.add(glb); if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, LAMP_LIGHT_Y, p.z)); return; }
+  if (glb) {
+    // image-to-3D models come in at any size: scale to the real height and stand them on the ground, centred
+    const H = PROP_HEIGHT[p.type];
+    if (H) {
+      const bb = new THREE.Box3().setFromObject(glb); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+      const k = H / Math.max(sz.y, 1e-3); glb.scale.multiplyScalar(k); glb.position.set(-c.x * k, -bb.min.y * k, -c.z * k);
+      glb.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { const ms = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.MeshStandardMaterial[]; for (const mt of ms) if (mt.isMeshStandardMaterial) {
+        mt.envMapIntensity = 1.2;
+        if (p.type === 'tree') mt.color.setRGB(1.0, 0.9, 0.62); // golden at dusk, as in the concepts
+        // lamps: the bright glass in the texture glows (the iron stays dark), so the lanterns light up like image 01
+        if (p.type === 'lamp' && mt.map) { if (!mt.userData.glow) { mt.userData.glow = true; const em = brightMask(mt.map); if (em) { mt.emissiveMap = em; mt.emissive.set(0xffc27a); mt.emissiveIntensity = 4.5; mt.needsUpdate = true; } } }
+        // trees: the reference was a vivid studio orange; at dusk the crowns read golden-ochre as in the concepts
+        
+      } } });
+    }
+    g.add(glb);
+    if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, LAMP_LIGHT_Y, p.z));
+    if (p.type === 'tree') { const ms: THREE.Mesh[] = []; glb.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.noMerge = true; ms.push(o as THREE.Mesh); } }); pendingFades.push({ meshes: ms, root: glb }); }
+    return;
+  }
+  // the café set model brings its own parasol: the separate parasols only keep their footprint
+  if (p.type === 'umbrella' && slotStatus('prop.cafe_table') === 'final' && cloneModel('prop.cafe_table')) return;
   switch (p.type) {
     case 'lamp': {
       buildStreetLamp(g);
@@ -419,8 +459,16 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const gn = groundNormal(map.ground).clone(); gn.repeat.copy(gt.repeat); gn.needsUpdate = true;
   // puddles: the wet-setts roughness map (tools/make_pbr.py) on top of the fan-pattern setts
   const wet = pbr('setts', W / 9, D / 9).roughnessMap;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, color: 0xe6d8c4, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.62, metalness: 0.25, envMapIntensity: 1.7 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, color: 0xb9c2cf, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.5, metalness: 0.3, envMapIntensity: 2.0 }));
   ground.rotation.x = -Math.PI / 2; ground.position.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2); ground.receiveShadow = true; group.add(ground);
+  // Paris: photographic wet granite setts (generated texture, public/textures/paris_setts_*) replace the drawn pattern
+  if (map.id === 'paris') {
+    const tl = new THREE.TextureLoader(); const rep = new THREE.Vector2(W / 2.0, D / 2.0);
+    const load = (f: string, srgb: boolean) => { const t = tl.load(`textures/${f}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.copy(rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+    const gm = ground.material as THREE.MeshStandardMaterial;
+    gm.map = load('paris_setts_albedo.jpg', true); gm.normalMap = load('paris_setts_normal.jpg', false); gm.roughnessMap = load('paris_setts_rough.jpg', false);
+    gm.color.set(0xdfe4ea); gm.roughness = 1; gm.metalness = 0.25; gm.normalScale.set(1.1, 1.1); gm.needsUpdate = true;
+  }
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
     const r = bd.rect;
@@ -572,21 +620,21 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     fadeables.push({ meshes: pf.meshes, box: new THREE.Box3().setFromObject(pf.root), opacity: 1 });
   }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
-  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.42)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.2)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   // light pools and wet-street streaks are each merged into one mesh (one draw call each, whatever the lamp count)
   const flat = (w: number, d: number, x: number, y: number, z: number, rotY = 0) => new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).rotateY(rotY).translate(x, y, z);
   const pools: THREE.BufferGeometry[] = []; const streaks: THREE.BufferGeometry[] = [];
   lampPos.forEach((lp, i) => {
-    pools.push(flat(8, 8, lp.x, 0.03, lp.z));
+    pools.push(flat(6, 6, lp.x, 0.03, lp.z));
     if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) pools.push(flat(s.width + 2, 5, s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4, Math.atan2(s.normal.x, s.normal.z)));
   // long reflections of lamps and shop windows on the wet setts, smeared towards the camera (which never turns)
-  const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.55 : 0.4 });
+  const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.7 : 0.6 });
   const addStreak = (x: number, z: number, w: number, len: number) => streaks.push(flat(w, len, x, 0.035, z + len / 2 - 0.3));
-  for (const lp of lampPos) addStreak(lp.x, lp.z, 0.9, 6.5);
-  for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 1.6, 7);
+  for (const lp of lampPos) addStreak(lp.x, lp.z, 1.7, 7);
+  for (const s of map.stores) if (s.normal.z > 0.5) for (const dx of [-2.3, 2.3]) addStreak(s.front.x + dx, s.front.z + 2.2, 2.6, 8);
   if (pools.length) group.add(new THREE.Mesh(mergeGeometries(pools)!, pool));
   if (streaks.length) { const sm = new THREE.Mesh(mergeGeometries(streaks)!, streak); sm.renderOrder = 2; group.add(sm); }
   // landmark buildings (image-to-3D models of the city references): front on the street face, scaled to the given width
