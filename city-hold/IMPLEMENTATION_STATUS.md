@@ -367,4 +367,5 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
   - stronger wet-street reflection;
   - exposure 1.42.
 - **Camera:** pitch 46° → 40° for all cities. The Paris framing is `{0, -4, 56}`: the whole main building with its roof is in view and the reserve team stays clear of the HUD.
+- **Fountain:** a new ornate three-tier fountain with bronze figures (generated reference, then Tripo H3.1 at 24k faces) replaces the earlier SAM-3D crop. It is lit warmly with a lower emissive.
 - **Roofs:** large Haussmann blocks break their flat zinc deck into the pitched roofs of separate houses, with party walls and chimney stacks.

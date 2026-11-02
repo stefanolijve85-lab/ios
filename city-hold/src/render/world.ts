@@ -590,7 +590,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
         if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals();
         const src = m.material as THREE.MeshStandardMaterial; if (!src.isMeshStandardMaterial) return;
         const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.7; mm.metalness = 0;
-        if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.6; }
+        if (mm.map) { mm.emissive = new THREE.Color(0xffe2b8); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.28; } // lit warmly by the lamps around it
         mm.needsUpdate = true; m.material = mm;
       });
       fg.add(glbFountain); fh = { group: fg, animated: fountainWaterFor(glbFountain, fg, f.r - 0.9, reducedFx), spray: null };
