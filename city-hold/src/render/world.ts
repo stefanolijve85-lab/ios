@@ -655,7 +655,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
       const len = fd.x1 - fd.x0;
       if (fd.tile) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = len / fd.tile; }
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7, roughness: 0.7 }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.45, roughness: 0.7 }));
       const c = (fd.x0 + fd.x1) / 2, y = (fd.y0 + fd.y1) / 2;
       if (fd.face === 'x+') { m.rotation.y = Math.PI / 2; m.position.set(fd.z, y, c); }
       else if (fd.face === 'x-') { m.rotation.y = -Math.PI / 2; m.position.set(fd.z, y, c); }

@@ -497,10 +497,10 @@ export class ShopModule {
       im.castShadow = !mobile; im.receiveShadow = true; im.visible = false; this.group.add(im); return im;
     };
     const box = new THREE.BoxGeometry(1, 1, 1);
-    const card = mk(box, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 }), mobile ? 8 : 18, () => { const s = 0.14 + rnd() * 0.22; return [s * (1 + rnd() * 0.6), s * 0.65, s]; }, width * 1.0, 3.2, (sy) => sy / 2, [0xb98b5a, 0xa77a4c, 0xc89d6a, 0xe8e6e0, 0xf2f1ec, 0x2a2c30]);
+    const card = mk(box, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45, envMapIntensity: 1.4 }), mobile ? 8 : 18, () => { const s = 0.14 + rnd() * 0.22; return [s * (1 + rnd() * 0.6), s * 0.65, s]; }, width * 1.0, 3.2, (sy) => sy / 2, [0xb98b5a, 0xa77a4c, 0xc89d6a, 0xe8e6e0, 0xf2f1ec, 0x2a2c30]);
     const flat = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-    const cloth = mk(flat, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, side: THREE.DoubleSide }), mobile ? 8 : 22, () => { const s = 0.12 + rnd() * 0.2; return [s * 1.3, 1, s]; }, width * 1.05, 3.6, () => 0.03, [0xb3253a, 0x2b3a6a, 0xe6e2da, 0x1f1f22, 0x7a1c2a, 0x3a5a3a, 0xd2c8b0]);
-    const glass = mk(flat, new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0.7, envMapIntensity: 2 }), mobile ? 20 : 60, () => { const s = 0.03 + rnd() * 0.08; return [s, 1, s * 0.7]; }, width * 1.0, 2.6, () => 0.028);
+    const cloth = mk(flat, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide }), mobile ? 8 : 22, () => { const s = 0.12 + rnd() * 0.2; return [s * 1.3, 1, s]; }, width * 1.05, 3.6, () => 0.03, [0xb3253a, 0x2b3a6a, 0xe6e2da, 0x1f1f22, 0x7a1c2a, 0x3a5a3a, 0xd2c8b0]);
+    const glass = mk(flat, new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.02, metalness: 0.8, transparent: true, opacity: 0.85, envMapIntensity: 3, emissive: 0xffd9a0, emissiveIntensity: 0.6 }) /* glints in the lamp light */, mobile ? 20 : 60, () => { const s = 0.03 + rnd() * 0.08; return [s, 1, s * 0.7]; }, width * 1.0, 2.6, () => 0.028);
     this.streetLoot = { damaged: [glass, card], looted: [glass, card, cloth] };
   }
 
