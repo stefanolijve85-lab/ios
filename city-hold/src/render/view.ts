@@ -583,7 +583,7 @@ export class MatchView {
         const hit = ray.intersectBox(f.box, new THREE.Vector3());
         if (hit && hit.distanceTo(cam) < tmp.distanceTo(cam) - 0.5) { occl = true; break; }
       }
-      const targetOp = occl ? 0.28 : 1;
+      const targetOp = occl ? 0.4 : 1;
       f.opacity += (targetOp - f.opacity) * 0.15;
       for (const m of f.meshes) {
         const ms = Array.isArray(m.material) ? m.material : [m.material];

@@ -290,18 +290,37 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
     const at = (a: number, b: number, y: number, sx: number, sy: number, sz: number) => new THREE.Matrix4().compose(
       new THREE.Vector3(alongX ? cx + a : cx + b, y, alongX ? cz + b : cz + a),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), alongX ? 0 : Math.PI / 2), new THREE.Vector3(sx, sy, sz));
+    const gables = new Batch(prism, chim.mat, true); // party walls follow the roof profile (gable-shaped), stone
+    const caps = new Batch(BOX, new THREE.MeshStandardMaterial({ color: 0xc3cbd4, roughness: 0.35, metalness: 0.75, envMapIntensity: 1.2 }), false); // zinc ridge caps
+    const D = short * 0.92; const half = D / 2;
+    const hs: number[] = [];
     for (let i = 0; i < n; i++) {
       const a = -long / 2 + seg * (i + 0.5);
-      const hgt = 1.5 + rnd() * 0.9;
-      ridges.add(at(a, 0, y0, seg - 0.35, hgt, short * 0.92), new THREE.Color().setScalar(0.85 + rnd() * 0.25));
-      if (i > 0) {
-        // party wall with a chimney stack and pots
-        const aw = -long / 2 + seg * i; const off = (rnd() - 0.5) * short * 0.5;
-        chim.add(at(aw, 0, y0 + 0.5, 0.45, 1.0 + hgt * 0.6, short * 0.92));
-        chim.add(at(aw, off, y0 + hgt + 0.6, 0.9, 1.6, 2.2));
-        for (let k = 0; k < 4; k++) pots.add(at(aw, off - 0.75 + k * 0.5, y0 + hgt + 1.6, 1, 0.45, 1));
+      const hgt = 1.9 + rnd() * 1.1; hs.push(hgt);
+      ridges.add(at(a, 0, y0, seg - 0.35, hgt, D), new THREE.Color().setScalar(0.8 + rnd() * 0.3));
+      caps.add(at(a, 0, y0 + hgt + 0.03, seg - 0.4, 0.1, 0.28));
+      // dormers on the slope that faces the street below the camera (+z side), lit like the rest of the facades
+      if (alongX) {
+        const nd = Math.max(1, Math.floor((seg - 1.2) / 2.4)); const zf = half * 0.5;
+        const yS = y0 + hgt * (1 - zf / half); // roof height where the dormer stands
+        for (let k = 0; k < nd; k++) {
+          const ad = a - ((nd - 1) * 2.4) / 2 + k * 2.4;
+          dB.add(at(ad, zf + 0.15, yS + 0.15, 1.0, 1.25, 0.9));
+          dRoof.add(at(ad, zf + 0.15, yS + 0.95, 1.2, 0.5, 1.0));
+          (rnd() < 0.65 ? dGlass : dDark).add(at(ad, zf + 0.61, yS + 0.12, 0.56, 0.85, 1));
+        }
       }
     }
+    for (let i = 1; i < n; i++) {
+      // party wall between two houses: a stone gable a little above the taller roof, chimney stack and pots on its ridge
+      const aw = -long / 2 + seg * i; const hgt = Math.max(hs[i - 1], hs[i]) + 0.35;
+      gables.add(at(aw, 0, y0, 0.42, hgt, D + 0.3));
+      const off = (rnd() - 0.5) * 1.2;
+      chim.add(at(aw, off, y0 + hgt + 0.55, 0.9, 1.4, 2.1));
+      chim.add(at(aw, off, y0 + hgt + 1.3, 1.05, 0.12, 2.25));
+      for (let k = 0; k < 4; k++) pots.add(at(aw, off - 0.75 + k * 0.5, y0 + hgt + 1.58, 1, 0.45, 1));
+    }
+    for (const bt of [gables, caps]) { const mm = bt.build(); if (mm) { g.add(mm); meshes.push(mm); } }
     const m = ridges.build(); if (m) { g.add(m); meshes.push(m); }
   }
 
