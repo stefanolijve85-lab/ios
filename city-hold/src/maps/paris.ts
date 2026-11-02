@@ -137,10 +137,10 @@ export const PARIS: MapDef = {
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
   facadeDecals: [
-    { texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75 },
+    { texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75, tile: 14.6 },
     // the same painted Haussmann front on the two side blocks that face the square and the side streets (image 02)
-    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: -25 + 0.75, face: 'x+', tile: 26 },
-    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: 25 - 0.75, face: 'x-', tile: 26 },
+    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: -25 + 0.75, face: 'x+', tile: 14.3 },
+    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: 25 - 0.75, face: 'x-', tile: 14.3 },
   ],
   ambient: {
     // guests standing or sitting at the terrace tables (first ones are kept on phones)
