@@ -2,6 +2,8 @@
 // A missing file simply stays silent. Volume is its own setting (Instellingen > Muziek); during a wave the mission
 // track plays a little louder than between waves.
 export type Track = 'menu' | 'mission';
+/** the ElevenLabs tracks are mastered loud: this keeps the music under the effects and the riot ambience (offline-measured) */
+const MIX = 0.2;
 
 class Music {
   private els = new Map<Track, HTMLAudioElement>();
@@ -44,7 +46,7 @@ class Music {
     const step = () => {
       let busy = false;
       for (const [t, el] of this.els) {
-        const target = t === this.current ? this.volume * this.intensity * 0.55 : 0;
+        const target = t === this.current ? this.volume * this.intensity * MIX : 0;
         const d = target - el.volume;
         if (Math.abs(d) > 0.005) { el.volume = Math.max(0, Math.min(1, el.volume + Math.sign(d) * Math.min(Math.abs(d), 0.02))); busy = true; }
         else { el.volume = target; if (target === 0 && !el.paused) el.pause(); }

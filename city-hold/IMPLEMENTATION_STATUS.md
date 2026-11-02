@@ -370,9 +370,12 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
 - **Fountain:** a new ornate three-tier fountain with bronze figures (generated reference, then Tripo H3.1 at 24k faces) replaces the earlier SAM-3D crop. It is lit warmly with a lower emissive.
 - **Roofs:** large Haussmann blocks break their flat zinc deck into the pitched roofs of separate houses, with party walls and chimney stacks.
 
-## ElevenLabs sound effects (pending download)
+## ElevenLabs sound effects and music (in `public/audio`)
 
-- 18 effects were generated with eleven_text_to_sound_v2 (about 300 ElevenLabs credits). Names and signed links are in `tools/sfx/elevenlabs_urls.txt`.
-- Run `bash city-hold/tools/sfx/fetch.sh` from a session that can reach `elevenlabsusercontent.com`. The links expire on 2026-11-02 16:00 UTC (17:00 Dutch time); after that, download the files from the ElevenLabs flow by hand.
-- `src/audio/sfx.ts` already loads `public/audio/<name>.mp3` and falls back to the synthesis when a file is missing.
-- After the download, check the mix with the offline render: every cue should peak at about 0.3 or less.
+- 18 effects (eleven_text_to_sound_v2) and 2 music loops (eleven_music_v2_5, 120 s each) from ElevenLabs flow `57zIxSMv8GYUQ6v0Yi5g`, downloaded to `public/audio/<name>.mp3` (about 6.6 MB in total). All 20 decode cleanly (ffmpeg, 128 kbps, 44.1 kHz stereo). To fetch them again, follow `tools/sfx/README_HANDOFF.md`.
+- **Levels:** the recordings are peak-normalised on load, so at first they played about 2× too loud as cues and 3× too loud as ambience loops. `Sfx.REC_LEVEL` (0.28) and `Sfx.LOOP_LEVEL` (0.2) bring them back to the level of the synthesis. The whistle, breach and wave cues got an extra trim. The music mix factor is now 0.2 (`MIX` in `music.ts`), down from 0.55.
+- **Verified:** the real `sfx.ts` was rendered offline in Chromium with all 18 recordings loaded.
+  - At full volume every cue peaks at 0.31 or less (glass 0.31, supply 0.31, fire 0.31, barrier 0.30, impact 0.29, wave 0.28).
+  - Panning works (L/R ratio 6.3 vs 0.16 at pan ∓0.8).
+  - Ambience is about 0.014 RMS on a calm street and 0.049 during a riot (synthesis: 0.013 vs 0.037).
+  - At default settings (sound 0.6, music 0.5) the mission music sits at about 0.018 RMS (peak 0.09). That is below the riot ambience (0.029) and below the effects (0.02–0.07 RMS in a 300 ms window).

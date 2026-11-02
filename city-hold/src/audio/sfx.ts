@@ -34,6 +34,9 @@ export class Sfx {
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
+  /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
+  private static readonly REC_LEVEL = 0.28;
+  private static readonly LOOP_LEVEL = 0.2;
   private loops = new Map<string, GainNode>();
   private crackleT = 0; private hammerT = 0; private sirenT = 8; private shoutT = 4;
   private _volume: number;
@@ -88,7 +91,7 @@ export class Sfx {
     const e = this.buf.get(name); if (!e || !this.ctx) return false;
     const c = this.ctx; const src = c.createBufferSource(); src.buffer = e.b;
     src.playbackRate.value = (opt.rate ?? 1) * (1 + (Math.random() * 2 - 1) * (opt.jitter ?? 0.06)); // no two hits sound identical
-    const g = c.createGain(); g.gain.value = gain * e.norm;
+    const g = c.createGain(); g.gain.value = gain * e.norm * Sfx.REC_LEVEL;
     src.connect(g).connect(dst); src.start(c.currentTime + (opt.delay ?? 0));
     return true;
   }
@@ -99,7 +102,7 @@ export class Sfx {
     const c = this.ctx; const g = c.createGain(); g.gain.value = 0; g.connect(dst);
     for (const rate of [0.94, 1.07]) {
       const src = c.createBufferSource(); src.buffer = e.b; src.loop = true; src.playbackRate.value = rate;
-      const sg = c.createGain(); sg.gain.value = e.norm * 0.6; src.connect(sg).connect(g); src.start(0, Math.random() * e.b.duration);
+      const sg = c.createGain(); sg.gain.value = e.norm * Sfx.LOOP_LEVEL; src.connect(sg).connect(g); src.start(0, Math.random() * e.b.duration);
     }
     this.loops.set(name, g); return g;
   }
@@ -195,10 +198,10 @@ export class Sfx {
   private recorded(cue: Cue, o: AudioNode, g: number): boolean {
     const v = 0.5 * g;
     switch (cue) {
-      case 'intercept': return this.smp('whistle', o, v * 0.8);
+      case 'intercept': return this.smp('whistle', o, v * 0.5); // the whistle recording is dense: keep it under the impacts
       case 'held': return this.smp('shield', o, v);
       case 'glass': return this.smp('glass', o, v);
-      case 'breach': { const a = this.smp('shutter', o, v * 0.9); const b = this.smp('glass', o, v * 0.8, { delay: 0.12 }); return a || b; }
+      case 'breach': { const a = this.smp('shutter', o, v * 0.7); const b = this.smp('glass', o, v * 0.6, { delay: 0.12 }); return a || b; }
       case 'barrierBroken': return this.smp('barrier', o, v);
       case 'impact': return this.smp('molotov', o, v);
       case 'fire': return this.smp('ignite', o, v);
@@ -206,7 +209,7 @@ export class Sfx {
       case 'collect': return this.smp('rustle', o, v * 0.6);
       case 'supply': if (!this.smp('horn', o, v * 0.8)) return false; this.tone(o, 900, 0.18, 'triangle', 0.08, { delay: 0.7 }); this.tone(o, 1200, 0.25, 'triangle', 0.08, { delay: 0.82 }); return true;
       case 'dispatch': return this.smp('crowd_shout', o, v * 0.7);
-      case 'wave': { const a = this.smp('siren', this.out(this.world, rnd(-0.6, 0.6)), 0.3, { jitter: 0.02 }); const b = this.smp('crowd_shout', o, 0.3); return a || b; }
+      case 'wave': { const a = this.smp('siren', this.out(this.world, rnd(-0.6, 0.6)), 0.22, { jitter: 0.02 }); const b = this.smp('crowd_shout', o, 0.22); return a || b; }
       default: return false;
     }
   }
