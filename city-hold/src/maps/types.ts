@@ -64,7 +64,9 @@ export interface FacadeDecal { texture: string; x0: number; x1: number; y0: numb
 
 /** a whole building model (city landmark) standing with its front on a street face; `store` makes it the look of that
  *  store while it is untouched (the 3D shop module with its states takes over in front of the ground floor otherwise) */
-export interface LandmarkDef { slot: string; x: number; z: number; /** facing direction in degrees: 0 = +z */ rot: number; width: number; store?: number; inset?: number }
+export interface LandmarkDef { slot: string; x: number; z: number; /** facing direction in degrees: 0 = +z */ rot: number; width: number; store?: number; inset?: number;
+  /** painted storefront per state (textures/storefronts/<key>_{intact,boarded,damaged,looted}.jpg) shown over the landmark's ground floor */
+  storefront?: string; storefrontH?: number }
 
 export interface MapDef {
   id: string;

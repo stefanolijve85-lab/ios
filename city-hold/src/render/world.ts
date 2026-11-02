@@ -453,9 +453,11 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       }
       return sm;
     }
-    if ((map.landmarks ?? []).some((l) => l.store === i && slotStatus(l.slot) === 'final')) {
-      // a landmark building is this shop's look; the full 3D module (states) appears in front of it once touched
+    const lmk = (map.landmarks ?? []).find((l) => l.store === i && slotStatus(l.slot) === 'final');
+    if (lmk) {
+      // a landmark building is this shop's look; either its painted storefront per state, or the full 3D module once touched
       const sm = new ShopModule(s, i, { quality: reducedFx ? 'mobile' : 'desktop', seed: 101 + i, withLight: false }); sm.setLandmarkSkin(true); group.add(sm.group);
+      if (lmk.storefront) sm.setStateFront(lmk.storefront, lmk.width * 0.98, lmk.storefrontH ?? lmk.width * 0.3);
       sm.group.position.x += s.normal.x * 0.6; sm.group.position.z += s.normal.z * 0.6; // in front of the landmark's own ground floor
       return sm;
     }

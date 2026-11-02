@@ -1,8 +1,10 @@
 import type { LandmarkDef, MapDef, PropDef } from './types';
 
 /** landmark buildings along one street face: [centre along the face, slot, width, store index?] */
+const FRONT: Record<string, [string, number]> = { 'building.blad': ['blad', 0.42], 'building.vetro': ['vetro', 0.31], 'building.ponto': ['ponto', 0.25] }; // key, height/width of the crop
 const row = (axis: 'x' | 'z', at: number, rot: number, items: [number, string, number, number?][]): LandmarkDef[] =>
-  items.map(([c, slot, width, store]) => ({ slot, width, rot, store, x: axis === 'x' ? c : at, z: axis === 'x' ? at : c }));
+  items.map(([c, slot, width, store]) => ({ slot, width, rot, store, x: axis === 'x' ? c : at, z: axis === 'x' ? at : c,
+    ...(store !== undefined && FRONT[slot] ? { storefront: FRONT[slot][0], storefrontH: width * FRONT[slot][1] } : {}) }));
 
 // Five further districts built on the shared systems. Geometry is a fictional layout derived from the clean
 // reference paintings (21-25); each has its own navigation, entrances, sockets, AI routes and extraction points.
@@ -41,8 +43,8 @@ export const AMSTERDAM: MapDef = {
   ],
   // canal houses from the Amsterdam pack (BLAD trapgevel, KADE hoekpand) along the shop quay, plus bike racks and bollards
   landmarks: [
-    ...row('x', -15, 0, [[-39.5, 'building.kade', 9], [-31.5, 'building.blad', 7], [-24.75, 'building.kade', 6.5], [-18, 'building.blad', 7, 0], [-11, 'building.blad', 7], [-3, 'building.kade', 9, 1],
-      [5, 'building.blad', 7], [12, 'building.kade', 7, 2], [19, 'building.blad', 7], [27, 'building.kade', 9], [35, 'building.blad', 7], [41.25, 'building.kade', 5.5]]),
+    ...row('x', -15, 0, [[-39.5, 'building.kade', 9], [-31.5, 'building.blad', 7], [-25, 'building.kade', 6], [-18, 'building.blad', 7, 0], [-11, 'building.kade', 7],
+      [-3, 'building.blad', 7, 1], [4.5, 'building.kade', 8], [12, 'building.blad', 7, 2], [19, 'building.kade', 7], [27, 'building.blad', 9], [35, 'building.kade', 7], [41.25, 'building.blad', 5.5]]),
     { slot: 'prop.bike_rack', x: -25, z: -13.6, rot: 90, width: 0.9 }, { slot: 'prop.bike_rack', x: 21, z: -13.6, rot: 90, width: 0.9 },
     ...[-28, -22, -6, 0, 6, 22, 28].map((x) => ({ slot: 'prop.bollard_ams', x, z: -4.9, rot: 0, width: 0.3 })),
   ],
@@ -199,7 +201,7 @@ export const BERLIN: MapDef = {
   ],
   // Berlin pack: KANTE plastered Gründerzeit houses (archway house over the courtyard passage), wheelie bins
   landmarks: [
-    ...row('x', -14, 0, [[-37, 'building.kante', 14], [-26.5, 'building.kante', 7], [-16, 'building.kante', 14, 0], [0, 'building.kante', 14], [16, 'building.kante', 14, 1], [26.5, 'building.kante', 7], [37, 'building.kante', 14]]),
+    ...row('x', -14, 0, [[-37, 'building.kante', 14], [-26.5, 'building.kante', 7], [-16, 'building.kante', 14, 0], [-6.25, 'building.kante', 5.5], [6.25, 'building.kante', 5.5], [16, 'building.kante', 14, 1], [26.5, 'building.kante', 7], [37, 'building.kante', 14]]),
     ...row('x', -38, 0, [[-10, 'building.kante', 8], [0, 'building.kante', 12, 2], [10, 'building.kante', 8]]),
     ...[-11.2, -10.4, -9.6].map((x) => ({ slot: 'prop.wheelie_bin', x, z: -38.4, rot: 0, width: 0.6 })),
     ...[22.4, 23.2].map((x) => ({ slot: 'prop.wheelie_bin', x, z: -13.5, rot: 0, width: 0.6 })),

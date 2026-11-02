@@ -470,8 +470,27 @@ export class ShopModule {
   /** a landmark building shows this shop while it is untouched: hide the whole module until something changes */
   private landmarkSkin = false;
   setLandmarkSkin(on: boolean) { this.landmarkSkin = on; }
+  /** painted storefront panel per visual state (from the city packs); replaces the 3D module completely */
+  private stateFront: { mesh: THREE.Mesh; tex: Record<string, THREE.Texture>; cur: string } | null = null;
+  setStateFront(key: string, width: number, height: number) {
+    const L = new THREE.TextureLoader(); const tex: Record<string, THREE.Texture> = {};
+    for (const st of ['intact', 'boarded', 'damaged', 'looted']) { const t = L.load(`textures/storefronts/${key}_${st}.jpg`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; tex[st] = t; }
+    const mat = new THREE.MeshStandardMaterial({ map: tex.intact, emissive: 0xffffff, emissiveMap: tex.intact, emissiveIntensity: 0.75, roughness: 0.6 });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat); mesh.position.set(0, height / 2, 0.05); mesh.renderOrder = 1; this.group.add(mesh);
+    this.stateFront = { mesh, tex, cur: 'intact' };
+  }
 
   update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio = 0) {
+    if (this.stateFront) {
+      // states stay independent: boards win the look while they hold; then theft (stock) and then damage (glass)
+      const st = boardRatio > 0 ? 'boarded' : stockRatio < 0.5 ? 'looted' : structureRatio < 0.999 || breached ? 'damaged' : 'intact';
+      const f = this.stateFront;
+      if (st !== f.cur) { const m = f.mesh.material as THREE.MeshStandardMaterial; m.map = f.tex[st]; m.emissiveMap = f.tex[st]; m.needsUpdate = true; this.justBroke = (st === 'damaged' || st === 'looted') && (f.cur === 'intact' || f.cur === 'boarded'); f.cur = st; } else this.justBroke = false;
+      for (const name of SHOP_GROUPS) this.groups[name].visible = false;
+      if (this.soot) this.soot.visible = this.scorchedOn;
+      if (this.light) this.light.intensity = 0;
+      return;
+    }
     if (this.landmarkSkin) {
       const intact = structureRatio >= 0.999 && stockRatio >= 0.999 && boardRatio <= 0 && !breached && level <= 1 && !this.scorchedOn;
       if (intact) { for (const name of SHOP_GROUPS) this.groups[name].visible = false; this.justBroke = false; if (this.light) this.light.intensity = 0; return; }
