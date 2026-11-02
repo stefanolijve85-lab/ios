@@ -40,9 +40,9 @@
       "note": "temporary model generated from the procedural figure; replace with a final asset"
     },
     "char.looter.01_tracksuit_arms_spread": {
-      "file": "placeholder/char_looter_01_tracksuit_arms_spread.glb",
-      "status": "placeholder",
-      "note": "temporary model generated from the procedural figure; replace with a final asset"
+      "file": "final/char.looter.01_tracksuit_arms_spread.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from 01 webp), 44 credits"
     },
     "char.looter.02_puffer_large_box": {
       "file": "placeholder/char_looter_02_puffer_large_box.glb",
