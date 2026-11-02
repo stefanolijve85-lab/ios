@@ -31,6 +31,10 @@ export class Sfx {
   private noise!: AudioBuffer; private brown!: AudioBuffer; private pink!: AudioBuffer;
   private last = new Map<string, number>();
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
+  /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
+  static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout'] as const;
+  private buf = new Map<string, { b: AudioBuffer; norm: number }>();
+  private loops = new Map<string, GainNode>();
   private crackleT = 0; private hammerT = 0; private sirenT = 8; private shoutT = 4;
   private _volume: number;
 
@@ -64,7 +68,40 @@ export class Sfx {
       last = (last + 0.02 * x) / 1.02; br[i] = last * 3.5;
     }
     document.addEventListener('visibilitychange', this.onVis);
+    this.loadSamples(c);
     return c;
+  }
+  private loadSamples(c: Ctx) {
+    for (const name of Sfx.SAMPLES) {
+      fetch(`audio/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+        .then((ab) => new Promise<AudioBuffer>((res, rej) => { const pr = c.decodeAudioData(ab, res, rej) as unknown as Promise<AudioBuffer> | undefined; pr?.catch?.(rej); }))
+        .then((b) => {
+          // loudness-normalise to the peak so every recording starts at the same level
+          let peak = 0; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
+          this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1 });
+        })
+        .catch(() => { /* missing or undecodable: the synthesised version is used */ });
+    }
+  }
+  /** play a recorded sound; false when it is not loaded (caller synthesises instead) */
+  private smp(name: string, dst: AudioNode, gain: number, opt: { rate?: number; jitter?: number; delay?: number } = {}): boolean {
+    const e = this.buf.get(name); if (!e || !this.ctx) return false;
+    const c = this.ctx; const src = c.createBufferSource(); src.buffer = e.b;
+    src.playbackRate.value = (opt.rate ?? 1) * (1 + (Math.random() * 2 - 1) * (opt.jitter ?? 0.06)); // no two hits sound identical
+    const g = c.createGain(); g.gain.value = gain * e.norm;
+    src.connect(g).connect(dst); src.start(c.currentTime + (opt.delay ?? 0));
+    return true;
+  }
+  /** a looping recording (two copies at slightly different speeds, so a short loop does not sound repetitive) */
+  private loop(name: string, dst: AudioNode): GainNode | null {
+    const have = this.loops.get(name); if (have) return have;
+    const e = this.buf.get(name); if (!e || !this.ctx) return null;
+    const c = this.ctx; const g = c.createGain(); g.gain.value = 0; g.connect(dst);
+    for (const rate of [0.94, 1.07]) {
+      const src = c.createBufferSource(); src.buffer = e.b; src.loop = true; src.playbackRate.value = rate;
+      const sg = c.createGain(); sg.gain.value = e.norm * 0.6; src.connect(sg).connect(g); src.start(0, Math.random() * e.b.duration);
+    }
+    this.loops.set(name, g); return g;
   }
   private onVis = () => { if (!this.ctx) return; if (document.hidden) void this.ctx.suspend(); else void this.ctx.resume(); };
 
@@ -119,6 +156,7 @@ export class Sfx {
     const isUi = cue === 'click' || cue === 'buy' || cue === 'deny' || cue === 'upgrade' || cue === 'place';
     const bus = isUi ? this.ui : this.world;
     const o = this.out(bus, L.pan); const g = L.gain;
+    if (this.recorded(cue, o, g)) return;
     switch (cue) {
       // ---------- interface
       case 'click': this.tone(o, 1650, 0.035, 'sine', 0.22); this.burst(o, 0.02, 0.08, { type: 'highpass', freq: 4000 }); break;
@@ -150,6 +188,26 @@ export class Sfx {
       case 'wave': this.siren(this.out(this.world, rnd(-0.6, 0.6)), 0.5, 2.6); this.crowdShout(o, 1); break;
       case 'win': this.stinger(o, [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]], 0.13); break;
       case 'lose': this.stinger(o, [[392, 466, 587], [349, 415, 523], [262, 311, 392]], 0.13); break;
+    }
+  }
+
+  /** recorded versions of the world cues (UI cues and music stingers stay synthesised) */
+  private recorded(cue: Cue, o: AudioNode, g: number): boolean {
+    const v = 0.5 * g;
+    switch (cue) {
+      case 'intercept': return this.smp('whistle', o, v * 0.8);
+      case 'held': return this.smp('shield', o, v);
+      case 'glass': return this.smp('glass', o, v);
+      case 'breach': { const a = this.smp('shutter', o, v * 0.9); const b = this.smp('glass', o, v * 0.8, { delay: 0.12 }); return a || b; }
+      case 'barrierBroken': return this.smp('barrier', o, v);
+      case 'impact': return this.smp('molotov', o, v);
+      case 'fire': return this.smp('ignite', o, v);
+      case 'extinguished': return this.smp('steam', o, v * 0.8);
+      case 'collect': return this.smp('rustle', o, v * 0.6);
+      case 'supply': if (!this.smp('horn', o, v * 0.8)) return false; this.tone(o, 900, 0.18, 'triangle', 0.08, { delay: 0.7 }); this.tone(o, 1200, 0.25, 'triangle', 0.08, { delay: 0.82 }); return true;
+      case 'dispatch': return this.smp('crowd_shout', o, v * 0.7);
+      case 'wave': { const a = this.smp('siren', this.out(this.world, rnd(-0.6, 0.6)), 0.3, { jitter: 0.02 }); const b = this.smp('crowd_shout', o, 0.3); return a || b; }
+      default: return false;
     }
   }
 
@@ -214,6 +272,16 @@ export class Sfx {
     b.hiss.gain.setTargetAtTime(hose.gain * 0.12 * quiet, t, 0.12); b.hissP.pan.setTargetAtTime(hose.pan, t, 0.2);
     // fountain
     b.water.gain.setTargetAtTime((s.fountain?.gain ?? 0) * 0.035 * quiet, t, 0.8); b.waterP.pan.setTargetAtTime(s.fountain?.pan ?? 0, t, 0.8);
+    // recorded loops where available: the synthesised bed underneath drops back to a thin layer
+    const rec = (name: string, dst: AudioNode, level: number, synth: GainNode, synthLevel: number) => {
+      const l = this.loop(name, dst); if (!l) return;
+      l.gain.setTargetAtTime(level * quiet, t, k); synth.gain.setTargetAtTime(synthLevel * 0.25 * quiet, t, k);
+    };
+    rec('city_loop', this.amb, 0.5, b.hum, 0.16);
+    rec('crowd_loop', this.amb, crowdLvl * 0.7, b.crowd, 0.015 + crowdLvl * 0.16);
+    rec('fire_loop', b.roarP, fireLvl * 0.8, b.roar, fireLvl * 0.5);
+    rec('hose_loop', b.hissP, hose.gain * 0.45, b.hiss, hose.gain * 0.12);
+    rec('fountain_loop', b.waterP, (s.fountain?.gain ?? 0) * 0.18, b.water, (s.fountain?.gain ?? 0) * 0.035);
     if (s.paused) return;
     // fire crackle: random pops, more with more fire
     this.crackleT -= dt;
@@ -227,14 +295,16 @@ export class Sfx {
     if (s.hammering.length && this.hammerT <= 0) {
       this.hammerT = rnd(0.35, 0.7) / Math.min(3, s.hammering.length);
       const h = s.hammering[Math.floor(Math.random() * s.hammering.length)];
-      if (h.gain > 0.03) { const o = this.out(this.world, h.pan); this.burst(o, 0.09, 0.45 * h.gain, { type: 'bandpass', freq: rnd(350, 700), q: 1.3 }); this.tone(o, rnd(160, 220), 0.08, 'sine', 0.12 * h.gain, { slide: -60 }); }
+      if (h.gain > 0.03 && this.smp('wood_hit', this.out(this.world, h.pan), 0.35 * h.gain, { jitter: 0.12 })) { /* recorded hit */ }
+      else if (h.gain > 0.03) { const o = this.out(this.world, h.pan); this.burst(o, 0.09, 0.45 * h.gain, { type: 'bandpass', freq: rnd(350, 700), q: 1.3 }); this.tone(o, rnd(160, 220), 0.08, 'sine', 0.12 * h.gain, { slide: -60 }); }
     }
     // distant sirens and occasional shouts while a wave runs
     if (s.active) {
       this.sirenT -= dt;
-      if (this.sirenT <= 0) { this.sirenT = rnd(14, 30); this.siren(this.out(this.amb, rnd(-0.9, 0.9)), 0.35, rnd(2.4, 4.2)); }
+      if (this.sirenT <= 0 && this.smp('siren', this.out(this.amb, rnd(-0.9, 0.9)), 0.35, { jitter: 0.04 })) this.sirenT = rnd(14, 30);
+      else if (this.sirenT <= 0) { this.sirenT = rnd(14, 30); this.siren(this.out(this.amb, rnd(-0.9, 0.9)), 0.35, rnd(2.4, 4.2)); }
       this.shoutT -= dt;
-      if (s.crowd > 2 && this.shoutT <= 0) { this.shoutT = rnd(3, 8) / Math.min(2, s.crowd / 5); this.crowdShout(this.out(this.amb, rnd(-0.7, 0.7)), 0.25 + Math.min(0.5, s.crowd / 20)); }
+      if (s.crowd > 2 && this.shoutT <= 0) { this.shoutT = rnd(3, 8) / Math.min(2, s.crowd / 5); if (!this.smp('crowd_shout', this.out(this.amb, rnd(-0.7, 0.7)), 0.25 + Math.min(0.4, s.crowd / 25))) this.crowdShout(this.out(this.amb, rnd(-0.7, 0.7)), 0.25 + Math.min(0.5, s.crowd / 20)); }
     }
   }
 }
