@@ -419,7 +419,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const gn = groundNormal(map.ground).clone(); gn.repeat.copy(gt.repeat); gn.needsUpdate = true;
   // puddles: the wet-setts roughness map (tools/make_pbr.py) on top of the fan-pattern setts
   const wet = pbr('setts', W / 9, D / 9).roughnessMap;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, color: 0xe6d8c4, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.75, metalness: 0.2, envMapIntensity: 0.9 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: gt, color: 0xe6d8c4, normalMap: gn, normalScale: new THREE.Vector2(0.9, 0.9), roughnessMap: wet, roughness: 0.62, metalness: 0.25, envMapIntensity: 1.7 }));
   ground.rotation.x = -Math.PI / 2; ground.position.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2); ground.receiveShadow = true; group.add(ground);
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
@@ -613,8 +613,14 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   for (const fd of map.facadeDecals ?? []) {
     new THREE.TextureLoader().loadAsync(fd.texture).then((t) => {
       t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(fd.x1 - fd.x0, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7, roughness: 0.7 }));
-      m.position.set((fd.x0 + fd.x1) / 2, (fd.y0 + fd.y1) / 2, fd.z); m.receiveShadow = true; group.add(m);
+      const len = fd.x1 - fd.x0;
+      if (fd.tile) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = len / fd.tile; }
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7, roughness: 0.7 }));
+      const c = (fd.x0 + fd.x1) / 2, y = (fd.y0 + fd.y1) / 2;
+      if (fd.face === 'x+') { m.rotation.y = Math.PI / 2; m.position.set(fd.z, y, c); }
+      else if (fd.face === 'x-') { m.rotation.y = -Math.PI / 2; m.position.set(fd.z, y, c); }
+      else m.position.set(c, y, fd.z);
+      m.receiveShadow = true; group.add(m);
     }).catch(() => { /* keep the built facade */ });
   }
   // support van (staging point)

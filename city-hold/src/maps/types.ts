@@ -60,7 +60,9 @@ export interface SupplyDef { route: Vec2[]; loadIndex: number }
 export interface Spot { x: number; z: number; facing: number }
 
 /** a painted facade from the concept art laid over a building front (x0..x1 along the face, y0..y1 height, at depth z) */
-export interface FacadeDecal { texture: string; x0: number; x1: number; y0: number; y1: number; z: number }
+export interface FacadeDecal { texture: string; x0: number; x1: number; y0: number; y1: number; z: number;
+  /** face direction: 'z' (default, front faces +z) or 'x+' / 'x-' (x0/x1 are then z coordinates and z is the x position) */ face?: 'z' | 'x+' | 'x-';
+  /** metres of facade that one copy of the painting covers (repeats along longer faces) */ tile?: number }
 
 /** a whole building model (city landmark) standing with its front on a street face; `store` makes it the look of that
  *  store while it is untouched (the 3D shop module with its states takes over in front of the ground floor otherwise) */

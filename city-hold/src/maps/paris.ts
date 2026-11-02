@@ -136,7 +136,12 @@ export const PARIS: MapDef = {
   defenderSpawn: { x: 19.5, z: 9 },
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
-  facadeDecals: [{ texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75 }],
+  facadeDecals: [
+    { texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75 },
+    // the same painted Haussmann front on the two side blocks that face the square and the side streets (image 02)
+    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: -25 + 0.75, face: 'x+', tile: 26 },
+    { texture: 'textures/facades/paris_main.jpg', x0: -40, x1: 3, y0: 4.45, y1: 14, z: 25 - 0.75, face: 'x-', tile: 26 },
+  ],
   ambient: {
     // guests standing or sitting at the terrace tables (first ones are kept on phones)
     patrons: [
@@ -151,6 +156,8 @@ export const PARIS: MapDef = {
       { x: -12, z: -11.6 }, { x: -8, z: -11.6 }, { x: -1.8, z: -11.6 }, { x: 1.8, z: -11.6 }, { x: 8, z: -11.6 }, { x: 12, z: -11.6 },
       { x: -5.6, z: -2 }, { x: 5.6, z: -2 }, { x: 0, z: 4 }, { x: -3.8, z: 2 }, { x: 3.8, z: -6 },
       { x: -20.5, z: -5.4 }, { x: 0, z: 13 },
+      // the side streets (image 02: people walking up and down both streets)
+      { x: -21, z: -18 }, { x: -20, z: -24 }, { x: -21.5, z: -27 }, { x: 21, z: -17 }, { x: 20.5, z: -21 }, { x: 21.5, z: -27 }, { x: -12, z: 10 }, { x: 12, z: 10 },
     ],
   },
   camera: { x: 0, z: -2, dist: 46 },

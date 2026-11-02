@@ -126,11 +126,11 @@ export function buildTreePlanter(parent: THREE.Object3D, seed: number): TreeHand
     const sz = 0.95 + rnd() * 0.5;
     for (let c = 0; c < 3; c++) { const q = new THREE.PlaneGeometry(sz, sz * 0.85); q.rotateY((c * Math.PI) / 3 + rnd()); q.rotateX((rnd() - 0.5) * 0.6); q.translate(x, y, z); near.push(q); }
   });
-  for (const [x, y, z] of [[0, S + 2.8, 0], [0.5, S + 2.6, 0.3], [-0.45, S + 2.7, -0.3]] as [number, number, number][]) far.push(new THREE.IcosahedronGeometry(0.85, 0).translate(x, y, z));
+  for (const [x, y, z] of [[0, S + 2.9, 0], [0.55, S + 2.6, 0.35], [-0.5, S + 2.7, -0.3], [0.3, S + 3.2, -0.45], [-0.35, S + 2.4, 0.45]] as [number, number, number][]) for (let c = 0; c < 3; c++) far.push(new THREE.PlaneGeometry(2.3, 2.0).rotateY((c * Math.PI) / 3 + x).rotateX(c === 2 ? -Math.PI / 2.4 : 0).translate(x, y, z));
   const leaf = leafMats[seed % leafMats.length];
   const crown = new THREE.LOD();
   const nearMesh = new THREE.Mesh(mergeGeometries(near)!, leafCardMat(seed % 3)); nearMesh.castShadow = false;
-  const farMesh = new THREE.Mesh(mergeGeometries(far)!, leaf.clone());
+  const farMesh = new THREE.Mesh(mergeGeometries(far)!, leafCardMat(seed % 3)); void leaf;
   crown.addLevel(nearMesh, 0); crown.addLevel(farMesh, 55);
   g.add(crown);
   return { group: g, crown, crownMeshes: [nearMesh, farMesh] };
