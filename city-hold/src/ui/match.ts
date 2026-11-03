@@ -378,7 +378,12 @@ export class Match {
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
         case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
-        case 'won': if (!(this.side === 'defence' && this.sfx.victory())) this.sfx.play('win'); this.buzz([60, 60, 120]); break;
+        case 'won': {
+          // defence: sting + radio voice ("Missie volbracht. Alle winkels zijn beveiligd."); looting: the sting alone (the line is about secured shops)
+          if (!this.sfx.victory(this.side === 'defence')) this.sfx.play('win');
+          music.setIntensity(0); music.duck(4.5); // the music steps back while the voice speaks
+          this.buzz([60, 60, 120]); break;
+        }
         case 'lost': this.sfx.play('lose'); this.buzz(250); break;
         case 'upgrade': this.sfx.play('upgrade'); this.toast(e.text, 'good'); break;
         case 'purchase': if (e.x !== undefined && e.amount) this.view.floatText(e.x, e.z!, `−${e.amount}`, 'muted'); break;

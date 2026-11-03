@@ -61,13 +61,17 @@ export class Sfx {
   /** language for the voice lines */
   lang: 'nl' | 'en' = 'nl';
   /** mission won: a short cinematic sting with the radio voice over it ("Missie volbracht. Alle winkels zijn beveiligd.") */
-  victory(): boolean {
+  victory(voice = true): boolean {
     if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
-    const o = this.out(this.world, 0);
-    const sting = this.smp('win_sting', o, 0.34, { jitter: 0 });
-    // the voice comes through a police-radio band-pass, over the sting
-    const radio = c.createBiquadFilter(); radio.type = 'bandpass'; radio.frequency.value = 1700; radio.Q.value = 0.55; radio.connect(this.out(this.world, 0));
-    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', radio, 0.6, { jitter: 0, delay: sting ? 0.5 : 0 });
+    if (c.state === 'suspended') void c.resume();
+    const o = this.out(this.ui, 0); // not placed in the world: it must be heard whatever the zoom
+    const sting = this.smp('win_sting', o, 0.6, { jitter: 0 });
+    if (!voice) return sting;
+    // the voice as over a police radio: telephone band (300-3400 Hz), loud and clear over the sting
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 280;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600;
+    hp.connect(lp).connect(this.out(this.ui, 0));
+    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1.5, { jitter: 0, delay: sting ? 0.6 : 0 });
     return sting || vo;
   }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }

@@ -64,6 +64,12 @@ class Music {
   /** 0..1: how intense the moment is (a running wave = 1, calm prep = 0) */
   setIntensity(k: number) { const n = 0.65 + 0.35 * Math.max(0, Math.min(1, k)); if (Math.abs(n - this.intensity) > 0.01) { this.intensity = n; this.apply(); } }
   play(t: Track) { if (this.current === t) return; this.current = t; this.apply(true); }
+  /** dip the music for a few seconds (a voice line on top), then let it come back */
+  duck(seconds: number) {
+    this.ducked = 0.3; this.apply();
+    clearTimeout(this.duckT); this.duckT = window.setTimeout(() => { this.ducked = 1; this.apply(); }, seconds * 1000);
+  }
+  private ducked = 1; private duckT = 0;
   /** a looping ambience next to the music (e.g. 'riot' under the intro); level 0 fades it out */
   ambience(name: string, level: number) { this.extras.set(name, Math.max(0, level)); this.apply(true); }
 
@@ -72,7 +78,7 @@ class Music {
     for (const [name] of this.extras) this.voice('amb:' + name, `audio/${name}_loop.mp3`);
     for (const [name, v] of this.voices) {
       v.target = name.startsWith('amb:') ? (this.extras.get(name.slice(4)) ?? 0)
-        : name === this.current ? this.volume * this.intensity * MIX : 0;
+        : name === this.current ? this.volume * this.intensity * MIX * this.ducked : 0;
       if (v.target > 0 && (start || v.el.paused) && this.unlocked && !v.missing) void v.el.play().catch(() => {});
     }
     // fade towards the target levels (the voice keeps its own level: iOS cannot read a volume back)

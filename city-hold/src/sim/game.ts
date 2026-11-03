@@ -1,3 +1,4 @@
+import { fireStation } from '../maps/fireEngine';
 import { BALANCE, DIFFICULTY, type Difficulty, type AttKind, type DefKind, type UnitKind, waveComposition } from '../config/balance';
 import type { MapDef, Rect, SocketDef, Vec2, Spot } from '../maps/types';
 import { storeDoor } from '../maps/types';
@@ -379,6 +380,7 @@ export class Game {
     const sp = this.map.defenderSpawn;
     const n = this.defenders().length;
     const u = this.spawnDefender(kind, { x: sp.x - (n % 3), z: sp.z + ((n % 2) ? 1 : -1) });
+    if (kind === 'firefighter') { u.home = this.fireStationPoint(); u.state = 'return'; this.setPath(u, u.home); } // waits by the fire engine
     this.emit({ type: 'purchase', text: `${kind === 'security' ? 'Security team' : kind === 'shield' ? 'Shield team' : 'Firefighter'} deployed at the van (-${cost})`, x: u.x, z: u.z, amount: cost });
     return { ok: true };
   }
@@ -917,6 +919,8 @@ export class Game {
     }
   }
 
+  /** the walkable spot beside the fire engine's pump panel, where firefighters wait between fires */
+  private fireStationPoint(): Vec2 { const p = fireStation(this.map); return this.nav.nearestWalkable(p.x, p.z, 5) ?? this.map.defenderSpawn; }
   private goHome(u: Unit) { u.engage = -1; u.state = 'return'; u.stateT = 0; this.setPath(u, u.home); }
 
   private releaseRestrain(u: Unit) {
@@ -1133,7 +1137,7 @@ export class Game {
     }
     if (u.state === 'extinguish') {
       const f = this.fires.find((ff) => ff.id === u.fireId);
-      if (!f || f.out) { u.fireId = -1; this.goHome(u); return; }
+      if (!f || f.out) { u.fireId = -1; if (this.side === 'defence') u.home = this.fireStationPoint(); this.goHome(u); return; } // back to the engine, also from a side street
       const d = Math.hypot(f.x - u.x, f.z - u.z);
       // a car or street fire sits on ground he cannot stand on: the hose reaches further, and once he is as close as
       // he can get (path finished) he sprays from there instead of standing next to it

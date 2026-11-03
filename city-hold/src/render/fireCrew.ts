@@ -8,6 +8,7 @@ import type { MapDef } from '../maps/types';
 import { createCharacter, type CharacterVisual } from './character';
 import type { Effects } from './effects';
 import { radialTexture } from './textures';
+import { fireEnginePark } from '../maps/fireEngine';
 
 const RED = 0xa8121a;
 
@@ -28,8 +29,9 @@ function chevronTexture(): THREE.CanvasTexture {
 }
 
 /** fire engine, 8.4 m long and 2.5 m wide, nose to +z. outlet = the pump connection the hose runs from (left side, local +x) */
-export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outlet: THREE.Object3D } {
-  const g = new THREE.Group();
+export interface FireEngine { g: THREE.Group; body: THREE.Group; wheels: THREE.Group[]; beacons: THREE.Mesh[]; outlet: THREE.Object3D; heads: THREE.Mesh[] }
+export function buildFireEngine(): FireEngine {
+  const root = new THREE.Group(); const g = new THREE.Group(); root.add(g); // g = the sprung body; wheels hang on the root
   const paint = new THREE.MeshStandardMaterial({ color: RED, roughness: 0.32, metalness: 0.35 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x17191c, roughness: 0.8 });
   const chrome = new THREE.MeshStandardMaterial({ color: 0xd9dde2, roughness: 0.18, metalness: 0.9 });
@@ -63,7 +65,11 @@ export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outl
   add(box(1.6, 0.7, 0.05), chrome, 0, 1.25, 4.11, false);
   add(box(2.5, 0.25, 0.25), chrome, 0, 0.72, 4.15);
   const head = new THREE.MeshBasicMaterial({ color: 0xfff4d6 });
-  for (const s of [-1, 1]) add(box(0.36, 0.2, 0.04), head, s * 0.95, 1.12, 4.14, false);
+  const heads: THREE.Mesh[] = [];
+  for (const s of [-1, 1]) heads.push(add(box(0.36, 0.2, 0.04), head, s * 0.95, 1.12, 4.14, false));
+  // headlight beams on the wet street ahead (decal, brightest while driving in)
+  { const beam = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 10).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,240,200,0.3)', 'rgba(255,230,180,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    beam.position.set(0, 0.06, 8.6); root.add(beam); heads.push(beam); }
   // ladder on the roof
   for (const s of [-1, 1]) add(box(0.06, 0.1, 7.2), chrome, s * 0.42, 3.02, -0.7);
   for (let i = 0; i < 14; i++) add(new THREE.CylinderGeometry(0.02, 0.02, 0.84, 5).rotateZ(Math.PI / 2), chrome, 0, 3.02, -4.1 + i * 0.5, false);
@@ -76,7 +82,13 @@ export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outl
   add(new THREE.CylinderGeometry(0.07, 0.07, 0.18, 10).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.3, metalness: 0.9 }), 1.33, 1.05, 1.35, false);
   // wheels: front axle, tandem rear axles
   const tyre = new THREE.CylinderGeometry(0.52, 0.52, 0.38, 20).rotateZ(Math.PI / 2); const hub = new THREE.CylinderGeometry(0.25, 0.25, 0.4, 12).rotateZ(Math.PI / 2);
-  for (const z of [2.85, -1.9, -3.1]) for (const s of [-1, 1]) { add(tyre, dark, s * 1.08, 0.52, z); add(hub, chrome, s * 1.09, 0.52, z, false); }
+  const wheels: THREE.Group[] = [];
+  for (const z of [2.85, -1.9, -3.1]) for (const s of [-1, 1]) {
+    const w = new THREE.Group(); w.position.set(s * 1.08, 0.52, z); root.add(w); wheels.push(w);
+    const t = new THREE.Mesh(tyre, dark); t.castShadow = true; w.add(t); const hb = new THREE.Mesh(hub, chrome); hb.position.x = s * 0.01; w.add(hb);
+    // a spoke bar on the hub so the turning is visible
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.06, 0.06), chrome); sp.position.x = s * 0.2; w.add(sp);
+  }
   // light bar on the cab and corner beacons at the rear
   const beacons: THREE.Mesh[] = [];
   add(box(1.9, 0.08, 0.3), dark, 0, 2.88, 3.4, false);
@@ -93,7 +105,7 @@ export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outl
     const m = new THREE.Mesh(new THREE.PlaneGeometry(7, 9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture(i ? 'rgba(70,120,255,0.5)' : 'rgba(255,50,40,0.45)', 'rgba(0,0,0,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     m.position.set(x, 0.05, 1.5); g.add(m); beacons[i].userData.pool = m; beacons[i + 2].userData.pool = m;
   }
-  return { g, beacons, outlet };
+  return { g: root, body: g, wheels, beacons, outlet, heads };
 }
 
 /** a water jet: a tube along a ballistic arc with a scrolling, broken-up stream shader */
@@ -127,7 +139,9 @@ interface Crew {
 }
 
 export class FireCrew {
-  private engine: { g: THREE.Group; beacons: THREE.Mesh[]; outlet: THREE.Object3D } | null = null;
+  private engine: FireEngine | null = null;
+  /** drive-in: distance still to cover (m), speed, and the body's sprung pitch */
+  private drive = { left: 0, v: 0, pitch: 0, pv: 0, bob: 0 };
   private crews = new Map<number, Crew>();
   private hoseMat = new THREE.MeshStandardMaterial({ color: 0x9a1c18, roughness: 0.62 });
   /** branch pipe as in the reference pictures: silver coupling, black barrel, red bale handle and a red tip ring (+z forward) */
@@ -148,12 +162,7 @@ export class FireCrew {
   private tmp = new THREE.Vector3(); private tmp2 = new THREE.Vector3();
   constructor(private scene: THREE.Scene, private map: MapDef, private fx: Effects) {}
 
-  private parking() {
-    if (this.map.fireEngine) return this.map.fireEngine;
-    // default: behind the police van, in its lane
-    const v = this.map.van; const r = (v.rot * Math.PI) / 180;
-    return { x: v.x - Math.sin(r) * 7.6, z: v.z - Math.cos(r) * 7.6, rot: v.rot };
-  }
+  private parking() { return fireEnginePark(this.map); }
   enginePos(): { x: number; z: number } | null { return this.engine && this.engine.g.visible ? { x: this.engine.g.position.x, z: this.engine.g.position.z } : null; }
   private outletWorld(out: THREE.Vector3) { this.engine!.g.updateMatrixWorld(); return this.engine!.outlet.getWorldPosition(out); }
 
@@ -161,8 +170,10 @@ export class FireCrew {
     const ffs = g.units.filter((u) => u.kind === 'firefighter' && u.side === 'def');
     if (ffs.length && !this.engine) {
       this.engine = buildFireEngine(); const p = this.parking();
-      this.engine.g.position.set(p.x, 0, p.z); this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.scene.add(this.engine.g);
+      this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.scene.add(this.engine.g);
+      this.drive.left = 28; this.drive.v = 9; // comes up the street at about 30 km/h and brakes to a stop at its spot
     }
+    if (this.engine) this.stepDrive(dt, time);
     if (this.engine) {
       this.engine.g.visible = ffs.length > 0;
       // beacons: alternating double flashes, the halo follows
@@ -181,6 +192,25 @@ export class FireCrew {
     }
     for (const [id, c] of this.crews) if (!seen.has(id)) { this.scene.remove(c.hose, c.nozzle, c.jet, c.mist, c.mate.root); this.crews.delete(id); }
   }
+
+  private stepDrive(dt: number, time: number) {
+    const e = this.engine!; const d = this.drive; const p = this.parking(); const a = (p.rot * Math.PI) / 180;
+    let decel = 0;
+    if (d.left > 0) {
+      // constant braking so it stops exactly on its spot: v^2 = 2 a s
+      decel = (d.v * d.v) / (2 * Math.max(d.left, 0.01)); if (d.left > 14) decel = 0; // cruise, then brake over the last 14 m
+      d.v = Math.max(0, d.v - decel * dt); const step = Math.min(d.left, d.v * dt + (d.v === 0 ? d.left : 0)); d.left -= step;
+      for (const w of e.wheels) w.rotation.x += step / 0.52;
+      if (d.left < 0.01) { d.left = 0; d.v = 0; }
+    }
+    e.g.position.set(p.x - Math.sin(a) * d.left, 0, p.z - Math.cos(a) * d.left);
+    // body on its springs: nose dips under braking and rocks back when it stops; a faint shake while the engine runs
+    const target = -decel * 0.006; d.pv += ((target - d.pitch) * 60 - d.pv * 7) * dt; d.pitch += d.pv * dt;
+    e.body.rotation.x = d.pitch; e.body.position.y = Math.sin(time * 31) * 0.004 + Math.abs(d.pitch) * 0.3;
+    const lit = d.left > 0 ? 1 : 0.35; (e.heads[e.heads.length - 1].material as THREE.MeshBasicMaterial).opacity = lit;
+  }
+  /** the engine is still driving in (the crew waits for it before the hose comes off) */
+  arriving() { return !!this.engine && this.drive.left > 0; }
 
   private crew(u: Unit): Crew {
     let c = this.crews.get(u.id);
