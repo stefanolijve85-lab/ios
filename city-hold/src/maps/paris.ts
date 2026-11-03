@@ -127,6 +127,8 @@ export const PARIS: MapDef = {
   defenderSpawn: { x: 19.2, z: 0.5 }, // far enough from the foreground block that its roof never hides the staging team
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
+  // the rest of the riot further up the two side streets (images 05/07): a crowd that is scenery, never part of the game
+  backdropCrowd: [{ x0: -22.4, x1: -17.4, z0: -60, z1: -33 }, { x0: 17.4, x1: 22.4, z0: -60, z1: -33 }],
   glowLamps: ([[-16.2, -24], [-16.2, -30], [-16.2, -37], [-16.2, -44], [-16.2, -50], [-16.2, -56], [-16.2, -63], [-16.2, -70], [-23.6, -24], [-23.6, -30], [-23.6, -37], [-23.6, -44], [-23.6, -50], [-23.6, -56], [-23.6, -63], [-23.6, -70], [16.2, -24], [16.2, -30], [16.2, -37], [16.2, -44], [16.2, -50], [16.2, -56], [16.2, -63], [16.2, -70], [23.6, -24], [23.6, -30], [23.6, -37], [23.6, -44], [23.6, -50], [23.6, -56], [23.6, -63], [23.6, -70], [-36, -43.5], [-8, -43.5], [8, -43.5], [36, -43.5]] as const).map(([x, z]) => ({ x, z })),
   facadeDecals: [
     { texture: 'textures/facades/paris_main.jpg', x0: -14.6, x1: 14.6, y0: 4.45, y1: 14.6, z: -14 + 0.75, tile: 29.2 },
