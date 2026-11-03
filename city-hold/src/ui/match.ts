@@ -67,7 +67,7 @@ export class Match {
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx, settings.timeOfDay ?? 'evening');
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
-    music.prepareShots(['win_sting', 'vo_win_en']); // the victory recordings, played like the music (works on iPad)
+    music.prepareShots(['victory_def', 'victory_loot', 'vo_wave_en']); // the victory recordings, played like the music (works on iPad)
     this.sfx.unlock(); // create the audio graph now so the recordings start loading with the match (it resumes on the first tap)
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
@@ -644,25 +644,22 @@ export class Match {
 
   resultInfo: ((r: MatchResult) => { unlocked: string[]; research: number; specs: string[] }) | null = null;
 
-  /** mission won: the recorded fanfare, and (defence) the commander's voice over it with the fanfare stepping back.
-   *  Played through the music's <audio> route, which plays on iPad; Web Audio only when that route is not ready. */
-  private victory(voice: boolean): boolean {
+  /** mission won: one pre-mixed recording (defence: the fanfare with the commander's "Mission accomplished. All stores
+   *  secured." over it; looting: the fanfare alone). Played through the music's <audio> route, which plays on iPad;
+   *  Web Audio only when that route is not unlocked yet. */
+  private victory(defence: boolean): boolean {
     const vol = this.settings.volume ?? 0.6; if (vol <= 0) return false;
-    if (!music.isUnlocked) return this.sfx.victory(voice);
-    clearTimeout(this.waveT);
-    if (!music.playShot('win_sting', 0.9 * vol)) return this.sfx.victory(voice);
-    if (voice && music.playShot('vo_win_en', Math.min(2, 1.8 * vol), 0.7)) {
-      music.rampShot('win_sting', 0.3 * vol, 0.55, 0.15); music.rampShot('win_sting', 0.65 * vol, 3.4, 0.5);
-    }
-    return true;
+    const name = defence ? 'victory_def' : 'victory_loot';
+    music.stopShot('vo_wave_en');
+    if (music.isUnlocked && music.playShot(name, 1.0 * vol)) return true;
+    return this.sfx.victory(defence);
   }
-  /** a held wave: the first second of the fanfare, softer, faded out */
+  /** a held wave: the commander on the radio ("Wave cleared. Hold the line.") */
   private waveSecured() {
     const vol = this.settings.volume ?? 0.6; if (vol <= 0) return;
-    if (!music.isUnlocked) { this.sfx.waveSecured(); return; }
-    if (music.playShot('win_sting', 0.55 * vol)) { music.rampShot('win_sting', 0, 1.1, 0.7); this.waveT = window.setTimeout(() => music.stopShot('win_sting'), 1900); }
+    if (music.isUnlocked && music.playShot('vo_wave_en', 1.0 * vol)) return;
+    this.sfx.waveSecured();
   }
-  private waveT = 0;
 
   private showResult() {
     const g = this.game; const r = g.result!;

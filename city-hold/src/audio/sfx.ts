@@ -41,7 +41,7 @@ export class Sfx {
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
     'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton',
-    'win_sting', 'vo_win_nl', 'vo_win_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
+    'victory_def', 'victory_loot', 'vo_wave_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
@@ -61,51 +61,21 @@ export class Sfx {
   /** create (or resume) the audio graph; call from a user gesture on iOS */
   /** language for the voice lines */
   lang: 'nl' | 'en' = 'nl';
-  /** mission won: a short cinematic sting with the radio voice over it ("Missie volbracht. Alle winkels zijn beveiligd.") */
-  victory(voice = true): boolean {
+  /** mission won (Web Audio fallback): the pre-mixed recording, defence with the voice, looting without */
+  victory(defence = true): boolean {
     if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
     if (c.state === 'suspended') void c.resume();
-    // not decoded yet (slow connection, or the first tap came late): fetch them now and play as soon as they are ready
-    const vo = this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl';
-    if (!this.buf.has('win_sting') || (voice && !this.buf.has(vo))) {
-      void Promise.all([this.loadOne(c, 'win_sting'), voice ? this.loadOne(c, vo) : Promise.resolve(true)]).then(([a, b]) => { if (a || b) this.playVictory(c, voice); });
-      return true; // the recording follows; no synthesised chime on top
-    }
-    this.playVictory(c, voice); return true;
+    const name = defence ? 'victory_def' : 'victory_loot';
+    if (!this.buf.has(name)) { void this.loadOne(c, name).then((ok) => { if (ok) this.smp(name, this.out(this.ui, 0), 1, { jitter: 0 }); }); return true; }
+    return this.smp(name, this.out(this.ui, 0), 1, { jitter: 0 });
   }
-  /** settings test: load the mission-end recordings and report which work (an error says why, e.g. 404) */
-  async testVictory(): Promise<string> {
-    if (this._volume <= 0) return 'volume is 0';
-    const c = this.ensure(); if (!c) return 'no audio (AudioContext)';
-    if (c.state === 'suspended') await c.resume().catch(() => {});
-    const names = ['win_sting', this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl'];
-    const ok = await Promise.all(names.map((n) => this.loadOne(c, n)));
-    this.playVictory(c, true);
-    return names.map((n, i) => `${n}: ${ok[i] ? 'OK' : (this.loadErr.get(n) ?? 'not loaded')}`).join(' · ') + ` · audio ${c.state}`;
-  }
-  private loadErr = new Map<string, string>();
-  private playVictory(c: Ctx, voice: boolean): boolean {
-    // the sting through its own gain, so it can step back while the voice speaks
-    const stingBus = c.createGain(); stingBus.gain.value = 1; stingBus.connect(this.out(this.ui, 0));
-    const sting = this.smp('win_sting', stingBus, 0.95, { jitter: 0 });
-    if (!voice) return sting;
-    // the voice clear and loud on top (only the lowest rumble cut), the sting ducked to a third under it
-    const at = sting ? 0.7 : 0; const t = c.currentTime; // after the fanfare's opening hit
-    if (sting) { stingBus.gain.setValueAtTime(1, t + at - 0.15); stingBus.gain.linearRampToValueAtTime(0.35, t + at); stingBus.gain.setValueAtTime(0.35, t + at + 2.6); stingBus.gain.linearRampToValueAtTime(0.7, t + at + 3.1); }
-    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
-    const vbus = c.createGain(); vbus.gain.value = 2.2; hp.connect(vbus).connect(this.out(this.ui, 0));
-    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1, { jitter: 0, delay: at });
-    return sting || vo;
-  }
-  /** a wave held: the opening of the victory fanfare, short and softer, faded out (no synthesised chime) */
+  /** a held wave (Web Audio fallback): the radio line */
   waveSecured() {
     if (this._volume <= 0) return; const c = this.ensure(); if (!c) return;
-    if (!this.buf.has('win_sting')) { void this.loadOne(c, 'win_sting'); return; }
-    const bus = c.createGain(); const t = c.currentTime;
-    bus.gain.setValueAtTime(0.6, t); bus.gain.setValueAtTime(0.6, t + 1.1); bus.gain.linearRampToValueAtTime(0, t + 1.8);
-    bus.connect(this.out(this.ui, 0));
-    this.smp('win_sting', bus, 0.95, { jitter: 0 });
+    if (!this.buf.has('vo_wave_en')) { void this.loadOne(c, 'vo_wave_en'); return; }
+    this.smp('vo_wave_en', this.out(this.ui, 0), 1, { jitter: 0 });
   }
+  private loadErr = new Map<string, string>();
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }
 
   private ensure(): Ctx | null {
@@ -151,7 +121,7 @@ export class Sfx {
   }
   private loadSamples(c: Ctx) {
     // the mission-end lines first, so they are always ready in time
-    for (const n of ['win_sting', 'vo_win_nl', 'vo_win_en']) void this.loadOne(c, n);
+    for (const n of ['victory_def', 'victory_loot', 'vo_wave_en']) void this.loadOne(c, n);
     for (const name of Sfx.SAMPLES) void this.loadOne(c, name);
   }
   /** play a recorded sound; false when it is not loaded (caller synthesises instead) */
