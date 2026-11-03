@@ -131,6 +131,7 @@ export class MatchView {
   readonly world: WorldHandles;
   readonly fx: Effects;
   private fireCrew: FireCrew;
+  private night = false;
   /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
    *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
   async warm(): Promise<void> {
@@ -181,7 +182,7 @@ export class MatchView {
   private wet: Reflector | null = null;
   private keys = new Set<string>();
 
-  constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean) {
+  constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean, timeOfDay: 'evening' | 'night' = 'evening') {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
     // touch tablets at full quality render at 1.5x (a 2x iPad screen is 4x the pixels of 1x: that made play and sound stutter)
     const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
@@ -195,24 +196,31 @@ export class MatchView {
     this.camera = new THREE.PerspectiveCamera(map.camera.fov ?? 36, 1, 0.5, 400);
     const pm = new THREE.PMREMGenerator(this.renderer);
     const env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environment = env; this.scene.environmentIntensity = 0.25;
+    this.scene.environment = env; this.scene.environmentIntensity = timeOfDay === 'night' ? 0.1 : 0.25;
     // blue-hour HDRI (tools/make_hdri.py) replaces the neutral room environment once loaded
     new HDRLoader().loadAsync('env/blue_hour.hdr').then((hdr) => {
       if (this.disposed) return;
       hdr.mapping = THREE.EquirectangularReflectionMapping;
       const t = pm.fromEquirectangular(hdr).texture; hdr.dispose();
-      this.scene.environment = t; this.scene.environmentIntensity = 0.55;
+      this.scene.environment = t; this.scene.environmentIntensity = this.night ? 0.22 : 0.55;
     }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
     this.scene.fog = new THREE.Fog(0x2a3a5c, 115, 260); // haze only far down the side streets: the square itself stays clear (image 01)
-    this.scene.add(new THREE.HemisphereLight(0x8a9ac8, 0x4a3e30, 0.85)); // blue-hour sky, cool wet ground bounce
+    const hemi = new THREE.HemisphereLight(0x8a9ac8, 0x4a3e30, 0.85); this.scene.add(hemi); // blue-hour sky, cool wet ground bounce
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);
     moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);
     const sc = moon.shadow.camera; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50; sc.near = 10; sc.far = 160; moon.shadow.bias = -0.0005;
     this.scene.add(moon, moon.target);
+    // night: less sky and moon light, a darker sky and street; the lamps, windows and fires carry the scene
+    this.night = timeOfDay === 'night';
+    if (this.night) {
+      this.renderer.toneMappingExposure = 1.15; hemi.intensity = 0.32; hemi.color.set(0x5a6a9a); moon.intensity = 0.32; moon.color.set(0x8fa6e8);
+      this.scene.backgroundIntensity = 0.35; (this.scene.fog as THREE.Fog).color.set(0x0e1424);
+    }
     this.camera.layers.enable(NO_REFLECT_LAYER); // the game camera sees everything; the reflection only layer 0
     this.world = buildWorld(map, this.scene, reducedFx);
+    if (this.night) for (const l of this.world.lampLights) l.intensity *= 1.5; // the lamps own the night
     // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
     for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
     if (!reducedFx) {
@@ -962,7 +970,7 @@ export class MatchView {
       // the glow eases off as the camera comes closer, and stays calm while the zoom is still moving
       const near = THREE.MathUtils.clamp((this.dist - this.minDist) / 30, 0, 1);
       const zooming = Math.abs(this.dist - this.lastDist) > 0.05; this.lastDist = this.dist;
-      const wantS = (0.3 + 0.45 * near) * (zooming ? 0.6 : 1), wantT = 0.82 + (1 - near) * 0.12 + (zooming ? 0.05 : 0);
+      const wantS = (0.3 + 0.45 * near) * (zooming ? 0.6 : 1) * (this.night ? 1.3 : 1), wantT = 0.82 + (1 - near) * 0.12 + (zooming ? 0.05 : 0);
       const b = this.post.bloom; b.strength += (wantS - b.strength) * 0.25; b.threshold += (wantT - b.threshold) * 0.25;
       this.post.render(this.time);
     } else this.renderer.render(this.scene, this.camera);

@@ -36,7 +36,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'MOEILIJKHEID', normal: 'NORMAAL', hard: 'MOEILIJK', expert: 'EXPERT', start: 'START MISSIE',
     objDef: `Bescherm de winkels tegen ${BALANCE.defence.waves} opeenvolgende golven.`, objLoot: `Buit {n} voorraad en ontsnap binnen ${BALANCE.looters.timeLimit / 60} minuten.`,
     notPlayable: 'Nog niet speelbaar', lockedWin: 'Win {prev} om {city} vrij te spelen.',
-    volume: 'Geluid', musicVol: 'Muziek', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
+    volume: 'Geluid', musicVol: 'Muziek', tod: 'Dagdeel', todEve: 'Avond', todNight: 'Nacht', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
     danger: 'Gevarenzone', reset: 'VOORTGANG WISSEN', resetConfirm: 'Weet je het zeker? Alle steden, onderzoek en instellingen worden gewist.', resetYes: 'JA, WISSEN', cancel: 'ANNULEREN',
     campaign: 'CAMPAGNE', research: 'ONDERZOEK', points: 'punten', buy: 'KOPEN', owned: 'IN BEZIT', won: 'gewonnen', matches: 'Gespeelde missies',
     defShort: 'verdedigd', lootShort: 'geplunderd', hudNote: 'De speelinterface is (nog) Engelstalig.',
@@ -48,7 +48,7 @@ const T: Record<Lang, Record<string, string>> = {
     difficulty: 'DIFFICULTY', normal: 'NORMAL', hard: 'HARD', expert: 'EXPERT', start: 'START MISSION',
     objDef: `Protect the shops through ${BALANCE.defence.waves} consecutive waves.`, objLoot: `Loot {n} stock and escape within ${BALANCE.looters.timeLimit / 60} minutes.`,
     notPlayable: 'Not playable yet', lockedWin: 'Win {prev} to unlock {city}.',
-    volume: 'Sound', musicVol: 'Music', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
+    volume: 'Sound', musicVol: 'Music', tod: 'Time of day', todEve: 'Evening', todNight: 'Night', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
     danger: 'Danger zone', reset: 'ERASE PROGRESS', resetConfirm: 'Are you sure? All cities, research and settings will be erased.', resetYes: 'YES, ERASE', cancel: 'CANCEL',
     campaign: 'CAMPAIGN', research: 'RESEARCH', points: 'points', buy: 'BUY', owned: 'OWNED', won: 'won', matches: 'Missions played',
     defShort: 'defended', lootShort: 'looted', hudNote: 'The in-game interface is in English.',
@@ -303,6 +303,7 @@ export class Menu {
         <label class="rm-row"><span>${t.musicVol}</span><input type="range" min="0" max="1" step="0.05" value="${s.music ?? 0.5}" data-s="mus"></label>
         <div class="rm-row"><span>${t.language}</span><span class="rm-seg">${(['nl', 'en'] as Lang[]).map((l) => `<button class="rm-diffbtn ${s.language === l ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</span></div>
         <div class="rm-row"><span>${t.quality}</span><span class="rm-seg"><button class="rm-diffbtn ${!s.reducedFx ? 'on' : ''}" data-q="high">${t.qHigh}</button><button class="rm-diffbtn ${s.reducedFx ? 'on' : ''}" data-q="mobile">${t.qMobile}</button></span></div>
+        <div class="rm-row"><span>${t.tod}</span><span class="rm-seg"><button class="rm-diffbtn ${(s.timeOfDay ?? 'evening') === 'evening' ? 'on' : ''}" data-tod="evening">${t.todEve}</button><button class="rm-diffbtn ${s.timeOfDay === 'night' ? 'on' : ''}" data-tod="night">${t.todNight}</button></span></div>
         <label class="rm-row"><span>${t.hints}</span><input type="checkbox" ${s.showHints ? 'checked' : ''} data-s="hints"></label>
         <div class="rm-row"><span>${t.uiScale}</span><span class="rm-seg">${[1, 1.15, 1.3].map((v) => `<button class="rm-diffbtn ${Number(s.uiScale || 1) === v ? 'on' : ''}" data-ui="${v}">${Math.round(v * 100)}%</button>`).join('')}</span></div>
         <label class="rm-row"><span>${t.vibration}</span><input type="checkbox" ${s.vibration ? 'checked' : ''} data-s="vib"></label>
@@ -317,6 +318,7 @@ export class Menu {
     this.app.querySelector<HTMLInputElement>('[data-s="hints"]')!.addEventListener('change', (e) => { s.showHints = (e.target as HTMLInputElement).checked; this.host.save(); });
     this.wire('[data-lang]', (el) => { s.language = el.dataset.lang as Lang; this.host.save(); this.settings(); });
     this.wire('[data-q]', (el) => { s.reducedFx = el.dataset.q === 'mobile'; this.host.save(); this.settings(); });
+    this.wire('[data-tod]', (el) => { s.timeOfDay = el.dataset.tod as 'evening' | 'night'; this.host.save(); this.settings(); });
     this.wire('[data-ui]', (el) => { s.uiScale = Number(el.dataset.ui); this.host.save(); this.settings(); });
     this.app.querySelector<HTMLInputElement>('[data-s="vib"]')!.addEventListener('change', (e) => { s.vibration = (e.target as HTMLInputElement).checked; this.host.save(); try { if (s.vibration) navigator.vibrate?.(30); } catch { /* not supported */ } });
     this.wire('[data-reset]', () => this.settings(true));

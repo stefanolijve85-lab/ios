@@ -1,5 +1,5 @@
 // Local progress and settings (localStorage). Explicit reset is available from the menu.
-export interface Settings { /** the tablet default has been applied */ qualityV2?: boolean; volume: number; /** background music volume */ music?: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
+export interface Settings { /** the tablet default has been applied */ qualityV2?: boolean; /** light of the street: blue-hour evening (default) or night */ timeOfDay?: 'evening' | 'night'; volume: number; /** background music volume */ music?: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
   /** HUD size multiplier (phones benefit from larger) */ uiScale: number; /** short vibrations on key events (phones that support it) */ vibration: boolean;
   /** chosen figures per role (model slots); appearance only */ figures?: Record<string, string[]>;
   /** cities whose briefing has been shown once */ briefed?: string[] }

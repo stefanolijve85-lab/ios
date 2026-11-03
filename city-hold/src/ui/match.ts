@@ -64,7 +64,7 @@ export class Match {
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
-    this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx);
+    this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx, settings.timeOfDay ?? 'evening');
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
     this.sfx.unlock(); // create the audio graph now so the recordings start loading with the match (it resumes on the first tap)
