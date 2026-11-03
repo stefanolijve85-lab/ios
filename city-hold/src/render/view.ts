@@ -453,7 +453,7 @@ export class MatchView {
     const lanes = this.map.backdropCrowd; if (!lanes?.length) return;
     const riot = g.phase === 'wave' || (this.side === 'looters' && !g.over);
     if (!this.backdrop.length) {
-      const n = this.reducedFx ? 6 : 14; const kinds: AnyKind[] = ['runner', 'carrier', 'vandal', 'heavy', 'thrower'];
+      const n = this.reducedFx ? 10 : 26; const kinds: AnyKind[] = ['runner', 'carrier', 'vandal', 'heavy', 'thrower'];
       for (let i = 0; i < n; i++) {
         const lane = i % lanes.length, L = lanes[lane];
         const h = createCharacter(kinds[i % kinds.length], 900 + i); h.icon.visible = false; h.root.visible = false; this.scene.add(h.root);
@@ -473,7 +473,11 @@ export class MatchView {
       else if ((b.wait -= dt) <= 0) {
         // mill around: short hops, sometimes a run towards the square and back (as in the riot shots)
         b.flee = Math.random() < 0.15; b.wait = 1 + Math.random() * 4;
-        b.tx = L.x0 + Math.random() * (L.x1 - L.x0); b.tz = Math.max(L.z0, Math.min(L.z1, b.z + (Math.random() - 0.5) * 10));
+        for (let k = 0; k < 6; k++) { // not inside the burning wrecks or the barricade
+          b.tx = L.x0 + Math.random() * (L.x1 - L.x0); b.tz = Math.max(L.z0, Math.min(L.z1, b.z + (Math.random() - 0.5) * 10));
+          const blocked = [...(this.map.riotFires ?? []), ...this.map.props.filter((pp) => pp.type === 'barricade_fire' || pp.type === 'car' || pp.type === 'police_van')].some((f) => Math.hypot(f.x - b.tx, f.z - b.tz) < 3);
+          if (!blocked) break;
+        }
       } else { // standing: face the square, shouting
         let df = Math.PI - b.h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2; b.h.root.rotation.y += df * Math.min(1, dt * 2);
       }
