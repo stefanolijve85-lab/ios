@@ -107,10 +107,16 @@ class GltfCharacter implements CharacterVisual {
   private carry: THREE.Object3D | null;
   private bar: THREE.Object3D | null = null;
   private held: HeldObject;
+  /** this figure's own rhythm: standing clips a little faster or slower than its neighbours' */
+  private tempo = 1;
+  /** standing personality: head and upper body settle differently per figure, and the gaze wanders on its own clock */
+  private quirk: { head?: THREE.Object3D; spine?: THREE.Object3D; saved: THREE.Quaternion[]; tilt: number; lean: number; twist: number; freq: number; off: number; w: number; t: number } = { saved: [], tilt: 0, lean: 0, twist: 0, freq: 0.2, off: 0, w: 0, t: 0 };
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
   constructor(kind: AnyKind, variant: number, scene: THREE.Object3D, clips: THREE.AnimationClip[]) {
     const model = skeletonClone(scene);
     const r = rng(variant + 91);
+    this.tempo = 0.86 + rng(variant * 31 + 5)() * 0.28;
+    { const q = rng(variant * 53 + 11); const qk = this.quirk; qk.tilt = (q() - 0.5) * 0.22; qk.lean = (q() - 0.5) * 0.12; qk.twist = (q() - 0.5) * 0.3; qk.freq = 0.12 + q() * 0.22; qk.off = q() * 20; }
     // per-unit recolouring of named materials: skin tone always varies; casual clothing varies
     const skin = SKIN_TONES[Math.floor(r() * SKIN_TONES.length)];
     const top = CASUAL_TOPS[Math.floor(r() * CASUAL_TOPS.length)], legs = CASUAL_LEGS[Math.floor(r() * CASUAL_LEGS.length)];
@@ -136,6 +142,7 @@ class GltfCharacter implements CharacterVisual {
             const r2 = rng(variant * 4271 + 7); const base = new THREE.Color(pal[Math.floor(r2() * pal.length)]);
             c.color.setRGB(0.7, 0.7, 0.7).lerp(base, 0.4).multiplyScalar(1.05 + r2() * 0.3);
           }
+          else if (kind === 'security' || kind === 'shield' || kind === 'firefighter') { const r2 = rng(variant * 6151 + 3); c.color.setScalar(0.8 + r2() * 0.32); } // same uniform, washed and worn differently
           else if (kind === 'shopkeeper') { const r2 = rng(variant * 7919 + 13); c.color.setScalar(0.72 + r2() * 0.3); } // same uniform, a different build and shade per guard
           return c;
         }
@@ -145,7 +152,7 @@ class GltfCharacter implements CharacterVisual {
       m.material = Array.isArray(m.material) ? out : out[0];
     });
     model.scale.setScalar(0.95 + r() * 0.08);
-    if (kind === 'civilian' || kind === 'runner' || kind === 'carrier' || kind === 'heavy' || kind === 'vandal' || kind === 'thrower') { model.scale.x *= 0.92 + r() * 0.18; model.scale.y *= 0.94 + r() * 0.12; model.scale.z = model.scale.x; } // tall, short, slim, broad
+    { model.scale.x *= 0.92 + r() * 0.18; model.scale.y *= 0.94 + r() * 0.12; model.scale.z = model.scale.x; } // tall, short, slim, broad
     this.root.add(model);
     this.carry = model.getObjectByName('carry') ?? null;
     if (!this.carry && model.getObjectByName('Hips')) {
@@ -191,6 +198,25 @@ class GltfCharacter implements CharacterVisual {
     this.root.add(contactShadow());
     this.icon = makeIcon(kind); this.root.add(this.icon);
     this.mixer.setTime(r() * 3);
+    this.quirk.head = model.getObjectByName('Head') ?? undefined; this.quirk.spine = model.getObjectByName('Spine01') ?? model.getObjectByName('Spine1') ?? model.getObjectByName('Spine') ?? undefined;
+  }
+  private qv = new THREE.Quaternion(); private qe = new THREE.Euler();
+  /** undo last frame's offsets so they never pile up on a bone the clip does not drive */
+  private unquirk() { const qk = this.quirk; [qk.head, qk.spine].forEach((b, i) => { if (b && qk.saved[i]) b.quaternion.copy(qk.saved[i]); }); qk.saved = []; }
+  private applyQuirk(standing: boolean, dt: number) {
+    const qk = this.quirk; qk.t += dt;
+    qk.w += ((standing ? 1 : 0) - qk.w) * Math.min(1, dt * 2.5);
+    if (qk.w < 0.01) return;
+    const t = qk.t * qk.freq + qk.off;
+    // the gaze drifts, pauses and drifts back (two slow waves, so neighbours never turn their heads together)
+    const look = (Math.sin(t) * 0.7 + Math.sin(t * 2.3 + 1.3) * 0.3) * 0.45 + qk.twist;
+    const bones: [THREE.Object3D | undefined, number, number, number][] = [
+      [qk.head, qk.tilt * 0.6 + Math.sin(t * 0.7) * 0.05, look, qk.tilt],
+      [qk.spine, 0, look * 0.25, qk.lean]];
+    bones.forEach(([b, x, y, z], i) => {
+      if (!b) return; qk.saved[i] = b.quaternion.clone();
+      b.quaternion.multiply(this.qv.setFromEuler(this.qe.set(x * qk.w, y * qk.w, z * qk.w)));
+    });
   }
   /** gallery: names of the clips this figure can play, and direct playback */
   clipNames(): string[] { return [...this.actions.keys()]; }
@@ -198,9 +224,14 @@ class GltfCharacter implements CharacterVisual {
   private play(name: string, timeScale: number) {
     const a = this.actions.get(name) ?? this.actions.get(name.startsWith('carry') ? name.replace('carry_', '') : 'idle') ?? this.actions.get('idle');
     if (!a) return;
-    a.timeScale = timeScale;
+    const oneShot = name === 'throw' || name === 'strike' || name === 'pickup';
+    // standing and working loops run at the figure's own tempo; walk/run stay matched to the feet (only a hint of it)
+    const loco = name === 'walk' || name === 'run' || name === 'carry_walk' || name === 'flee' || name === 'escort' || name === 'escorted';
+    a.timeScale = oneShot ? timeScale : timeScale * (loco ? 1 + (this.tempo - 1) * 0.25 : this.tempo);
     if (a === this.current) return;
     a.reset().play();
+    // start a loop somewhere in its cycle: figures that start walking or waiting together never move in lockstep
+    if (!oneShot) a.time = Math.random() * a.getClip().duration;
     if (this.current) a.crossFadeFrom(this.current, name === 'throw' || name === 'strike' || name === 'pickup' ? 0.12 : 0.3, false); // one-shot moves blend in fast
     this.current = a;
   }
@@ -210,9 +241,10 @@ class GltfCharacter implements CharacterVisual {
     if (pose === 'throw' || pose === 'strike' || pose === 'pickup') {
       const a = this.actions.get(pose);
       // the clip is scrubbed by the action's progress, but the mixer clock still runs so the crossfade into it completes (it stayed invisible)
-      if (a) { this.play(pose, 1); a.paused = true; this.mixer.update(Math.max(dt, 1 / 60)); a.time = action * a.getClip().duration; this.mixer.update(0); return; }
+      if (a) { this.unquirk(); this.quirk.w = 0; this.play(pose, 1); a.paused = true; this.mixer.update(Math.max(dt, 1 / 60)); a.time = action * a.getClip().duration; this.mixer.update(0); return; }
     }
     let clip: string = pose;
+    this.unquirk();
     if ((pose === 'breach' || pose === 'barrier') && this.actions.has('smash')) clip = 'smash'; // crowbar blows on the shutter / barrier
     if (this.bar) this.bar.visible = clip === 'smash';
     if (pose === 'flee') clip = carrying ? 'carry_walk' : 'flee';
@@ -223,6 +255,7 @@ class GltfCharacter implements CharacterVisual {
     const ts = natural[clip] ? speed / natural[clip] : 1;
     this.play(clip, Math.min(2.6, Math.max(0.5, ts)));
     this.mixer.update(dt);
+    this.applyQuirk(clip === 'idle' || clip === 'carry_idle' || clip === 'brace' || clip === 'guide', dt);
   }
 }
 
