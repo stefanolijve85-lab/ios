@@ -291,7 +291,7 @@
 }
 
 /* cinematic intro over the main menu */
-.rm-intro { position: fixed; inset: 0; z-index: 1000; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity .55s ease; cursor: pointer; }
+.rm-intro { position: fixed; inset: 0; z-index: 1000; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity .55s ease; }
 .rm-intro.out { opacity: 0; pointer-events: none; }
 .rm-intro video { width: 100%; height: 100%; object-fit: cover; }
 /* RIOTS logo as its own layer over the video: real text, so it stays crisp at any size; fades in with a slight settle */

@@ -190,13 +190,15 @@ export class Menu {
       fadeTo(0, 900, () => riot.pause()); // the riot fades out, the menu music carries on
       setTimeout(() => el.remove(), 600);
     };
-    const onKey = (e: KeyboardEvent) => { if (!soundOn && e.key !== 'Escape') void startSound().then((ok) => { if (!ok) close(); }); else close(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); else if (!soundOn) void startSound(); };
     v.addEventListener('ended', close); v.addEventListener('error', close);
     el.querySelector('.rm-intro-skip')!.addEventListener('pointerdown', (e) => { e.stopPropagation(); close(); });
-    el.addEventListener('pointerdown', () => { if (soundOn || vol <= 0) close(); else void startSound().then((ok) => { if (!ok) close(); }); });
+    // a tap on the video only turns the sound on; leaving the intro is the Overslaan button (or the end of the video)
+    el.addEventListener('pointerdown', () => { if (!soundOn) void startSound(); });
     window.addEventListener('keydown', onKey, true);
     void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
     void startSound().then((ok) => { if (!ok && vol > 0) soundBtn.hidden = false; });
+    soundBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); void startSound(); });
   }
 
   // ---------------------------------------------------------------- 03 city selection
