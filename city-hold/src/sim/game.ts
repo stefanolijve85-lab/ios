@@ -74,6 +74,8 @@ export interface Unit {
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
   gasT: number; gasThrowAt: number;
+  /** rioter: time it last threw a grenade back (view plays the throw) */
+  throwBackAt: number;
   barrierId: number;
   /** thrower: throws left, cooldown, release done in the current throw, aim */
   throwsLeft: number; throwCd: number; released: boolean; aim: ThrowTarget | null;
@@ -91,7 +93,9 @@ export interface Unit {
 export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; /** degrees: 0 along x, 90 along z, any angle */ rot: number; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
 /** tear gas canister: flies from the thrower for `flight` s, then a cloud grows to `r` and thins out at the end of its life */
-export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number }
+export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number;
+  /** tear gas cloud or flashbang */ kind: 'gas' | 'flash'; /** which side it hurts: the rioters, or the police once a rioter threw it back */ against: 'att' | 'def';
+  /** a rioter already tried (or managed) to throw this one back */ tried?: boolean }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number; /** a burning barricade placed in the scenery: harmless, burns until a firefighter puts it out */ ambient?: boolean }
 /** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
 export type NpcRole = 'civilian' | 'shopkeeper' | 'helper' | 'patron' | 'police';
@@ -103,7 +107,7 @@ export interface Projectile { id: number; owner: number; x: number; y: number; z
 export interface Drop { id: number; x: number; z: number; amount: number; t: number }
 export interface Truck { x: number; z: number; facing: number; seg: number; done: boolean; rewarded: boolean; waitT: number; active: boolean; blocked: boolean }
 
-export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm' | 'gasThrow' | 'gasLand';
+export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm' | 'gasThrow' | 'gasLand' | 'flashBang' | 'throwBack';
 export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att'; id?: number }
 
 export interface GameOptions {
@@ -133,6 +137,7 @@ export class Game {
   fires: Fire[] = [];
   gas: Gas[] = [];
   gasReadyAt = 0;
+  flashReadyAt = 0;
   projectiles: Projectile[] = [];
   npcs: Npc[] = [];
   readonly difficulty: Difficulty;
@@ -234,7 +239,7 @@ export class Game {
       id: this.nextId++, side, kind, x: p.x, z: p.z, facing: 0, r: st.radius, variant: Math.floor(this.rng.next() * 1e6),
       state: side === 'def' ? 'idle' : 'approach', stateT: 0, path: null, pi: 0, goal: null, repathT: 0, moving: false, speedNow: 0,
       targetStore: -1, exitId: '', carrying: 0, pending: 0, carryStore: -1, capacity: 0, detectedUntil: -1, camSeen: 0, heldBy: -1, holdT: 0,
-      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, gasT: 0, gasThrowAt: -9, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
+      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, gasT: 0, gasThrowAt: -9, throwBackAt: -9, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
       home: { x: p.x, z: p.z }, engage: -1, escortOf: -1, fireId: -1, selected: false, chaseT: 0, escortSolo: false,
     };
   }
@@ -278,6 +283,7 @@ export class Game {
   speedOf(u: Unit): number {
     const base = (BALANCE.units[u.kind] as { speed: number }).speed;
     let s = base;
+    if (u.side === 'def' && this.inGas(u.x, u.z, 'def')) s *= BALANCE.tearGas.slow; // the police caught in their own gas
     if (u.side === 'att') {
       if (u.carrying > 0) s *= BALANCE.loadedSpeedFactor;
       if (this.inGas(u.x, u.z)) s *= BALANCE.tearGas.slow; // eyes streaming, coughing
@@ -837,6 +843,7 @@ export class Game {
 
   private stepDefender(u: Unit, dt: number) {
     u.stateT += dt;
+    if (u.staggerUntil > this.time) { u.moving = false; return; } // blinded by a flashbang thrown back at them
     const sp = this.speedOf(u);
     if (u.kind === 'firefighter') { this.stepFirefighter(u, dt, sp); return; }
     switch (u.state) {
@@ -1008,41 +1015,81 @@ export class Game {
       .sort((a, b) => (a.kind === 'shield' ? 0 : 6) + Math.hypot(a.x - x, a.z - z) - ((b.kind === 'shield' ? 0 : 6) + Math.hypot(b.x - x, b.z - z)));
     return c[0] ?? null;
   }
-  canTearGas(): ActionResult {
-    const T = BALANCE.tearGas;
+  canTearGas(kind: 'gas' | 'flash' = 'gas'): ActionResult {
+    const T = kind === 'gas' ? BALANCE.tearGas : BALANCE.flashBang; const name = kind === 'gas' ? 'Tear gas' : 'Flashbang';
+    const ready = kind === 'gas' ? this.gasReadyAt : this.flashReadyAt;
     if (this.side !== 'defence' || this.over) return { ok: false };
-    if (this.phase !== 'wave') return { ok: false, reason: 'Tear gas only during a wave' };
-    if (this.time < this.gasReadyAt) return { ok: false, reason: `Tear gas ready in ${Math.ceil(this.gasReadyAt - this.time)} s` };
+    if (this.phase !== 'wave') return { ok: false, reason: `${name} only during a wave` };
+    if (this.time < ready) return { ok: false, reason: `${name} ready in ${Math.ceil(ready - this.time)} s` };
     if (this.budget < T.cost) return { ok: false, reason: 'Insufficient budget' };
     if (!this.defenders().some((d) => d.kind === 'shield' || d.kind === 'security')) return { ok: false, reason: 'Needs an officer to throw it' };
     return { ok: true };
   }
-  tearGas(x: number, z: number): ActionResult {
-    const ok = this.canTearGas(); if (!ok.ok) return ok.reason ? this.deny(ok.reason) : ok;
-    const T = BALANCE.tearGas;
+  tearGas(x: number, z: number): ActionResult { return this.throwGrenade('gas', x, z); }
+  flashBang(x: number, z: number): ActionResult { return this.throwGrenade('flash', x, z); }
+  throwGrenade(kind: 'gas' | 'flash', x: number, z: number): ActionResult {
+    const ok = this.canTearGas(kind); if (!ok.ok) return ok.reason ? this.deny(ok.reason) : ok;
+    const T = kind === 'gas' ? BALANCE.tearGas : BALANCE.flashBang;
     const by = this.gasThrower(x, z); if (!by) return this.deny(`No officer within ${T.range} m`);
-    this.budget -= T.cost; this.gasReadyAt = this.time + T.cooldown;
+    this.budget -= T.cost; if (kind === 'gas') this.gasReadyAt = this.time + T.cooldown; else this.flashReadyAt = this.time + T.cooldown;
     by.gasThrowAt = this.time; by.facing = Math.atan2(x - by.x, z - by.z);
-    this.gas.push({ id: this.nextId++, x, z, fromX: by.x, fromZ: by.z, t: 0, landed: false, r: 0, by: by.id });
-    this.emit({ type: 'gasThrow', text: `Tear gas (-${T.cost})`, x: by.x, z: by.z, amount: T.cost });
+    this.gas.push({ id: this.nextId++, x, z, fromX: by.x, fromZ: by.z, t: 0, landed: false, r: 0, by: by.id, kind, against: 'att' });
+    this.emit({ type: 'gasThrow', text: `${kind === 'gas' ? 'Tear gas' : 'Flashbang'} (-${T.cost})`, x: by.x, z: by.z, amount: T.cost });
     return { ok: true };
   }
-  inGas(x: number, z: number) { return this.gas.some((g) => g.landed && (g.x - x) ** 2 + (g.z - z) ** 2 < g.r * g.r); }
+  /** inside a tear gas cloud that hurts this side (default: the rioters) */
+  inGas(x: number, z: number, side: 'att' | 'def' = 'att') { return this.gas.some((g) => g.kind === 'gas' && g.against === side && g.landed && (g.x - x) ** 2 + (g.z - z) ** 2 < g.r * g.r); }
   private gasWork(u: Unit) { return this.inGas(u.x, u.z) ? BALANCE.tearGas.workMul : 1; }
   private stepGas(dt: number) {
     const T = BALANCE.tearGas;
+    const F = BALANCE.flashBang;
     for (const g of this.gas) {
       g.t += dt;
-      if (!g.landed && g.t >= T.flight) { g.landed = true; g.t = 0; this.emit({ type: 'gasLand', text: 'Tear gas', x: g.x, z: g.z }); }
-      if (g.landed) g.r = T.radius * Math.min(1, g.t / T.grow) * (g.t > T.life - 3 ? Math.max(0, (T.life - g.t) / 3) : 1);
+      if (!g.landed && g.t >= T.flight) { g.landed = true; g.t = 0; if (g.kind === 'gas') this.emit({ type: 'gasLand', text: 'Tear gas', x: g.x, z: g.z }); }
+      if (!g.landed) continue;
+      // a rioter right next to a fresh grenade may grab it and throw it back at the police
+      if (!g.tried && g.against === 'att' && g.t > 0.35) { g.tried = true; this.tryThrowBack(g); if (!g.landed) continue; }
+      if (g.kind === 'gas') g.r = T.radius * Math.min(1, g.t / T.grow) * (g.t > T.life - 3 ? Math.max(0, (T.life - g.t) / 3) : 1);
+      else if (g.t >= F.fuse && g.r >= 0) { this.flashGoesOff(g); g.r = -1; }
     }
-    this.gas = this.gas.filter((g) => !g.landed || g.t < T.life);
+    this.gas = this.gas.filter((g) => !g.landed || (g.kind === 'gas' ? g.t < T.life : g.r >= 0));
     for (const a of this.attackers()) {
       if (!this.inGas(a.x, a.z)) { a.gasT = Math.max(0, a.gasT - dt * 0.5); continue; }
       const was = a.gasT; a.gasT += dt;
       // some give up: empty-handed rioters who were still on their way run off the map
       if (was < T.panicAfter && a.gasT >= T.panicAfter && a.carrying === 0 && (a.state === 'approach' || a.state === 'barrier') && this.rng.next() < T.panicChance) {
         a.state = 'flee'; a.targetStore = -1; this.setAttGoal(a);
+      }
+    }
+  }
+
+  private tryThrowBack(g: Gas) {
+    const F = BALANCE.flashBang;
+    const a = this.attackers().filter((u) => u.heldBy < 0 && u.restrainBy < 0 && u.staggerUntil <= this.time && ['approach', 'extract', 'barrier', 'breach', 'flee'].includes(u.state) && Math.hypot(u.x - g.x, u.z - g.z) < F.throwBackRange)
+      .sort((p, q) => Math.hypot(p.x - g.x, p.z - g.z) - Math.hypot(q.x - g.x, q.z - g.z))[0];
+    if (!a || this.rng.next() >= (a.kind === 'thrower' ? F.throwerThrowBack : F.throwBackChance)) return;
+    // the nearest officer is the target; it lands at his feet (a little short)
+    const cops = this.defenders().filter((d) => d.kind !== 'firefighter' && Math.hypot(d.x - a.x, d.z - a.z) < F.throwBackRangeOut);
+    const t = cops.sort((p, q) => Math.hypot(p.x - a.x, p.z - a.z) - Math.hypot(q.x - a.x, q.z - a.z))[0];
+    if (!t) return;
+    const d = Math.hypot(t.x - a.x, t.z - a.z) || 1; const k = Math.max(0, (d - 0.8) / d);
+    const land = this.nav.nearestWalkable(a.x + (t.x - a.x) * k, a.z + (t.z - a.z) * k, 2) ?? { x: t.x, z: t.z };
+    g.fromX = a.x; g.fromZ = a.z; g.x = land.x; g.z = land.z; g.t = 0; g.landed = false; g.r = 0; g.against = 'def'; g.by = a.id;
+    a.throwBackAt = this.time; a.staggerUntil = this.time + 0.5; a.facing = Math.atan2(t.x - a.x, t.z - a.z);
+    this.emit({ type: 'throwBack', text: `A rioter threw the ${g.kind === 'gas' ? 'tear gas' : 'flashbang'} back!`, x: a.x, z: a.z, side: 'att' });
+  }
+
+  /** the flashbang goes off: blinding flash and bang; the side it is aimed at is stunned for a moment, some rioters flee */
+  private flashGoesOff(g: Gas) {
+    const F = BALANCE.flashBang;
+    this.emit({ type: 'flashBang', text: 'Flashbang', x: g.x, z: g.z, side: g.against === 'att' ? 'def' : 'att' });
+    for (const u of this.units) {
+      if ((g.against === 'att') !== (u.side === 'att')) continue;
+      const d = Math.hypot(u.x - g.x, u.z - g.z); if (d > F.radius) continue;
+      u.staggerUntil = Math.max(u.staggerUntil, this.time + F.stun * (1 - (d / F.radius) * 0.5)); u.moving = false;
+      if (u.side === 'att') {
+        u.detectedUntil = Math.max(u.detectedUntil, this.time + 6);
+        if (u.carrying === 0 && (u.state === 'approach' || u.state === 'barrier') && this.rng.next() < F.panicChance) { u.state = 'flee'; u.targetStore = -1; this.setAttGoal(u); }
       }
     }
   }
@@ -1078,7 +1125,7 @@ export class Game {
 
   private stepAttacker(u: Unit, dt: number) {
     u.stateT += dt;
-    if (u.staggerUntil > this.time && (u.state === 'approach' || u.state === 'extract')) { u.moving = false; return; } // reeling from a baton strike
+    if (u.staggerUntil > this.time && ['approach', 'extract', 'breach', 'barrier', 'collect', 'flee'].includes(u.state)) { u.moving = false; return; } // reeling from a baton strike or a flashbang
     const sp = this.speedOf(u);
     switch (u.state) {
       case 'approach': {

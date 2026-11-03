@@ -10,7 +10,7 @@
 export type Cue =
   | 'click' | 'buy' | 'deny' | 'intercept' | 'extract' | 'breach' | 'wave' | 'win' | 'lose' | 'fire' | 'upgrade' | 'held'
   | 'glass' | 'barrierBroken' | 'impact' | 'release' | 'extinguished' | 'supply' | 'dispatch' | 'collect' | 'recovered' | 'place'
-  | 'gasThrow' | 'gasLand' | 'strike' | 'scream';
+  | 'gasThrow' | 'gasLand' | 'strike' | 'scream' | 'flashBang' | 'throwBack';
 
 export interface Listener { pan: number; gain: number }
 export interface AmbienceState {
@@ -38,7 +38,7 @@ export class Sfx {
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
     'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton',
-    'win_sting', 'vo_win_nl', 'vo_win_en'] as const;
+    'win_sting', 'vo_win_nl', 'vo_win_en', 'flashbang'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
@@ -208,6 +208,13 @@ export class Sfx {
       case 'gasLand': for (let i = 0; i < 3; i++) this.tone(o, rnd(1800, 2600), 0.06, 'triangle', 0.08 * g, { delay: i * 0.13 }); this.burst(o, 2.2, 0.22 * g, { type: 'highpass', freq: 3000, attack: 0.15, delay: 0.3 }); break; // clatter + hiss
       case 'strike': this.thud(o, g * 0.7); break;
       case 'scream': this.scream(o, g); break;
+      case 'flashBang': // sharp crack, low thump and a ringing tone that fades (stun grenade)
+        this.burst(o, 0.22, 0.95 * g, { type: 'highpass', freq: 900, attack: 0.002 });
+        this.burst(o, 0.6, 0.8 * g, { type: 'lowpass', freq: 260, src: this.brown, attack: 0.003 });
+        this.tone(o, 62, 0.45, 'sine', 0.55 * g, { slide: -30 });
+        this.tone(o, 3700, 2.2, 'sine', 0.045 * g, { attack: 0.08, delay: 0.1 });
+        break;
+      case 'throwBack': for (let i = 0; i < 2; i++) this.tone(o, rnd(2000, 2900), 0.06, 'triangle', 0.07 * g, { delay: i * 0.1 }); this.crowdShout(o, 0.7 * g); break;
       case 'wave': this.crowdShout(o, 1.3); this.crowdShout(this.out(this.world, rnd(-0.6, 0.6)), 0.8); break;
       case 'win': this.stinger(o, [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]], 0.13); break;
       case 'lose': this.stinger(o, [[392, 466, 587], [349, 415, 523], [262, 311, 392]], 0.13); break;
@@ -233,6 +240,8 @@ export class Sfx {
       case 'gasLand': { const a = this.smp('cough', o, v * 0.7, { delay: 1.2 }); const b = this.smp('scream', o, v * 0.6, { delay: 0.5 }); this.smp('gas_hiss', o, v * 0.5); return a || b; }
       case 'strike': return this.smp('baton', o, v * 0.9);
       case 'scream': return this.smp('scream', o, v * 0.7);
+      case 'flashBang': { if (!this.smp('flashbang', o, v * 1.1)) return false; this.tone(o, 3700, 2.2, 'sine', 0.035 * g, { attack: 0.1, delay: 0.15 }); return true; } // recording plus a faint ear-ringing
+      case 'throwBack': { const a = this.smp('riot_yell', o, v * 0.6, { jitter: 0.1 }); for (let i = 0; i < 2; i++) this.tone(o, rnd(2000, 2900), 0.06, 'triangle', 0.06 * g, { delay: 0.15 + i * 0.1 }); return a; }
       case 'wave': { // the riot starts: an angry roar rolls in, a bottle smashes somewhere
         const a = this.smp('riot_yell', this.out(this.world, rnd(-0.5, 0.5)), 0.3, { jitter: 0.05 }); const b = this.smp('crowd_shout', o, 0.22, { delay: 0.35 });
         this.smp('glass', this.out(this.world, rnd(-0.8, 0.8)), 0.12, { delay: rnd(0.8, 1.6) }); return a || b; }

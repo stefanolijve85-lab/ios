@@ -77,6 +77,29 @@ function crumpled(geo: THREE.BufferGeometry, amount: number, seed: number) {
   for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + r() * amount * 0.6, p.getY(i) + r() * amount * 2, p.getZ(i) + r() * amount * 0.6);
   geo.computeVertexNormals(); return geo;
 }
+/** flashbang canister (reference image): dark steel body perforated with round ports, ribbed end caps, fuse head with
+ *  a spoon lever and pull ring; shown about 2.5x real size so it reads from the game camera */
+let FLASH_PROTO: THREE.Group | null = null;
+function flashbangModel(): THREE.Object3D {
+  if (!FLASH_PROTO) {
+    const g = new THREE.Group();
+    const c = document.createElement('canvas'); c.width = 128; c.height = 64; const x = c.getContext('2d')!;
+    x.fillStyle = '#3c3c3e'; x.fillRect(0, 0, 128, 64); for (let i = 0; i < 400; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? 0 : 255},${Math.random() < 0.5 ? 0 : 255},255,0.05)`; x.fillRect(Math.random() * 128, Math.random() * 64, 2, 2); }
+    x.fillStyle = '#0b0b0c'; for (let col = 0; col < 8; col++) for (let row = 0; row < 3; row++) { x.beginPath(); x.arc(8 + col * 16, 12 + row * 20, 5, 0, Math.PI * 2); x.fill(); }
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const steel = new THREE.MeshStandardMaterial({ color: 0x5a5a5c, roughness: 0.45, metalness: 0.75 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.12, 16, 1, true), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5, metalness: 0.7, side: THREE.DoubleSide }));
+    g.add(body);
+    for (const y of [-0.068, 0.068]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.028, 8), steel); cap.position.y = y; g.add(cap); }
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.026, 0.03, 10), steel); neck.position.y = 0.097; g.add(neck);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.035), steel); head.position.y = 0.122; g.add(head);
+    const spoon = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.15, 0.022), steel); spoon.position.set(0.052, 0.045, 0); spoon.rotation.z = -0.12; g.add(spoon);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0045, 6, 18), steel); ring.position.set(0.045, 0.11, 0.02); ring.rotation.y = Math.PI / 2; g.add(ring);
+    g.scale.setScalar(2.5); g.traverse((o) => { (o as THREE.Mesh).castShadow = true; });
+    FLASH_PROTO = g;
+  }
+  return FLASH_PROTO.clone();
+}
 /** a steel crowd barrier lying flat on the ground: frame plus vertical bars, merged into one geometry */
 function fallenBarrierGeometry(): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
@@ -172,6 +195,7 @@ export class MatchView {
       this.post = new Post(this.renderer, this.scene, this.camera);
     }
     this.fx = new Effects(this.scene, reducedFx);
+    if (!reducedFx) { this.flashLight = new THREE.PointLight(0xfff6e8, 0, 22, 1.6); this.scene.add(this.flashLight); }
     this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));
     this.destMarker.position.y = 0.05; this.scene.add(this.destMarker);
@@ -403,7 +427,35 @@ export class MatchView {
     return { moving: m.on, speed: m.v };
   }
 
-  private gasVis = new Map<number, { can: THREE.Mesh; haze: THREE.Mesh; ring: THREE.Mesh }>();
+  // ---- flashbang going off: a blinding white flash (light, sprite, sparks, white smoke) and a white-out on screen
+  private flashLight: THREE.PointLight | null = null; private flashSprite: THREE.Sprite | null = null; private flashT = 9; private flashOverlay: HTMLDivElement | null = null;
+  flashBang(x: number, z: number) {
+    if (!this.flashSprite) {
+      this.flashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture('rgba(255,255,255,1)', 'rgba(255,250,235,0)'), blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true }));
+      this.flashSprite.renderOrder = 20; this.scene.add(this.flashSprite);
+    }
+    this.flashSprite.position.set(x, 1.0, z); this.flashT = 0;
+    if (this.flashLight) this.flashLight.position.set(x, 1.4, z);
+    this.fx.event(`flash:${x.toFixed(1)}:${z.toFixed(1)}:${this.time.toFixed(2)}`, 'sparks', x, z);
+    for (let i = 0; i < 3; i++) this.fx.emit(`flsm:${this.time.toFixed(2)}:${i}`, 'smoke', x + (i - 1) * 0.4, 0.4, z, 0.5, 1, 0.8);
+    // the screen whites out briefly, more when the bang is near the middle of the view and the camera is close
+    const sc = this.toScreen(x, 1, z); const w = this.container.clientWidth, h = this.container.clientHeight;
+    const off = Math.hypot(sc.x / w - 0.5, sc.y / h - 0.5); const near = THREE.MathUtils.clamp(40 / this.dist, 0.4, 1.4);
+    const amt = THREE.MathUtils.clamp((0.75 - off) * near, 0, 0.85);
+    if (amt > 0.03) {
+      if (!this.flashOverlay) { this.flashOverlay = document.createElement('div'); this.flashOverlay.style.cssText = 'position:absolute;inset:0;background:#fff;pointer-events:none;opacity:0;z-index:5;'; this.container.appendChild(this.flashOverlay); }
+      const o = this.flashOverlay; o.style.transition = 'none'; o.style.opacity = String(amt); void o.offsetWidth; o.style.transition = 'opacity 0.9s ease-out'; o.style.opacity = '0';
+    }
+  }
+  private stepFlash(dt: number) {
+    if (this.flashT > 2 || !this.flashSprite) { if (this.flashLight) this.flashLight.intensity = 0; if (this.flashSprite) this.flashSprite.visible = false; return; }
+    this.flashT += dt; const k = this.flashT;
+    this.flashSprite.visible = true; const s = 2 + Math.min(1, k / 0.08) * 10; this.flashSprite.scale.set(s, s, 1);
+    (this.flashSprite.material as THREE.SpriteMaterial).opacity = Math.max(0, 1 - k / 0.45);
+    if (this.flashLight) this.flashLight.intensity = Math.max(0, 900 * (1 - k / 0.3));
+  }
+
+  private gasVis = new Map<number, { can: THREE.Object3D; haze: THREE.Mesh; ring: THREE.Mesh }>();
   private hazeTex: THREE.Texture | null = null;
   private drawGas(g: Game) {
     const T = BALANCE.tearGas; const live = new Set<number>();
@@ -416,7 +468,7 @@ export class MatchView {
       live.add(c.id);
       let v = this.gasVis.get(c.id);
       if (!v) {
-        const can = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x5a6068, metalness: 0.6, roughness: 0.4 }));
+        const can = c.kind === 'flash' ? flashbangModel() : new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x5a6068, metalness: 0.6, roughness: 0.4 }));
         const haze = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.hazeTex, color: 0xa9a69e, transparent: true, opacity: 0, depthWrite: false }));
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.94, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf2efe6, transparent: true, opacity: 0, depthWrite: false }));
         haze.renderOrder = 2; ring.renderOrder = 3; this.scene.add(can, haze, ring); v = { can, haze, ring }; this.gasVis.set(c.id, v);
@@ -425,10 +477,11 @@ export class MatchView {
         const k = Math.min(1, c.t / T.flight);
         v.can.position.set(c.fromX + (c.x - c.fromX) * k, 1.5 + Math.sin(k * Math.PI) * 3.2 - k * 1.4, c.fromZ + (c.z - c.fromZ) * k);
         v.can.rotation.set(c.t * 9, 0, c.t * 5);
-        this.fx.emit(`gast:${c.id}`, 'tear_gas', v.can.position.x, v.can.position.y, v.can.position.z, 0.05, 0.8, 0.35); // thin trail
+        if (c.kind === 'gas') this.fx.emit(`gast:${c.id}`, 'tear_gas', v.can.position.x, v.can.position.y, v.can.position.z, 0.05, 0.8, 0.35); // thin trail
         continue;
       }
       v.can.position.set(c.x, 0.06, c.z); v.can.rotation.set(Math.PI / 2, 0, c.id);
+      if (c.kind === 'flash') { v.haze.visible = false; v.ring.visible = false; v.can.rotation.set(Math.PI / 2, 0, c.id + c.t * 0.3); continue; } // lies on the setts, fuse burning
       const life = Math.max(0, 1 - Math.max(0, c.t - (T.life - 3)) / 3);
       // the cloud: jet at the canister plus puffs around it, spread to the cloud's radius
       this.fx.emit(`gasc:${c.id}`, 'tear_gas', c.x, 0.25, c.z, 0.4, 2.2 * life, 1.1);
@@ -441,7 +494,7 @@ export class MatchView {
       // a faint ring on the ground marks where the gas works
       v.ring.position.set(c.x, 0.1, c.z); v.ring.scale.setScalar(Math.max(0.1, c.r)); (v.ring.material as THREE.MeshBasicMaterial).opacity = 0.4 * Math.min(1, c.t / 1.2) * life;
     }
-    for (const [id, v] of this.gasVis) if (!live.has(id)) { this.scene.remove(v.can, v.haze, v.ring); v.can.geometry.dispose(); v.haze.geometry.dispose(); v.ring.geometry.dispose(); this.gasVis.delete(id); }
+    for (const [id, v] of this.gasVis) if (!live.has(id)) { this.scene.remove(v.can, v.haze, v.ring); v.haze.geometry.dispose(); v.ring.geometry.dispose(); this.gasVis.delete(id); }
   }
 
   /** a scenery fire keeps burning until a firefighter has put out the game fire at that spot */
@@ -636,6 +689,7 @@ export class MatchView {
     this.stepBackdrop(g, dt);
     this.stepLitter(g, dt);
     this.stepRiotFires(g, dt);
+    this.stepFlash(dt);
     // keyboard pan
     const kp = this.dist * 0.9 * dt;
     if (this.keys.has('a') || this.keys.has('arrowleft')) this.target.x -= kp;
@@ -684,6 +738,8 @@ export class MatchView {
       let action = u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0;
       if (u.kind === 'shield' && g.time - u.strikeAt < 0.6) { pose = 'strike'; action = (g.time - u.strikeAt) / 0.6; } // baton swing
       if (u.side === 'def' && g.time - u.gasThrowAt < BALANCE.throw.duration) { pose = 'throw'; action = (g.time - u.gasThrowAt) / BALANCE.throw.duration; } // lobs the canister
+      if (u.side === 'att' && g.time - u.throwBackAt < BALANCE.throw.duration * 0.6) { pose = 'throw'; action = 0.4 + 0.6 * ((g.time - u.throwBackAt) / (BALANCE.throw.duration * 0.6)); } // hurls the grenade back
+      else if (u.staggerUntil > g.time && pose !== 'strike' && pose !== 'throw') pose = u.side === 'att' ? 'held' : 'brace'; // blinded and reeling
       h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);

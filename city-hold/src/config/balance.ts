@@ -47,6 +47,9 @@ export const BALANCE = {
   barrier: { hp: 60, concreteHp: 120, extraPathCost: 14 },
   /** tear gas: thrown by an officer at a tapped spot; slows rioters, halves their work, scares some off (defence only) */
   tearGas: { cost: 150, cooldown: 22, range: 22, radius: 4.5, flight: 0.9, grow: 1.6, life: 14, slow: 0.55, workMul: 0.5, panicAfter: 0.8, panicChance: 0.35 },
+  /** flashbang: thrown like tear gas; after a short fuse it goes off with a blinding flash and bang that stuns everyone of the
+   *  other side nearby. Rioters can grab a grenade (gas or flash) that lands next to them and throw it back at the police. */
+  flashBang: { cost: 120, cooldown: 18, range: 22, radius: 6, fuse: 0.75, stun: 2.6, panicChance: 0.3, throwBackRange: 2.4, throwBackChance: 0.22, throwerThrowBack: 0.55, throwBackRangeOut: 16 },
   camera: { radius: 12, detectDelay: 1.0, wideRadius: 18, fastDelay: 0.25, responseBoost: 1.5, alarmResponders: 2, alarmRange: 40 },
   unloadedSightDetectDelay: 0.6,
   fire: { storeDamagePerSec: 1.2, vandalIgniteChance: 0.55, max: 4, groundBurnSec: 5, scorchAfterSec: 2 },

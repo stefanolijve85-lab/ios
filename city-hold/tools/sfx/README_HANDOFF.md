@@ -58,3 +58,9 @@ Download each to `public/audio/<name>.mp3` (the game falls back to the old chime
 | vo_win_nl | jq5Va6P4z0r6ORYwAl6v | IWlr3cVNepceEYDcHuDo | "Missie volbracht. Alle winkels zijn beveiligd." (take 1) |
 | vo_win_en | m15mEq50wctVxroHhCXY | 83ZCCA7nHsIITOERw6ar | "Mission accomplished. All stores secured." (take 1) |
 | win_sting | U6gQLgy8wd4t73104ju3 | J63GgYIpJ7vrrhhwbIxB | 4 s drum hit, brass swell, sirens fading |
+
+## Batch 4 (flashbang) — same flow, same steps
+
+| name | session id | generation id | notes |
+|---|---|---|---|
+| flashbang | rZSBEotbftXPDtV2CSsg | tcoj6Z56G58gztVi6jgW | 2.5 s: canister clink, bang with street echo, ear ringing (synth stand-in until downloaded) |
