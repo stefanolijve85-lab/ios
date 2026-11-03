@@ -124,6 +124,7 @@ export const PARIS: MapDef = {
     { id: 'L4', x: -28.5, z: 9, size: 'large', rot: 90 },
   ],
   van: { x: 22.6, z: 1.5, rot: 0 },
+  fireEngine: { x: 15.6, z: 6.9, rot: 90 }, // along the kerb of the foreground block, facing the cross street
   defenderSpawn: { x: 19.2, z: 0.5 }, // far enough from the foreground block that its roof never hides the staging team
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)

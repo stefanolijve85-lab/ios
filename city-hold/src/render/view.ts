@@ -18,6 +18,7 @@ import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
 import { arrowTexture } from './textures';
 import { BALANCE } from '../config/balance';
+import { FireCrew } from './fireCrew';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export type Pick =
@@ -118,6 +119,7 @@ export class MatchView {
   private lastDist = 0;
   readonly world: WorldHandles;
   readonly fx: Effects;
+  private fireCrew: FireCrew;
   target = new THREE.Vector2();
   dist = 50;
   private minDist = 13; private maxDist = 78;
@@ -195,6 +197,7 @@ export class MatchView {
       this.post = new Post(this.renderer, this.scene, this.camera);
     }
     this.fx = new Effects(this.scene, reducedFx);
+    this.fireCrew = new FireCrew(this.scene, map, this.fx);
     if (!reducedFx) { this.flashLight = new THREE.PointLight(0xfff6e8, 0, 22, 1.6); this.scene.add(this.flashLight); }
     this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));
@@ -869,7 +872,7 @@ export class MatchView {
     // decorative fires (burning barricade far up the side street): flames, smoke and flicker, never part of the game
     this.world.ambientFires.forEach((f, i) => { if (!this.ambientBurning(g, f)) return; this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); this.fx.emit(`plume:amb${i}`, 'plume', f.x, 3.5, f.z, 1, 0.8, 1.3); });
     this.fx.setFireLights([...activeFires.filter((f) => !f.ambient), ...this.world.ambientFires.filter((f) => this.ambientBurning(g, f))], this.time);
-    for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }
+    this.fireCrew.update(g, this.humans, dt, this.time); // engine, hose line, second man and water jet (scenery)
     (window as unknown as { __fx?: unknown }).__fx = this.fx;
     // dropped goods markers
     const dseen = new Set<number>();

@@ -278,7 +278,7 @@ export const SAOPAULO: MapDef = {
     { id: 'p5', x: -14, z: -26, size: 'small', rot: 0 }, { id: 'p6', x: 14, z: -4, size: 'small', rot: 0 },
     { id: 'L1', x: -26, z: 10, size: 'large', rot: 90 }, { id: 'L2', x: 0, z: 18, size: 'large', rot: 0 }, { id: 'L3', x: -14, z: -32, size: 'large', rot: 90 },
   ],
-  van: { x: 12, z: 3, rot: 90 }, defenderSpawn: { x: 8, z: 4 },
+  van: { x: 12, z: 3, rot: 90 }, fireEngine: { x: 23.5, z: 6, rot: 0 }, defenderSpawn: { x: 8, z: 4 },
   lowSight: [],
   loadingLane: { x0: 20.2, z0: -28, x1: 25.8, z1: -14 },
   supply: { route: [{ x: 23, z: 23 }, { x: 23, z: -21 }, { x: 23, z: -35 }], loadIndex: 1 },

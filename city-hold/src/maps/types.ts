@@ -106,6 +106,8 @@ export interface MapDef {
   entries: EntryDef[];
   sockets: SocketDef[];
   van: { x: number; z: number; rot: number };
+  /** where the fire engine parks (scenery; defaults to behind the van) */
+  fireEngine?: { x: number; z: number; rot: number };
   defenderSpawn: Vec2;
   /** reduced detection under covered areas */
   lowSight: Rect[];
