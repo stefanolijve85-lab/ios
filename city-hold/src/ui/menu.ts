@@ -170,38 +170,24 @@ export class Menu {
     document.body.appendChild(el);
     const v = el.querySelector('video')!;
     const soundBtn = el.querySelector<HTMLButtonElement>('.rm-intro-sound')!;
-    // the menu music plus a low riot ambience under the intro. Browsers only allow sound after a tap: if autoplay with
-    // sound is refused, the first tap turns the sound on (and keeps the intro running); after that a tap skips it.
+    // the mission track and a riot ambience under the intro (both through the music module, which routes them via Web
+    // Audio so they fade on iPhone too). Phones only allow sound after a released tap: until then a button asks for one;
+    // a tap on the video only turns the sound on, leaving the intro is Overslaan (or the end of the video)
     const vol = this.host.progress().settings.volume ?? 0.6;
-    const riot = new Audio('audio/riot_loop.mp3'); riot.loop = true; riot.volume = 0;
-    let soundOn = false; let fadeT = 0;
-    const fadeTo = (target: number, ms: number, then?: () => void) => {
-      cancelAnimationFrame(fadeT); const from = riot.volume; const t0 = performance.now();
-      const step = (t: number) => { const k = Math.min(1, (t - t0) / ms); riot.volume = Math.max(0, Math.min(1, from + (target - from) * k)); if (k < 1) fadeT = requestAnimationFrame(step); else then?.(); };
-      fadeT = requestAnimationFrame(step);
-    };
-    const startSound = () => {
-      if (soundOn || vol <= 0) return Promise.resolve(soundOn);
-      return riot.play().then(() => { soundOn = true; soundBtn.hidden = true; fadeTo(0.3 * vol, 1500); return true; }).catch(() => false);
-    };
-    // the intro runs on the (tenser) mission track; the menu crossfades back to its own music when the intro ends
-    setTimeout(() => { if (!done) { music.play('mission'); music.setIntensity(1); } }, 0);
     let done = false;
+    setTimeout(() => { if (!done) { music.play('mission'); music.setIntensity(1); music.ambience('riot', 0.3 * vol); } }, 0);
+    if (!music.isUnlocked && vol > 0) setTimeout(() => { if (!done && !music.isUnlocked) soundBtn.hidden = false; }, 300);
     const close = () => {
       if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
-      music.setIntensity(0.4); music.play('menu');
-      fadeTo(0, 900, () => riot.pause()); // the riot fades out, the menu music carries on
+      music.ambience('riot', 0); music.setIntensity(0.4); music.play('menu'); // the riot fades out, the menu music takes over
       setTimeout(() => el.remove(), 600);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); else if (!soundOn) void startSound(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     v.addEventListener('ended', close); v.addEventListener('error', close);
-    el.querySelector('.rm-intro-skip')!.addEventListener('pointerdown', (e) => { e.stopPropagation(); close(); });
-    // a tap on the video only turns the sound on; leaving the intro is the Overslaan button (or the end of the video)
-    el.addEventListener('pointerdown', () => { if (!soundOn) void startSound(); });
+    el.addEventListener('click', () => { soundBtn.hidden = true; }); // the music module itself starts the sound on this tap
+    el.querySelector('.rm-intro-skip')!.addEventListener('click', (e) => { e.stopPropagation(); close(); });
     window.addEventListener('keydown', onKey, true);
     void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
-    void startSound().then((ok) => { if (!ok && vol > 0) soundBtn.hidden = false; });
-    soundBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); void startSound(); });
   }
 
   // ---------------------------------------------------------------- 03 city selection
