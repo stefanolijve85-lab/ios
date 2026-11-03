@@ -213,10 +213,9 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .recruit-pop small { font-size: 12px; color: var(--muted); }
 @keyframes recruitBob { from { transform: translateY(0) rotate(-1.5deg); } to { transform: translateY(-6px) rotate(1.5deg); } }
 
-/* phones upright: the start-wave button spans the whole width under the other actions */
-@media (max-width: 700px) and (orientation: portrait) {
-  .actions .btnrow [data-a="startwave"], .actions .btnrow [data-a="dispatch"] { flex: 1 0 100%; width: 100%; min-height: 44px; font-size: 15px; }
-}
+/* the start-wave button spans the whole width under the other actions (iPad and phones upright; phones sideways
+   keep their compact strip below) */
+.actions .btnrow [data-a="startwave"], .actions .btnrow [data-a="dispatch"] { flex: 1 0 100%; width: 100%; min-height: 46px; font-size: 16px; letter-spacing: .04em; }
 /* phones sideways: the card row hugs the bottom edge (no stretched cards) so the street gets the screen */
 @media (max-height: 500px) and (orientation: landscape) {
   .bottom { align-items: flex-end; padding: 2px 6px 3px; background: linear-gradient(0deg, rgba(5, 9, 18, 0.85), rgba(5, 9, 18, 0)); }

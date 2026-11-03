@@ -266,7 +266,9 @@ export class FireCrew {
     const fire = u.state === 'extinguish' ? g.fires.find((f) => f.id === u.fireId && !f.out) : undefined;
     const home = u.home ?? { x: pos.x, z: pos.z };
     const away = Math.hypot(pos.x - home.x, pos.z - home.z) > 1.6;
-    const out = !!fire || (c.crumbs.length > 0 && away);
+    // the line comes off the engine as soon as he sets out: walking to a fire, or sent somewhere (then he picks up the
+    // nearest fire there); walking back over it reels it in
+    const out = !!fire || (away && (c.crumbs.length > 0 || u.state === 'move' || u.state === 'extinguish'));
     const outlet = this.outletWorld(new THREE.Vector3());
     // lay the line behind him: a breadcrumb every 0.7 m; walking back over it reels it in
     if (out) {
