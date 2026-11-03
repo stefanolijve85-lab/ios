@@ -131,7 +131,7 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
   .menu { grid-template-columns: 1fr; padding: 12px; }
   .menu h1 { font-size: 32px; }
   .citylist { grid-template-columns: repeat(2, 1fr); }
-  .info { width: 210px; top: auto; bottom: 200px; right: 6px; max-height: 40vh; font-size: 11px; }
+  .info { width: 210px; top: calc(var(--tb, 92px) + 46px); bottom: auto; right: 6px; max-height: 40vh; font-size: 11px; } /* under the top bar, never over the unit cards */
   .info.collapsed { width: auto; }
   .topbar { padding: 4px 6px; }
   .tbtns button { min-width: 36px; }

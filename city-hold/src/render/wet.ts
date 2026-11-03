@@ -16,6 +16,7 @@ const WetShader = {
     varying vec4 vR; varying vec2 vUv; varying vec2 vBig;
     float n2(vec2 p){ return sin(p.x * 5.1 + sin(p.y * 3.7)) * 0.5 + sin(p.y * 4.3 + sin(p.x * 2.9)) * 0.5; }
     void main(){
+      if (vR.w < 0.01) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; } // behind/at the reflection camera: projected lookups blow up
       vec3 st = texture2D(tStone, vUv).rgb;
       float lum = dot(st, vec3(0.333));
       vec2 dist = (st.rg - vec2(0.5)) * 0.045;
@@ -34,7 +35,8 @@ const WetShader = {
       acc = min(acc, vec3(1.1)); // controlled highlights: no blown-out puddles
       float puddle = smoothstep(-0.2, 0.6, n2(vBig * 2.0));
       float wet = strength * mix(0.35, 1.0, puddle) * mix(1.0, 0.55, smoothstep(0.25, 0.6, lum));
-      gl_FragColor = vec4(acc * color * wet, 1.0);
+      vec3 o = acc * color * wet; if (!(o.r == o.r) || !(o.g == o.g) || !(o.b == o.b)) o = vec3(0.0); // never a NaN on mobile GPUs
+      gl_FragColor = vec4(clamp(o, 0.0, 2.0), 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`,

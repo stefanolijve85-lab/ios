@@ -32,6 +32,16 @@ export class Post {
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
     this.composer = new EffectComposer(renderer);
     this.composer.addPass(new RenderPass(scene, camera));
+    // mobile GPUs (iPad/iPhone) can leave a stray NaN or infinite pixel (wet reflections, normal maps at grazing angles);
+    // the bloom then smears it into a white blotch that flashes while panning or zooming. Clean every pixel first.
+    this.composer.addPass(new ShaderPass({
+      uniforms: { tDiffuse: { value: null } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+        void main(){ vec4 c = texture2D(tDiffuse, vUv);
+          if (!(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || !(c.a == c.a)) c = vec4(0.0, 0.0, 0.0, 1.0); // NaN
+          gl_FragColor = vec4(clamp(c.rgb, 0.0, 6.0), clamp(c.a, 0.0, 1.0)); }`,
+    }));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.75, 0.55, 0.82);
     this.composer.addPass(this.bloom);
     this.grade = new ShaderPass(GradeShader);
