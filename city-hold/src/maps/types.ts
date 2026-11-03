@@ -78,7 +78,7 @@ export interface MapDef {
   refImage: string;
   damageImage: string;
   bounds: Rect;
-  ground: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza';
+  ground: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza' | 'copacabana';
   buildings: BuildingDef[];
   /** thin solid walls, quays, railings (h = visual height, default 2.6 m) */
   walls: (Rect & { h?: number })[];

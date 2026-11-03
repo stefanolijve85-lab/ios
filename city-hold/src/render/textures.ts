@@ -23,7 +23,7 @@ const cache = new Map<string, THREE.Texture>();
 function cached(key: string, make: () => THREE.Texture) { let t = cache.get(key); if (!t) { t = make(); cache.set(key, t); } return t; }
 
 /** normal map for the street: each sett is a rounded bump so lamp light glints on individual stones */
-export function groundNormal(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza'): THREE.Texture {
+export function groundNormal(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza' | 'copacabana'): THREE.Texture {
   return cached('gnormal-' + kind, () => {
     const src = (groundTexture(kind).image as HTMLCanvasElement);
     const N = 512; const g = src.getContext('2d')!; const d = g.getImageData(0, 0, N, N).data;
@@ -44,9 +44,23 @@ export function groundNormal(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'p
   });
 }
 
-export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza'): THREE.Texture {
+export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza' | 'copacabana'): THREE.Texture {
   return cached('ground-' + kind, () => {
     const [c, g] = canvas(512, 512);
+    if (kind === 'copacabana') {
+      // Copacabana promenade: black and white Portuguese stone in long waves, each wave a band of small square setts
+      const N = 512, P = 128; // one wave period (tiles seamlessly)
+      const amp = 34, cell = 7;
+      for (let y = 0; y < N; y += cell) for (let x = 0; x < N; x += cell) {
+        const wave = Math.sin(((x + cell / 2) / N) * Math.PI * 2 * 2) * amp; // two waves across the tile
+        const band = Math.floor(((y + cell / 2 + wave) % P + P) % P / (P / 2)); // alternating black / white bands
+        const v = band ? 222 + rnd() * 26 : 26 + rnd() * 22;
+        g.fillStyle = band ? `rgb(${v},${v - 4},${v - 12})` : `rgb(${v},${v},${v + 3})`;
+        g.fillRect(x + 0.8, y + 0.8, cell - 1.6, cell - 1.6); // the grout shows between the stones
+      }
+      g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#5a5650'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'source-over';
+      return tex(c);
+    }
     if (kind === 'asphalt') {
       g.fillStyle = '#4a4d52'; g.fillRect(0, 0, 512, 512);
       for (let i = 0; i < 9000; i++) { const v = 60 + rnd() * 35; g.fillStyle = `rgb(${v},${v + 2},${v + 6})`; g.fillRect(rnd() * 512, rnd() * 512, 2, 2); }

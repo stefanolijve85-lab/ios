@@ -231,9 +231,14 @@ export const BERLIN: MapDef = {
 export const SAOPAULO: MapDef = {
   id: 'saopaulo', city: 'Rio de Janeiro', country: 'Brazil', district: 'Copacabana',
   refImage: 'ui/25_sao_paulo_retail.jpg', damageImage: 'ui/36_sao_paulo_disorder.jpg',
-  bounds: { x0: -32, z0: -36, x1: 32, z1: 24 }, ground: 'stone',
+  bounds: { x0: -32, z0: -36, x1: 32, z1: 24 }, ground: 'copacabana', // the black-and-white wave promenade of Copacabana (city art)
   buildings: [
     { rect: { x0: -10, z0: -30, x1: 20, z1: -10 }, height: 7, style: 'modern', renderInset: 1.6 },
+    // Rio's high-rise skyline behind the forecourt (backdrop, outside the play area)
+    { rect: { x0: -46, z0: -84, x1: -30, z1: -62 }, height: 46, style: 'modern', backdrop: true },
+    { rect: { x0: -24, z0: -92, x1: -6, z1: -66 }, height: 58, style: 'modern', backdrop: true },
+    { rect: { x0: 2, z0: -88, x1: 18, z1: -64 }, height: 40, style: 'modern', backdrop: true },
+    { rect: { x0: 26, z0: -90, x1: 44, z1: -60 }, height: 52, style: 'modern', backdrop: true },
     { rect: { x0: 26, z0: -48, x1: 44, z1: 34 }, height: 7, style: 'modern', renderInset: 1.6 },
     { rect: { x0: -44, z0: -48, x1: -18, z1: 0 }, height: 7, style: 'modern', renderInset: 1.6 },
     { rect: { x0: -18, z0: -48, x1: 20, z1: -34 }, height: 7, style: 'modern', renderInset: 1.6 },
@@ -243,7 +248,8 @@ export const SAOPAULO: MapDef = {
   walls: [{ x0: 19.6, z0: 14, x1: 20, z1: 34 }],
   water: [], bridges: [], arcades: [], islands: [],
   props: [
-    ...trees([[-14, -4], [-4, -4], [6, -4], [-14, 8], [14, 8]], 'palm'),
+    // royal palms along the avenue and around the forecourt, as in the Rio art
+    ...trees([[-14, -4], [-4, -4], [6, -4], [-14, 8], [14, 8], [-22, -6], [-22, 14], [-8, 16], [8, 16], [17, 16], [-26, -14], [17, -2]], 'palm'),
     ...planters([[-4, 6], [4, 6]]),
     ...lamps([[-12, -12], [16, -6], [-12, 12], [17, 6]]),
     { type: 'car', x: -22, z: 3, rot: 90, collide: true, burnable: true },
