@@ -219,10 +219,11 @@ export class Match {
       this.placing = this.placing === kind ? null : kind; this.pending = null; this.view.setGhost(null, null, false);
       this.view.showSockets = this.placing ? (id) => this.game.canPlace(this.placing!, id).ok : null;
       this.view.refreshSockets(this.game);
+      if (this.placing) this.showCardPop(kind);
       if (this.placing) this.toast(`Tap a green socket to place the ${kind === 'concrete' ? 'concrete barrier (large sockets)' : kind}`, 'info');
     } else {
       const r = this.game.buyUnit(kind);
-      if (r.ok) { this.sfx.play('buy'); const u = this.game.defenders()[this.game.defenders().length - 1]; this.view.selected = new Set([u.id]); this.toast(`${KIND_LABEL[kind]} ready at the van — tap the map to move it`, 'good'); }
+      if (r.ok) { this.sfx.play('buy'); this.showCardPop(kind); const u = this.game.defenders()[this.game.defenders().length - 1]; this.view.selected = new Set([u.id]); this.toast(`${KIND_LABEL[kind]} ready at the van — tap the map to move it`, 'good'); }
     }
     this.refreshHud(true);
   }
@@ -410,10 +411,16 @@ export class Match {
 
   /** a short enlarged look at the figure just added to the group (pointer-transparent: never blocks the next tap) */
   private recruitPop: HTMLDivElement | null = null; private recruitT = 0;
-  private showRecruit(img: string | null, label: string) {
+  /** defence: the picked unit or object shown large for a moment, as with the looting crew */
+  private showCardPop(kind: DefKind | BuildKind) {
+    const c = DEF_CARDS.find((d) => d.kind === kind); if (!c) return;
+    const img = kind === 'firefighter' ? `ui/firefighters/${this.game.map.id}.webp` : c.img;
+    this.showRecruit(img, c.label, kind === 'barrier' || kind === 'concrete' || kind === 'camera' ? '' : `+1 · ${this.game.defenders().filter((u) => u.kind === kind).length}`);
+  }
+  private showRecruit(img: string | null, label: string, sub?: string) {
     if (!img) return;
     if (!this.recruitPop) { this.recruitPop = document.createElement('div'); this.recruitPop.className = 'recruit-pop'; this.root.appendChild(this.recruitPop); }
-    const el = this.recruitPop; el.innerHTML = `<img src="${img}" alt=""><b>${label}</b><small>+1 · ${this.game.squad.length}</small>`;
+    const el = this.recruitPop; el.innerHTML = `<img src="${img}" alt=""><b>${label}</b>${(sub ?? `+1 · ${this.game.squad.length}`) ? `<small>${sub ?? `+1 · ${this.game.squad.length}`}</small>` : ''}`;
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     clearTimeout(this.recruitT); this.recruitT = window.setTimeout(() => el.classList.remove('show'), 1100);
   }

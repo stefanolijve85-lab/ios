@@ -84,14 +84,16 @@ export class Sfx {
   }
   private loadErr = new Map<string, string>();
   private playVictory(c: Ctx, voice: boolean): boolean {
-    const o = this.out(this.ui, 0); // not placed in the world: it must be heard whatever the zoom
-    const sting = this.smp('win_sting', o, 0.95, { jitter: 0 }); // was faint on iPad
+    // the sting through its own gain, so it can step back while the voice speaks
+    const stingBus = c.createGain(); stingBus.gain.value = 1; stingBus.connect(this.out(this.ui, 0));
+    const sting = this.smp('win_sting', stingBus, 0.95, { jitter: 0 });
     if (!voice) return sting;
-    // the voice as over a police radio: telephone band (300-3400 Hz), loud and clear over the sting
-    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 280;
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600;
-    hp.connect(lp).connect(this.out(this.ui, 0));
-    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1.5, { jitter: 0, delay: sting ? 0.6 : 0 });
+    // the voice clear and loud on top (only the lowest rumble cut), the sting ducked to a third under it
+    const at = sting ? 0.9 : 0; const t = c.currentTime;
+    if (sting) { stingBus.gain.setValueAtTime(1, t + at - 0.15); stingBus.gain.linearRampToValueAtTime(0.3, t + at); stingBus.gain.setValueAtTime(0.3, t + at + 3.0); stingBus.gain.linearRampToValueAtTime(1, t + at + 3.4); }
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
+    const vbus = c.createGain(); vbus.gain.value = 2.2; hp.connect(vbus).connect(this.out(this.ui, 0));
+    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1, { jitter: 0, delay: at });
     return sting || vo;
   }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }

@@ -209,6 +209,7 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .recruit-pop.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 .recruit-pop img { height: min(34vh, 260px); width: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.6)); animation: recruitBob 1.1s ease-in-out infinite alternate; }
 .recruit-pop b { font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--orange); }
+.side-def .recruit-pop b { color: var(--cyan); }
 .recruit-pop small { font-size: 12px; color: var(--muted); }
 @keyframes recruitBob { from { transform: translateY(0) rotate(-1.5deg); } to { transform: translateY(-6px) rotate(1.5deg); } }
 
