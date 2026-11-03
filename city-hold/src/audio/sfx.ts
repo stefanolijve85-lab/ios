@@ -85,7 +85,7 @@ export class Sfx {
   private loadErr = new Map<string, string>();
   private playVictory(c: Ctx, voice: boolean): boolean {
     const o = this.out(this.ui, 0); // not placed in the world: it must be heard whatever the zoom
-    const sting = this.smp('win_sting', o, 0.6, { jitter: 0 });
+    const sting = this.smp('win_sting', o, 0.95, { jitter: 0 }); // was faint on iPad
     if (!voice) return sting;
     // the voice as over a police radio: telephone band (300-3400 Hz), loud and clear over the sting
     const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 280;
