@@ -130,8 +130,11 @@ const FACADES: Record<BuildingStyle, FacadeStyle> = {
 /** one facade tile = `cols` window bays wide (2 m per bay), `floors` storeys high (3.2 m per storey).
  *  Returns the colour map and a matching emissive map (lit windows) so windows glow at blue hour. */
 const facadePairs = new Map<string, { map: THREE.Texture; emi: THREE.Texture }>();
+let facadeDay = false;
+/** daylight: facade windows are unlit glass reflecting the sky (set before the world is built) */
+export function setFacadeDaylight(day: boolean) { facadeDay = day; }
 function makeFacade(style: BuildingStyle, variant: number) {
-  const key = `${style}-${variant}`;
+  const key = `${style}-${variant}${facadeDay ? '-day' : ''}`;
   const hit = facadePairs.get(key); if (hit) return hit;
   const f = FACADES[style];
   const W = 512, H = 1024; const [c, g] = canvas(W, H); const [ce, ge] = canvas(W, H);
@@ -178,10 +181,11 @@ function makeFacade(style: BuildingStyle, variant: number) {
       g.fillStyle = f.frame; g.fillRect(wx - 8, wy - 8, ww + 16, wh + 12);
       if (noble && style === 'haussmann') { g.beginPath(); g.moveTo(wx - 14, wy - 8); g.lineTo(wx + ww / 2, wy - 30); g.lineTo(wx + ww + 14, wy - 8); g.closePath(); g.fill(); g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(wx - 14, wy - 9, ww + 28, 3); }
       if (style === 'italian' || (ground && style === 'berlin')) { g.fillStyle = f.frame; g.beginPath(); g.arc(wx + ww / 2, wy, ww / 2 + 8, Math.PI, 0); g.fill(); }
-      const lit = rnd() < (ground ? 0.25 : 0.5);
+      const lit = rnd() < (ground ? 0.25 : 0.5) && !facadeDay;
       const warm = rnd();
       const grd = g.createLinearGradient(0, wy, 0, wy + wh);
       if (lit) { grd.addColorStop(0, warm > 0.5 ? '#ffe2a8' : '#ffd08a'); grd.addColorStop(1, warm > 0.5 ? '#d88a40' : '#c47a36'); }
+      else if (facadeDay) { grd.addColorStop(0, '#9fb3c8'); grd.addColorStop(0.45, '#5d6d80'); grd.addColorStop(1, '#2e3640'); } // sky in the glass
       else { grd.addColorStop(0, '#4a5870'); grd.addColorStop(0.5, '#27303f'); grd.addColorStop(1, f.window); }
       g.fillStyle = grd; g.fillRect(wx, wy, ww, wh);
       if (style === 'italian' || (ground && style === 'berlin')) { g.beginPath(); g.arc(wx + ww / 2, wy, ww / 2, Math.PI, 0); g.fill(); }

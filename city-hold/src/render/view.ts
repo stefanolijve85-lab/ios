@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import type { Game, Unit } from '../sim/game';
 import type { MapDef, Vec2 } from '../maps/types';
-import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, noReflection, NO_REFLECT_LAYER, skyTexture, type WorldHandles } from './world';
+import { buildBarrierModel, buildMastModel, buildWorld, setWorldDaylight, buildTruck, noReflection, NO_REFLECT_LAYER, skyTexture, type WorldHandles } from './world';
 import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
@@ -12,7 +12,7 @@ import { IncendiaryPool } from './thrown';
 import { createCharacter, setFireKit, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
 import { buildCar } from './world';
-import { radialTexture } from './textures';
+import { radialTexture, setFacadeDaylight } from './textures';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
@@ -132,6 +132,26 @@ export class MatchView {
   readonly fx: Effects;
   private fireCrew: FireCrew;
   private night = false;
+  private day = false;
+  /** daylight: lamps off, their pools and streaks hidden, self-lit surfaces (windows, paintings, lanterns) toned down.
+   *  Fires, beacons and effects are added later and keep their light. */
+  private toDaylight() {
+    for (const l of this.world.lampLights) l.intensity = 0;
+    // the square is damp, not a black mirror: lighter stone, little metal, a softer sheen
+    const gm = (this.world.ground as THREE.Mesh).material as THREE.MeshStandardMaterial;
+    if (gm?.isMeshStandardMaterial) { gm.color.set(0xeae0d0); gm.metalness = 0.05; gm.envMapIntensity = 0.7; gm.needsUpdate = true; }
+    const seen = new Set<THREE.Material>();
+    this.world.group.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined; if (!m) return;
+      for (const mt of Array.isArray(m) ? m : [m]) {
+        if (mt.userData.lampGlow) { o.visible = false; continue; }
+        if (seen.has(mt)) continue; seen.add(mt);
+        if (mt.userData.dayColor !== undefined) (mt as THREE.MeshBasicMaterial).color.set(mt.userData.dayColor);
+        const st = mt as THREE.MeshStandardMaterial;
+        if (st.isMeshStandardMaterial && st.emissiveIntensity > 0) st.emissiveIntensity *= 0.18;
+      }
+    });
+  }
   /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
    *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
   async warm(): Promise<void> {
@@ -182,7 +202,7 @@ export class MatchView {
   private wet: Reflector | null = null;
   private keys = new Set<string>();
 
-  constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean, timeOfDay: 'evening' | 'night' = 'evening') {
+  constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean, timeOfDay: 'day' | 'evening' | 'night' = 'evening') {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
     // touch tablets at full quality render at 1.5x (a 2x iPad screen is 4x the pixels of 1x: that made play and sound stutter)
     const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
@@ -202,9 +222,10 @@ export class MatchView {
       if (this.disposed) return;
       hdr.mapping = THREE.EquirectangularReflectionMapping;
       const t = pm.fromEquirectangular(hdr).texture; hdr.dispose();
-      this.scene.environment = t; this.scene.environmentIntensity = this.night ? 0.22 : 0.55;
+      this.scene.environment = t; this.scene.environmentIntensity = this.night ? 0.22 : this.day ? 0.9 : 0.55;
     }).catch(() => { /* keep fallback */ });
-    this.scene.background = skyTexture();
+    this.day = timeOfDay === 'day';
+    this.scene.background = skyTexture(this.day);
     this.scene.fog = new THREE.Fog(0x2a3a5c, 115, 260); // haze only far down the side streets: the square itself stays clear (image 01)
     const hemi = new THREE.HemisphereLight(0x8a9ac8, 0x4a3e30, 0.85); this.scene.add(hemi); // blue-hour sky, cool wet ground bounce
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
@@ -218,19 +239,30 @@ export class MatchView {
       this.renderer.toneMappingExposure = 1.15; hemi.intensity = 0.32; hemi.color.set(0x5a6a9a); moon.intensity = 0.32; moon.color.set(0x8fa6e8);
       this.scene.backgroundIntensity = 0.35; (this.scene.fog as THREE.Fog).color.set(0x0e1424);
     }
+    // day: a hazy riot afternoon. The sun takes the moon's place (same shadow setup), the sky is pale, the street lamps
+    // are off and the self-lit windows and paintings are toned right down
+    if (this.day) {
+      this.renderer.toneMappingExposure = 1.0; hemi.intensity = 1.2; hemi.color.set(0xdde4ee); hemi.groundColor.set(0x8a7a64);
+      moon.intensity = 3.0; moon.color.set(0xfff0dc); moon.position.set(35, 70, 30);
+      this.scene.environmentIntensity = 0.6; (this.scene.fog as THREE.Fog).color.set(0xb4bfcc); (this.scene.fog as THREE.Fog).near = 140; (this.scene.fog as THREE.Fog).far = 320;
+    }
     this.camera.layers.enable(NO_REFLECT_LAYER); // the game camera sees everything; the reflection only layer 0
+    setFacadeDaylight(this.day); setWorldDaylight(this.day);
     this.world = buildWorld(map, this.scene, reducedFx);
     if (this.night) for (const l of this.world.lampLights) l.intensity *= 1.5; // the lamps own the night
+    if (this.day) this.toDaylight();
     // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
     for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
     if (!reducedFx) {
       this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
+      if (this.day) (this.wet.material as THREE.ShaderMaterial).uniforms.color.value.set(0x4a4540); // damp, not a mirror, by day
       this.scene.add(this.wet);
       // the reflection is a full redraw of the street: while the camera stands still it is refreshed every third frame
       // (flames and beacons in it still move), while panning or zooming every frame
       { const w = this.wet; const orig = w.onBeforeRender.bind(w); const last = new THREE.Matrix4(); let n = 0;
         w.onBeforeRender = (r, sc, cam, ...rest) => { n++; const still = cam.matrixWorld.equals(last); last.copy(cam.matrixWorld); if (still && n % 3 !== 0) return; orig(r, sc, cam, ...rest); }; }
       this.post = new Post(this.renderer, this.scene, this.camera);
+      if (this.day) this.post.grade.uniforms.day.value = 1;
     }
     this.fx = new Effects(this.scene, reducedFx);
     setFireKit(map.id);
@@ -970,7 +1002,7 @@ export class MatchView {
       // the glow eases off as the camera comes closer, and stays calm while the zoom is still moving
       const near = THREE.MathUtils.clamp((this.dist - this.minDist) / 30, 0, 1);
       const zooming = Math.abs(this.dist - this.lastDist) > 0.05; this.lastDist = this.dist;
-      const wantS = (0.3 + 0.45 * near) * (zooming ? 0.6 : 1) * (this.night ? 1.3 : 1), wantT = 0.82 + (1 - near) * 0.12 + (zooming ? 0.05 : 0);
+      const wantS = (0.3 + 0.45 * near) * (zooming ? 0.6 : 1) * (this.night ? 1.3 : this.day ? 0.45 : 1), wantT = 0.82 + (1 - near) * 0.12 + (zooming ? 0.05 : 0);
       const b = this.post.bloom; b.strength += (wantS - b.strength) * 0.25; b.threshold += (wantT - b.threshold) * 0.25;
       this.post.render(this.time);
     } else this.renderer.render(this.scene, this.camera);

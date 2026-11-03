@@ -530,14 +530,14 @@ function fountainWaterFor(model: THREE.Object3D, parent: THREE.Group, outerR: nu
   const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.06, vy: 0.045 });
   const water = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.86, 56).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: rip, color: 0x8a9a8c, roughness: 0.04, metalness: 0.5, transparent: true, opacity: 0.78, depthWrite: false, emissive: 0x6a5a34, emissiveIntensity: 0.75, envMapIntensity: 2.2 })); // lit golden from below
   water.position.y = waterY; parent.add(water);
-  const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,210,130,0.6)', 'rgba(255,190,110,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,210,130,0.6)', 'rgba(255,190,110,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); glow.userData.lampGlow = true;
   // a ring of warm underwater lamps along the basin wall and a soft glow over the whole pool
   for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2 + 0.3; const d = new THREE.Mesh(new THREE.CircleGeometry(0.95, 20).rotateX(-Math.PI / 2), glow); d.position.set(Math.cos(a) * outerR * 0.7, waterY + 0.012, Math.sin(a) * outerR * 0.7); parent.add(d); }
   const pool = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.86, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,200,120,0.22)', 'rgba(255,190,110,0.05)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  pool.position.y = waterY + 0.008; parent.add(pool);
+  pool.position.y = waterY + 0.008; parent.add(pool); (pool.material as THREE.Material).userData.lampGlow = true;
   // the glow spills onto the setts around the basin
   const spill = new THREE.Mesh(new THREE.RingGeometry(outerR * 0.95, outerR + 3.2, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0.035, depthWrite: false, blending: THREE.AdditiveBlending }));
-  spill.position.y = 0.03; parent.add(spill);
+  spill.position.y = 0.03; parent.add(spill); (spill.material as THREE.Material).userData.lampGlow = true;
   void reducedFx; // the falling sheet is one cheap mesh: shown on phones too, so the water visibly moves everywhere
   if (bowlY > waterY + 0.3) {
     const ft = fallingWaterTexture().clone(); ft.repeat.set(14, 1); ft.needsUpdate = true; animated.push({ tex: ft, vx: 0, vy: 1.4 });
@@ -733,6 +733,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
   const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.17)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  pool.userData.lampGlow = true; // switched off in daylight
   const lampLights: THREE.PointLight[] = [];
   // light pools and wet-street streaks are each merged into one mesh (one draw call each, whatever the lamp count)
   const flat = (w: number, d: number, x: number, y: number, z: number, rotY = 0) => new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).rotateY(rotY).translate(x, y, z);
@@ -744,6 +745,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   for (const s of map.stores) pools.push(flat(s.width + 2, 5, s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4, Math.atan2(s.normal.x, s.normal.z)));
   // long reflections of lamps and shop windows on the wet setts, smeared towards the camera (which never turns)
   const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.85 : 0.8 });
+  streak.userData.lampGlow = true;
   const addStreak = (x: number, z: number, w: number, len: number) => streaks.push(flat(w, len, x, 0.035, z + len / 2 - 0.3));
   for (const lp of lampPos) addStreak(lp.x, lp.z, 1.4, 9);
   // decorative lamp rows down the side streets (images 01/02): instanced poles and lanterns, merged pools and reflections
@@ -751,6 +753,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   if (gl.length) {
     const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.11, 3.8, 6).translate(0, 1.9, 0), new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.5, metalness: 0.6 }), gl.length);
     const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd29a).multiplyScalar(3) }), gl.length * 2);
+    (bulbs.material as THREE.MeshBasicMaterial).userData.dayColor = 0xd8d4c8; // an unlit bulb by day
     const m4 = new THREE.Matrix4();
     gl.forEach((p, i) => {
       poles.setMatrixAt(i, m4.makeTranslation(p.x, 0, p.z));
@@ -774,7 +777,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       if (!me.geometry.attributes.normal) me.geometry.computeVertexNormals();
       const src = me.material as THREE.MeshStandardMaterial; if (!src.isMeshStandardMaterial) return;
       const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.75; mm.metalness = 0;
-      if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.55; } // the texture carries the painting's own night light
+      if (mm.map) { mm.emissive = new THREE.Color(0xffffff); mm.emissiveMap = mm.map; mm.emissiveIntensity = worldDay ? 0.1 : 0.55; } // the texture carries the painting's own night light
       me.material = mm; me.castShadow = !reducedFx; me.receiveShadow = true;
     });
     const holder = new THREE.Group(); const scaled = new THREE.Group(); scaled.scale.setScalar(k); scaled.add(m); holder.add(scaled);
@@ -784,11 +787,14 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // painted facades from the concept art (front faces facing +z), slightly self-lit because the painting carries its own light
   for (const fd of map.facadeDecals ?? []) {
-    new THREE.TextureLoader().loadAsync(fd.texture).then((t) => {
+    // daylight: a day painting of the same facade when there is one (<name>_day.jpg), its tile length from its own aspect
+    const dayTex = worldDay && DAY_FACADES.has(fd.texture) ? fd.texture.replace(/\.jpg$/, '_day.jpg') : null;
+    new THREE.TextureLoader().loadAsync(dayTex ?? fd.texture).then((t) => {
       t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
       const len = fd.x1 - fd.x0;
-      if (fd.tile) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = len / fd.tile; }
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.45, roughness: 0.7 }));
+      const tile = dayTex && fd.tile ? (fd.y1 - fd.y0) * (t.image.width / t.image.height) : fd.tile;
+      if (tile) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = len / tile; }
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, fd.y1 - fd.y0), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: worldDay ? (dayTex ? 0.12 : 0.1) : 0.45, roughness: 0.7 }));
       const c = (fd.x0 + fd.x1) / 2, y = (fd.y0 + fd.y1) / 2;
       if (fd.face === 'x+') { m.rotation.y = Math.PI / 2; m.position.set(fd.z, y, c); }
       else if (fd.face === 'x-') { m.rotation.y = -Math.PI / 2; m.position.set(fd.z, y, c); }
@@ -829,10 +835,16 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   return { group, ground, stores, fadeables, cars, van, vanLights, water, fountainWater, lampLights, animated, decorShops, policeLights, ambientFires: ambientFires.slice(), fireGlows };
 }
 
-export function skyTexture(): THREE.Texture {
+/** daylight mode for things built or loaded after the world is made (set by the view before buildWorld) */
+let worldDay = false;
+export function setWorldDaylight(day: boolean) { worldDay = day; }
+/** facade paintings that have a daylight version next to them (<name>_day.jpg) */
+const DAY_FACADES = new Set(['textures/facades/paris_main.jpg']);
+export function skyTexture(day = false): THREE.Texture {
   const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d')!;
   const grd = g.createLinearGradient(0, 0, 0, 256);
-  grd.addColorStop(0, '#060c1e'); grd.addColorStop(0.5, '#15254a'); grd.addColorStop(0.85, '#3b4d7c'); grd.addColorStop(1, '#6a5a6a');
+  if (day) { grd.addColorStop(0, '#5f86b8'); grd.addColorStop(0.55, '#93b0d2'); grd.addColorStop(0.9, '#c9d3dc'); grd.addColorStop(1, '#d8d6d0'); } // a hazy, slightly overcast day
+  else { grd.addColorStop(0, '#060c1e'); grd.addColorStop(0.5, '#15254a'); grd.addColorStop(0.85, '#3b4d7c'); grd.addColorStop(1, '#6a5a6a'); }
   g.fillStyle = grd; g.fillRect(0, 0, 4, 256);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
