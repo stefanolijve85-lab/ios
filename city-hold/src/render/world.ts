@@ -9,7 +9,7 @@ import { buildHaussmann } from './haussmann';
 import { ShopModule } from './shopModule';
 import { mergeStatic } from './merge';
 import { pbr } from './pbr';
-import { buildBench, buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
+import { buildFountain, buildLamp, buildStreetDetails, type Scroll } from './street';
 import { crackTexture, facadeEmissive, facadeTexture, groundNormal, groundTexture, interiorTexture, fallingWaterTexture, radialTexture, rippleTexture, roofTexture, streakTexture, shutterTexture, signTexture, waterTexture } from './textures';
 
 export interface StoreVisual {
@@ -52,6 +52,29 @@ export interface WorldHandles {
 
 const box = new THREE.BoxGeometry(1, 1, 1);
 const cyl = new THREE.CylinderGeometry(1, 1, 1, 12);
+
+/** the classic Versailles planter of Paris squares: dark green slatted panels, posts with ball finials, on little feet */
+const VB = { body: new THREE.MeshStandardMaterial({ color: 0x1d4532, roughness: 0.55, metalness: 0.05 }), slat: new THREE.MeshStandardMaterial({ color: 0x163828, roughness: 0.6 }), soil: new THREE.MeshStandardMaterial({ color: 0x33261a, roughness: 1 }) };
+function versaillesBox(parent: THREE.Object3D, S: number, H: number) {
+  const bx = new THREE.BoxGeometry(1, 1, 1); const ball = new THREE.SphereGeometry(1, 10, 8);
+  mesh(bx, VB.body, parent, 0, 0.08 + H / 2, 0, S * 0.94, H, S * 0.94);
+  for (const [x, z] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    mesh(bx, VB.body, parent, (x * S) / 2, 0.06 + H / 2, (z * S) / 2, 0.09, H + 0.12, 0.09);
+    mesh(ball, VB.body, parent, (x * S) / 2, H + 0.2, (z * S) / 2, 0.065, 0.065, 0.065);
+    mesh(bx, VB.body, parent, (x * S) / 2, 0.04, (z * S) / 2, 0.12, 0.08, 0.12);
+  }
+  for (const [nx, nz] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) for (let k = -2; k <= 2; k++)
+    mesh(bx, VB.slat, parent, nx * (S * 0.47 + 0.012) + (nz ? (k * S) / 6 : 0), 0.08 + H / 2, nz * (S * 0.47 + 0.012) + (nx ? (k * S) / 6 : 0), nz ? 0.035 : 0.02, H * 0.86, nz ? 0.02 : 0.035, false);
+  mesh(bx, VB.body, parent, 0, H + 0.1, 0, S + 0.04, 0.05, S + 0.04); // top rail
+  mesh(bx, VB.soil, parent, 0, H + 0.08, 0, S * 0.9, 0.04, S * 0.9, false);
+}
+/** a Paris cast-iron bollard ('potelet'): tapered dark shaft, a collar near the top and a small dome head */
+const BOLLARD = new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.45, metalness: 0.55 });
+const BOLLARD_GEO = (() => {
+  const pts = [[0.0, 0], [0.085, 0], [0.085, 0.04], [0.062, 0.08], [0.052, 0.62], [0.066, 0.66], [0.066, 0.71], [0.05, 0.75], [0.05, 0.84], [0.035, 0.9], [0.0, 0.92]].map(([r, y]) => new THREE.Vector2(r, y));
+  return new THREE.LatheGeometry(pts, 14);
+})();
+function parisBollard(parent: THREE.Object3D) { const m = new THREE.Mesh(BOLLARD_GEO, BOLLARD); m.castShadow = true; m.receiveShadow = true; parent.add(m); }
 
 function mesh(g: THREE.BufferGeometry, m: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, shadow = true) {
   const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz);
@@ -310,13 +333,24 @@ export function buildTruck(): THREE.Group {
 }
 
 /** clipped shrub: a few overlapping rounded clusters with small blossoms */
+/** a clipped boxwood ball (images 01/05): leafy texture, lit a little from the lamps, with a few flowers on some */
+let leafTex: THREE.Texture | null = null;
+function boxwoodTexture(): THREE.Texture {
+  if (leafTex) return leafTex;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d')!;
+  g.fillStyle = '#2c4a24'; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 900; i++) { const v = Math.random(); g.fillStyle = v < 0.5 ? `rgba(70,110,50,${0.5 + v})` : v < 0.85 ? `rgba(28,52,22,0.8)` : 'rgba(120,150,70,0.8)'; g.beginPath(); g.ellipse(Math.random() * 128, Math.random() * 128, 2.5, 1.4, Math.random() * Math.PI, 0, Math.PI * 2); g.fill(); }
+  leafTex = new THREE.CanvasTexture(c); leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(3, 2); leafTex.colorSpace = THREE.SRGBColorSpace; return leafTex;
+}
+const BOX_MATS: THREE.MeshStandardMaterial[] = [];
 function bush(parent: THREE.Object3D, x: number, y: number, z: number, r: number, seed: number) {
-  const greens = [0x2f4a26, 0x3a5a2c, 0x34522a];
-  for (let k = 0; k < 4; k++) {
-    const a = k * 2.2 + seed; const rr = k === 0 ? 0 : r * 0.45;
-    mesh(new THREE.IcosahedronGeometry(r * (k === 0 ? 0.85 : 0.6), 1), mat(greens[(seed + k) % 3], 0.9), parent, x + Math.cos(a) * rr, y + r * 0.45 + (k === 0 ? 0.1 : 0), z + Math.sin(a) * rr);
-  }
-  if (seed % 2 === 0) for (let k = 0; k < 5; k++) { const a = k * 1.3 + seed; mesh(new THREE.SphereGeometry(0.05, 5, 4), mat([0xd8c060, 0xe0e0d0, 0xc06050][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.6, y + r * 0.95, z + Math.sin(a) * r * 0.6, 1, 1, 1, false); }
+  if (!BOX_MATS.length) for (const tint of [0xffffff, 0xd8e8c8, 0xe8f0d0]) BOX_MATS.push(new THREE.MeshStandardMaterial({ map: boxwoodTexture(), color: tint, roughness: 0.85, emissive: 0x1a2a12, emissiveIntensity: 1 }));
+  // one clipped ball, slightly squashed and bumpy, sitting in the planter
+  const geo = new THREE.IcosahedronGeometry(r * 0.92, 3); const pa = geo.attributes.position; let s2 = seed * 9301 + 7;
+  for (let i = 0; i < pa.count; i++) { s2 = (s2 * 9301 + 49297) % 233280; const k = 1 + (s2 / 233280 - 0.5) * 0.08; pa.setXYZ(i, pa.getX(i) * k, pa.getY(i) * k * 0.86, pa.getZ(i) * k); }
+  geo.computeVertexNormals();
+  mesh(geo, BOX_MATS[seed % BOX_MATS.length], parent, x, y + r * 0.62, z);
+  if (seed % 3 === 0) for (let k = 0; k < 6; k++) { const a = k * 1.1 + seed; mesh(new THREE.SphereGeometry(0.045, 5, 4), mat([0xe8d8a0, 0xf0f0e8, 0xd07080][seed % 3], 0.7), parent, x + Math.cos(a) * r * 0.55, y + r * 1.25, z + Math.sin(a) * r * 0.55, 1, 1, 1, false); }
 }
 
 /** emissive mask from a colour map: only the bright parts (lit lantern glass) glow, the dark iron stays dark */
@@ -414,9 +448,9 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       }
       break;
     }
-    case 'planter': mesh(box, mat(0x2e3034, 0.6, 0.2), g, 0, 0.35, 0, 1.4, 0.7, 1.4); bush(g, 0, 0.75, 0, 0.62, i); break;
+    case 'planter': versaillesBox(g, 1.3, 0.75); bush(g, 0, 0.85, 0, 0.62, i); break;
     case 'bench': buildStreetBench(g); break;
-    case 'bollard': mesh(cyl, mat(0x202226, 0.6, 0.3), g, 0, 0.45, 0, 0.12, 0.9, 0.12); break;
+    case 'bollard': parisBollard(g); break;
     case 'umbrella': {
       // large cream café parasol (images 01/02): 8 ribs, scalloped valance, warm light underneath
       mesh(cyl, mat(0x2a2a2a, 0.6), g, 0, 1.25, 0, 0.045, 2.5, 0.045);
@@ -619,10 +653,10 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     // ring of planters with benches between them, all inside the fountain's collision circle
     for (let k = 0; k < 8; k++) {
       const a = (k / 8) * Math.PI * 2;
-      mesh(box, mat(0x2e3034, 0.6, 0.2), fh.group, Math.cos(a) * (f.r - 0.35), 0.35, Math.sin(a) * (f.r - 0.35), 1.0, 0.7, 1.0).rotation.y = -a;
+      { const pg = new THREE.Group(); pg.position.set(Math.cos(a) * (f.r - 0.35), 0, Math.sin(a) * (f.r - 0.35)); pg.rotation.y = -a; fh.group.add(pg); versaillesBox(pg, 0.95, 0.7); }
       bush(fh.group, Math.cos(a) * (f.r - 0.35), 0.7, Math.sin(a) * (f.r - 0.35), 0.5, k);
       const ab = a + Math.PI / 8; const bg = new THREE.Group(); bg.position.set(Math.cos(ab) * (f.r - 0.32), 0, Math.sin(ab) * (f.r - 0.32)); bg.rotation.y = -ab - Math.PI / 2; fh.group.add(bg);
-      buildBench(bg, 1.5);
+      buildStreetBench(bg, 1.5); // the cast-iron Paris bench with armrests, as on the street
     }
     mergeStatic(fh.group);
   }

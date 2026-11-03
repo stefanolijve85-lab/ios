@@ -124,7 +124,12 @@ class GltfCharacter implements CharacterVisual {
           // auto-rigged photo-textured model: a little self-light keeps it readable on the night street
           const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0;
           // passers-by share three models: each gets its own colour cast and brightness so the crowd does not look cloned
-          if (kind === 'civilian' || kind === 'helper') { const r2 = rng(variant * 7919 + 13); c.color.setHSL(r2(), 0.25 + r2() * 0.3, 0.55 + r2() * 0.35); }
+          if (kind === 'civilian' || kind === 'helper') {
+            // passers-by share a few models: each gets a clearly different colour cast (jacket colours of a Paris evening)
+            const pal = [0x9a3a32, 0x3a5a8a, 0xb8954a, 0x4a6a4a, 0x7a5a8a, 0xa8a49a, 0x2a3a5a, 0x8a6a4a];
+            const r2 = rng(variant * 7919 + 13); const base = new THREE.Color(pal[Math.floor(r2() * pal.length)]);
+            c.color.setRGB(0.55, 0.55, 0.55).lerp(base, 0.55).multiplyScalar(1.15 + r2() * 0.3);
+          }
           else if (kind === 'shopkeeper') { const r2 = rng(variant * 7919 + 13); c.color.setScalar(0.72 + r2() * 0.3); } // same uniform, a different build and shade per guard
           return c;
         }
@@ -134,6 +139,7 @@ class GltfCharacter implements CharacterVisual {
       m.material = Array.isArray(m.material) ? out : out[0];
     });
     model.scale.setScalar(0.95 + r() * 0.08);
+    if (kind === 'civilian') { model.scale.x *= 0.92 + r() * 0.18; model.scale.y *= 0.94 + r() * 0.12; model.scale.z = model.scale.x; } // tall, short, slim, broad
     this.root.add(model);
     this.carry = model.getObjectByName('carry') ?? null;
     if (!this.carry && model.getObjectByName('Hips')) {
