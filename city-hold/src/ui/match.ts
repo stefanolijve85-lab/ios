@@ -341,6 +341,7 @@ export class Match {
     const zoom = Math.max(0.45, Math.min(1.15, 48 / this.view.dist));
     return { pan, gain: zoom * Math.max(0.25, 1 - out * 1.5) };
   }
+  private engineSeen = false;
   private updateAudio(dt: number) {
     const g = this.game;
     const near = (list: { x: number; z: number }[], max: number) => list.slice(0, max).map((p) => this.hear(p.x, p.z));
@@ -357,6 +358,8 @@ export class Match {
       gas: near(g.gas.filter((c) => c.landed && c.r > 0.5), 3),
       panic: (() => { const at = g.attackers(); if (!at.length) return 0; const p = at.filter((u) => u.gasT > 0.3 || u.state === 'flee' || u.state === 'held' || u.staggerUntil > g.time).length; return Math.min(1, p / Math.max(3, at.length * 0.6)); })(),
       smashing: hammering.length,
+      engine: (() => { const e = this.view.fireEnginePos(); return e ? this.hear(e.x, e.z) : null; })(),
+      engineArrived: (() => { const has = !!this.view.fireEnginePos(); const arrived = has && !this.engineSeen; this.engineSeen = has; return arrived; })(),
     });
   }
 

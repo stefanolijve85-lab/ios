@@ -20,6 +20,8 @@ export interface AmbienceState {
   /** firefighters spraying right now */ hoses: Listener[];
   /** a wave / looting run is in progress */ active: boolean;
   /** tear gas clouds on the ground */ gas?: Listener[];
+  /** the fire engine: its pump runs while a hose is out */ engine?: Listener | null;
+  /** the fire engine just pulled up */ engineArrived?: boolean;
   /** 0..1 how much of the crowd is in panic (in gas, fleeing, being struck) */ panic?: number;
   /** rioters smashing shutters and barriers right now */ smashing?: number;
   /** the match is paused or a modal is open */ paused: boolean;
@@ -38,12 +40,14 @@ export class Sfx {
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
     'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton',
-    'win_sting', 'vo_win_nl', 'vo_win_en', 'flashbang'] as const;
+    'win_sting', 'vo_win_nl', 'vo_win_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
   private static readonly LOOP_LEVEL = 0.2;
   private loops = new Map<string, GainNode>();
+  private hosesBefore = 0;
+  private pumpP: StereoPannerNode | null = null;
   private crackleT = 0; private hammerT = 0; private sirenT = 30; private shoutT = 4; private yellT = 3; private coughT = 2; private screamT = 5;
   private _volume: number;
 
@@ -329,6 +333,14 @@ export class Sfx {
     { const l = this.loop('gas_hiss', this.amb); if (l) l.gain.setTargetAtTime(gasL.gain * 0.35 * quiet, t, 0.4); }
     rec('fire_loop', b.roarP, fireLvl * 0.8, b.roar, fireLvl * 0.5);
     rec('hose_loop', b.hissP, hose.gain * 0.45, b.hiss, hose.gain * 0.12);
+    // fire crew: water sizzling on the flames where the jet hits, the pump labouring at the engine, the nozzle opening
+    { const l = this.loop('sizzle_loop', b.hissP); if (l) l.gain.setTargetAtTime(hose.gain * 0.5 * quiet, t, 0.15); }
+    { const e = s.engine; if (!this.pumpP) { this.pumpP = c.createStereoPanner(); this.pumpP.connect(this.amb); }
+      this.pumpP.pan.setTargetAtTime(e?.pan ?? 0, t, 0.3);
+      const l = this.loop('pump_loop', this.pumpP); if (l) l.gain.setTargetAtTime((e && s.hoses.length ? e.gain * 0.35 : 0) * quiet, t, 0.8); }
+    if (s.hoses.length > this.hosesBefore && !s.paused) this.smp('hose_charge', b.hissP, 0.7 * hose.gain);
+    this.hosesBefore = s.hoses.length;
+    if (s.engineArrived && s.engine && !s.paused) this.smp('engine_arrive', this.out(this.amb, s.engine.pan), 0.75 * s.engine.gain, { jitter: 0 });
     rec('fountain_loop', b.waterP, (s.fountain?.gain ?? 0) * 0.18, b.water, (s.fountain?.gain ?? 0) * 0.035);
     if (s.paused) return;
     // fire crackle: random pops, more with more fire

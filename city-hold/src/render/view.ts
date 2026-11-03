@@ -120,6 +120,8 @@ export class MatchView {
   readonly world: WorldHandles;
   readonly fx: Effects;
   private fireCrew: FireCrew;
+  /** where the fire engine stands (null until a firefighter is on the team) */
+  fireEnginePos() { return this.fireCrew.enginePos(); }
   target = new THREE.Vector2();
   dist = 50;
   private minDist = 13; private maxDist = 78;

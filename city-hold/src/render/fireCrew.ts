@@ -154,6 +154,7 @@ export class FireCrew {
     const v = this.map.van; const r = (v.rot * Math.PI) / 180;
     return { x: v.x - Math.sin(r) * 7.6, z: v.z - Math.cos(r) * 7.6, rot: v.rot };
   }
+  enginePos(): { x: number; z: number } | null { return this.engine && this.engine.g.visible ? { x: this.engine.g.position.x, z: this.engine.g.position.z } : null; }
   private outletWorld(out: THREE.Vector3) { this.engine!.g.updateMatrixWorld(); return this.engine!.outlet.getWorldPosition(out); }
 
   update(g: Game, humans: Map<number, CharacterVisual>, dt: number, time: number) {
