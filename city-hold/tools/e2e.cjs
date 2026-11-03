@@ -21,7 +21,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
     await p.click(`[data-side="${side}"]`); await p.click('[data-start]');
     // first start of a city shows its briefing (map + notes); it must offer a start button
     if (await p.$('.bf-overlay')) { assert(await p.$('.bf-overlay canvas'), 'city briefing shows a map'); await p.click('[data-bf-start]'); }
-    await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 }); await p.waitForTimeout(800);
+    await p.waitForFunction(() => !!window.__match && document.querySelector('.hud'), null, { timeout: 90000 });
+    await p.waitForFunction(() => !document.querySelector('.rm-loading'), null, { timeout: 120000 }); await p.waitForTimeout(800); // the loading cover (shader warm-up) is gone
   };
   // ---------------- defence
   await play('defence');
@@ -31,6 +32,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.click('.card[data-kind="barrier"]'); await p.waitForTimeout(300);
   const sock = await p.evaluate(() => { const g = window.__match.game; return g.map.sockets.find((s) => s.size === 'small' && g.canPlace('barrier', s.id).ok); });
   let pt = await scr(sock.x, 0.2, sock.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(300);
+  await p.click('[data-a="putdown"]'); await p.waitForTimeout(300); // turn step: confirm the direction
   st = await p.evaluate(() => ({ budget: window.__match.game.budget, n: window.__match.game.barriers.length }));
   assert(st.n === 1, 'barrier placed by tapping a socket, budget now ' + st.budget);
   // invalid placement: tap ground while placing cancels without charge
