@@ -4,7 +4,8 @@ import { CITY_INFO, CITY_ORDER, MAPS } from './maps';
 import { Match, type MatchResult } from './ui/match';
 import { loadProgress, recordResult, resetProgress, saveProgress, type Progress } from './save';
 import type { Side } from './sim/game';
-import { loadingInner, startLoadingFilm } from './ui/loading';
+import { loadingInner, startLoadingFilm, warmLoadingFilm } from './ui/loading';
+warmLoadingFilm(); // the loading film downloads during the intro
 import { loadAssets, loadCityAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
 import { Menu, menuState } from './ui/menu';
