@@ -1,3 +1,4 @@
+import { BALANCE, type AttKind } from './config/balance';
 import './ui/styles.css';
 import { CITY_INFO, CITY_ORDER, MAPS } from './maps';
 import { Match, type MatchResult } from './ui/match';
@@ -61,10 +62,12 @@ async function start() {
   await loadCityAssets(map.id, 'models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`; });
   app.innerHTML = '';
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);
-  match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action));
+  match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action), chosenSide === 'looters' ? (progress.crew ?? []) as AttKind[] : []);
   match.onSettings = () => saveProgress(progress);
   match.resultInfo = (r: MatchResult) => {
     const unlocked = recordResult(progress, r.cityId, r.side, r.won, r.research, CITY_ORDER).filter(cityPlayable).map((id) => CITY_INFO[id].label);
+    // looting campaign: whoever walked off the map this time (and recruits still waiting) is back next mission
+    if (r.side === 'looters') { const g0 = match!.game; progress.crew = [...g0.crewOut, ...g0.squad].slice(0, BALANCE.looters.maxActive); }
     saveProgress(progress);
     const g = match!.game; const specs: string[] = [];
     if (g.securitySpec !== 'none') specs.push(g.securitySpec === 'mobile' ? 'Mobile response' : 'Fixed protection');

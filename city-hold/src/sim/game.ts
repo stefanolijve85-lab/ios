@@ -111,6 +111,8 @@ export interface GameOptions {
   perks?: string[];
   mobile?: boolean;
   difficulty?: Difficulty;
+  /** looting campaign: the rioters who got away last mission join this one for free */
+  crew?: AttKind[];
 }
 
 export interface ActionResult { ok: boolean; reason?: string }
@@ -155,6 +157,8 @@ export class Game {
   wavesCleared = 0;
   // looter mode
   squad: AttKind[] = [];
+  /** looting campaign: kinds of every rioter who walked off the map this match (with loot, or pushed away by security) */
+  crewOut: AttKind[] = [];
   looterTarget = -1;
   looterRoute: string;
   extracted = 0;
@@ -178,6 +182,7 @@ export class Game {
     this.rng = new Rng(opts.seed ?? 12345);
     this.perks = new Set(opts.perks ?? []);
     this.difficulty = opts.difficulty ?? 'normal';
+    if (side === 'looters' && opts.crew?.length) this.squad = opts.crew.slice(0, BALANCE.looters.maxActive); // last mission's crew is back
     if (opts.mobile) this.maxProjectiles = BALANCE.throw.maxActive.mobile;
     this.maxCivilians = opts.mobile ? BALANCE.npc.civilians.mobile : BALANCE.npc.civilians.desktop;
     const bonus = this.perks.has('budget') ? 100 : 0;
@@ -1154,8 +1159,8 @@ export class Game {
       case 'escorted': {
         u.moving = false;
         const solo = u.escortSolo;
-        if (solo) { if (this.follow(u, dt, this.speedOf(u) * 1.1) || u.stateT > 9 || !u.path) u.state = 'removed'; break; }
-        if (!solo && !this.units.some((d) => d.escortOf === u.id)) { if (u.stateT > 3) u.state = 'removed'; }
+        if (solo) { if (this.follow(u, dt, this.speedOf(u) * 1.1) || u.stateT > 9 || !u.path) { u.state = 'removed'; this.crewOut.push(u.kind as AttKind); } break; }
+        if (!solo && !this.units.some((d) => d.escortOf === u.id)) { if (u.stateT > 3) { u.state = 'removed'; this.crewOut.push(u.kind as AttKind); } }
         break;
       }
     }
@@ -1207,7 +1212,7 @@ export class Game {
       if (this.side === 'looters') this.budget += u.carrying * BALANCE.looters.budgetPerExtractedStock;
       this.emit({ type: 'extract', text: `${u.carrying} stock extracted from ${s.name}`, x: u.x, z: u.z, amount: u.carrying, side: 'att' });
     }
-    u.carrying = 0; u.state = 'escaped';
+    u.carrying = 0; u.state = 'escaped'; this.crewOut.push(u.kind as AttKind);
   }
 
   private maybeIgniteCar(u: Unit) {

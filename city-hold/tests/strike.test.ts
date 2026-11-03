@@ -46,3 +46,17 @@ test('a camera that spots an intruder sends guards running at him', () => {
   for (let i = 0; i < 30 * 120 && !alarm; i++) { g.step(1 / 30); alarm = g.events.some((e) => e.type === 'alarm'); }
   expect(alarm).toBe(true);
 });
+
+test('looting campaign: the rioters who got away join the next mission for free', () => {
+  const g = new Game(PARIS, 'looters', { seed: 4 });
+  g.crewOut.push('carrier', 'runner', 'heavy');
+  const next = new Game(PARIS, 'looters', { seed: 5, crew: g.crewOut });
+  expect(next.squad).toEqual(['carrier', 'runner', 'heavy']);
+  const budget = next.budget;
+  expect(next.recruit('runner').ok).toBe(true); // the crew costs nothing, new recruits still do
+  expect(next.budget).toBeLessThan(budget);
+  // whoever walks off the map is counted
+  next.setLooterTarget(1); next.dispatch();
+  for (let i = 0; i < 30 * 200 && !next.over; i++) next.step(1 / 30);
+  expect(next.crewOut.length).toBeGreaterThan(0);
+});

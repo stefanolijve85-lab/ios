@@ -12,6 +12,8 @@ export interface Progress {
   tutorialDone: boolean;
   matches: number;
   settings: Settings;
+  /** looting campaign: the rioters who got away in the last looting mission (they join the next one for free) */
+  crew?: string[];
 }
 
 const KEY = 'cityhold.progress.v1';

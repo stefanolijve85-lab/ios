@@ -52,10 +52,10 @@ export class Match {
   private el: Record<string, HTMLElement> = {};
 
   constructor(private host: HTMLElement, readonly map: MapDef, readonly side: Side, private settings: Settings, private perks: string[], private tutorial: boolean,
-    private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void) {
+    private onExit: (r: MatchResult | null, action: 'menu' | 'restart' | 'next') => void, crew: AttKind[] = []) {
     setFigureChoices(settings.figures);
     const urlSeed = Number(new URLSearchParams(location.search).get('seed')); // fixed seed for automated tests (?seed=N)
-    this.game = new Game(map, side, { seed: urlSeed > 0 ? urlSeed : (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty });
+    this.game = new Game(map, side, { seed: urlSeed > 0 ? urlSeed : (Date.now() & 0xffff) + 1, perks, mobile: settings.reducedFx, difficulty: settings.difficulty, crew });
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
@@ -155,6 +155,7 @@ export class Match {
       }
     }
     window.addEventListener('keydown', this.onKey);
+    if (!isDef && this.game.squad.length) setTimeout(() => this.toast(`Your crew is back: ${this.game.squad.length} rioters from the last mission joined the group`, 'good'), 600);
   }
 
   private onKey = (e: KeyboardEvent) => {
