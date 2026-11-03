@@ -1,3 +1,4 @@
+import { ASSET_Q } from '../assetVer';
 import * as THREE from 'three';
 import { addPosedClips } from './rigPoses';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -97,7 +98,7 @@ export async function loadAssets(base = 'models/', onProgress?: (done: number, t
   let done = 0;
   await Promise.all(entries.map(async ([slot, e]) => {
     try {
-      const g = await loader.loadAsync(base + e.file);
+      const g = await loader.loadAsync(base + e.file + ASSET_Q);
       restoreGlow(g.scene);
       loaded.set(slot, { scene: g.scene, animations: g.animations });
     } catch (err) { console.warn('model failed', slot, err); }
@@ -115,7 +116,7 @@ export function loadCityAssets(city: string, base = 'models/', onProgress?: (don
       const entries = Object.entries(manifest?.slots ?? {}).filter(([, e]) => e.city === city);
       const loader = new GLTFLoader(); let done = 0;
       await Promise.all(entries.map(async ([slot, e]) => {
-        try { const g = await loader.loadAsync(base + e.file); loaded.set(slot, { scene: g.scene, animations: g.animations }); } catch (err) { console.warn('model failed', slot, err); }
+        try { const g = await loader.loadAsync(base + e.file + ASSET_Q); loaded.set(slot, { scene: g.scene, animations: g.animations }); } catch (err) { console.warn('model failed', slot, err); }
         onProgress?.(++done, entries.length);
       }));
       if (entries.some(([slot]) => slot.startsWith('char.'))) shareCharacterClips(); // a city's own figures get the shared clips too

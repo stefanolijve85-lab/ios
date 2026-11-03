@@ -1,3 +1,4 @@
+import { ASSET_Q } from '../assetVer';
 // Synthesised sound (Web Audio, no audio files, no network). Volume 0 disables everything.
 //
 // Three layers:
@@ -128,7 +129,7 @@ export class Sfx {
     if (this.buf.has(name)) return Promise.resolve(true);
     let p = this.loading.get(name);
     if (!p) {
-      p = fetch(`audio/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      p = fetch(`audio/${name}.mp3${ASSET_Q}`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
         .then((ab) => new Promise<AudioBuffer>((res, rej) => { const pr = c.decodeAudioData(ab, res, rej) as unknown as Promise<AudioBuffer> | undefined; pr?.catch?.(rej); }))
         .then((b) => {
           let peak = 0; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }

@@ -1,3 +1,4 @@
+import { ASSET_Q } from '../assetVer';
 // Background music: one looping track for the menus and one for missions (public/audio/music_*.mp3), crossfaded,
 // plus named ambience loops (e.g. the riot under the intro). A missing file simply stays silent. Volume is its own
 // setting (Instellingen > Muziek); during a wave the mission track plays a little louder than between waves.
@@ -74,8 +75,8 @@ class Music {
   ambience(name: string, level: number) { this.extras.set(name, Math.max(0, level)); this.apply(true); }
 
   private apply(start = false) {
-    if (this.current) this.voice(this.current, `audio/music_${this.current}.mp3`);
-    for (const [name] of this.extras) this.voice('amb:' + name, `audio/${name}_loop.mp3`);
+    if (this.current) this.voice(this.current, `audio/music_${this.current}.mp3${ASSET_Q}`);
+    for (const [name] of this.extras) this.voice('amb:' + name, `audio/${name}_loop.mp3${ASSET_Q}`);
     for (const [name, v] of this.voices) {
       v.target = name.startsWith('amb:') ? (this.extras.get(name.slice(4)) ?? 0)
         : name === this.current ? this.volume * this.intensity * MIX * this.ducked : 0;
