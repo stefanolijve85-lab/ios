@@ -166,14 +166,37 @@ export class Menu {
     this.introShown = true;
     const nl = this.lang === 'nl';
     const el = document.createElement('div'); el.className = 'rm-intro';
-    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
+    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-sound" hidden>${nl ? '🔊 Tik voor geluid' : '🔊 Tap for sound'}</button><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
     document.body.appendChild(el);
     const v = el.querySelector('video')!;
+    const soundBtn = el.querySelector<HTMLButtonElement>('.rm-intro-sound')!;
+    // the menu music plus a low riot ambience under the intro. Browsers only allow sound after a tap: if autoplay with
+    // sound is refused, the first tap turns the sound on (and keeps the intro running); after that a tap skips it.
+    const vol = this.host.progress().settings.volume ?? 0.6;
+    const riot = new Audio('audio/riot_loop.mp3'); riot.loop = true; riot.volume = 0;
+    let soundOn = false; let fadeT = 0;
+    const fadeTo = (target: number, ms: number, then?: () => void) => {
+      cancelAnimationFrame(fadeT); const from = riot.volume; const t0 = performance.now();
+      const step = (t: number) => { const k = Math.min(1, (t - t0) / ms); riot.volume = Math.max(0, Math.min(1, from + (target - from) * k)); if (k < 1) fadeT = requestAnimationFrame(step); else then?.(); };
+      fadeT = requestAnimationFrame(step);
+    };
+    const startSound = () => {
+      if (soundOn || vol <= 0) return Promise.resolve(soundOn);
+      return riot.play().then(() => { soundOn = true; soundBtn.hidden = true; fadeTo(0.22 * vol, 1500); return true; }).catch(() => false);
+    };
     let done = false;
-    const close = () => { if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', close, true); setTimeout(() => el.remove(), 600); };
+    const close = () => {
+      if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
+      fadeTo(0, 900, () => riot.pause()); // the riot fades out, the menu music carries on
+      setTimeout(() => el.remove(), 600);
+    };
+    const onKey = (e: KeyboardEvent) => { if (!soundOn && e.key !== 'Escape') void startSound().then((ok) => { if (!ok) close(); }); else close(); };
     v.addEventListener('ended', close); v.addEventListener('error', close);
-    el.addEventListener('pointerdown', close); window.addEventListener('keydown', close, true);
+    el.querySelector('.rm-intro-skip')!.addEventListener('pointerdown', (e) => { e.stopPropagation(); close(); });
+    el.addEventListener('pointerdown', () => { if (soundOn || vol <= 0) close(); else void startSound().then((ok) => { if (!ok) close(); }); });
+    window.addEventListener('keydown', onKey, true);
     void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
+    void startSound().then((ok) => { if (!ok && vol > 0) soundBtn.hidden = false; });
   }
 
   // ---------------------------------------------------------------- 03 city selection
