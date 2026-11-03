@@ -51,7 +51,8 @@ export interface SocketDef { id: string; x: number; z: number; size: 'small' | '
 
 export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table' | 'police_van' | 'barricade_fire';
 
-export interface PropDef { type: PropType; x: number; z: number; rot?: number; collide?: boolean; r?: number; burnable?: boolean }
+export interface PropDef { type: PropType; x: number; z: number; rot?: number; collide?: boolean; r?: number; burnable?: boolean;
+  /** a car: the model slot to show instead of the generic parked car (e.g. the city's taxi); same footprint */ model?: string }
 
 export interface ArcadeDef { rect: Rect; height: number; columns: Circle[] }
 

@@ -98,7 +98,7 @@ export const LONDON: MapDef = {
     ...trees([[-28, 4], [-12, 2], [4, 2]]),
     { type: 'phonebox', x: -2, z: -9.6, collide: true, r: 0.6 },
     { type: 'bench', x: -20, z: 6, collide: true, r: 0.8 },
-    { type: 'car', x: 26, z: 4.6, rot: 0, collide: true, burnable: true },
+    { type: 'car', x: 26, z: 4.6, rot: 0, collide: true, burnable: true, model: 'prop.taxi_london' }, // black cab (expansion 18, TRELLIS.2)
   ],
   // London pack: ALDER brick shop and THE LANTERN corner pub along the high street, a red bus shelter
   landmarks: [

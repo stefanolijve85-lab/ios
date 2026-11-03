@@ -465,7 +465,13 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
     case 'phonebox': mesh(box, mat(0x9a1a1a, 0.5), g, 0, 1.25, 0, 0.9, 2.5, 0.9); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), g, 0, 1.4, 0.46, 0.6, 1.2, 0.02, false); break;
     case 'column': mesh(cyl, mat(0xd9c8a4, 0.8), g, 0, 2.5, 0, p.r ?? 0.35, 5, p.r ?? 0.35); break;
     case 'car': {
-      const intact = (finalProp('prop.car') as THREE.Group | null) ?? buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
+      // a city's own vehicle (image-to-3D, any scale or axis) is fitted to the parked-car footprint: long axis on Z, on the ground
+      const own = p.model ? finalProp(p.model) : null;
+      if (own) { const bb = new THREE.Box3().setFromObject(own); const sz = bb.getSize(new THREE.Vector3());
+        const inner = new THREE.Group(); inner.add(own); if (sz.x > sz.z) inner.rotation.y = Math.PI / 2;
+        const k = 4.4 / Math.max(sz.x, sz.z); const c = bb.getCenter(new THREE.Vector3()); own.position.set(-c.x, -bb.min.y, -c.z); inner.scale.setScalar(k);
+        own.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } }); }
+      const intact = (own ? (() => { const w = new THREE.Group(); w.add(own.parent ?? own); return w; })() : null) ?? (finalProp('prop.car') as THREE.Group | null) ?? buildCar([0x5a5f66, 0x2a3a5a, 0x7a2a2a, 0x8a8a88, 0x1a1a1a][i % 5], false);
       const burned = (finalProp('prop.car_burned') as THREE.Group | null) ?? buildCar(0, true); burned.visible = false;
       g.add(intact, burned); cars.set(i, { intact, burned });
       g.rotation.y = p.rot === 90 ? 0 : Math.PI / 2;

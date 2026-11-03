@@ -39,9 +39,22 @@ def main():
         if max(im.size) > mx: im = im.resize((min(mx, im.width), min(mx, im.height)), Image.LANCZOS)
         out = io.BytesIO()
         alpha = im.mode in ('RGBA', 'LA') and im.getchannel('A').getextrema()[0] < 250
-        if alpha: im.save(out, 'PNG', optimize=True); img['mimeType'] = 'image/png'
+        if img.get('mimeType') == 'image/webp': im.save(out, 'WEBP', quality=82, method=6) # webp stays webp (EXT_texture_webp, Safari 14+)
+        elif alpha: im.save(out, 'PNG', optimize=True); img['mimeType'] = 'image/png'
         else: im.convert('RGB').save(out, 'JPEG', quality=85); img['mimeType'] = 'image/jpeg'
         blobs[img['bufferView']] = out.getvalue()
+    # webp images (EXT_texture_webp, as TRELLIS writes them) are now JPEG/PNG: point the textures straight at them
+    webp = {i for i, im in enumerate(js.get('images', [])) if im.get('mimeType') == 'image/webp'}
+    for t in js.get('textures', []):
+        w = t.get('extensions', {}).get('EXT_texture_webp')
+        if w is not None and w['source'] in webp: continue
+        w = t.get('extensions', {}).pop('EXT_texture_webp', None)
+        if w is not None: t['source'] = w['source']
+        if 'extensions' in t and not t['extensions']: del t['extensions']
+    for k in ('extensionsUsed', 'extensionsRequired'):
+        if k in js and not webp:
+            js[k] = [e for e in js[k] if e != 'EXT_texture_webp']
+            if not js[k]: del js[k]
     # repack every buffer view (4-byte aligned) into one binary chunk
     new = b''
     for v, blob in zip(views, blobs):

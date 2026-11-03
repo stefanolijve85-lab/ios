@@ -395,6 +395,12 @@
       "status": "final",
       "note": "Tripo H3.1 image-to-3D of the concept police van (17_police_van), textures 1024 px",
       "city": "paris"
+    },
+    "prop.taxi_london": {
+      "file": "final/prop.taxi_london.glb",
+      "status": "final",
+      "note": "TRELLIS.2 (Hugging Face) image-to-3D of the expansion-18 London taxi, simplified to 28k triangles, 1024 px textures",
+      "city": "london"
     }
   }
 }
