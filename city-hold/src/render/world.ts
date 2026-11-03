@@ -322,7 +322,27 @@ export function buildVan(): { g: THREE.Group; lights: THREE.Mesh[] } {
   return { g, lights };
 }
 
+/** turn per image-to-3D vehicle so its nose points to +z (set after looking at each model) */
+const VEHICLE_YAW: Record<string, number> = { delivery_van: Math.PI, supply_truck: 0 };
+/** an image-to-3D vehicle (any size and axis) fitted to a length in metres, long axis on z, standing on the ground */
+export function vehicleModel(slot: string, len: number, yaw = 0): THREE.Group | null {
+  if (slotStatus(slot) !== 'final') return null;
+  const m = cloneModel(slot); if (!m) return null;
+  const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+  const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m);
+  inner.rotation.y = (sz.x > sz.z ? -Math.PI / 2 : 0) + yaw; inner.scale.setScalar(len / Math.max(sz.x, sz.z));
+  m.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } });
+  const g = new THREE.Group(); g.add(inner); return g;
+}
 export function buildTruck(): THREE.Group {
+  const vm = vehicleModel('prop.supply_truck', 7.4, VEHICLE_YAW.supply_truck);
+  if (vm) {
+    // the views never showed the top of the box body, so the model's roof has holes: close it with a white panel (the camera looks down)
+    const bb = new THREE.Box3().setFromObject(vm); const w = bb.max.x - bb.min.x;
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(w * 0.82, 0.05, (bb.max.z - bb.min.z) * 0.64), new THREE.MeshStandardMaterial({ color: 0xe9ecef, roughness: 0.55, metalness: 0.1 }));
+    lid.position.set((bb.min.x + bb.max.x) / 2, bb.max.y - 0.04, bb.min.z + (bb.max.z - bb.min.z) * 0.36); lid.castShadow = true; vm.add(lid);
+    return vm;
+  }
   const g = new THREE.Group();
   mesh(box, mat(0xf4f4f4, 0.5), g, 0, 1.9, -0.8, 2.4, 2.6, 5.2);
   mesh(box, mat(0xe8e8e8, 0.35, 0.2), g, 0, 1.4, 2.6, 2.3, 2.0, 1.8);
@@ -383,7 +403,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
   // a loaded GLB in the prop's slot replaces the procedural placeholder
   const slotType = p.type === 'palm' ? null : p.type;
   const finalProp = (slot: string) => (slotStatus(slot) === 'final' ? cloneModel(slot) : null); // placeholders come from this same code
-  const glb = slotType && p.type !== 'car' && p.type !== 'vehicle' && p.type !== 'object' ? finalProp('prop.' + slotType) : null;
+  const glb = slotType && p.type !== 'car' && p.type !== 'vehicle' && p.type !== 'object' && p.type !== 'delivery_van' ? finalProp('prop.' + slotType) : null;
   if (glb) {
     // image-to-3D models come in at any size: scale to the real height and stand them on the ground, centred
     const H = PROP_HEIGHT[p.type];
@@ -418,7 +438,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       pendingFades.push({ meshes: sh.roof, root: sh.group });
       break;
     }
-    case 'delivery_van': buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break;
+    case 'delivery_van': { const vm = vehicleModel('prop.delivery_van', 5.3, VEHICLE_YAW.delivery_van); if (vm) g.add(vm); else buildDeliveryVan().children.slice().forEach((c) => g.add(c)); break; }
     case 'police_van': {
       const pm = policeVanModel();
       if (pm) { g.add(pm.group); for (const b of pm.beacons) { b.userData.noMerge = true; policeBeacons.push(b); } policeSpots.push(new THREE.Vector3(p.x, 2.6, p.z)); break; }
