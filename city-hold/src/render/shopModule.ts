@@ -113,6 +113,31 @@ export interface ShopModuleOptions { quality: Quality; seed: number; withLight: 
 
 type AddFn = (geo: THREE.BufferGeometry, mat: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, sx?: number, sy?: number, sz?: number) => THREE.Mesh;
 
+/** fine glass cracks over the shop windows and door of a painted storefront (concept 06): radiating star breaks */
+function paneCracks(seed: number): THREE.Texture {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 432; const g = c.getContext('2d')!;
+  let s = 11 + seed * 7; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  g.lineCap = 'round';
+  // window and door areas as fractions of the painted front (the Paris shopfront packs share this layout)
+  const panes = [[0.07, 0.22, 0.3, 0.68], [0.7, 0.22, 0.93, 0.68], [0.37, 0.25, 0.63, 0.85]];
+  for (const [x0, y0, x1, y1] of panes) {
+    for (let st = 0; st < 2; st++) {
+      const cx = (x0 + (x1 - x0) * (0.2 + rnd() * 0.6)) * 1024, cy = (y0 + (y1 - y0) * (0.2 + rnd() * 0.6)) * 432;
+      const rays = 9 + Math.floor(rnd() * 6);
+      for (let r = 0; r < rays; r++) {
+        let a = (r / rays) * Math.PI * 2 + rnd() * 0.4, x = cx, y = cy; const len = 40 + rnd() * 120;
+        g.beginPath(); g.moveTo(x, y);
+        for (let k = 0; k < 6; k++) { a += (rnd() - 0.5) * 0.5; x += Math.cos(a) * len / 6; y += Math.sin(a) * len / 6; if (x < x0 * 1024 || x > x1 * 1024 || y < y0 * 432 || y > y1 * 432) break; g.lineTo(x, y); }
+        g.strokeStyle = 'rgba(235,245,255,0.85)'; g.lineWidth = 1.4; g.stroke();
+      }
+      // a ring of concentric breaks around the impact point
+      for (let ring = 1; ring <= 2; ring++) { g.beginPath(); for (let k = 0; k <= 12; k++) { const a = (k / 12) * Math.PI * 2; const rr = ring * (12 + rnd() * 10); g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.strokeStyle = 'rgba(235,245,255,0.6)'; g.lineWidth = 1; g.stroke(); }
+      g.fillStyle = 'rgba(255,255,255,0.7)'; g.beginPath(); g.arc(cx, cy, 3, 0, Math.PI * 2); g.fill();
+    }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
 export class ShopModule {
   readonly group = new THREE.Group();
   readonly groups = {} as Record<ShopGroup, THREE.Group>;
@@ -471,13 +496,19 @@ export class ShopModule {
   private landmarkSkin = false;
   setLandmarkSkin(on: boolean) { this.landmarkSkin = on; }
   /** painted storefront panel per visual state (from the city packs); replaces the 3D module completely */
-  private stateFront: { mesh: THREE.Mesh; tex: Record<string, THREE.Texture>; cur: string } | null = null;
+  private stateFront: { mesh: THREE.Mesh; tex: Record<string, THREE.Texture>; cur: string; old: THREE.Mesh; cracks: THREE.Mesh; changedAt: number; seed: number } | null = null;
   setStateFront(key: string, width: number, height: number) {
     const L = new THREE.TextureLoader(); const tex: Record<string, THREE.Texture> = {};
     for (const st of ['intact', 'boarded', 'damaged', 'looted']) { const t = L.load(`textures/storefronts/${key}_${st}.jpg`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; tex[st] = t; }
     const mat = new THREE.MeshStandardMaterial({ map: tex.intact, emissive: 0xffffff, emissiveMap: tex.intact, emissiveIntensity: 0.75, roughness: 0.6 });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat); mesh.position.set(0, height / 2, 0.05); mesh.renderOrder = 1; this.group.add(mesh);
-    this.stateFront = { mesh, tex, cur: 'intact' };
+    // the previous state fades out over the new one, so a break reads as an event instead of a texture swap
+    const old = new THREE.Mesh(mesh.geometry, new THREE.MeshBasicMaterial({ map: tex.intact, transparent: true, opacity: 0, depthWrite: false }));
+    old.position.set(0, height / 2, 0.056); old.renderOrder = 2; old.visible = false; this.group.add(old);
+    // first blows: cracks spread over the shop windows and the door glass before they give way
+    const cracks = new THREE.Mesh(mesh.geometry, new THREE.MeshBasicMaterial({ map: paneCracks(this.opts.seed), transparent: true, opacity: 0, depthWrite: false }));
+    cracks.position.set(0, height / 2, 0.06); cracks.renderOrder = 3; cracks.visible = false; this.group.add(cracks);
+    this.stateFront = { mesh, tex, cur: 'intact', old, cracks, changedAt: -1e9, seed: this.opts.seed };
     this.buildStreetLoot(width);
   }
 
@@ -507,9 +538,25 @@ export class ShopModule {
   update(structureRatio: number, stockRatio: number, level: number, breached: boolean, boardRatio = 0) {
     if (this.stateFront) {
       // states stay independent: boards win the look while they hold; then theft (stock) and then damage (glass)
-      const st = boardRatio > 0 ? 'boarded' : stockRatio < 0.5 ? 'looted' : structureRatio < 0.999 || breached ? 'damaged' : 'intact';
-      const f = this.stateFront;
-      if (st !== f.cur) { const m = f.mesh.material as THREE.MeshStandardMaterial; m.map = f.tex[st]; m.emissiveMap = f.tex[st]; m.needsUpdate = true; this.justBroke = (st === 'damaged' || st === 'looted') && (f.cur === 'intact' || f.cur === 'boarded'); f.cur = st; } else this.justBroke = false;
+      // the front holds (cracking) until it has taken 40% damage, then the windows go and the shutter is wrenched up
+      const st = boardRatio > 0 ? 'boarded' : stockRatio < 0.5 ? 'looted' : structureRatio < 0.6 || breached ? 'damaged' : 'intact';
+      const f = this.stateFront; const now = performance.now() / 1000;
+      if (st !== f.cur) {
+        const m = f.mesh.material as THREE.MeshStandardMaterial;
+        const om = f.old.material as THREE.MeshBasicMaterial; om.map = f.tex[f.cur]; om.needsUpdate = true; f.old.visible = true; f.changedAt = now;
+        m.map = f.tex[st]; m.emissiveMap = f.tex[st]; m.needsUpdate = true;
+        this.justBroke = (st === 'damaged' || st === 'looted') && (f.cur === 'intact' || f.cur === 'boarded'); f.cur = st;
+      } else this.justBroke = false;
+      const since = now - f.changedAt; const m = f.mesh.material as THREE.MeshStandardMaterial;
+      if (f.old.visible) { const k = Math.min(1, since / 0.45); (f.old.material as THREE.MeshBasicMaterial).opacity = 1 - k; if (k >= 1) f.old.visible = false; }
+      // cracks grow with the damage while the glass still holds
+      const crack = st === 'intact' ? Math.min(1, Math.max(0, (1 - structureRatio) / 0.4)) : 0;
+      f.cracks.visible = crack > 0.02; (f.cracks.material as THREE.MeshBasicMaterial).opacity = crack * 0.9;
+      // shop lighting: a white flash as the front gives way, then broken lights flicker in a wrecked shop
+      const flash = since < 0.25 && (st === 'damaged' || st === 'looted') ? (1 - since / 0.25) * 1.2 : 0;
+      const t = now + f.seed * 3.1;
+      const flick = st === 'looted' ? 0.5 + (Math.sin(t * 17) > 0.86 ? -0.22 : 0) + Math.sin(t * 2.3) * 0.04 : st === 'damaged' ? 0.68 + (Math.sin(t * 23) > 0.95 ? -0.25 : 0) : 0.75;
+      m.emissiveIntensity = flick + flash;
       for (const name of SHOP_GROUPS) this.groups[name].visible = false;
       if (this.streetLoot) { for (const m of this.streetLoot.looted) m.visible = false; for (const m of (st === 'looted' ? this.streetLoot.looted : st === 'damaged' ? this.streetLoot.damaged : [])) m.visible = true; }
       if (this.soot) this.soot.visible = this.scorchedOn;
