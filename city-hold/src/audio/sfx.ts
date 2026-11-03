@@ -60,10 +60,10 @@ export class Sfx {
   victory(): boolean {
     if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
     const o = this.out(this.world, 0);
-    const sting = this.smp('win_sting', o, 0.42, { jitter: 0 });
+    const sting = this.smp('win_sting', o, 0.34, { jitter: 0 });
     // the voice comes through a police-radio band-pass, over the sting
     const radio = c.createBiquadFilter(); radio.type = 'bandpass'; radio.frequency.value = 1700; radio.Q.value = 0.55; radio.connect(this.out(this.world, 0));
-    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', radio, 0.75, { jitter: 0, delay: sting ? 0.5 : 0 });
+    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', radio, 0.6, { jitter: 0, delay: sting ? 0.5 : 0 });
     return sting || vo;
   }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }
