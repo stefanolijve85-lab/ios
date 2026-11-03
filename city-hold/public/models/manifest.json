@@ -416,6 +416,12 @@
       "file": "final/prop.supply_truck.glb",
       "status": "final",
       "note": "Tripo H3.1 multiview (4 views, detailed) of the SOLOTECH box truck, simplified to 40k triangles; roof panel added in code"
+    },
+    "char.shop_security.paris": {
+      "file": "final/char.shop_security.paris.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from the user's Paris shop security picture), 44 credits",
+      "city": "paris"
     }
   }
 }
