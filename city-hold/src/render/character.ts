@@ -316,7 +316,7 @@ const FIRE_KITS: Record<string, { suit: [number, number, number] | null; helmet:
 };
 let fireKit = '';
 /** shield on the left forearm in bone space (forearm along +y): x, y, z offset in metres, turn about the forearm, tilt in the shield's own plane */
-const SHIELD_OFF: number[] = (window as unknown as { __shieldOff?: number[] }).__shieldOff ?? [-0.12, 0.05, -0.12, -Math.PI / 2, 0.7];
+const SHIELD_OFF = [-0.12, 0.05, -0.12, -Math.PI / 2, 0.7];
 export function setFireKit(city: string) { fireKit = city; }
 const kitCache = new Map<string, THREE.Texture>();
 function kitTexture(src: THREE.Texture, city: string): THREE.Texture | null {
