@@ -45,6 +45,8 @@ export const BALANCE = {
   loadedSpeedFactor: 0.75,
   collectTimePerStock: 0.3,
   barrier: { hp: 60, concreteHp: 120, extraPathCost: 14 },
+  /** tear gas: thrown by an officer at a tapped spot; slows rioters, halves their work, scares some off (defence only) */
+  tearGas: { cost: 150, cooldown: 22, range: 22, radius: 4.5, flight: 0.9, grow: 1.6, life: 14, slow: 0.55, workMul: 0.5, panicAfter: 0.8, panicChance: 0.35 },
   camera: { radius: 12, detectDelay: 1.0, wideRadius: 18, fastDelay: 0.25, responseBoost: 1.5, alarmResponders: 2, alarmRange: 40 },
   unloadedSightDetectDelay: 0.6,
   fire: { storeDamagePerSec: 1.2, vandalIgniteChance: 0.55, max: 4, groundBurnSec: 5, scorchAfterSec: 2 },

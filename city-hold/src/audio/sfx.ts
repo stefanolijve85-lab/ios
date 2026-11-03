@@ -9,7 +9,8 @@
 //    sirens in the distance during a wave.
 export type Cue =
   | 'click' | 'buy' | 'deny' | 'intercept' | 'extract' | 'breach' | 'wave' | 'win' | 'lose' | 'fire' | 'upgrade' | 'held'
-  | 'glass' | 'barrierBroken' | 'impact' | 'release' | 'extinguished' | 'supply' | 'dispatch' | 'collect' | 'recovered' | 'place';
+  | 'glass' | 'barrierBroken' | 'impact' | 'release' | 'extinguished' | 'supply' | 'dispatch' | 'collect' | 'recovered' | 'place'
+  | 'gasThrow' | 'gasLand' | 'strike' | 'scream';
 
 export interface Listener { pan: number; gain: number }
 export interface AmbienceState {
@@ -18,6 +19,9 @@ export interface AmbienceState {
   /** units hammering at boards/barriers right now */ hammering: Listener[];
   /** firefighters spraying right now */ hoses: Listener[];
   /** a wave / looting run is in progress */ active: boolean;
+  /** tear gas clouds on the ground */ gas?: Listener[];
+  /** 0..1 how much of the crowd is in panic (in gas, fleeing, being struck) */ panic?: number;
+  /** rioters smashing shutters and barriers right now */ smashing?: number;
   /** the match is paused or a modal is open */ paused: boolean;
   /** the map has a fountain in view */ fountain?: Listener | null;
 }
@@ -32,13 +36,14 @@ export class Sfx {
   private last = new Map<string, number>();
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
-  static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout'] as const;
+  static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
+    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
   private static readonly LOOP_LEVEL = 0.2;
   private loops = new Map<string, GainNode>();
-  private crackleT = 0; private hammerT = 0; private sirenT = 8; private shoutT = 4;
+  private crackleT = 0; private hammerT = 0; private sirenT = 8; private shoutT = 4; private yellT = 3; private coughT = 2; private screamT = 5;
   private _volume: number;
 
   constructor(volume: number) { this._volume = volume; }
@@ -186,6 +191,10 @@ export class Sfx {
         this.tone(o, 900, 0.18, 'triangle', 0.08, { delay: 0.6 }); this.tone(o, 1200, 0.25, 'triangle', 0.08, { delay: 0.72 }); // budget chime
         break;
       case 'dispatch': this.crowdShout(o, 1.2 * g); break;
+      case 'gasThrow': this.tone(o, 90, 0.12, 'sine', 0.4 * g, { slide: -40 }); this.burst(o, 0.08, 0.35 * g, { type: 'lowpass', freq: 600, src: this.brown }); this.burst(o, 0.5, 0.1 * g, { type: 'bandpass', freq: 900, to: 2400, q: 1, delay: 0.05 }); break; // launcher thump + whoosh
+      case 'gasLand': for (let i = 0; i < 3; i++) this.tone(o, rnd(1800, 2600), 0.06, 'triangle', 0.08 * g, { delay: i * 0.13 }); this.burst(o, 2.2, 0.22 * g, { type: 'highpass', freq: 3000, attack: 0.15, delay: 0.3 }); break; // clatter + hiss
+      case 'strike': this.thud(o, g * 0.7); break;
+      case 'scream': this.scream(o, g); break;
       case 'wave': this.siren(this.out(this.world, rnd(-0.6, 0.6)), 0.5, 2.6); this.crowdShout(o, 1); break;
       case 'win': this.stinger(o, [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]], 0.13); break;
       case 'lose': this.stinger(o, [[392, 466, 587], [349, 415, 523], [262, 311, 392]], 0.13); break;
@@ -207,6 +216,10 @@ export class Sfx {
       case 'collect': return this.smp('rustle', o, v * 0.6);
       case 'supply': if (!this.smp('horn', o, v * 0.8)) return false; this.tone(o, 900, 0.18, 'triangle', 0.08, { delay: 0.7 }); this.tone(o, 1200, 0.25, 'triangle', 0.08, { delay: 0.82 }); return true;
       case 'dispatch': return this.smp('crowd_shout', o, v * 0.7);
+      case 'gasThrow': return this.smp('gas_launch', o, v * 0.9);
+      case 'gasLand': { const a = this.smp('cough', o, v * 0.7, { delay: 1.2 }); const b = this.smp('scream', o, v * 0.6, { delay: 0.5 }); this.smp('gas_hiss', o, v * 0.5); return a || b; }
+      case 'strike': return this.smp('baton', o, v * 0.9);
+      case 'scream': return this.smp('scream', o, v * 0.7);
       case 'wave': { const a = this.smp('siren', this.out(this.world, rnd(-0.6, 0.6)), 0.22, { jitter: 0.02 }); const b = this.smp('crowd_shout', o, 0.22); return a || b; }
       default: return false;
     }
@@ -236,6 +249,10 @@ export class Sfx {
   private crowdShout(o: AudioNode, g: number) {
     // a short swell of many voices: formant-filtered noise with a fast vibrato-like flutter
     for (const [f, q] of [[480, 4], [950, 5], [2300, 6]] as const) this.burst(o, 1.1, 0.2 * g, { type: 'bandpass', freq: f, q, attack: 0.15, src: this.pink });
+  }
+  /** synthetic fallback: a few rising, wavering voices */
+  private scream(o: AudioNode, g: number) {
+    for (let i = 0; i < 3; i++) { const f = rnd(650, 1100); this.tone(o, f, rnd(0.5, 0.9), 'sawtooth', 0.02 * g, { slide: rnd(150, 400), vibrato: [rnd(6, 9), 25], attack: 0.05, delay: i * rnd(0.08, 0.2) }); }
   }
   private stinger(o: AudioNode, chords: number[][], gain: number) {
     chords.forEach((ch, i) => ch.forEach((f) => this.tone(o, f, i === chords.length - 1 ? 1.1 : 0.32, 'triangle', gain / ch.length * 1.6, { delay: i * 0.22, attack: 0.02 })));
@@ -279,7 +296,13 @@ export class Sfx {
       l.gain.setTargetAtTime(level * quiet, t, k); synth.gain.setTargetAtTime(synthLevel * 0.25 * quiet, t, k);
     };
     rec('city_loop', this.amb, 0.5, b.hum, 0.16);
-    rec('crowd_loop', this.amb, crowdLvl * 0.7, b.crowd, 0.015 + crowdLvl * 0.16);
+    // the long riot recording replaces the short crowd loop when present; panic layers on top when gas or chaos hits
+    const panic = Math.min(1, s.panic ?? 0);
+    if (this.buf.has('riot_loop')) { rec('riot_loop', this.amb, crowdLvl * 0.85 * (1 - panic * 0.35), b.crowd, 0.015 + crowdLvl * 0.16); const cl = this.loops.get('crowd_loop'); if (cl) cl.gain.setTargetAtTime(0, t, k); }
+    else rec('crowd_loop', this.amb, crowdLvl * 0.7, b.crowd, 0.015 + crowdLvl * 0.16);
+    { const l = this.loop('panic_loop', this.amb); if (l) l.gain.setTargetAtTime(panic * 0.75 * quiet, t, 0.6); }
+    const gasL = (s.gas ?? []).reduce((a, f) => (f.gain > a.gain ? f : a), { pan: 0, gain: 0 });
+    { const l = this.loop('gas_hiss', this.amb); if (l) l.gain.setTargetAtTime(gasL.gain * 0.35 * quiet, t, 0.4); }
     rec('fire_loop', b.roarP, fireLvl * 0.8, b.roar, fireLvl * 0.5);
     rec('hose_loop', b.hissP, hose.gain * 0.45, b.hiss, hose.gain * 0.12);
     rec('fountain_loop', b.waterP, (s.fountain?.gain ?? 0) * 0.18, b.water, (s.fountain?.gain ?? 0) * 0.035);
@@ -296,8 +319,19 @@ export class Sfx {
     if (s.hammering.length && this.hammerT <= 0) {
       this.hammerT = rnd(0.35, 0.7) / Math.min(3, s.hammering.length);
       const h = s.hammering[Math.floor(Math.random() * s.hammering.length)];
-      if (h.gain > 0.03 && this.smp('wood_hit', this.out(this.world, h.pan), 0.35 * h.gain, { jitter: 0.12 })) { /* recorded hit */ }
+      if (h.gain > 0.03 && Math.random() < 0.55 && this.smp('smash', this.out(this.world, h.pan), 0.3 * h.gain, { jitter: 0.12 })) { /* crowbar on metal */ }
+      else if (h.gain > 0.03 && this.smp('wood_hit', this.out(this.world, h.pan), 0.35 * h.gain, { jitter: 0.12 })) { /* recorded hit */ }
       else if (h.gain > 0.03) { const o = this.out(this.world, h.pan); this.burst(o, 0.09, 0.45 * h.gain, { type: 'bandpass', freq: rnd(350, 700), q: 1.3 }); this.tone(o, rnd(160, 220), 0.08, 'sine', 0.12 * h.gain, { slide: -60 }); }
+    }
+    // coughing from inside the gas, panicked screams when the crowd breaks, angry yells while they smash
+    if (s.active) {
+      this.coughT -= dt;
+      if (gasL.gain > 0.05 && this.coughT <= 0) { this.coughT = rnd(2.5, 5); const o = this.out(this.amb, gasL.pan + rnd(-0.2, 0.2)); if (!this.smp('cough', o, 0.3 * gasL.gain, { jitter: 0.1 })) for (let i = 0; i < 4; i++) this.burst(o, 0.12, 0.12 * gasL.gain, { type: 'bandpass', freq: rnd(500, 900), q: 2, delay: i * rnd(0.18, 0.3) }); }
+      this.screamT -= dt;
+      if (panic > 0.15 && this.screamT <= 0) { this.screamT = rnd(3, 7) / (0.5 + panic); const o = this.out(this.amb, rnd(-0.7, 0.7)); if (!this.smp('scream', o, 0.2 + panic * 0.25, { jitter: 0.12 })) this.scream(o, 0.5 + panic); }
+      this.yellT -= dt;
+      const angry = (s.smashing ?? 0) + s.crowd * 0.3;
+      if (angry > 1 && this.yellT <= 0) { this.yellT = rnd(4, 9) / Math.min(2.5, angry / 3); this.smp('riot_yell', this.out(this.amb, rnd(-0.8, 0.8)), 0.2 + Math.min(0.3, angry / 30), { jitter: 0.1 }); }
     }
     // distant sirens and occasional shouts while a wave runs
     if (s.active) {

@@ -70,6 +70,8 @@ export interface Unit {
   immuneT: number;
   /** shield officer: time of the last baton strike (view plays the swing); rioter: knocked off balance until this time */
   strikeAt: number; staggerUntil: number;
+  /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
+  gasT: number; gasThrowAt: number;
   barrierId: number;
   /** thrower: throws left, cooldown, release done in the current throw, aim */
   throwsLeft: number; throwCd: number; released: boolean; aim: ThrowTarget | null;
@@ -86,6 +88,8 @@ export interface Unit {
 
 export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
+/** tear gas canister: flies from the thrower for `flight` s, then a cloud grows to `r` and thins out at the end of its life */
+export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number; /** a burning barricade placed in the scenery: harmless, burns until a firefighter puts it out */ ambient?: boolean }
 /** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
 export type NpcRole = 'civilian' | 'shopkeeper' | 'helper' | 'patron' | 'police';
@@ -97,7 +101,7 @@ export interface Projectile { id: number; owner: number; x: number; y: number; z
 export interface Drop { id: number; x: number; z: number; amount: number; t: number }
 export interface Truck { x: number; z: number; facing: number; seg: number; done: boolean; rewarded: boolean; waitT: number; active: boolean; blocked: boolean }
 
-export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm';
+export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm' | 'gasThrow' | 'gasLand';
 export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att'; id?: number }
 
 export interface GameOptions {
@@ -123,6 +127,8 @@ export class Game {
   barriers: Barrier[] = [];
   cameras: CameraMast[] = [];
   fires: Fire[] = [];
+  gas: Gas[] = [];
+  gasReadyAt = 0;
   projectiles: Projectile[] = [];
   npcs: Npc[] = [];
   readonly difficulty: Difficulty;
@@ -221,7 +227,7 @@ export class Game {
       id: this.nextId++, side, kind, x: p.x, z: p.z, facing: 0, r: st.radius, variant: Math.floor(this.rng.next() * 1e6),
       state: side === 'def' ? 'idle' : 'approach', stateT: 0, path: null, pi: 0, goal: null, repathT: 0, moving: false, speedNow: 0,
       targetStore: -1, exitId: '', carrying: 0, pending: 0, carryStore: -1, capacity: 0, detectedUntil: -1, camSeen: 0, heldBy: -1, holdT: 0,
-      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
+      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, gasT: 0, gasThrowAt: -9, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
       home: { x: p.x, z: p.z }, engage: -1, escortOf: -1, fireId: -1, selected: false, chaseT: 0, escortSolo: false,
     };
   }
@@ -267,6 +273,7 @@ export class Game {
     let s = base;
     if (u.side === 'att') {
       if (u.carrying > 0) s *= BALANCE.loadedSpeedFactor;
+      if (this.inGas(u.x, u.z)) s *= BALANCE.tearGas.slow; // eyes streaming, coughing
       if (this.side === 'looters' && this.looterUpgrade === 'speed') s *= BALANCE.looters.speedUpgrade;
       if (this.side === 'defence') s *= DIFFICULTY[this.difficulty].attackerSpeedMul; // AI attackers only
     } else {
@@ -633,6 +640,7 @@ export class Game {
     this.stepProjectiles(dt);
     this.stepNpcs(dt);
     this.stepFires(dt);
+    this.stepGas(dt);
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;
     this.drops = this.drops.filter((d) => d.t < 6);
@@ -960,6 +968,53 @@ export class Game {
     a.restrainP = Math.min(0.9, a.restrainP + 0.1);
   }
 
+  // ---------------------------------------------------------------- tear gas
+  /** the officer who throws: a shield officer first, else a guard, nearest to the target and within throwing range */
+  gasThrower(x: number, z: number): Unit | null {
+    const R = BALANCE.tearGas.range;
+    const c = this.defenders().filter((d) => (d.kind === 'shield' || d.kind === 'security') && d.state !== 'restrain' && d.state !== 'escort' && Math.hypot(d.x - x, d.z - z) < R)
+      .sort((a, b) => (a.kind === 'shield' ? 0 : 6) + Math.hypot(a.x - x, a.z - z) - ((b.kind === 'shield' ? 0 : 6) + Math.hypot(b.x - x, b.z - z)));
+    return c[0] ?? null;
+  }
+  canTearGas(): ActionResult {
+    const T = BALANCE.tearGas;
+    if (this.side !== 'defence' || this.over) return { ok: false };
+    if (this.phase !== 'wave') return { ok: false, reason: 'Tear gas only during a wave' };
+    if (this.time < this.gasReadyAt) return { ok: false, reason: `Tear gas ready in ${Math.ceil(this.gasReadyAt - this.time)} s` };
+    if (this.budget < T.cost) return { ok: false, reason: 'Insufficient budget' };
+    if (!this.defenders().some((d) => d.kind === 'shield' || d.kind === 'security')) return { ok: false, reason: 'Needs an officer to throw it' };
+    return { ok: true };
+  }
+  tearGas(x: number, z: number): ActionResult {
+    const ok = this.canTearGas(); if (!ok.ok) return ok.reason ? this.deny(ok.reason) : ok;
+    const T = BALANCE.tearGas;
+    const by = this.gasThrower(x, z); if (!by) return this.deny(`No officer within ${T.range} m`);
+    this.budget -= T.cost; this.gasReadyAt = this.time + T.cooldown;
+    by.gasThrowAt = this.time; by.facing = Math.atan2(x - by.x, z - by.z);
+    this.gas.push({ id: this.nextId++, x, z, fromX: by.x, fromZ: by.z, t: 0, landed: false, r: 0, by: by.id });
+    this.emit({ type: 'gasThrow', text: `Tear gas (-${T.cost})`, x: by.x, z: by.z, amount: T.cost });
+    return { ok: true };
+  }
+  inGas(x: number, z: number) { return this.gas.some((g) => g.landed && (g.x - x) ** 2 + (g.z - z) ** 2 < g.r * g.r); }
+  private gasWork(u: Unit) { return this.inGas(u.x, u.z) ? BALANCE.tearGas.workMul : 1; }
+  private stepGas(dt: number) {
+    const T = BALANCE.tearGas;
+    for (const g of this.gas) {
+      g.t += dt;
+      if (!g.landed && g.t >= T.flight) { g.landed = true; g.t = 0; this.emit({ type: 'gasLand', text: 'Tear gas', x: g.x, z: g.z }); }
+      if (g.landed) g.r = T.radius * Math.min(1, g.t / T.grow) * (g.t > T.life - 3 ? Math.max(0, (T.life - g.t) / 3) : 1);
+    }
+    this.gas = this.gas.filter((g) => !g.landed || g.t < T.life);
+    for (const a of this.attackers()) {
+      if (!this.inGas(a.x, a.z)) { a.gasT = Math.max(0, a.gasT - dt * 0.5); continue; }
+      const was = a.gasT; a.gasT += dt;
+      // some give up: empty-handed rioters who were still on their way run off the map
+      if (was < T.panicAfter && a.gasT >= T.panicAfter && a.carrying === 0 && (a.state === 'approach' || a.state === 'barrier') && this.rng.next() < T.panicChance) {
+        a.state = 'flee'; a.targetStore = -1; this.setAttGoal(a);
+      }
+    }
+  }
+
   private stepFirefighter(u: Unit, dt: number, sp: number) {
     if (u.state === 'move' || u.state === 'return') {
       if (!u.path || u.repathT > 50) this.setPath(u, u.goal ?? u.home);
@@ -1023,10 +1078,10 @@ export class Game {
         const rate = (BALANCE.units[u.kind] as { breakRate: number }).breakRate;
         if (s.boards > 0) {
           // boards absorb the attack first; the shutter is untouched until they are gone
-          s.boards = Math.max(0, s.boards - rate * dt);
+          s.boards = Math.max(0, s.boards - rate * dt * this.gasWork(u));
           if (s.boards <= 0) this.emit({ type: 'barrierBroken', text: `${s.name}: boards torn down`, x: s.door.x, z: s.door.z });
         } else if (s.structure > 0) {
-          s.structure = Math.max(0, s.structure - rate * dt);
+          s.structure = Math.max(0, s.structure - rate * dt * this.gasWork(u));
           if (s.structure <= 0) {
             this.emit({ type: 'breach', text: `${s.name} shutter breached`, x: s.door.x, z: s.door.z });
             if (u.kind === 'vandal' && this.rng.next() < BALANCE.fire.vandalIgniteChance) this.startFire(s.door.x, s.door.z - 0.0, s.idx, -1);
@@ -1037,6 +1092,7 @@ export class Game {
       case 'collect': {
         u.moving = false;
         if (u.pending <= 0) { this.reroute(u); break; }
+        if (this.inGas(u.x, u.z)) u.stateT -= dt * (1 - BALANCE.tearGas.workMul); // grabbing goods half as fast while coughing
         if (u.stateT >= u.pending * BALANCE.collectTimePerStock + 0.6) {
           u.carrying = u.pending; u.pending = 0; u.state = 'extract'; u.stateT = 0;
           this.emit({ type: 'collect', text: `${u.kind} took ${u.carrying} stock`, x: u.x, z: u.z });
@@ -1059,7 +1115,7 @@ export class Game {
         u.moving = false;
         const b = this.barriers.find((bb) => bb.id === u.barrierId);
         if (!b || b.broken) { u.state = u.carrying > 0 ? 'extract' : (u.pending > 0 ? 'extract' : 'approach'); if (u.carrying === 0 && u.targetStore < 0) u.state = 'flee'; this.setAttGoal(u); break; }
-        b.hp -= (BALANCE.units[u.kind] as { breakRate: number }).breakRate * dt * (u.kind === 'vandal' ? 1 : 0.8);
+        b.hp -= (BALANCE.units[u.kind] as { breakRate: number }).breakRate * dt * (u.kind === 'vandal' ? 1 : 0.8) * this.gasWork(u);
         if (b.hp <= 0) {
           b.hp = 0; b.broken = true; this.nav.setBarrier(b.id, b.rect, false);
           this.emit({ type: 'barrierBroken', text: 'Barrier knocked over', x: b.x, z: b.z });
@@ -1163,6 +1219,7 @@ export class Game {
     let best: { x: number; z: number; d: number } | null = null;
     for (const a of this.attackers()) { const d = Math.hypot(a.x - x, a.z - z); if (d < BALANCE.npc.fleeRadius && (!best || d < best.d)) best = { x: a.x, z: a.z, d }; }
     for (const f of this.fires) { if (f.out) continue; const d = Math.hypot(f.x - x, f.z - z); if (d < BALANCE.npc.fireRadius && (!best || d < best.d)) best = { x: f.x, z: f.z, d }; }
+    for (const g of this.gas) { if (!g.landed) continue; const d = Math.hypot(g.x - x, g.z - z); if (d < g.r + 3 && (!best || d < best.d)) best = { x: g.x, z: g.z, d }; }
     return best;
   }
   /** exit that leads away from the danger */

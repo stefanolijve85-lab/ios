@@ -32,3 +32,19 @@ Afterwards:
 - Check the files decode, then run the offline audio check described in IMPLEMENTATION_STATUS.md.
 - Every cue should peak at about 0.3 or less, and the music should sit below the effects.
 - Commit `public/audio` to branch `claude/happy-hypatia-1smfhz` and push.
+
+## Batch 2 (riot, panic, tear gas, strikes) — same flow, same steps
+
+Download each to `public/audio/<name>.mp3`. The game already plays them as soon as the files exist (synthesised stand-ins until then).
+
+| name | session id | notes |
+|---|---|---|
+| riot_loop | 6Li9mkP8qZ7RbxZUz4dK | 15 s seamless loop, replaces the 2 s crowd_loop |
+| panic_loop | wraahwJ5iCZnCAKu49mZ | 10 s seamless loop, rises when gas/chaos hits |
+| riot_yell | gZVz45tdNznxFdaB1L6w | angry yells |
+| scream | nTa186qJ7rVvNMacdNha | panic screams |
+| cough | rYAa3MK5yOCrHIqGkCB1 | coughing in tear gas |
+| gas_launch | TnawfWLj9uW0kuIMvfa1 | launcher thump + canister clatter |
+| gas_hiss | 6R6TvH6R9PsWO0OHGb45 | 6 s seamless loop |
+| smash | 6TCYByJkfEVVqjWzJW31 | crowbar on a metal shutter |
+| baton | hzvHeZxW49A1YFmbOnjX | baton strike |

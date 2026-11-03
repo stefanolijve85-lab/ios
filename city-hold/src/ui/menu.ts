@@ -155,6 +155,24 @@ export class Menu {
         <p class="rm-foot">${t.footer}</p>
       </div></main>`;
     this.wire('[data-go]', (el) => this.go(el.dataset.go as Screen));
+    this.intro();
+  }
+
+  /** cinematic intro (video/intro.mp4: shield wall, Milan looters, Amsterdam firefighters) once per visit, over the main menu;
+   *  any tap or key skips it. Not shown to automated browsers, so test clicks reach the menu directly. */
+  private intro() {
+    let seen = false; try { seen = sessionStorage.getItem('riots.intro') === '1'; sessionStorage.setItem('riots.intro', '1'); } catch { /* private mode: show it */ }
+    if (seen || navigator.webdriver || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const nl = this.lang === 'nl';
+    const el = document.createElement('div'); el.className = 'rm-intro';
+    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
+    document.body.appendChild(el);
+    const v = el.querySelector('video')!;
+    let done = false;
+    const close = () => { if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', close, true); setTimeout(() => el.remove(), 600); };
+    v.addEventListener('ended', close); v.addEventListener('error', close);
+    el.addEventListener('pointerdown', close); window.addEventListener('keydown', close, true);
+    void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
   }
 
   // ---------------------------------------------------------------- 03 city selection

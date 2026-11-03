@@ -39,6 +39,8 @@ export class Match {
   speed = 1;
   paused = false;
   placing: BuildKind | null = null;
+  /** tear gas armed: the next tap on the ground is where the canister lands */
+  gasAim = false;
   private raf = 0;
   private last = 0;
   private acc = 0;
@@ -170,7 +172,14 @@ export class Match {
       case 'skiphint': this.hints = []; this.el.hint.style.display = 'none'; break;
       case 'startwave': { this.game.startWave(); break; } // the waveStart event plays the siren
       case 'dispatch': { this.game.dispatch(); break; } // the dispatch event plays the crowd
-      case 'cancel': this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); break;
+      case 'gas': {
+        const r = this.game.canTearGas();
+        if (!r.ok) { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); break; }
+        this.gasAim = !this.gasAim; this.placing = null; this.view.showSockets = null;
+        if (this.gasAim) this.toast('Tear gas: tap where it should land', 'info');
+        break;
+      }
+      case 'cancel': this.gasAim = false; this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); break;
       case 'selall': this.view.selected = new Set(this.game.defenders().filter((d) => d.kind === 'security').map((d) => d.id)); break;
       case 'selsquad': this.view.selected = new Set(this.game.attackers().filter((u) => u.state === 'approach').map((d) => d.id)); break;
       case 'route': {
@@ -200,6 +209,14 @@ export class Match {
   private onTap(p: Pick, _sx: number, _sy: number) {
     const g = this.game; const isDef = this.side === 'defence';
     if (g.over) return;
+    if (this.gasAim && isDef) {
+      this.gasAim = false;
+      if (p.type === 'socket' || p.type === 'entry') { this.refreshHud(true); return; }
+      const x = p.x, z = p.z;
+      const r = g.tearGas(x, z);
+      if (r.ok) this.view.showDestination(x, z, null, 0xe8e4d8); else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
+      this.refreshHud(true); return;
+    }
     if (this.placing) {
       if (p.type === 'socket') {
         const r = g.place(this.placing, p.id);
@@ -306,6 +323,9 @@ export class Match {
       active: g.phase === 'wave' || g.phase === 'running',
       paused: this.paused || g.over,
       fountain: this.map.fountain ? this.hear(this.map.fountain.x, this.map.fountain.z) : null,
+      gas: near(g.gas.filter((c) => c.landed && c.r > 0.5), 3),
+      panic: (() => { const at = g.attackers(); if (!at.length) return 0; const p = at.filter((u) => u.gasT > 0.3 || u.state === 'flee' || u.state === 'held' || u.staggerUntil > g.time).length; return Math.min(1, p / Math.max(3, at.length * 0.6)); })(),
+      smashing: hammering.length,
     });
   }
 
@@ -320,7 +340,7 @@ export class Match {
         case 'breach': this.buzz(60); if (e.x !== undefined) this.view.fx.event(`breach:${e.x}:${e.z}:${this.game.time.toFixed(1)}`, 'sparks', e.x, e.z!); this.sfx.play('breach', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, this.side === 'defence' ? 'bad' : 'good'); break;
         case 'fire': this.sfx.play('fire', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.buzz([40, 40, 40]); this.toast(e.text, 'bad'); break;
         case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('impact', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
-        case 'held': this.sfx.play('held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
+        case 'held': this.sfx.play(e.text === 'Baton strike' ? 'strike' : 'held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
         case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
@@ -332,6 +352,8 @@ export class Match {
         case 'extinguished': this.sfx.play('extinguished', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'info'); break;
         case 'dispatch': this.sfx.play('dispatch'); this.toast(e.text, 'info'); break;
         case 'info': this.toast(e.text, 'info'); break;
+        case 'gasThrow': this.sfx.play('gasThrow', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
+        case 'gasLand': this.sfx.play('gasLand', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.buzz(40); break;
         case 'alarm': if (this.side === 'defence') { this.toast(e.text, 'bad'); if (e.x !== undefined) this.view.showDestination(e.x, e.z!, null, 0xff4a3a); this.sfx.play('deny'); } break;
         case 'collect': if (e.x !== undefined) this.sfx.play('collect', this.hear(e.x, e.z!)); break;
         case 'release': if (e.x !== undefined) this.sfx.play('release', this.hear(e.x, e.z!)); break;
@@ -422,6 +444,8 @@ export class Match {
     const dyn = this.el.info.querySelector('[data-dyn]');
     if (dyn) dyn.innerHTML = this.dynInfo();
     if (this.side === 'defence') {
+      const gb = this.el.actions.querySelector<HTMLButtonElement>('[data-gas]');
+      if (gb) { const left = Math.ceil(this.game.gasReadyAt - this.game.time); gb.disabled = this.game.phase !== 'wave' || left > 0 || this.game.budget < BALANCE.tearGas.cost; gb.textContent = left > 0 ? `Tear gas · ${left} s` : `Tear gas · ${BALANCE.tearGas.cost}`; }
       const sw = this.el.actions.querySelector<HTMLButtonElement>('[data-a="startwave"]');
       if (sw) sw.disabled = this.game.phase !== 'prep';
       const inc = this.el.actions.querySelector('[data-inc]'); if (inc) inc.innerHTML = this.incomingHtml();
@@ -443,7 +467,8 @@ export class Match {
     const g = this.game; const a = this.el.actions;
     if (this.side === 'defence') {
       a.innerHTML = `<div class="incoming" data-inc>${this.incomingHtml()}</div>
-        <div class="btnrow">${this.placing ? '<button data-a="cancel">Cancel placement</button>' : ''}<button data-a="selall">Select all security</button>
+        <div class="btnrow">${this.placing ? '<button data-a="cancel">Cancel placement</button>' : ''}${this.gasAim ? '<button data-a="cancel">Cancel tear gas</button>' : ''}<button data-a="selall">Select all security</button>
+        <button class="gas ${this.gasAim ? 'active' : ''}" data-a="gas" data-gas ${g.phase !== 'wave' ? 'disabled' : ''}>Tear gas · ${BALANCE.tearGas.cost}</button>
         <button class="primary" data-a="startwave" ${g.phase !== 'prep' ? 'disabled' : ''}>Start wave ${Math.min(g.wave, BALANCE.defence.waves)}</button></div>`;
     } else {
       const tgt = g.looterTarget >= 0 ? g.stores[g.looterTarget] : null;

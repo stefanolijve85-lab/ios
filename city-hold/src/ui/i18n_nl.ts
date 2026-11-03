@@ -42,7 +42,9 @@ const PHRASES: [string, string][] = [
   ['Intercept loot', 'Buit onderscheppen'], ['Wave reward', 'Golfbeloning'], ['Buy an upgrade', 'Upgrade kopen'], ['Recruit a group', 'Groep werven'],
   ['Loot a store', 'Winkel plunderen'], ['Extract the loot', 'Buit wegbrengen'], ['Extraction reward', 'Buitbeloning'],
   // actions and info
-  ['Select all security', 'Alle beveiliging selecteren'], ['Select approaching', 'Naderende selecteren'], ['Cancel placement', 'Plaatsen annuleren'],
+  ['Select all security', 'Alle beveiliging selecteren'], ['Cancel tear gas', 'Traangas annuleren'], ['Tear gas: tap where it should land', 'Traangas: tik waar het moet landen'],
+  ['Tear gas only during a wave', 'Traangas alleen tijdens een golf'], ['Needs an officer to throw it', 'Er is een agent nodig om te gooien'], ['Tear gas ready in', 'Traangas klaar over'],
+  ['No officer within', 'Geen agent binnen'], ['Camera alarm: guards responding', 'Cameralarm: beveiligers komen eraan'], ['Camera alarm', 'Cameralarm'], ['Baton strike', 'Wapenstokslag'], ['Tear gas', 'Traangas'], ['Select approaching', 'Naderende selecteren'], ['Cancel placement', 'Plaatsen annuleren'],
   ['Dispatch', 'Stuur op pad'], ['Start wave', 'Start golf'], ['Tap a unit or store for details.', 'Tik een eenheid of winkel voor details.'],
   ['Recruit units with the cards', 'Werf eenheden met de kaarten'], ['Tap a store', 'Tik een winkel'],
   ['offenders remaining', 'daders over'], ['IN PROGRESS', 'BEZIG'], ['INCOMING', 'KOMT ERAAN'], ['TARGET STORE', 'DOELWINKEL'], ['TARGET', 'DOEL'], ['ROUTE', 'ROUTE'],

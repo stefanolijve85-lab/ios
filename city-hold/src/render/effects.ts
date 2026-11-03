@@ -18,11 +18,11 @@ const PRESETS: Record<FxKind, Preset> = {
   smoke: { life: [3, 5], scale: [0.8, 2.8], opacity: 0.3, rise: [0.3, 0.6], drift: 0.2, rate: [2, 4], blend: 'normal', spin: 0.25 },
   sparks: { life: [0.2, 0.6], scale: [0.2, 0.5], opacity: 0.8, rise: [0.5, 1.5], drift: 1.4, rate: [2, 4], blend: 'add', spin: 2 },
   explosion: { life: [0.6, 1.1], scale: [0.25, 2.0], opacity: 0.9, rise: [0.2, 0.5], drift: 0.2, rate: [1, 2], blend: 'normal', spin: 0.4 },
-  tear_gas: { life: [3, 6], scale: [0.7, 3.2], opacity: 0.3, rise: [0.02, 0.1], drift: 0.25, rate: [2, 4], blend: 'normal', spin: 0.15 },
+  tear_gas: { life: [4, 7], scale: [1.0, 3.8], opacity: 0.55, rise: [0.02, 0.1], drift: 0.25, rate: [3, 6], blend: 'normal', spin: 0.15 },
   spray: { life: [0.5, 0.8], scale: [0.25, 0.9], opacity: 0.55, rise: [0.1, 0.3], drift: 0.4, rate: [10, 16], blend: 'normal', spin: 0.5 },
   flare: { life: [0.3, 0.5], scale: [0.2, 0.4], opacity: 0.9, rise: [0.5, 1.0], drift: 1.6, rate: [8, 14], blend: 'add', spin: 1 },
 };
-export const PARTICLE_CAP = { mobile: 64, desktop: 160 };
+export const PARTICLE_CAP = { mobile: 80, desktop: 200 };
 
 interface P { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; s0: number; s1: number; rot: number; vr: number; op: number; off: number }
 
@@ -125,14 +125,14 @@ export class Effects {
   constructor(scene: THREE.Scene, public reduced: boolean) {
     this.cap = reduced ? PARTICLE_CAP.mobile : PARTICLE_CAP.desktop;
     const c = this.cap;
-    const share: Record<FxKind, number> = { fire: 0.22, smoke: 0.24, sparks: 0.12, explosion: 0.05, tear_gas: 0.1, spray: 0.17, flare: 0.1 };
+    const share: Record<FxKind, number> = { fire: 0.2, smoke: 0.2, sparks: 0.1, explosion: 0.05, tear_gas: 0.24, spray: 0.13, flare: 0.08 };
     const n = (k: FxKind, min: number) => Math.max(min, Math.floor(c * share[k]));
     this.fields = {
       fire: new Field('fire', n('fire', 6), flameTexture(), 0xffffff, 'fire', 'fire'),
       smoke: new Field('smoke', n('smoke', 6), smokeTexture(), 0xa8a8b0, 'smoke', 'smoke'),
       sparks: new Field('sparks', n('sparks', 4), flameTexture(), 0xffffff, 'sparks'),
       explosion: new Field('explosion', n('explosion', 2), flameTexture(), 0xffffff, 'explosion'),
-      tear_gas: new Field('tear_gas', n('tear_gas', 4), smokeTexture(), 0xf2f0ea, 'tear_gas', 'tear_gas'),
+      tear_gas: new Field('tear_gas', n('tear_gas', 4), smokeTexture(), 0xd9d7cf, 'tear_gas', 'tear_gas'),
       spray: new Field('spray', n('spray', 4), smokeTexture(), 0xeaf6ff, 'tear_gas'),
       flare: new Field('flare', n('flare', 4), flameTexture(), 0x9feaff),
     };
@@ -239,6 +239,7 @@ export class Effects {
         if (e.kind === 'spray' && e.dir) this.spawn('spray', e.x, e.y, e.z, 0.1, { vx: e.dir[0] + (rnd() - 0.5) * 0.6, vy: e.dir[1] + rnd() * 0.4, vz: e.dir[2] + (rnd() - 0.5) * 0.6 });
         else if (e.kind === 'smoke') this.spawn('smoke', e.x, e.y, e.z, e.spread, { vx: 0.25 + rnd() * 0.3, vz: -0.15 - rnd() * 0.25, scaleMul: e.scale });
         else if (e.kind === 'fire') this.spawn('fire', e.x, e.y, e.z, e.spread, { vx: (rnd() - 0.5) * 0.2, vz: (rnd() - 0.5) * 0.2, scaleMul: e.scale, vy: e.scale < 1 ? 0.3 : undefined });
+        else if (e.kind === 'tear_gas') { const a = rnd() * Math.PI * 2, v = 0.25 + rnd() * 0.5; this.spawn('tear_gas', e.x, e.y + rnd() * 0.4, e.z, e.spread, { vx: Math.cos(a) * v, vz: Math.sin(a) * v, vy: 0.03 + rnd() * 0.12, scaleMul: e.scale }); } // rolls out low over the ground
         else this.spawn(e.kind, e.x, e.y, e.z, e.spread);
       }
     }

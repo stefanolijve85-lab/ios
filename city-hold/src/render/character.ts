@@ -140,7 +140,7 @@ class GltfCharacter implements CharacterVisual {
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.34), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 }));
       box.position.set(0, 1.08, 0.32); box.castShadow = true; box.name = 'carry'; this.root.add(box); this.carry = box;
     }
-    this.held = new HeldObject(model.getObjectByName('hand_socket') ?? model.getObjectByName('RightHand') ?? undefined);
+    this.held = new HeldObject(kind === 'security' || kind === 'shield' ? undefined : model.getObjectByName('hand_socket') ?? model.getObjectByName('RightHand') ?? undefined); // officers throw gas, not a firebomb
     const rh = model.getObjectByName('RightHand');
     if (rh && kind !== 'shield' && kind !== 'security' && kind !== 'firefighter' && kind !== 'civilian') {
       // crowbar, only in the hand while breaking something
@@ -231,7 +231,7 @@ class ProcCharacter implements CharacterVisual {
   root: THREE.Object3D; icon: THREE.Sprite;
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
   private held: HeldObject;
-  constructor(private h: Humanoid) { this.root = h.root; this.icon = h.icon; this.held = new HeldObject(h.root.getObjectByName('hand_socket')); }
+  constructor(private h: Humanoid) { this.root = h.root; this.icon = h.icon; this.held = new HeldObject(h.kind === 'security' || h.kind === 'shield' ? undefined : h.root.getObjectByName('hand_socket')); }
   update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
     this.h.actionT = action;
     animate(this.h, pose, moving, speed, carrying, dt);

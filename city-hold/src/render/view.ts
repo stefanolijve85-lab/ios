@@ -342,6 +342,44 @@ export class MatchView {
     return { moving: m.on, speed: m.v };
   }
 
+  private gasVis = new Map<number, { can: THREE.Mesh; haze: THREE.Mesh }>();
+  private hazeTex: THREE.Texture | null = null;
+  private drawGas(g: Game) {
+    const T = BALANCE.tearGas; const live = new Set<number>();
+    if (!this.hazeTex) {
+      const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!;
+      const gr = x.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = gr; x.fillRect(0, 0, 128, 128); this.hazeTex = new THREE.CanvasTexture(c);
+    }
+    for (const c of g.gas) {
+      live.add(c.id);
+      let v = this.gasVis.get(c.id);
+      if (!v) {
+        const can = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x5a6068, metalness: 0.6, roughness: 0.4 }));
+        const haze = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.hazeTex, color: 0xb9b8b2, transparent: true, opacity: 0, depthWrite: false }));
+        haze.renderOrder = 2; this.scene.add(can, haze); v = { can, haze }; this.gasVis.set(c.id, v);
+      }
+      if (!c.landed) {
+        const k = Math.min(1, c.t / T.flight);
+        v.can.position.set(c.fromX + (c.x - c.fromX) * k, 1.5 + Math.sin(k * Math.PI) * 3.2 - k * 1.4, c.fromZ + (c.z - c.fromZ) * k);
+        v.can.rotation.set(c.t * 9, 0, c.t * 5);
+        this.fx.emit(`gast:${c.id}`, 'tear_gas', v.can.position.x, v.can.position.y, v.can.position.z, 0.05, 0.8, 0.35); // thin trail
+        continue;
+      }
+      v.can.position.set(c.x, 0.06, c.z); v.can.rotation.set(Math.PI / 2, 0, c.id);
+      const life = Math.max(0, 1 - Math.max(0, c.t - (T.life - 3)) / 3);
+      // the cloud: jet at the canister plus puffs around it, spread to the cloud's radius
+      this.fx.emit(`gasc:${c.id}`, 'tear_gas', c.x, 0.25, c.z, 0.4, 2.2 * life, 1.1);
+      for (let i = 0; i < 4; i++) {
+        const a = i * 1.57 + c.id, rr = c.r * 0.55;
+        this.fx.emit(`gas${i}:${c.id}`, 'tear_gas', c.x + Math.cos(a) * rr, 0.4, c.z + Math.sin(a) * rr, c.r * 0.4, 0.9 * life, 1.5);
+      }
+      v.haze.position.set(c.x, 0.09, c.z); v.haze.scale.setScalar(Math.max(0.1, c.r * 1.35));
+      (v.haze.material as THREE.MeshBasicMaterial).opacity = 0.3 * Math.min(1, c.t / 1.2) * life;
+    }
+    for (const [id, v] of this.gasVis) if (!live.has(id)) { this.scene.remove(v.can, v.haze); v.can.geometry.dispose(); v.haze.geometry.dispose(); this.gasVis.delete(id); }
+  }
+
   /** a scenery fire keeps burning until a firefighter has put out the game fire at that spot */
   private ambientBurning(g: Game, f: { x: number; z: number }) { return g.fires.some((ff) => ff.ambient && !ff.out && Math.hypot(ff.x - f.x, ff.z - f.z) < 0.5); }
 
@@ -422,8 +460,10 @@ export class MatchView {
       let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
       else if (pose === 'brace' && mv.moving) pose = 'walk';
       if (lootPhase) pose = mv.moving ? 'walk' : 'collect'; // walks in/out, rummages inside
+      else if (u.side === 'att' && u.gasT > 0.3 && (pose === 'walk' || pose === 'idle')) pose = 'flee'; // arms up over the face, coughing
       let action = u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0;
       if (u.kind === 'shield' && g.time - u.strikeAt < 0.6) { pose = 'strike'; action = (g.time - u.strikeAt) / 0.6; } // baton swing
+      if (u.side === 'def' && g.time - u.gasThrowAt < BALANCE.throw.duration) { pose = 'throw'; action = (g.time - u.gasThrowAt) / BALANCE.throw.duration; } // lobs the canister
       h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
@@ -513,6 +553,8 @@ export class MatchView {
     }
     // cars that caught fire
     for (const idx of g.burnedProps) { const c = this.world.cars.get(idx); if (c && c.intact.visible) { c.intact.visible = false; c.burned.visible = true; const pp = this.map.props[idx]; this.fx.event(`car:${idx}`, 'explosion', pp.x, pp.z); } }
+    // tear gas: the canister arcs from the officer, lands and vents a thick low cloud with a ground haze under it
+    this.drawGas(g);
     // fires
     // thrown objects in flight (pooled visuals); flame at the cloth tip and a thin smoke trail
     const alive = new Set<number>();
