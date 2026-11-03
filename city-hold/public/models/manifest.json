@@ -405,6 +405,12 @@
       "file": "final/prop.fire_engine.glb",
       "status": "final",
       "note": "Tripo H3.1 multiview (4 views, detailed) of the RIOTS fire truck pack, simplified to 45k triangles, 2048 px textures"
+    },
+    "char.shop_security.saopaulo": {
+      "file": "final/char.shop_security.saopaulo.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from the user's Rio shop security picture), 44 credits",
+      "city": "saopaulo"
     }
   }
 }

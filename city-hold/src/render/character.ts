@@ -350,6 +350,8 @@ export function createCharacterFromSlot(slot: string, kind: AnyKind, variant = 1
 }
 
 export function createCharacter(kind: AnyKind, variant: number): CharacterVisual {
+  // shop security: the city's own guard (char.shop_security.<city>, rigged image-to-3D) when it is there
+  if (kind === 'shopkeeper' && fireKit) { const own = `char.shop_security.${fireKit}`; if (slotStatus(own) === 'final') { const c = createCharacterFromSlot(own, kind, variant); if (c) return c; } }
   const chosen = (figureChoice[kind] ?? []).filter((sl) => getModel(sl));
   if (chosen.length) { const c = createCharacterFromSlot(chosen[variant % chosen.length], kind, variant); if (c) return c; }
   // a final model for the unit class wins over a temporary outfit placeholder; civilians alternate between the final street figures

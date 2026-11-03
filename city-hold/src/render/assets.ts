@@ -112,6 +112,7 @@ export function loadCityAssets(city: string, base = 'models/', onProgress?: (don
         try { const g = await loader.loadAsync(base + e.file); loaded.set(slot, { scene: g.scene, animations: g.animations }); } catch (err) { console.warn('model failed', slot, err); }
         onProgress?.(++done, entries.length);
       }));
+      if (entries.some(([slot]) => slot.startsWith('char.'))) shareCharacterClips(); // a city's own figures get the shared clips too
     })();
     cityLoads.set(city, p);
   }
