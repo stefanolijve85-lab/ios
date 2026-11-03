@@ -125,7 +125,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   }
   const lb = await p.evaluate(() => { window.__match.paused = true; /* no income while the UI is clicked */ const g = window.__match.game; if (g.budget < 300) g.budget = 300; /* top-up only so the UI button can be exercised */ return { b: g.budget, ex: g.extracted }; });
   if (!(lb.ex > 0)) console.log("debug", await p.evaluate(() => { const g = window.__match.game; return JSON.stringify({ over: g.over, phase: g.phase, t: Math.round(g.time), budget: g.budget, att: g.attackers().length, defs: g.defenders().length, stock: g.stores.map((s) => s.stock) }); }));
-  if (!(lb.ex > 0)) console.log('trace', (await p.evaluate(() => window.__e2eLog || [])).slice(0, 12).join('\n'));
+  if (!(lb.ex > 0)) console.log('trace', (await p.evaluate(() => window.__e2eLog || [])).filter((_, i, a) => i < 6 || i > a.length - 8).join('\n'));
   assert(lb.ex > 0, `looters extracted stock (${lb.ex}) and were paid for it`);
   await p.waitForTimeout(400);
   await p.click('.infotoggle'); await p.waitForTimeout(300);
