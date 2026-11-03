@@ -379,3 +379,6 @@ Progression: Paris is open; winning a district (either side) unlocks the next. W
   - Panning works (L/R ratio 6.3 vs 0.16 at pan ∓0.8).
   - Ambience is about 0.014 RMS on a calm street and 0.049 during a riot (synthesis: 0.013 vs 0.037).
   - At default settings (sound 0.6, music 0.5) the mission music sits at about 0.018 RMS (peak 0.09). That is below the riot ambience (0.029) and below the effects (0.02–0.07 RMS in a 300 ms window).
+- **Batch 2 (riot, panic, tear gas, strikes):** `riot_loop` (15 s), `panic_loop` (10 s), `riot_yell`, `scream`, `cough`, `gas_launch`, `gas_hiss` (6 s), `smash` and `baton` were downloaded from the same flow to `public/audio` (about 0.9 MB). All 9 decode cleanly with ffmpeg, and all 27 recordings load in Chromium.
+  - Offline render of the real `sfx.ts` at full volume: gasThrow peaks at 0.27, gasLand at 0.30, strike at 0.23, scream at 0.21 (glass 0.31, barrier 0.30 and impact 0.29, as before).
+  - Ambience at full volume: calm street 0.014 RMS, riot 0.029 (the new riot loop is quieter than the old 2 s crowd loop at 0.049), riot with tear gas and panic 0.030, smashing 0.025.
