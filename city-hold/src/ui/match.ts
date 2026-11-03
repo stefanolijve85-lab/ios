@@ -150,7 +150,7 @@ export class Match {
       for (const c of ATT_CARDS) {
         const b = document.createElement('button'); b.className = 'card'; b.dataset.kind = c.kind;
         b.innerHTML = `${c.img ? `<img src="${c.img}" alt="">` : '<i class="glyph">✕</i>'}<span class="cl">${c.label}</span><span class="cc">${BALANCE.looters.costs[c.kind]}</span><span class="cn">${c.note}</span>`;
-        b.addEventListener('click', () => { const r = this.game.recruit(c.kind); if (r.ok) this.sfx.play('buy'); this.refreshHud(true); });
+        b.addEventListener('click', () => { const r = this.game.recruit(c.kind); if (r.ok) { this.sfx.play('buy'); this.showRecruit(c.img, c.label); } this.refreshHud(true); });
         cards.appendChild(b);
       }
     }
@@ -362,6 +362,16 @@ export class Match {
         case 'release': if (e.x !== undefined) this.sfx.play('release', this.hear(e.x, e.z!)); break;
       }
     }
+  }
+
+  /** a short enlarged look at the figure just added to the group (pointer-transparent: never blocks the next tap) */
+  private recruitPop: HTMLDivElement | null = null; private recruitT = 0;
+  private showRecruit(img: string | null, label: string) {
+    if (!img) return;
+    if (!this.recruitPop) { this.recruitPop = document.createElement('div'); this.recruitPop.className = 'recruit-pop'; this.root.appendChild(this.recruitPop); }
+    const el = this.recruitPop; el.innerHTML = `<img src="${img}" alt=""><b>${label}</b><small>+1 · ${this.game.squad.length}</small>`;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(this.recruitT); this.recruitT = window.setTimeout(() => el.classList.remove('show'), 1100);
   }
 
   toast(text: string, kind: 'good' | 'bad' | 'info') {
