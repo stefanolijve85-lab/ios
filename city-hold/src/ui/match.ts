@@ -67,7 +67,8 @@ export class Match {
     const tb = this.root.querySelector<HTMLElement>('.topbar');
     if (tb && 'ResizeObserver' in window) { const ro = new ResizeObserver(() => this.root.style.setProperty('--tb', `${tb.offsetHeight}px`)); ro.observe(tb); this.stopTb = () => ro.disconnect(); }
     // iOS only plays Web Audio after a touch: unlock on the first one (also starts the street ambience)
-    this.root.addEventListener('pointerdown', () => this.sfx.unlock(), { capture: true });
+    // iOS only grants sound on a released tap (touchend/click), not on pointerdown
+    for (const ev of ['pointerdown', 'touchend', 'click']) this.root.addEventListener(ev, () => this.sfx.unlock(), { capture: true });
     this.renderCycle();
     this.setupHints();
     this.refreshHud(true);

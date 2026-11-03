@@ -22,6 +22,8 @@ class Music {
   private ctx: AudioContext | null = null;
 
   constructor() {
+    // iOS: Web Audio follows the ring/silent switch unless the page declares itself a player (Safari 16.4+)
+    try { const n = navigator as unknown as { audioSession?: { type: string } }; if (n.audioSession) n.audioSession.type = 'playback'; } catch { /* older browsers */ }
     const unlock = () => {
       if (!this.ctx) {
         try { this.ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)(); } catch { this.ctx = null; }
