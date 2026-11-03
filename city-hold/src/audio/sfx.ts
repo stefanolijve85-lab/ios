@@ -300,9 +300,9 @@ export class Sfx {
     rec('city_loop', this.amb, 0.5, b.hum, 0.16);
     // the long riot recording replaces the short crowd loop when present; panic layers on top when gas or chaos hits
     const panic = Math.min(1, s.panic ?? 0);
-    if (this.buf.has('riot_loop')) { rec('riot_loop', this.amb, crowdLvl * 0.85 * (1 - panic * 0.35), b.crowd, 0.015 + crowdLvl * 0.16); const cl = this.loops.get('crowd_loop'); if (cl) cl.gain.setTargetAtTime(0, t, k); }
+    if (this.buf.has('riot_loop')) { rec('riot_loop', this.amb, crowdLvl * 1.35 * (1 - panic * 0.3), b.crowd, 0.015 + crowdLvl * 0.16); const cl = this.loops.get('crowd_loop'); if (cl) cl.gain.setTargetAtTime(0, t, k); }
     else rec('crowd_loop', this.amb, crowdLvl * 0.7, b.crowd, 0.015 + crowdLvl * 0.16);
-    { const l = this.loop('panic_loop', this.amb); if (l) l.gain.setTargetAtTime(panic * 0.75 * quiet, t, 0.6); }
+    { const l = this.loop('panic_loop', this.amb); if (l) l.gain.setTargetAtTime(panic * 1.3 * quiet, t, 0.6); }
     const gasL = (s.gas ?? []).reduce((a, f) => (f.gain > a.gain ? f : a), { pan: 0, gain: 0 });
     { const l = this.loop('gas_hiss', this.amb); if (l) l.gain.setTargetAtTime(gasL.gain * 0.35 * quiet, t, 0.4); }
     rec('fire_loop', b.roarP, fireLvl * 0.8, b.roar, fireLvl * 0.5);
