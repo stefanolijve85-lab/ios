@@ -66,6 +66,7 @@ export class Match {
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx);
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
+    this.sfx.unlock(); // create the audio graph now so the recordings start loading with the match (it resumes on the first tap)
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
     // overlays sit right under the top bar, whatever its height (it wraps to two or three rows on narrow phones)

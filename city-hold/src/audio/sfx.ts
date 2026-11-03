@@ -64,6 +64,15 @@ export class Sfx {
   victory(voice = true): boolean {
     if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
     if (c.state === 'suspended') void c.resume();
+    // not decoded yet (slow connection, or the first tap came late): fetch them now and play as soon as they are ready
+    const vo = this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl';
+    if (!this.buf.has('win_sting') || (voice && !this.buf.has(vo))) {
+      void Promise.all([this.loadOne(c, 'win_sting'), voice ? this.loadOne(c, vo) : Promise.resolve(true)]).then(([a, b]) => { if (a || b) this.playVictory(c, voice); });
+      return true; // the recording follows; no synthesised chime on top
+    }
+    this.playVictory(c, voice); return true;
+  }
+  private playVictory(c: Ctx, voice: boolean): boolean {
     const o = this.out(this.ui, 0); // not placed in the world: it must be heard whatever the zoom
     const sting = this.smp('win_sting', o, 0.6, { jitter: 0 });
     if (!voice) return sting;
@@ -100,17 +109,27 @@ export class Sfx {
     this.loadSamples(c);
     return c;
   }
-  private loadSamples(c: Ctx) {
-    for (const name of Sfx.SAMPLES) {
-      fetch(`audio/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+  private loading = new Map<string, Promise<boolean>>();
+  /** load one recording (once); resolves true when it can be played */
+  private loadOne(c: Ctx, name: string): Promise<boolean> {
+    if (this.buf.has(name)) return Promise.resolve(true);
+    let p = this.loading.get(name);
+    if (!p) {
+      p = fetch(`audio/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
         .then((ab) => new Promise<AudioBuffer>((res, rej) => { const pr = c.decodeAudioData(ab, res, rej) as unknown as Promise<AudioBuffer> | undefined; pr?.catch?.(rej); }))
         .then((b) => {
-          // loudness-normalise to the peak so every recording starts at the same level
           let peak = 0; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
-          this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1 });
+          this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1 }); return true;
         })
-        .catch(() => { /* missing or undecodable: the synthesised version is used */ });
+        .catch((e) => { console.warn('sound not loaded', name, e); this.loading.delete(name); return false; });
+      this.loading.set(name, p);
     }
+    return p;
+  }
+  private loadSamples(c: Ctx) {
+    // the mission-end lines first, so they are always ready in time
+    for (const n of ['win_sting', 'vo_win_nl', 'vo_win_en']) void this.loadOne(c, n);
+    for (const name of Sfx.SAMPLES) void this.loadOne(c, name);
   }
   /** play a recorded sound; false when it is not loaded (caller synthesises instead) */
   private smp(name: string, dst: AudioNode, gain: number, opt: { rate?: number; jitter?: number; delay?: number } = {}): boolean {
