@@ -1,3 +1,4 @@
+import { warmLoadingFilm } from './loading';
 import '@fontsource/anton/400.css';
 import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
@@ -113,6 +114,7 @@ export class Menu {
     document.title = 'RIOTS';
     const s = menuState.screen;
     this.galleryOff?.(); this.galleryOff = null;
+    warmLoadingFilm(); // the loading film downloads while the player is in the menus
     if (s === 'main') this.main(); else if (s === 'cities') this.cities(); else if (s === 'side') this.side(); else if (s === 'progress') this.progress(); else if (s === 'gallery') this.gallery(); else this.settings();
     const first = this.app.querySelector<HTMLElement>('[data-autofocus]');
     // focus for keyboard/screen readers without drawing the focus ring on a mouse/touch visit
