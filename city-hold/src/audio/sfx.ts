@@ -89,8 +89,8 @@ export class Sfx {
     const sting = this.smp('win_sting', stingBus, 0.95, { jitter: 0 });
     if (!voice) return sting;
     // the voice clear and loud on top (only the lowest rumble cut), the sting ducked to a third under it
-    const at = sting ? 0.9 : 0; const t = c.currentTime;
-    if (sting) { stingBus.gain.setValueAtTime(1, t + at - 0.15); stingBus.gain.linearRampToValueAtTime(0.3, t + at); stingBus.gain.setValueAtTime(0.3, t + at + 3.0); stingBus.gain.linearRampToValueAtTime(1, t + at + 3.4); }
+    const at = sting ? 1.1 : 0; const t = c.currentTime; // after the fanfare's opening hit
+    if (sting) { stingBus.gain.setValueAtTime(1, t + at - 0.15); stingBus.gain.linearRampToValueAtTime(0.35, t + at); stingBus.gain.setValueAtTime(0.35, t + at + 3.0); stingBus.gain.linearRampToValueAtTime(0.9, t + at + 3.6); }
     const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
     const vbus = c.createGain(); vbus.gain.value = 2.2; hp.connect(vbus).connect(this.out(this.ui, 0));
     const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1, { jitter: 0, delay: at });
