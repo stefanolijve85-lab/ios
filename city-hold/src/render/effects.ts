@@ -57,7 +57,9 @@ class Field {
     const m = new THREE.ShaderMaterial({
       uniforms: { map: { value: tex }, tint: { value: new THREE.Color(tint) }, scale: { value: 400 }, useAtlas: { value: 0 } },
       vertexShader: `attribute float psize; attribute float palpha; attribute float prot; attribute float pframe; varying float va; varying float vr; varying float vf; uniform float scale;
-        void main(){ va = palpha; vr = prot; vf = pframe; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
+        void main(){ vr = prot; vf = pframe; vec4 mv = modelViewMatrix * vec4(position,1.0); float d = -mv.z;
+          // zoomed in close, a puff right in front of the lens would cover the screen in a white flash: fade it out and cap its size
+          va = palpha * clamp((d - 4.0) / 8.0, 0.0, 1.0); gl_PointSize = min(psize * scale / d, scale * 0.35); gl_Position = projectionMatrix * mv; }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float useAtlas; varying float va; varying float vr; varying float vf;
         void main(){
           vec2 c = gl_PointCoord - 0.5; float cs = cos(vr), sn = sin(vr);

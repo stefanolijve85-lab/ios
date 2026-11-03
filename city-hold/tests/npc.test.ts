@@ -13,14 +13,14 @@ describe('neutral people', () => {
     for (let i = 0; i < 30 * 120; i++) { g.step(dt); expect(g.npcs.filter((n) => n.role === 'civilian' && n.state !== 'gone').length).toBeLessThanOrEqual(BALANCE.npc.civilians.mobile); }
   });
 
-  test('a shopkeeper flees from a nearby attacker and returns when the street is calm; no effect on stock', () => {
+  test('the shop door security pulls back from a nearby attacker and returns when the street is calm; no effect on stock', () => {
     const g = new Game(PARIS, 'defence', { seed: 2 });
     g.units = []; g.phase = 'wave';
     const keeper = g.npcs.find((n) => n.role === 'shopkeeper' && n.store === 0)!;
     const a = g.spawnAttacker('carrier', 'nw', 0); a.x = keeper.x + 2; a.z = keeper.z + 1; a.path = null; a.state = 'held';
     g.step(dt);
     expect(keeper.state).toBe('flee');
-    expect(keeper.carrying).toBe(true);
+    expect(keeper.carrying).toBe(false); // the door security guard pulls back empty-handed
     const helper = g.npcs.find((n) => n.role === 'helper')!;
     for (let i = 0; i < 30 * 30; i++) g.step(dt);
     expect(['guide', 'stroll', 'idle']).toContain(helper.state);

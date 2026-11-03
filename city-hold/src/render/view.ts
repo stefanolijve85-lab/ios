@@ -34,6 +34,49 @@ export interface ViewInput {
 
 const PITCH_DEFAULT = THREE.MathUtils.degToRad(40); // oblique view of images 02/03: shopfronts readable, fountain in the middle
 
+/** canvas textures for the street litter: taped cardboard, printed product boxes, flyers, fabric weave, gift boxes */
+function litterTextures() {
+  const mk = (w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d')!); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  const noise = (g: CanvasRenderingContext2D, w: number, h: number, a: number) => { for (let i = 0; i < w * h / 18; i++) { const v = Math.random() < 0.5 ? 0 : 255; g.fillStyle = `rgba(${v},${v},${v},${Math.random() * a})`; g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); } };
+  const cardboard = mk(128, 128, (g) => {
+    g.fillStyle = '#a57a4b'; g.fillRect(0, 0, 128, 128); noise(g, 128, 128, 0.12);
+    g.strokeStyle = 'rgba(70,45,20,0.6)'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 125, 125);
+    g.fillStyle = 'rgba(210,190,150,0.85)'; g.fillRect(56, 0, 16, 128); // packing tape
+    g.fillStyle = '#efe9dc'; g.fillRect(14, 82, 30, 22); g.fillStyle = '#333'; for (let i = 0; i < 4; i++) g.fillRect(17, 86 + i * 4, 18 + (i % 2) * 6, 1.5); // shipping label
+    g.fillStyle = 'rgba(40,30,20,0.7)'; g.font = 'bold 14px sans-serif'; g.fillText('↑↑', 92, 30);
+  });
+  const product = mk(128, 128, (g) => {
+    g.fillStyle = '#e9e8e4'; g.fillRect(0, 0, 128, 128); noise(g, 128, 128, 0.05);
+    const gr = g.createLinearGradient(20, 26, 108, 90); gr.addColorStop(0, '#1d3c7a'); gr.addColorStop(1, '#3fa0d8'); g.fillStyle = gr; g.fillRect(20, 26, 88, 56); // the product picture
+    g.fillStyle = '#20232a'; g.fillRect(20, 92, 52, 7); g.fillStyle = '#888'; g.fillRect(20, 104, 70, 3); g.fillRect(20, 110, 44, 3);
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2; g.strokeRect(1, 1, 126, 126);
+  });
+  const paper = mk(128, 96, (g) => {
+    g.fillStyle = '#ece6d8'; g.fillRect(0, 0, 128, 96); noise(g, 128, 96, 0.08);
+    g.fillStyle = ['#c0392b', '#2c4f8c', '#d68a1a'][Math.floor(Math.random() * 3)]; g.fillRect(8, 8, 112, 22); // flyer heading
+    g.fillStyle = 'rgba(40,40,40,0.65)'; for (let i = 0; i < 6; i++) g.fillRect(8, 40 + i * 8, 60 + Math.random() * 50, 3);
+    g.strokeStyle = 'rgba(0,0,0,0.12)'; g.beginPath(); g.moveTo(0, 48); g.lineTo(128, 52); g.moveTo(64, 0); g.lineTo(60, 96); g.stroke(); // fold lines
+  });
+  const fabric = mk(64, 64, (g) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 64);
+    for (let y = 0; y < 64; y += 2) { g.fillStyle = `rgba(0,0,0,${0.06 + (y % 4 ? 0.04 : 0)})`; g.fillRect(0, y, 64, 1); }
+    for (let x = 0; x < 64; x += 3) { g.fillStyle = 'rgba(0,0,0,0.05)'; g.fillRect(x, 0, 1, 64); }
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2; g.beginPath(); g.moveTo(6, 10); g.lineTo(58, 14); g.stroke(); // a seam
+  });
+  const giftbox = mk(64, 64, (g) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 64); g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#d6b25e'; g.fillRect(28, 0, 8, 64); g.fillRect(0, 28, 64, 8); // gold ribbon
+    g.strokeStyle = '#d6b25e'; g.lineWidth = 2; g.strokeRect(2, 2, 60, 60);
+  });
+  return { cardboard, product, paper, fabric, giftbox };
+}
+/** crumple a geometry: push every vertex a random amount along y (and a little sideways) so flat sheets fold and sag */
+function crumpled(geo: THREE.BufferGeometry, amount: number, seed: number) {
+  const p = geo.attributes.position; let s = seed * 9301 + 49297;
+  const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; };
+  for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + r() * amount * 0.6, p.getY(i) + r() * amount * 2, p.getZ(i) + r() * amount * 0.6);
+  geo.computeVertexNormals(); return geo;
+}
 /** a steel crowd barrier lying flat on the ground: frame plus vertical bars, merged into one geometry */
 function fallenBarrierGeometry(): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
@@ -509,16 +552,16 @@ export class MatchView {
   private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number; spilled: Set<number> } | null = null;
   private stepLitter(g: Game, dt: number) {
     if (!this.litter) {
-      const max = this.reducedFx ? 60 : 180;
+      const max = this.reducedFx ? 60 : 180; const LT = litterTextures();
       const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.InstancedMesh(geo, mat, max); m.count = 0; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); return m; };
       this.litter = { kinds: [
-        mk(new THREE.PlaneGeometry(0.32, 0.24).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xe8e3d8, roughness: 0.9, side: THREE.DoubleSide })), // paper
-        mk(new THREE.BoxGeometry(0.42, 0.28, 0.32), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 })), // cardboard
-        mk(new THREE.SphereGeometry(0.16, 6, 4).scale(1, 0.55, 1.2), new THREE.MeshStandardMaterial({ color: 0x1d1e22, roughness: 0.4, metalness: 0.1 })), // bin bags
+        mk(crumpled(new THREE.PlaneGeometry(0.3, 0.22, 4, 3).rotateX(-Math.PI / 2), 0.025, 3), new THREE.MeshStandardMaterial({ map: LT.paper, roughness: 0.92, side: THREE.DoubleSide })), // printed paper, flyers
+        mk(new THREE.BoxGeometry(0.42, 0.28, 0.32), new THREE.MeshStandardMaterial({ map: LT.cardboard, roughness: 0.95 })), // taped and labelled cardboard boxes
+        mk(crumpled(new THREE.IcosahedronGeometry(0.17, 1).scale(1, 0.62, 1.15), 0.035, 5), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.28, metalness: 0.15, envMapIntensity: 1.6 })), // shiny bin bags
         mk(new THREE.CylinderGeometry(0.035, 0.035, 0.26, 6).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2f5a35, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85 })), // bottles
-        mk(new THREE.BoxGeometry(0.5, 0.06, 0.38), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 })), // 4: clothes heaps (per-piece colour)
-        mk(new THREE.BoxGeometry(0.42, 0.3, 0.32), new THREE.MeshStandardMaterial({ color: 0xb9b8b4, roughness: 0.75 })), // 5: white electronics boxes (image 06), toned for the night street
-        mk(new THREE.BoxGeometry(0.14, 0.08, 0.14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.4 })), // 6: jewellery / phone boxes (per-piece colour)
+        mk(crumpled(new THREE.PlaneGeometry(0.55, 0.42, 5, 4).rotateX(-Math.PI / 2), 0.05, 7), new THREE.MeshStandardMaterial({ map: LT.fabric, color: 0xffffff, roughness: 0.95, side: THREE.DoubleSide })), // 4: dropped clothes, crumpled (per-piece colour)
+        mk(new THREE.BoxGeometry(0.42, 0.3, 0.32), new THREE.MeshStandardMaterial({ map: LT.product, roughness: 0.55 })), // 5: printed electronics boxes (image 06)
+        mk(new THREE.BoxGeometry(0.14, 0.08, 0.14), new THREE.MeshStandardMaterial({ map: LT.giftbox, color: 0xffffff, roughness: 0.35, metalness: 0.3 })), // 6: jewellery / phone boxes (per-piece colour)
         mk(new THREE.CircleGeometry(0.09, 3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xcfe6f2, roughness: 0.05, metalness: 0.9, emissive: 0x405060, emissiveIntensity: 0.6 })), // 7: glass shards
         mk(new THREE.CylinderGeometry(0.32, 0.28, 0.9, 10).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2c3a2e, roughness: 0.55, metalness: 0.3 })), // 8: tipped-over bins (image 05)
         mk(fallenBarrierGeometry(), new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.75 })), // 9: knocked-over crowd barriers (image 05)
@@ -532,7 +575,7 @@ export class MatchView {
     const drop = (x: number, z: number, spread: number, kind?: number) => {
       const k = kind ?? [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= (k === 8 ? 8 : k === 9 ? 5 : max)) return;
       const px = x + (rnd() - 0.5) * spread, pz = z + (rnd() - 0.5) * spread * 0.6; if (!g.nav.walkable(px, pz)) return;
-      const y = [0.04, 0.14, 0.07, 0.05, 0.035, 0.18, 0.04, 0.02, 0.3, 0.04][k];
+      const y = [0.05, 0.14, 0.09, 0.05, 0.07, 0.18, 0.04, 0.02, 0.3, 0.04][k];
       e.set(k === 1 || k === 5 ? (rnd() < 0.3 ? Math.PI / 2 : 0) : 0, rnd() * Math.PI * 2, 0); q.setFromEuler(e); const s2 = 0.7 + rnd() * 0.6; sc.set(s2, k === 4 ? s2 * (0.6 + rnd()) : s2, s2);
       const i = L.n[k]++; L.kinds[k].setMatrixAt(i, m4.compose(pos.set(px, y, pz), q, sc));
       if (L.kinds[k].instanceColor) { L.kinds[k].setColorAt(i, col.setHex(COL[Math.floor(rnd() * COL.length)])); L.kinds[k].instanceColor!.needsUpdate = true; }
@@ -606,8 +649,11 @@ export class MatchView {
       let face = u.facing;
       if (lootPhase === 'out' && u.targetStore >= 0) { const n = this.map.stores[u.targetStore].normal; face = Math.atan2(n.x, n.z); } // walking back out
       if (u.side === 'def' && !u.moving && (u.state === 'idle' || u.state === 'return')) {
-        let best = 12; for (const a of g.units) if (a.side === 'att') { const d = Math.hypot(a.x - u.x, a.z - u.z); if (d < best) { best = d; face = Math.atan2(a.x - u.x, a.z - u.z); } }
-        if (best >= 12) face += Math.sin(this.time * (0.18 + (u.id % 5) * 0.04) + u.id * 1.7) * 0.55;
+        // a guard in formation keeps his side covered: he turns to a rioter only when one comes close (in his half),
+        // otherwise he looks around a little within his own sector
+        const near = u.holdFacing !== undefined ? 6 : 12; let best = near;
+        for (const a of g.units) if (a.side === 'att') { const d = Math.hypot(a.x - u.x, a.z - u.z); const fa = Math.atan2(a.x - u.x, a.z - u.z); let off = fa - u.facing; while (off > Math.PI) off -= Math.PI * 2; while (off < -Math.PI) off += Math.PI * 2; if (d < best && (u.holdFacing === undefined || Math.abs(off) < 1.7)) { best = d; face = fa; } }
+        if (best >= near) face += Math.sin(this.time * (0.18 + (u.id % 5) * 0.04) + u.id * 1.7) * (u.holdFacing !== undefined ? 0.35 : 0.55);
       }
       let df = face - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       h.root.rotation.y += df * Math.min(1, dt * (u.moving ? 12 : 3)); // standing turns are unhurried

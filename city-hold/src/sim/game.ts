@@ -70,6 +70,8 @@ export interface Unit {
   immuneT: number;
   /** shield officer: time of the last baton strike (view plays the swing); rioter: knocked off balance until this time */
   strikeAt: number; staggerUntil: number;
+  /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
+  holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
   gasT: number; gasThrowAt: number;
   barrierId: number;
@@ -426,17 +428,42 @@ export class Game {
     for (const u of this.units) u.repathT = 99;
   }
 
+  /** where each of n officers stands when sent to one spot: in front of a shop a line along the facade facing the
+   *  street; elsewhere a tight ring, backs to each other, facing out (one alone faces the nearest street) */
+  formation(x: number, z: number, n: number): { x: number; z: number; face: number }[] {
+    const out: { x: number; z: number; face: number }[] = [];
+    if (this.side !== 'defence') { // the AI police in looting mode keep their old spread (looting balance unchanged)
+      for (let k = 0; k < n; k++) { const ang = k * 2.399, rad = k === 0 ? 0 : 0.9 + 0.3 * k; out.push({ x: x + Math.cos(ang) * rad, z: z + Math.sin(ang) * rad, face: 0 }); }
+      return out;
+    }
+    const sd = this.map.stores.map((s, i) => ({ s, door: this.stores[i].door })).find(({ s }) => {
+      const lat = (x - s.front.x) * s.normal.z - (z - s.front.z) * s.normal.x, dep = (x - s.front.x) * s.normal.x + (z - s.front.z) * s.normal.z;
+      return Math.abs(lat) < s.width / 2 + 2 && dep > -0.5 && dep < 6;
+    });
+    if (sd) {
+      const s = sd.s; const face = Math.atan2(s.normal.x, s.normal.z); const tx = s.normal.z, tz = -s.normal.x; // along the facade
+      const dep = 2.2; const lat0 = (x - s.front.x) * tx + (z - s.front.z) * tz; const gap = 1.25;
+      for (let k = 0; k < n; k++) { const l = lat0 + (k - (n - 1) / 2) * gap; out.push({ x: s.front.x + tx * l + s.normal.x * dep, z: s.front.z + tz * l + s.normal.z * dep, face }); }
+      return out;
+    }
+    if (n === 1) { const b = this.map.bounds; return [{ x, z, face: Math.atan2(0, (b.z0 + b.z1) / 2 > z ? 1 : -1) }]; }
+    const r = Math.max(0.85, 0.32 * n);
+    for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; out.push({ x: x + Math.sin(a) * r, z: z + Math.cos(a) * r, face: a }); }
+    return out;
+  }
+
   moveUnits(ids: number[], x: number, z: number): ActionResult {
     const p = this.nav.nearestWalkable(x, z, 3);
     if (!p) return this.deny('Cannot move there');
+    const slots = this.formation(p.x, p.z, ids.filter((id) => { const u = this.unit(id); return u && u.side === 'def' && u.state !== 'escort'; }).length);
     let i = 0;
     for (const id of ids) {
       const u = this.unit(id);
       if (!u || u.side !== 'def' || u.state === 'escort') continue;
       if (u.state === 'restrain') this.releaseRestrain(u);
-      const ang = i * 2.399; const rad = i === 0 ? 0 : 0.9 + 0.3 * i;
-      const q = this.nav.nearestWalkable(p.x + Math.cos(ang) * rad, p.z + Math.sin(ang) * rad, 2) ?? p;
-      u.state = 'move'; u.engage = -1; u.fireId = -1; u.home = q; this.setPath(u, q);
+      const slot = slots[i] ?? { x: p.x, z: p.z, face: 0 };
+      const q = this.nav.nearestWalkable(slot.x, slot.z, 2) ?? p;
+      u.state = 'move'; u.engage = -1; u.fireId = -1; u.home = q; u.holdFacing = slot.face; this.setPath(u, q);
       if (!u.path) return this.deny('No route');
       i++;
     }
@@ -811,7 +838,7 @@ export class Game {
       case 'move': case 'return': {
         if (u.repathT > 5 || !u.path) this.setPath(u, u.goal ?? u.home);
         u.repathT += dt;
-        if (this.follow(u, dt, sp)) { u.state = 'idle'; u.moving = false; }
+        if (this.follow(u, dt, sp)) { u.state = 'idle'; u.moving = false; if (u.holdFacing !== undefined && u.state === 'idle') u.facing = u.holdFacing; }
         if (u.kind === 'security' && u.state === 'return') this.autoEngage(u);
         // sent somewhere mid-riot: a guard running past a rioter grabs them on the way, then carries on to the spot
         else if (u.kind === 'security' && u.state === 'move' && this.side === 'defence') this.autoEngage(u, 3.2); // the player's guards only: looting balance unchanged
@@ -1200,7 +1227,7 @@ export class Game {
     this.npcs.push(n); return n;
   }
   private initNpcs() {
-    this.map.stores.forEach((sd, i) => { const n = this.newNpc('shopkeeper', sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, i); n.facing = Math.atan2(sd.normal.x, sd.normal.z); });
+    this.map.stores.forEach((sd, i) => { const n = this.newNpc('shopkeeper', sd.front.x + sd.normal.x * 1.0 + sd.normal.z * 1.6, sd.front.z + sd.normal.z * 1.0 + sd.normal.x * 1.6, i); n.facing = Math.atan2(sd.normal.x, sd.normal.z); if (this.side === 'defence') { n.home = { x: n.x, z: n.z, facing: n.facing }; n.wait = this.npcRng.next() * 5; } });
     const v = this.map.van; this.newNpc('helper', v.x - 2.2, v.z + 1.5);
     const amb = this.map.ambient; if (!amb) return;
     const patrons = amb.patrons.slice(0, this.maxCivilians < BALANCE.npc.civilians.desktop ? BALANCE.npc.patrons.mobile : BALANCE.npc.patrons.desktop);
@@ -1253,7 +1280,7 @@ export class Game {
       const dz = this.danger(n.x, n.z);
       if (n.role !== 'helper' && n.role !== 'police' && dz && n.state !== 'flee') {
         const e = this.safeExit(n, dz); n.exit = e.id; n.state = 'flee'; this.npcGo(n, e.x, e.z);
-        if (n.role === 'shopkeeper') n.carrying = true; // takes the till box along
+        // the shop's door security pulls back from the danger (empty-handed: they guard, they do not carry the till)
       }
       if (n.state === 'flee') fleeing.push(n);
       if (n.role === 'shopkeeper' && n.state === 'gone' && this.phase === 'prep' && n.store >= 0 && !this.isBurning(n.store)) {
@@ -1265,8 +1292,9 @@ export class Game {
         n.x = n.home.x; n.z = n.home.z; n.facing = n.home.facing; n.state = 'idle'; n.path = null; n.repaths = 0; // guests come back to the terrace once it is calm
       }
       if (n.state === 'browse') { n.moving = false; n.wait = (n.wait ?? 0) - dt; if (n.wait <= 0) { n.state = 'stroll'; n.browsed = true; const e = this.map.entries.find((en) => en.id === n.exit); if (e) this.npcGo(n, e.x, e.z); } continue; }
-      // decorative police: each officer on their own rhythm looks around, takes a few steps and drifts back to their post
-      if (n.role === 'police' && n.state === 'idle' && n.home) {
+      // decorative police and the shops' own door security: each on their own rhythm looks around, takes a few steps
+      // and drifts back to their post
+      if ((n.role === 'police' || n.role === 'shopkeeper') && n.state === 'idle' && n.home) {
         n.moving = false; n.wait = (n.wait ?? this.npcRng.next() * 4) - dt;
         if (n.wait <= 0) {
           const r = this.npcRng.next(); const h = n.home;
@@ -1281,7 +1309,7 @@ export class Game {
         continue;
       }
       if (n.state === 'gone' || n.state === 'idle') { n.moving = false; continue; }
-      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : n.role === 'police' ? 0.9 : N.walkSpeed * (0.8 + ((n.variant % 7) / 6) * 0.35); // everyone walks at their own pace
+      const sp = n.state === 'flee' ? N.runSpeed : n.role === 'helper' ? 2.6 : n.role === 'police' || n.role === 'shopkeeper' ? 0.9 : N.walkSpeed * (0.8 + ((n.variant % 7) / 6) * 0.35); // everyone walks at their own pace
       n.moving = false; n.speed = 0;
       if (n.path && n.pi < n.path.length) {
         let budget = sp * dt;
@@ -1293,7 +1321,7 @@ export class Game {
           n.x = nx; n.z = nz; n.facing = Math.atan2(dx, dzz); budget -= st; n.moving = true; n.speed = sp; if (st >= d - 1e-6) n.pi++;
         }
       } else if (n.role === 'helper') { n.state = n.state === 'guide' ? 'guide' : 'idle'; }
-      else if (n.role === 'police') { n.state = 'idle'; n.wait = 3 + this.npcRng.next() * 6; if (n.home && Math.hypot(n.x - n.home.x, n.z - n.home.z) < 0.5) n.facing = n.home.facing; }
+      else if (n.role === 'police' || (n.role === 'shopkeeper' && n.state === 'stroll')) { n.state = 'idle'; n.wait = 3 + this.npcRng.next() * 6; if (n.home && Math.hypot(n.x - n.home.x, n.z - n.home.z) < 0.5) n.facing = n.home.facing; }
       else if (n.state === 'stroll' && n.role === 'civilian' && !n.browsed) {
         n.state = 'browse'; n.wait = N.browseSec[0] + this.npcRng.next() * (N.browseSec[1] - N.browseSec[0]); // stop and look
         const sx = this.map.stores.reduce((b, sd) => (Math.hypot(sd.front.x - n.x, sd.front.z - n.z) < Math.hypot(b.front.x - n.x, b.front.z - n.z) ? sd : b), this.map.stores[0]);
