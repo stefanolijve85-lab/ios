@@ -400,6 +400,11 @@
       "status": "final",
       "note": "TRELLIS.2 (Hugging Face) image-to-3D of the expansion-18 London taxi, simplified to 28k triangles, 1024 px textures",
       "city": "london"
+    },
+    "prop.fire_engine": {
+      "file": "final/prop.fire_engine.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views, detailed) of the RIOTS fire truck pack, simplified to 45k triangles, 2048 px textures"
     }
   }
 }

@@ -8,6 +8,7 @@ import type { MapDef } from '../maps/types';
 import { createCharacter, type CharacterVisual } from './character';
 import type { Effects } from './effects';
 import { radialTexture } from './textures';
+import { cloneModel, slotStatus } from './assets';
 import { fireEnginePark } from '../maps/fireEngine';
 
 const RED = 0xa8121a;
@@ -30,6 +31,8 @@ function chevronTexture(): THREE.CanvasTexture {
 
 /** fire engine, 8.4 m long and 2.5 m wide, nose to +z. outlet = the pump connection the hose runs from (left side, local +x) */
 export interface FireEngine { g: THREE.Group; body: THREE.Group; wheels: THREE.Group[]; beacons: THREE.Mesh[]; outlet: THREE.Object3D; heads: THREE.Mesh[] }
+/** turn applied to the fire engine model so its nose points to +z (set after looking at the model) */
+const FIRE_ENGINE_YAW = 0;
 export function buildFireEngine(): FireEngine {
   const root = new THREE.Group(); const g = new THREE.Group(); root.add(g); // g = the sprung body; wheels hang on the root
   const paint = new THREE.MeshStandardMaterial({ color: RED, roughness: 0.32, metalness: 0.35 });
@@ -104,6 +107,21 @@ export function buildFireEngine(): FireEngine {
   for (const [i, x] of [[0, -3.2], [1, 3.2]] as const) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(7, 9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture(i ? 'rgba(70,120,255,0.5)' : 'rgba(255,50,40,0.45)', 'rgba(0,0,0,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     m.position.set(x, 0.05, 1.5); g.add(m); beacons[i].userData.pool = m; beacons[i + 2].userData.pool = m;
+  }
+  // the image-to-3D engine (slot prop.fire_engine) replaces the built body and wheels; beacons, light pools, headlight
+  // beam and the hose outlet stay (they are animated). Fitted to 8.4 m, nose to +z, standing on the ground, on the springs.
+  const model = slotStatus('prop.fire_engine') === 'final' ? cloneModel('prop.fire_engine') : null;
+  if (model) {
+    const keep = new Set<THREE.Object3D>([...beacons, outlet]); for (const b of beacons) { if (b.userData.halo) keep.add(b.userData.halo); if (b.userData.pool) keep.add(b.userData.pool); }
+    for (const c of [...g.children]) if (!keep.has(c)) c.visible = false;
+    for (const w of wheels) w.visible = false;
+    const bb = new THREE.Box3().setFromObject(model); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+    const inner = new THREE.Group(); model.position.set(-c.x, -bb.min.y, -c.z); inner.add(model);
+    inner.rotation.y = (sz.x > sz.z ? -Math.PI / 2 : 0) + FIRE_ENGINE_YAW; inner.scale.setScalar(8.4 / Math.max(sz.x, sz.z));
+    model.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } });
+    g.add(inner);
+    // beacons sit on the model's own light bar
+    const h = sz.y * (8.4 / Math.max(sz.x, sz.z)); for (const b of beacons) b.position.y = Math.min(b.position.y, h + 0.02);
   }
   return { g: root, body: g, wheels, beacons, outlet, heads };
 }
