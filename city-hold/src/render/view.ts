@@ -81,6 +81,17 @@ function crumpled(geo: THREE.BufferGeometry, amount: number, seed: number) {
 /** flashbang canister (reference image): dark steel body perforated with round ports, ribbed end caps, fuse head with
  *  a spoon lever and pull ring; shown about 1.5x real size: still readable from the game camera without looking like a can of paint */
 let FLASH_PROTO: THREE.Group | null = null;
+/** soft camera-reach disc: alpha 0.04 in the middle, up to 0.16 near the rim, then a smooth fade to nothing */
+let COVERAGE_TEX: THREE.CanvasTexture | null = null;
+function coverageTexture(): THREE.CanvasTexture {
+  if (COVERAGE_TEX) return COVERAGE_TEX;
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d')!;
+  const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+  g.addColorStop(0, 'rgba(255,255,255,0.04)'); g.addColorStop(0.62, 'rgba(255,255,255,0.06)'); g.addColorStop(0.86, 'rgba(255,255,255,0.16)');
+  g.addColorStop(0.95, 'rgba(255,255,255,0.06)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  COVERAGE_TEX = new THREE.CanvasTexture(c); return COVERAGE_TEX;
+}
 function flashbangModel(): THREE.Object3D {
   if (!FLASH_PROTO) {
     const g = new THREE.Group();
@@ -838,16 +849,15 @@ export class MatchView {
       if (this.masts.has(c.id)) continue;
       const m = (slotStatus('prop.camera_mast') === 'final' ? cloneModel('prop.camera_mast') : null) ?? buildMastModel(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
     }
-    this.coverage.clear();
-    if (isDef || this.reducedFx === false) {
-      for (const c of g.cameras) {
-        const r = g.cameraRadius();
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: isDef ? 0.07 : 0.05, depthWrite: false }));
-        disc.position.set(c.x, 0.06, c.z); this.coverage.add(disc);
-        const edge = new THREE.Mesh(new THREE.RingGeometry(r - 0.12, r, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.35, depthWrite: false }));
-        edge.position.set(c.x, 0.065, c.z); this.coverage.add(edge);
-      }
-    }
+    // camera reach: one soft disc per camera, faint inside, a little stronger towards the rim and fading out (no hard edge)
+    const want = isDef || this.reducedFx === false ? g.cameras : [];
+    const r = g.cameraRadius();
+    while (this.coverage.children.length > want.length) this.coverage.remove(this.coverage.children[this.coverage.children.length - 1]);
+    want.forEach((c, i) => {
+      let disc = this.coverage.children[i] as THREE.Mesh | undefined;
+      if (!disc) { disc = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: coverageTexture(), color: 0x36e0ff, transparent: true, opacity: isDef ? 0.3 : 0.2, depthWrite: false, toneMapped: false })); this.coverage.add(disc); }
+      disc.position.set(c.x, 0.06, c.z); disc.scale.set(r, 1, r);
+    });
     // cars that caught fire
     for (const idx of g.burnedProps) { const c = this.world.cars.get(idx); if (c && c.intact.visible) { c.intact.visible = false; c.burned.visible = true; const pp = this.map.props[idx]; this.fx.event(`car:${idx}`, 'explosion', pp.x, pp.z); } }
     // tear gas: the canister arcs from the officer, lands and vents a thick low cloud with a ground haze under it
