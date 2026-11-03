@@ -37,6 +37,9 @@ export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outl
   const white = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4 });
   const add = (geo: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number, cast = true) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = cast; o.receiveShadow = true; g.add(o); return o; };
   const box = (w: number, h: number, d: number) => new THREE.BoxGeometry(w, h, d);
+  // soft contact shadow under the whole truck (grounds it on the wet street)
+  { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const x = cv.getContext('2d')!; const gr = x.createRadialGradient(32, 32, 4, 32, 32, 32); gr.addColorStop(0, 'rgba(0,0,0,0.75)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+    const sh = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 10).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false })); sh.position.y = 0.045; g.add(sh); }
   // chassis and body
   add(box(2.3, 0.35, 8.2), dark, 0, 0.62, 0);
   add(box(2.5, 2.05, 5.9), paint, 0, 1.85, -1.15); // equipment body
@@ -84,6 +87,11 @@ export function buildFireEngine(): { g: THREE.Group; beacons: THREE.Mesh[]; outl
   for (const [i, b] of beacons.entries()) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture(i % 2 ? 'rgba(80,120,255,0.9)' : 'rgba(255,60,50,0.9)', 'rgba(0,0,0,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     s.scale.set(2.2, 2.2, 1); b.add(s); b.userData.halo = s;
+  }
+  // the beacons wash the wet street red and blue on either side (decals: an extra real light would recompile every shader)
+  for (const [i, x] of [[0, -3.2], [1, 3.2]] as const) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(7, 9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture(i ? 'rgba(70,120,255,0.5)' : 'rgba(255,50,40,0.45)', 'rgba(0,0,0,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    m.position.set(x, 0.05, 1.5); g.add(m); beacons[i].userData.pool = m; beacons[i + 2].userData.pool = m;
   }
   return { g, beacons, outlet };
 }
@@ -161,6 +169,7 @@ export class FireCrew {
         const ph = (time * 2.4 + (i % 2) * 0.5) % 1; const on = ph < 0.12 || (ph > 0.2 && ph < 0.32);
         (b.material as THREE.MeshBasicMaterial).color.setHex(on ? b.userData.base : 0x220808);
         (b.userData.halo as THREE.Sprite).visible = on;
+        const pool = b.userData.pool as THREE.Mesh | undefined; if (pool && i < 2) pool.visible = on;
       });
     }
     const seen = new Set<number>();

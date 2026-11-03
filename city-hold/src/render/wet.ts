@@ -8,7 +8,7 @@ const WetShader = {
   name: 'WetStreet',
   uniforms: {
     color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
-    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 1.3 },
+    tStone: { value: null }, repeat: { value: new THREE.Vector2(20, 20) }, strength: { value: 1.75 },
   },
   vertexShader: `uniform mat4 textureMatrix; uniform vec2 repeat; varying vec4 vR; varying vec2 vUv; varying vec2 vBig;
     void main(){ vR = textureMatrix * vec4(position, 1.0); vUv = uv * repeat; vBig = uv * 3.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -24,7 +24,7 @@ const WetShader = {
       float jit = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
       for (int i = 0; i < 8; i++) {
         float k = (float(i) + jit) / 8.0;
-        vec4 p = vR; p.xy += (dist + vec2((jit - 0.5) * 0.004, -k * 0.13)) * p.w; // long vertical smear: the golden streaks of images 01-03
+        vec4 p = vR; p.xy += (dist + vec2((jit - 0.5) * 0.004, -k * 0.19)) * p.w; // long vertical smear: the golden streaks of images 01-03
         float w = 1.0 - k * 0.75;
         acc += texture2DProj(tDiffuse, p).rgb * w; wsum += w;
       }

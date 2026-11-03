@@ -527,9 +527,9 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     const load = (f: string, srgb: boolean) => { const t = tl.load(`textures/${f}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.copy(rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
     const gm = ground.material as THREE.MeshStandardMaterial;
     gm.map = load('paris_setts_albedo.jpg', true); gm.normalMap = load('paris_setts_normal.jpg', false); gm.roughnessMap = load('paris_setts_rough.jpg', false);
-    gm.color.set(0xe2d8cc); gm.roughness = 0.62; gm.metalness = 0.3; gm.envMapIntensity = 3.0; // brighter wet granite reflecting the blue-hour sky (image 01) gm.normalScale.set(1.1, 1.1);
+    gm.color.set(0xc9c3bf); gm.roughness = 0.44; gm.metalness = 0.3; gm.envMapIntensity = 3.0; // brighter wet granite reflecting the blue-hour sky (image 01) gm.normalScale.set(1.1, 1.1);
     // the city glow lifts the stone between the lamp pools (image 01: grey-mauve wet setts, never black-blue)
-    gm.emissive = new THREE.Color(0xae948c); gm.emissiveMap = gm.map; gm.emissiveIntensity = 0.38; gm.needsUpdate = true;
+    gm.emissive = new THREE.Color(0x8c8aa0); gm.emissiveMap = gm.map; gm.emissiveIntensity = 0.24; // darker, cooler stone: the light lives in the reflections (image 02) gm.needsUpdate = true;
   }
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
@@ -674,20 +674,20 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     fadeables.push({ meshes: pf.meshes, box: new THREE.Box3().setFromObject(pf.root), opacity: 1 });
   }
   // warm light pools on the wet ground (cheap reflection substitute) + a few real lights
-  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.24)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,190,110,0.17)', 'rgba(255,170,90,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampLights: THREE.PointLight[] = [];
   // light pools and wet-street streaks are each merged into one mesh (one draw call each, whatever the lamp count)
   const flat = (w: number, d: number, x: number, y: number, z: number, rotY = 0) => new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).rotateY(rotY).translate(x, y, z);
   const pools: THREE.BufferGeometry[] = []; const streaks: THREE.BufferGeometry[] = [];
   lampPos.forEach((lp, i) => {
-    pools.push(flat(9, 9, lp.x, 0.03, lp.z));
+    pools.push(flat(7, 7, lp.x, 0.03, lp.z)); // a tighter pool: the wet street carries the light in streaks (image 02)
     if (!reducedFx && i < 6) { const l = new THREE.PointLight(0xffc27a, 22, 13, 1.6); l.position.copy(lp); group.add(l); lampLights.push(l); }
   });
   for (const s of map.stores) pools.push(flat(s.width + 2, 5, s.front.x + s.normal.x * 2.4, 0.032, s.front.z + s.normal.z * 2.4, Math.atan2(s.normal.x, s.normal.z)));
   // long reflections of lamps and shop windows on the wet setts, smeared towards the camera (which never turns)
-  const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.7 : 0.6 });
+  const streak = new THREE.MeshBasicMaterial({ map: streakTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: reducedFx ? 0.85 : 0.8 });
   const addStreak = (x: number, z: number, w: number, len: number) => streaks.push(flat(w, len, x, 0.035, z + len / 2 - 0.3));
-  for (const lp of lampPos) addStreak(lp.x, lp.z, 1.7, 7);
+  for (const lp of lampPos) addStreak(lp.x, lp.z, 1.4, 9);
   // decorative lamp rows down the side streets (images 01/02): instanced poles and lanterns, merged pools and reflections
   const gl = map.glowLamps ?? [];
   if (gl.length) {

@@ -422,8 +422,11 @@ export function streakTexture(): THREE.Texture {
     const [c, g] = canvas(64, 256);
     for (let y = 0; y < 256; y++) {
       const v = y / 255; const fall = Math.pow(1 - v, 1.35) * (0.8 + 0.2 * Math.sin(v * 9 + Math.sin(v * 3) * 2)); // a soft golden smear, no dashes
+      // the stones break the reflection up: brighter and dimmer bands down the streak, and a slight sideways wobble
+      const band = 0.62 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(v * 61 + Math.sin(v * 23) * 2.2) * Math.sin(v * 37 + 1.3), 0.7);
+      const wob = Math.sin(v * 27 + Math.sin(v * 11)) * 3 * v;
       for (let x = 0; x < 64; x++) {
-        const u = (x - 31.5) / 32; const w = Math.exp(-u * u * (3.2 + v * 3)) * (0.88 + rnd() * 0.12);
+        const u = (x - 31.5 - wob) / 32; const w = Math.exp(-u * u * (3.2 + v * 3)) * (0.82 + rnd() * 0.18) * band;
         const a = Math.max(0, Math.min(1, fall * w));
         g.fillStyle = `rgba(255,${190 + Math.round(30 * (1 - v))},${120 + Math.round(40 * (1 - v))},${a.toFixed(3)})`; g.fillRect(x, y, 1, 1);
       }
