@@ -89,9 +89,9 @@ const PHRASES: [string, string][] = [
   ['Supply delivered', 'Bevoorrading geleverd'], ['secured', 'afgeslagen'], ['stores hold stock', 'winkels hebben voorraad'], ['started', 'gestart'], ['offenders', 'daders'],
   ['Wave', 'Golf'], ['WAVE', 'GOLF'], ['Route', 'Route'], ['units', 'eenheden'],
   // cities and districts in the top bar
-  ['PARIS', 'PARIJS'], ['LONDON', 'LONDEN'], ['MILAN', 'MILAAN'], ['BERLIN', 'BERLIJN'], ['SÃO PAULO', 'SÃO PAULO'], ['AMSTERDAM', 'AMSTERDAM'],
+  ['PARIS', 'PARIJS'], ['LONDON', 'LONDEN'], ['MILAN', 'MILAAN'], ['BERLIN', 'BERLIJN'], ['RIO DE JANEIRO', 'RIO DE JANEIRO'], ['AMSTERDAM', 'AMSTERDAM'],
   ['FOUNTAIN DISTRICT', 'FONTEINWIJK'], ['CANAL QUARTER', 'GRACHTENGORDEL'], ['HIGH STREET', 'WINKELSTRAAT'], ['PIAZZA AND ARCADE', 'PIAZZA EN ARCADE'],
-  ['COURTYARDS', 'BINNENPLAATSEN'], ['RETAIL FORECOURT', 'WINKELPLEIN'],
+  ['COURTYARDS', 'BINNENPLAATSEN'], ['COPACABANA', 'COPACABANA'],
   // in-world labels
   ['EXTINGUISHING', 'BLUSSEN'], ['FIRE (burns out)', 'BRAND (dooft vanzelf)'], ['FIRE — send firefighter', 'BRAND — stuur de brandweer'], ['HOLD', 'VAST'],
   ['JEWELLERY', 'JUWELIER'], ['ELECTRONICS', 'ELEKTRONICA'], ['FASHION', 'MODE'], ['PHONES', 'TELEFOONS'], ['DEPARTMENT', 'WARENHUIS'], ['SPORTS', 'SPORT'], ['COURTYARD JEWELLER', 'JUWELIER BINNENPLAATS'],

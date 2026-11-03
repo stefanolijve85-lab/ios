@@ -227,9 +227,9 @@ export const BERLIN: MapDef = {
   notes: 'The courtyard is a real navigable area reached only through the archway; walls are solid.',
 };
 
-/** São Paulo: retail forecourt, corner shopping centre, loading yard with service lane and a rear approach. */
+/** Rio de Janeiro (id 'saopaulo' kept for saved progress): retail forecourt, corner shopping centre, loading yard with service lane and a rear approach. */
 export const SAOPAULO: MapDef = {
-  id: 'saopaulo', city: 'São Paulo', country: 'Brazil', district: 'Retail forecourt',
+  id: 'saopaulo', city: 'Rio de Janeiro', country: 'Brazil', district: 'Copacabana',
   refImage: 'ui/25_sao_paulo_retail.jpg', damageImage: 'ui/36_sao_paulo_disorder.jpg',
   bounds: { x0: -32, z0: -36, x1: 32, z1: 24 }, ground: 'stone',
   buildings: [
@@ -248,7 +248,7 @@ export const SAOPAULO: MapDef = {
     ...lamps([[-12, -12], [16, -6], [-12, 12], [17, 6]]),
     { type: 'car', x: -22, z: 3, rot: 90, collide: true, burnable: true },
   ],
-  // São Paulo pack: PONTO concrete corner buildings (teal fascia, sun fins, air-conditioners) around the forecourt
+  // Rio de Janeiro (former São Paulo) pack: PONTO concrete corner buildings (teal fascia, sun fins, air-conditioners) around the forecourt
   landmarks: [
     ...row('x', -10, 0, [[-1, 'building.ponto', 10, 1], [12, 'building.ponto', 10, 2]]),
     ...row('z', -10, -90, [[-20, 'building.ponto', 12, 0]]),

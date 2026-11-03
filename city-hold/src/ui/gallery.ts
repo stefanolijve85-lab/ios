@@ -44,7 +44,7 @@ const BUILDING_NAMES: Record<string, string> = {
   'building.lantern': 'THE LANTERN — hoekpub', 'building.circuit': 'CIRCUIT — beschadigd', 'building.vetro': 'VETRO — arcadepand', 'building.kante': 'KANTE — binnenplaatspand',
   'building.ponto': 'PONTO — hoekgebouw',
 };
-const CITY_NL: Record<string, string> = { amsterdam: 'Amsterdam', london: 'Londen', milan: 'Milaan', berlin: 'Berlijn', saopaulo: 'São Paulo', paris: 'Parijs' };
+const CITY_NL: Record<string, string> = { amsterdam: 'Amsterdam', london: 'Londen', milan: 'Milaan', berlin: 'Berlijn', saopaulo: 'Rio de Janeiro', paris: 'Parijs' };
 
 function kindOfSlot(slot: string): AnyKind {
   const k = slot.split('.');

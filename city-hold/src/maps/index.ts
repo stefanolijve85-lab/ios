@@ -13,5 +13,5 @@ export const CITY_INFO: Record<string, { label: string; country: string; image: 
   london: { label: 'London', country: 'United Kingdom', image: 'ui/22_london_high_street.jpg' },
   milan: { label: 'Milan', country: 'Italy', image: 'ui/23_milan_arcade.jpg' },
   berlin: { label: 'Berlin', country: 'Germany', image: 'ui/24_berlin_courtyards.jpg' },
-  saopaulo: { label: 'São Paulo', country: 'Brazil', image: 'ui/25_sao_paulo_retail.jpg' },
+  saopaulo: { label: 'Rio de Janeiro', country: 'Brazil', image: 'ui/25_sao_paulo_retail.jpg' },
 };
