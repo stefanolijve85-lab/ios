@@ -56,12 +56,12 @@ const T: Record<Lang, Record<string, string>> = {
 };
 
 const CITY: Record<string, { nl: string; en: string; cnl: string; cen: string; hero: string; card: string }> = {
-  paris: { nl: 'PARIJS', en: 'PARIS', cnl: 'FRANKRIJK', cen: 'FRANCE', hero: 'menu/hero_paris.jpg', card: 'menu/card_paris.jpg' },
+  paris: { nl: 'PARIJS', en: 'PARIS', cnl: 'FRANKRIJK', cen: 'FRANCE', hero: 'menu/hero_paris_riot.jpg', card: 'menu/card_paris_riot.jpg' },
   amsterdam: { nl: 'AMSTERDAM', en: 'AMSTERDAM', cnl: 'NEDERLAND', cen: 'NETHERLANDS', hero: 'ui/21_amsterdam_canals.jpg', card: 'menu/card_amsterdam.jpg' },
-  london: { nl: 'LONDEN', en: 'LONDON', cnl: 'VERENIGD KONINKRIJK', cen: 'UNITED KINGDOM', hero: 'ui/22_london_high_street.jpg', card: 'menu/card_london.jpg' },
-  milan: { nl: 'MILAAN', en: 'MILAN', cnl: 'ITALIË', cen: 'ITALY', hero: 'ui/23_milan_arcade.jpg', card: 'menu/card_milan.jpg' },
+  london: { nl: 'LONDEN', en: 'LONDON', cnl: 'VERENIGD KONINKRIJK', cen: 'UNITED KINGDOM', hero: 'menu/hero_london_riot.jpg', card: 'menu/card_london_riot.jpg' },
+  milan: { nl: 'MILAAN', en: 'MILAN', cnl: 'ITALIË', cen: 'ITALY', hero: 'menu/hero_milan_riot.jpg', card: 'menu/card_milan_riot.jpg' },
   berlin: { nl: 'BERLIJN', en: 'BERLIN', cnl: 'DUITSLAND', cen: 'GERMANY', hero: 'ui/24_berlin_courtyards.jpg', card: 'menu/card_berlin.jpg' },
-  saopaulo: { nl: 'SÃO PAULO', en: 'SÃO PAULO', cnl: 'BRAZILIË', cen: 'BRAZIL', hero: 'ui/25_sao_paulo_retail.jpg', card: 'menu/card_saopaulo.jpg' },
+  saopaulo: { nl: 'SÃO PAULO', en: 'SÃO PAULO', cnl: 'BRAZILIË', cen: 'BRAZIL', hero: 'menu/hero_saopaulo_riot.jpg', card: 'menu/card_saopaulo_riot.jpg' },
 };
 
 export interface MenuHost {
