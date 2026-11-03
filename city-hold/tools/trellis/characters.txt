@@ -1,0 +1,13 @@
+# characters (static 3D first; they need a rig - Mixamo or Meshy - before they can walk)
+paris_street_worker expansion18/paris/character.png
+amsterdam_bike_mechanic expansion18/amsterdam/character.png
+london_paramedic expansion18/london/character.png
+milan_cafe_waitress expansion18/milan/character.png
+berlin_electrician expansion18/berlin/character.png
+rio_street_sweeper expansion18/rio/character.png
+paris_masked_carrier pack02/paris/carrier_poses/pose1_idle.png
+amsterdam_shopkeeper pack02/amsterdam/character.png
+london_masked_woman pack02/london/character.png
+milan_courier pack02/milan/courier_poses/pose1_stand.png
+berlin_masked_man pack02/berlin/character.png
+rio_shopkeeper pack02/rio/character.png

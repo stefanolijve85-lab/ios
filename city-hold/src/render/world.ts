@@ -383,7 +383,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
   // a loaded GLB in the prop's slot replaces the procedural placeholder
   const slotType = p.type === 'palm' ? null : p.type;
   const finalProp = (slot: string) => (slotStatus(slot) === 'final' ? cloneModel(slot) : null); // placeholders come from this same code
-  const glb = slotType && p.type !== 'car' ? finalProp('prop.' + slotType) : null;
+  const glb = slotType && p.type !== 'car' && p.type !== 'vehicle' && p.type !== 'object' ? finalProp('prop.' + slotType) : null;
   if (glb) {
     // image-to-3D models come in at any size: scale to the real height and stand them on the ground, centred
     const H = PROP_HEIGHT[p.type];
@@ -464,6 +464,16 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
     case 'kiosk': mesh(box, mat(0x2f4a3a, 0.6), g, 0, 1.3, 0, 2, 2.6, 2); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffd28a }), g, 0, 1.4, 1.01, 1.4, 0.8, 0.02, false); break;
     case 'phonebox': mesh(box, mat(0x9a1a1a, 0.5), g, 0, 1.25, 0, 0.9, 2.5, 0.9); mesh(box, new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), g, 0, 1.4, 0.46, 0.6, 1.2, 0.02, false); break;
     case 'column': mesh(cyl, mat(0xd9c8a4, 0.8), g, 0, 2.5, 0, p.r ?? 0.35, 5, p.r ?? 0.35); break;
+    case 'vehicle': case 'object': {
+      // image-to-3D scenery: a vehicle is scaled to its length with the long axis on z, an object to its height; both stand on the ground
+      const m = p.model ? finalProp(p.model) : null; if (!m) break;
+      const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
+      const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m);
+      if (p.type === 'vehicle') { if (sz.x > sz.z) inner.rotation.y = Math.PI / 2; inner.scale.setScalar((p.len ?? 4.4) / Math.max(sz.x, sz.z)); }
+      else inner.scale.setScalar((p.h ?? 1.2) / Math.max(sz.y, 1e-3));
+      m.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } });
+      g.add(inner); break;
+    }
     case 'car': {
       // a city's own vehicle (image-to-3D, any scale or axis) is fitted to the parked-car footprint: long axis on Z, on the ground
       const own = p.model ? finalProp(p.model) : null;

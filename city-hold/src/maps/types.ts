@@ -49,10 +49,13 @@ export interface EntryDef {
 
 export interface SocketDef { id: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90 }
 
-export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table' | 'police_van' | 'barricade_fire';
+export type PropType = 'tree' | 'palm' | 'lamp' | 'planter' | 'bench' | 'bollard' | 'car' | 'umbrella' | 'kiosk' | 'phonebox' | 'column' | 'shelter' | 'delivery_van' | 'fence' | 'cafe_table' | 'police_van' | 'barricade_fire'
+  /** scenery vehicle / street object from a model slot (image-to-3D); vehicles block a len x wid rectangle, objects a circle of r */
+  | 'vehicle' | 'object';
 
 export interface PropDef { type: PropType; x: number; z: number; rot?: number; collide?: boolean; r?: number; burnable?: boolean;
-  /** a car: the model slot to show instead of the generic parked car (e.g. the city's taxi); same footprint */ model?: string }
+  /** car / vehicle / object: the model slot to show (a car keeps the parked-car footprint) */ model?: string;
+  /** vehicle: length and width in metres (long axis along +z before rot); object: height in metres */ len?: number; wid?: number; h?: number }
 
 export interface ArcadeDef { rect: Rect; height: number; columns: Circle[] }
 

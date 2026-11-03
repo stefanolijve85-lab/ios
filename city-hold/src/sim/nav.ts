@@ -38,6 +38,12 @@ export function staticObstacles(map: MapDef): StaticObstacleSet {
       rects.push({ x0: p.x - hx, z0: p.z - hz, x1: p.x + hx, z1: p.z + hz });
       continue;
     }
+    if (p.type === 'vehicle') {
+      const alongZ = Math.round(((p.rot ?? 0) % 180 + 180) % 180) < 45 || Math.round(((p.rot ?? 0) % 180 + 180) % 180) > 135;
+      const hl = (p.len ?? 4.4) / 2, hw = (p.wid ?? 1.9) / 2;
+      rects.push(alongZ ? { x0: p.x - hw, z0: p.z - hl, x1: p.x + hw, z1: p.z + hl } : { x0: p.x - hl, z0: p.z - hw, x1: p.x + hl, z1: p.z + hw });
+      continue;
+    }
     if (p.type === 'car') {
       const vert = p.rot === 90;
       const hl = (vert ? CAR.wid : CAR.len) / 2, hw = (vert ? CAR.len : CAR.wid) / 2;

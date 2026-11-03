@@ -1,0 +1,32 @@
+# name  image (relative to city-hold/assets)
+paris_sweeper expansion18/paris/vehicle.png
+paris_wallace expansion18/paris/prop.png
+amsterdam_ev_van expansion18/amsterdam/vehicle.png
+amsterdam_lifebuoy expansion18/amsterdam/prop.png
+london_bin expansion18/london/prop.png
+milan_scooter expansion18/milan/vehicle.png
+milan_icecart expansion18/milan/prop.png
+berlin_pickup expansion18/berlin/vehicle.png
+berlin_power_box expansion18/berlin/prop.png
+rio_taxi expansion18/rio/vehicle.png
+rio_vending_cart expansion18/rio/prop.png
+paris_van pack02/paris/vehicle.png
+paris_shutter pack02/paris/prop.png
+amsterdam_cargo_bike pack02/amsterdam/vehicle.png
+amsterdam_flower_rack pack02/amsterdam/prop.png
+london_tow_truck pack02/london/vehicle.png
+london_security_gates pack02/london/prop.png
+milan_ape pack02/milan/vehicle.png
+milan_vitrine pack02/milan/prop.png
+berlin_estate pack02/berlin/vehicle.png
+berlin_skip pack02/berlin/prop.png
+rio_ambulance pack02/rio/vehicle.png
+rio_clothes_rack pack02/rio/prop.png
+# existing scenery that is still procedural or can be redone more realistically
+paris_fountain street_props/references/fountain.png
+car_parked props/18_car_intact.png
+car_burned props/19_car_burned.png
+barrier props/15_barrier.png
+camera_mast props/16_camera_mast.png
+concrete_block props/31_concrete_barriers.png
+supply_truck props/30_supply_truck.png
