@@ -48,3 +48,13 @@ Download each to `public/audio/<name>.mp3`. The game already plays them as soon 
 | gas_hiss | 6R6TvH6R9PsWO0OHGb45 | 6 s seamless loop |
 | smash | 6TCYByJkfEVVqjWzJW31 | crowbar on a metal shutter |
 | baton | hzvHeZxW49A1YFmbOnjX | baton strike |
+
+## Batch 3 (victory) — same flow, same steps
+
+Download each to `public/audio/<name>.mp3` (the game falls back to the old chime until they exist).
+
+| name | session id | generation id | notes |
+|---|---|---|---|
+| vo_win_nl | jq5Va6P4z0r6ORYwAl6v | IWlr3cVNepceEYDcHuDo | "Missie volbracht. Alle winkels zijn beveiligd." (take 1) |
+| vo_win_en | m15mEq50wctVxroHhCXY | 83ZCCA7nHsIITOERw6ar | "Mission accomplished. All stores secured." (take 1) |
+| win_sting | U6gQLgy8wd4t73104ju3 | J63GgYIpJ7vrrhhwbIxB | 4 s drum hit, brass swell, sirens fading |

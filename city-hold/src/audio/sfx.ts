@@ -37,7 +37,8 @@ export class Sfx {
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
-    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton'] as const;
+    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton',
+    'win_sting', 'vo_win_nl', 'vo_win_en'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
@@ -53,6 +54,18 @@ export class Sfx {
   private masterLevel() { return Math.max(0, Math.min(1, this._volume)) * 0.9; }
 
   /** create (or resume) the audio graph; call from a user gesture on iOS */
+  /** language for the voice lines */
+  lang: 'nl' | 'en' = 'nl';
+  /** mission won: a short cinematic sting with the radio voice over it ("Missie volbracht. Alle winkels zijn beveiligd.") */
+  victory(): boolean {
+    if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
+    const o = this.out(this.world, 0);
+    const sting = this.smp('win_sting', o, 0.42, { jitter: 0 });
+    // the voice comes through a police-radio band-pass, over the sting
+    const radio = c.createBiquadFilter(); radio.type = 'bandpass'; radio.frequency.value = 1700; radio.Q.value = 0.55; radio.connect(this.out(this.world, 0));
+    const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', radio, 0.75, { jitter: 0, delay: sting ? 0.5 : 0 });
+    return sting || vo;
+  }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }
 
   private ensure(): Ctx | null {

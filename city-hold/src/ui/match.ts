@@ -61,6 +61,7 @@ export class Match {
     host.appendChild(this.root);
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx);
     this.buildHud();
+    this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
     // overlays sit right under the top bar, whatever its height (it wraps to two or three rows on narrow phones)
@@ -345,7 +346,7 @@ export class Match {
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
         case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
-        case 'won': this.sfx.play('win'); this.buzz([60, 60, 120]); break;
+        case 'won': if (!(this.side === 'defence' && this.sfx.victory())) this.sfx.play('win'); this.buzz([60, 60, 120]); break;
         case 'lost': this.sfx.play('lose'); this.buzz(250); break;
         case 'upgrade': this.sfx.play('upgrade'); this.toast(e.text, 'good'); break;
         case 'purchase': if (e.x !== undefined && e.amount) this.view.floatText(e.x, e.z!, `−${e.amount}`, 'muted'); break;
