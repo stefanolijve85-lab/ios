@@ -129,6 +129,7 @@ class GltfCharacter implements CharacterVisual {
         if (model.getObjectByName('Hips') && (mm as THREE.MeshStandardMaterial).map) {
           // auto-rigged photo-textured model: a little self-light keeps it readable on the night street
           const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0;
+          if (kind === 'firefighter' && fireKit && c.map) { const t = kitTexture(c.map, fireKit); if (t) { c.map = t; c.emissiveMap = t; } } // the city's own kit
           // passers-by share three models: each gets its own colour cast and brightness so the crowd does not look cloned
           if (kind === 'civilian' || kind === 'helper') {
             // passers-by share a few models: each gets a clearly different colour cast (jacket colours of a Paris evening)
@@ -289,6 +290,42 @@ class ProcCharacter implements CharacterVisual {
 /** Use the GLB in the unit's slot when it is loaded, otherwise fall back to the procedural figure. */
 /** player's figure choice per role (Collectie screen): slot lists; empty or missing = the default look */
 let figureChoice: Record<string, string[]> = {};
+/** each city's fire service kit, after the reference pictures (ui/firefighters/<city>.webp): suit colour (null keeps the
+ *  dark kit of the model) and helmet colour (null keeps the yellow helmet). Applied by recolouring the model's texture. */
+const FIRE_KITS: Record<string, { suit: [number, number, number] | null; helmet: [number, number, number] | null }> = {
+  saopaulo: { suit: [0.66, 0.5, 0.3], helmet: [0.8, 0.09, 0.07] }, // tan, red helmet
+  milan: { suit: null, helmet: [0.8, 0.09, 0.07] }, // black, red helmet
+  london: { suit: [0.64, 0.51, 0.34], helmet: null }, // tan, yellow helmet
+  berlin: { suit: [0.12, 0.14, 0.22], helmet: [0.93, 0.92, 0.74] }, // navy, pale helmet
+  paris: { suit: [0.12, 0.14, 0.24], helmet: [0.78, 0.8, 0.84] }, // navy, chrome helmet
+  amsterdam: { suit: [0.64, 0.51, 0.34], helmet: [0.9, 0.93, 0.58] }, // tan, lime-white helmet
+};
+let fireKit = '';
+export function setFireKit(city: string) { fireKit = city; }
+const kitCache = new Map<string, THREE.Texture>();
+function kitTexture(src: THREE.Texture, city: string): THREE.Texture | null {
+  const kit = FIRE_KITS[city]; const img = src.image as CanvasImageSource & { width: number; height: number } | undefined;
+  if (!kit || !img || !img.width) return null;
+  const key = city + ':' + src.uuid; const hit = kitCache.get(key); if (hit) return hit;
+  const S = Math.min(1024, img.width); const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const cx = cv.getContext('2d', { willReadFrequently: true }); if (!cx) return null;
+  cx.drawImage(img, 0, 0, S, S); const d = cx.getImageData(0, 0, S, S); const px = d.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i] / 255, g = px[i + 1] / 255, b = px[i + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx, sat = mx > 0 ? (mx - mn) / mx : 0;
+    let h = 0; if (mx > mn) { h = mx === r ? ((g - b) / (mx - mn)) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4; h *= 60; if (h < 0) h += 360; }
+    let out: [number, number, number] | null = null;
+    if (kit.helmet && sat > 0.45 && v > 0.4 && h >= 34 && h < 51) { const k = v / 0.92; out = [kit.helmet[0] * k, kit.helmet[1] * k, kit.helmet[2] * k]; } // the helmet's warm yellow (the lime stripes sit at 52-64)
+    else if (kit.suit && sat < 0.32 && v < 0.52) {
+      const k = v / 0.27; const w = Math.min(1, Math.max(0, (v - 0.07) / 0.07)); // the black boots and gloves stay black
+      out = [r + (kit.suit[0] * k - r) * w, g + (kit.suit[1] * k - g) * w, b + (kit.suit[2] * k - b) * w];
+    }
+    if (out) { px[i] = Math.min(255, out[0] * 255); px[i + 1] = Math.min(255, out[1] * 255); px[i + 2] = Math.min(255, out[2] * 255); }
+  }
+  cx.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.flipY = src.flipY; t.colorSpace = src.colorSpace; t.wrapS = src.wrapS; t.wrapT = src.wrapT; t.anisotropy = src.anisotropy;
+  kitCache.set(key, t); return t;
+}
 export function setFigureChoices(c: Record<string, string[]> | undefined) { figureChoice = c ?? {}; }
 
 /** a figure from a specific model slot (gallery, and roles with a chosen look); appearance only, never stats */

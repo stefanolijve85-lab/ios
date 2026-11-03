@@ -146,7 +146,9 @@ export class Match {
       for (const c of DEF_CARDS) {
         const b = document.createElement('button'); b.className = 'card'; b.dataset.kind = c.kind;
         const cost = BALANCE.defence.costs[c.kind];
-        b.innerHTML = `<img src="${c.img}" alt=""><span class="cl">${c.label}</span><span class="cc">${cost}</span><span class="cn">${c.note}</span>`;
+        // the fire crew wears the city's own kit (ui/firefighters/<city>.webp); falls back to the generic picture
+        const img = c.kind === 'firefighter' ? `ui/firefighters/${this.game.map.id}.webp` : c.img;
+        b.innerHTML = `<img src="${img}" alt="" onerror="this.onerror=null;this.src='${c.img}'"><span class="cl">${c.label}</span><span class="cc">${cost}</span><span class="cn">${c.note}</span>`;
         b.addEventListener('click', () => this.cardDef(c.kind));
         cards.appendChild(b);
       }

@@ -112,7 +112,7 @@ function jetMaterial(core: boolean): THREE.ShaderMaterial {
 
 interface Crew {
   crumbs: THREE.Vector3[];
-  hose: THREE.Mesh; nozzle: THREE.Mesh;
+  hose: THREE.Mesh; nozzle: THREE.Group;
   jet: THREE.Mesh; mist: THREE.Mesh; jetKey: string; jetOn: number;
   mate: CharacterVisual; matePos: THREE.Vector3; mateOut: boolean;
   rebuildT: number;
@@ -122,8 +122,21 @@ export class FireCrew {
   private engine: { g: THREE.Group; beacons: THREE.Mesh[]; outlet: THREE.Object3D } | null = null;
   private crews = new Map<number, Crew>();
   private hoseMat = new THREE.MeshStandardMaterial({ color: 0x9a1c18, roughness: 0.62 });
-  private nozzleGeo = new THREE.CylinderGeometry(0.035, 0.06, 0.42, 10).rotateX(Math.PI / 2);
-  private nozzleMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.6 });
+  /** branch pipe as in the reference pictures: silver coupling, black barrel, red bale handle and a red tip ring (+z forward) */
+  private buildNozzle(): THREE.Group {
+    const g = new THREE.Group();
+    const black = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.45, metalness: 0.3 });
+    const red = new THREE.MeshStandardMaterial({ color: 0xb3161a, roughness: 0.4, metalness: 0.2 });
+    const silver = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.25, metalness: 0.9 });
+    const cyl = (r0: number, r1: number, len: number, z: number, m: THREE.Material) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, len, 12).rotateX(Math.PI / 2), m); o.position.z = z; g.add(o); };
+    cyl(0.055, 0.055, 0.1, -0.24, silver); // coupling on the hose end
+    cyl(0.042, 0.046, 0.34, -0.03, black); // barrel
+    cyl(0.07, 0.062, 0.1, 0.18, red); // tip ring
+    cyl(0.05, 0.05, 0.04, 0.245, black); // nozzle face
+    const bale = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 6, 12, Math.PI), red); bale.rotation.y = Math.PI / 2; bale.position.set(0, 0.04, -0.06); g.add(bale);
+    g.scale.setScalar(1.25); g.traverse((o) => { (o as THREE.Mesh).castShadow = true; });
+    return g;
+  }
   private tmp = new THREE.Vector3(); private tmp2 = new THREE.Vector3();
   constructor(private scene: THREE.Scene, private map: MapDef, private fx: Effects) {}
 
@@ -163,7 +176,7 @@ export class FireCrew {
     let c = this.crews.get(u.id);
     if (!c) {
       const hose = new THREE.Mesh(new THREE.BufferGeometry(), this.hoseMat); hose.castShadow = true; hose.visible = false;
-      const nozzle = new THREE.Mesh(this.nozzleGeo, this.nozzleMat); nozzle.visible = false;
+      const nozzle = this.buildNozzle(); nozzle.visible = false;
       const jet = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(true)); jet.visible = false; jet.frustumCulled = false;
       const mist = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(false)); mist.visible = false; mist.frustumCulled = false;
       const mate = createCharacter('firefighter', u.id * 7 + 3); mate.icon.visible = false; mate.root.visible = false;
@@ -198,7 +211,7 @@ export class FireCrew {
     hand.y = spraying ? 1.18 : 0.95;
     c.nozzle.visible = out; c.hose.visible = out && c.crumbs.length > 0;
     if (out) {
-      c.nozzle.position.copy(hand).addScaledVector(fwd, 0.18);
+      c.nozzle.position.copy(hand).addScaledVector(fwd, 0.12);
       c.nozzle.rotation.set(spraying ? -0.12 : 0.5, yaw, 0, 'YXZ');
       c.rebuildT -= dt;
       if (c.rebuildT <= 0) {
@@ -209,7 +222,7 @@ export class FireCrew {
         const behind = hand.clone().addScaledVector(fwd, -0.5); behind.y = 0.05;
         const lastP = pts[pts.length - 1];
         if (Math.hypot(behind.x - lastP.x, behind.z - lastP.z) > 0.3) pts.push(behind);
-        pts.push(hand.clone().addScaledVector(fwd, -0.05));
+        pts.push(hand.clone().addScaledVector(fwd, -0.2));
         const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
         c.hose.geometry.dispose(); c.hose.geometry = new THREE.TubeGeometry(curve, Math.min(400, pts.length * 6), 0.045, 6, false);
       }
@@ -233,7 +246,7 @@ export class FireCrew {
     c.jetOn = Math.max(0, Math.min(1, c.jetOn + (spraying ? dt * 2.5 : -dt * 4)));
     c.jet.visible = c.mist.visible = c.jetOn > 0;
     if (c.jetOn > 0 && fire) {
-      const from = c.nozzle.position.clone().addScaledVector(fwd, 0.22);
+      const from = c.nozzle.position.clone().addScaledVector(fwd, 0.34);
       const to = new THREE.Vector3(fire.x, fire.store >= 0 ? 1.05 : 0.8, fire.z);
       const key = `${from.x.toFixed(1)},${from.z.toFixed(1)},${to.x.toFixed(1)},${to.z.toFixed(1)}`;
       if (key !== c.jetKey) {

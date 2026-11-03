@@ -9,7 +9,7 @@ import { Effects } from './effects';
 import { Post } from './post';
 import { cloneModel, slotStatus } from './assets';
 import { IncendiaryPool } from './thrown';
-import { createCharacter, type CharacterVisual } from './character';
+import { createCharacter, setFireKit, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
 import { buildCar } from './world';
 import { radialTexture } from './textures';
@@ -197,6 +197,7 @@ export class MatchView {
       this.post = new Post(this.renderer, this.scene, this.camera);
     }
     this.fx = new Effects(this.scene, reducedFx);
+    setFireKit(map.id);
     this.fireCrew = new FireCrew(this.scene, map, this.fx);
     if (!reducedFx) { this.flashLight = new THREE.PointLight(0xfff6e8, 0, 22, 1.6); this.scene.add(this.flashLight); }
     this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
