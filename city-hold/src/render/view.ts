@@ -491,7 +491,7 @@ export class MatchView {
 
   // ---- riot litter (image 07): paper, cardboard, bags and bottles pile up around broken shops and along the rioters'
   // routes as the riot goes on; it stays for the rest of the match. Scenery only, instanced (4 draw calls).
-  private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number } | null = null;
+  private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number; spilled: Set<number> } | null = null;
   private stepLitter(g: Game, dt: number) {
     if (!this.litter) {
       const max = this.reducedFx ? 60 : 180;
@@ -501,24 +501,44 @@ export class MatchView {
         mk(new THREE.BoxGeometry(0.42, 0.28, 0.32), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 })), // cardboard
         mk(new THREE.SphereGeometry(0.16, 6, 4).scale(1, 0.55, 1.2), new THREE.MeshStandardMaterial({ color: 0x1d1e22, roughness: 0.4, metalness: 0.1 })), // bin bags
         mk(new THREE.CylinderGeometry(0.035, 0.035, 0.26, 6).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2f5a35, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85 })), // bottles
-      ], n: [0, 0, 0, 0], acc: 0, seed: 1 };
+        mk(new THREE.BoxGeometry(0.5, 0.06, 0.38), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 })), // 4: clothes heaps (per-piece colour)
+        mk(new THREE.BoxGeometry(0.42, 0.3, 0.32), new THREE.MeshStandardMaterial({ color: 0xb9b8b4, roughness: 0.75 })), // 5: white electronics boxes (image 06), toned for the night street
+        mk(new THREE.BoxGeometry(0.14, 0.08, 0.14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.4 })), // 6: jewellery / phone boxes (per-piece colour)
+        mk(new THREE.CircleGeometry(0.09, 3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xcfe6f2, roughness: 0.05, metalness: 0.9, emissive: 0x405060, emissiveIntensity: 0.6 })), // 7: glass shards
+      ], n: [0, 0, 0, 0, 0, 0, 0, 0], acc: 0, seed: 1, spilled: new Set() };
+      for (const k of [4, 6]) { this.litter.kinds[k].instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(max * 3), 3); }
     }
     const L = this.litter; const max = L.kinds[0].instanceMatrix.count;
     const rnd = () => { L.seed = (L.seed * 16807) % 2147483647; return L.seed / 2147483647; };
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3();
-    const drop = (x: number, z: number, spread: number) => {
-      const k = [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= max) return;
-      const px = x + (rnd() - 0.5) * spread, pz = z + (rnd() - 0.5) * spread; if (!g.nav.walkable(px, pz)) return;
-      const y = k === 0 ? 0.04 : k === 1 ? 0.14 : k === 2 ? 0.07 : 0.05;
-      e.set(k === 1 ? (rnd() < 0.3 ? Math.PI / 2 : 0) : 0, rnd() * Math.PI * 2, 0); q.setFromEuler(e); const s2 = 0.7 + rnd() * 0.6; sc.set(s2, s2, s2);
-      L.kinds[k].setMatrixAt(L.n[k]++, m4.compose(pos.set(px, y, pz), q, sc)); L.kinds[k].count = L.n[k]; L.kinds[k].instanceMatrix.needsUpdate = true;
+    const COL = [0xb8242c, 0x2a4fa8, 0xe8e3d0, 0x1d1f24, 0xc98a2a, 0x3d7a4a, 0x8a3fa0, 0xd8d0c0]; const col = new THREE.Color();
+    const drop = (x: number, z: number, spread: number, kind?: number) => {
+      const k = kind ?? [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= max) return;
+      const px = x + (rnd() - 0.5) * spread, pz = z + (rnd() - 0.5) * spread * 0.6; if (!g.nav.walkable(px, pz)) return;
+      const y = [0.04, 0.14, 0.07, 0.05, 0.035, 0.18, 0.04, 0.02][k];
+      e.set(k === 1 || k === 5 ? (rnd() < 0.3 ? Math.PI / 2 : 0) : 0, rnd() * Math.PI * 2, 0); q.setFromEuler(e); const s2 = 0.7 + rnd() * 0.6; sc.set(s2, k === 4 ? s2 * (0.6 + rnd()) : s2, s2);
+      const i = L.n[k]++; L.kinds[k].setMatrixAt(i, m4.compose(pos.set(px, y, pz), q, sc));
+      if (L.kinds[k].instanceColor) { L.kinds[k].setColorAt(i, col.setHex(COL[Math.floor(rnd() * COL.length)])); L.kinds[k].instanceColor!.needsUpdate = true; }
+      L.kinds[k].count = L.n[k]; L.kinds[k].instanceMatrix.needsUpdate = true;
     };
+    // the moment a shop front gives way: glass sprays over the pavement and the first goods spill out (image 06)
+    g.stores.forEach((s, i) => {
+      if (s.structure > 0 || L.spilled.has(i)) return; L.spilled.add(i);
+      const sd = this.map.stores[i]; const gx = s.door.x + sd.normal.x * 1.6, gz = s.door.z + sd.normal.z * 1.6;
+      const goods = sd.kind === 'fashion' ? 4 : sd.kind === 'electronics' ? 5 : 6;
+      for (let n = 0; n < (this.reducedFx ? 12 : 30); n++) drop(gx, gz, sd.width * 0.9, 7);
+      for (let n = 0; n < (this.reducedFx ? 4 : (goods === 5 ? 7 : 12)); n++) drop(gx + sd.normal.x * 0.8, gz + sd.normal.z * 0.8, sd.width * 0.8, goods);
+      for (let n = 0; n < 5; n++) drop(gx + sd.normal.x * 0.6, gz + sd.normal.z * 0.6, sd.width * 0.7, 1);
+    });
     if (dt <= 0) return;
     // rioters drop things as they go (more when carrying loot); broken shop fronts spill goods onto the pavement
     L.acc += dt;
     if (L.acc < 0.5) return; L.acc = 0;
     for (const u of g.units) if (u.side === 'att' && (u.moving || u.state === 'collect') && rnd() < (u.carrying > 0 || u.state === 'collect' ? 0.25 : 0.06)) drop(u.x, u.z, 1.2);
-    g.stores.forEach((s, i) => { if (s.structure <= 0 && rnd() < 0.35) { const sd = this.map.stores[i]; drop(s.door.x + sd.normal.x * 1.8, s.door.z + sd.normal.z * 1.8, sd.width * 0.8); } });
+    g.stores.forEach((s, i) => { if (s.structure <= 0 && rnd() < 0.45) { const sd = this.map.stores[i]; const goods = sd.kind === 'fashion' ? 4 : sd.kind === 'electronics' ? 5 : 6;
+      drop(s.door.x + sd.normal.x * 2.2, s.door.z + sd.normal.z * 2.2, sd.width * 0.9, rnd() < (goods === 5 ? 0.25 : 0.5) ? goods : undefined); } });
+    // looters carrying goods lose a piece now and then
+    for (const u of g.units) if (u.side === 'att' && u.carrying > 0 && u.moving && rnd() < 0.08 && u.carryStore >= 0) { const sd = this.map.stores[u.carryStore]; drop(u.x, u.z, 0.8, sd.kind === 'fashion' ? 4 : sd.kind === 'electronics' ? 5 : 6); }
   }
 
   render(g: Game, dt: number) {
