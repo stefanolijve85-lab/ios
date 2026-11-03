@@ -163,7 +163,7 @@ export class Menu {
     if (seen || navigator.webdriver || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const nl = this.lang === 'nl';
     const el = document.createElement('div'); el.className = 'rm-intro';
-    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
+    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
     document.body.appendChild(el);
     const v = el.querySelector('video')!;
     let done = false;
