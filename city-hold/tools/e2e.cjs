@@ -115,6 +115,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
         if (!g.squad.length && g.budget >= 100) g.recruit('runner');
         if (g.squad.length) g.dispatch();
       }
+      (window.__e2eLog = window.__e2eLog || []).push(JSON.stringify({ t: Math.round(g.time), sq: g.squad.length, q: g.dispatchQueue.length, att: g.attackers().map((a) => a.kind[0] + a.state + ':' + a.x.toFixed(0) + ',' + a.z.toFixed(0)), tgt: g.looterTarget, b: g.budget, d: g.defenders().length }));
       for (let k = 0; k < 150 && !g.over && g.extracted === 0; k++) { if (g.budget < 150) g.budget = 150; /* test-only: never lose for lack of funds here */ g.step(1 / 30); }
       return g.extracted;
     });
@@ -122,6 +123,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   }
   const lb = await p.evaluate(() => { window.__match.paused = true; /* no income while the UI is clicked */ const g = window.__match.game; if (g.budget < 300) g.budget = 300; /* top-up only so the UI button can be exercised */ return { b: g.budget, ex: g.extracted }; });
   if (!(lb.ex > 0)) console.log("debug", await p.evaluate(() => { const g = window.__match.game; return JSON.stringify({ over: g.over, phase: g.phase, t: Math.round(g.time), budget: g.budget, att: g.attackers().length, defs: g.defenders().length, stock: g.stores.map((s) => s.stock) }); }));
+  if (!(lb.ex > 0)) console.log('trace', (await p.evaluate(() => window.__e2eLog || [])).slice(0, 12).join('\n'));
   assert(lb.ex > 0, `looters extracted stock (${lb.ex}) and were paid for it`);
   await p.waitForTimeout(400);
   await p.click('.infotoggle'); await p.waitForTimeout(300);
