@@ -814,7 +814,7 @@ export class Game {
         if (this.follow(u, dt, sp)) { u.state = 'idle'; u.moving = false; }
         if (u.kind === 'security' && u.state === 'return') this.autoEngage(u);
         // sent somewhere mid-riot: a guard running past a rioter grabs them on the way, then carries on to the spot
-        else if (u.kind === 'security' && u.state === 'move') this.autoEngage(u, 3.2);
+        else if (u.kind === 'security' && u.state === 'move' && this.side === 'defence') this.autoEngage(u, 3.2); // the player's guards only: looting balance unchanged
         break;
       }
       case 'idle': {
@@ -922,7 +922,7 @@ export class Game {
       if (s.kind !== 'shield') continue;
       const held = this.attackers().filter((a) => a.heldBy === s.id && a.state === 'held');
       // a shield officer sent into the crowd strikes the first rioter he reaches with the baton: knocked back and off balance
-      if (s.state === 'move' && this.time - s.strikeAt > st.strikeEvery) {
+      if (s.state === 'move' && this.side === 'defence' && this.time - s.strikeAt > st.strikeEvery) {
         const a = this.attackers().find((o) => o.heldBy < 0 && o.restrainBy < 0 && !['held', 'restrained', 'escorted', 'breach', 'collect', 'removed', 'escaped'].includes(o.state)
           && (o.x - s.x) ** 2 + (o.z - s.z) ** 2 < st.holdRadius ** 2);
         if (a) this.strike(s, a);
@@ -961,7 +961,7 @@ export class Game {
     s.strikeAt = this.time; s.facing = Math.atan2(a.x - s.x, a.z - s.z);
     this.emit({ type: 'held', text: 'Baton strike', x: a.x, z: a.z });
     a.detectedUntil = Math.max(a.detectedUntil, this.time + 6);
-    if (!knock) return;
+    if (!knock || this.side !== 'defence') return; // the AI police in looting mode only swing (balance unchanged)
     const d = Math.hypot(a.x - s.x, a.z - s.z) || 1;
     for (const k of [0.5, 0.3]) { const nx = a.x + ((a.x - s.x) / d) * k, nz = a.z + ((a.z - s.z) / d) * k; if (this.nav.walkable(nx, nz)) { a.x = nx; a.z = nz; break; } }
     a.staggerUntil = this.time + BALANCE.units.shield.strikeStagger; a.moving = false;
