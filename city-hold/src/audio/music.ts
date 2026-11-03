@@ -28,8 +28,9 @@ class Music {
     const unlock = () => {
       if (!this.ctx) {
         try { this.ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)(); } catch { this.ctx = null; }
-        if (this.ctx) for (const v of this.voices.values()) this.route(v);
+        if (this.ctx) for (const v of [...this.voices.values(), ...this.shots.values()]) this.route(v);
       }
+      this.primeShots();
       if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume();
       this.unlocked = true; this.apply(true);
     };
@@ -71,6 +72,51 @@ class Music {
     clearTimeout(this.duckT); this.duckT = window.setTimeout(() => { this.ducked = 1; this.apply(); }, seconds * 1000);
   }
   private ducked = 1; private duckT = 0;
+
+  // ---- one-shot recordings (the victory fanfare and voice) through the same <audio> route as the music, which is
+  // the route that demonstrably plays on iPad. Each element is started once inside a tap (silently) so iOS lets it
+  // play later without one.
+  private shots = new Map<string, Voice & { primed?: boolean; live?: boolean }>();
+  private shot(name: string) {
+    let v = this.shots.get(name);
+    if (!v) {
+      const el = new Audio(`audio/${name}.mp3${ASSET_Q}`); el.preload = 'auto'; el.loop = false;
+      const nv: Voice & { primed?: boolean; live?: boolean } = { el, gain: null, level: 0, target: 0, missing: false };
+      el.addEventListener('error', () => { nv.missing = true; });
+      el.addEventListener('ended', () => { nv.live = false; });
+      this.shots.set(name, nv); this.route(nv); try { el.load(); } catch { /* ignore */ }
+      v = nv;
+    }
+    return v;
+  }
+  private primeShots() {
+    for (const v of this.shots.values()) {
+      if (v.primed || v.live || !v.gain) continue; // without the gain node it would be audible: iOS ignores el.volume
+      v.primed = true; v.gain.gain.value = 0;
+      void v.el.play().then(() => { if (!v.live) { v.el.pause(); v.el.currentTime = 0; } }).catch(() => { v.primed = false; });
+    }
+  }
+  /** start downloading these recordings now (e.g. at the start of a mission) */
+  prepareShots(names: string[]) { for (const n of names) this.shot(n); this.primeShots(); }
+  /** play a recording once at the given level (0..2), optionally after a delay (s); false when it cannot play */
+  playShot(name: string, level: number, delay = 0): boolean {
+    const v = this.shot(name); if (v.missing) return false;
+    const go = () => {
+      v.live = true; v.level = level;
+      if (v.gain) { const g = v.gain.gain; g.cancelScheduledValues(0); g.value = level; } else v.el.volume = Math.max(0, Math.min(1, level));
+      try { v.el.currentTime = 0; } catch { /* ignore */ }
+      void v.el.play().catch(() => { v.live = false; });
+    };
+    if (delay > 0) window.setTimeout(go, delay * 1000); else go();
+    return true;
+  }
+  /** ramp a playing recording to a level, starting `at` s from now and taking `dur` s (Web Audio route only) */
+  rampShot(name: string, level: number, at: number, dur: number) {
+    const v = this.shots.get(name); if (!v || !v.gain || !this.ctx) return;
+    const g = v.gain.gain, t = this.ctx.currentTime;
+    g.setValueAtTime(g.value, t + at); g.linearRampToValueAtTime(level, t + at + dur);
+  }
+  stopShot(name: string) { const v = this.shots.get(name); if (v) { v.live = false; v.el.pause(); } }
   /** a looping ambience next to the music (e.g. 'riot' under the intro); level 0 fades it out */
   ambience(name: string, level: number) { this.extras.set(name, Math.max(0, level)); this.apply(true); }
 

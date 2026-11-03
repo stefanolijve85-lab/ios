@@ -67,6 +67,7 @@ export class Match {
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx, settings.timeOfDay ?? 'evening');
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
+    music.prepareShots(['win_sting', 'vo_win_en']); // the victory recordings, played like the music (works on iPad)
     this.sfx.unlock(); // create the audio graph now so the recordings start loading with the match (it resumes on the first tap)
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
@@ -384,11 +385,11 @@ export class Match {
         case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('impact', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'held': this.sfx.play(e.text === 'Baton strike' ? 'strike' : 'held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
-        case 'waveEnd': if (!this.game.over) this.sfx.waveSecured(); this.buzz(30); // the last wave ends in the victory sound instead this.banner('WAVE SECURED', e.text); break;
+        case 'waveEnd': if (!this.game.over) this.waveSecured(); this.buzz(30); // the last wave ends in the victory sound instead this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
         case 'won': {
           // defence: sting + radio voice ("Missie volbracht. Alle winkels zijn beveiligd."); looting: the sting alone (the line is about secured shops)
-          this.sfx.victory(this.side === 'defence'); // never the synthesised chime: it sounded like a car horn
+          this.victory(this.side === 'defence');
           music.setIntensity(0); music.duck(4.5); // the music steps back while the voice speaks
           this.buzz([60, 60, 120]); break;
         }
@@ -630,7 +631,7 @@ export class Match {
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
       <div class="btnrow"><button data-s="testwin">Test victory sound</button><span class="muted" data-s="testres"></span></div>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
-    m.querySelector<HTMLButtonElement>('[data-s="testwin"]')!.addEventListener('click', () => { const out = m.querySelector<HTMLElement>('[data-s="testres"]')!; out.textContent = '…'; void this.sfx.testVictory().then((t) => { out.textContent = t; }); });
+    m.querySelector<HTMLButtonElement>('[data-s="testwin"]')!.addEventListener('click', () => { const out = m.querySelector<HTMLElement>('[data-s="testres"]')!; out.textContent = '…'; out.textContent = this.victory(true) ? 'playing (music route)' : 'not available'; void this.sfx; });
     m.querySelector<HTMLInputElement>('[data-s="mus"]')!.addEventListener('input', (e) => { this.settings.music = Number((e.target as HTMLInputElement).value); music.setVolume(this.settings.music); this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { this.settings.volume = Number((e.target as HTMLInputElement).value); this.sfx.volume = this.settings.volume; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { this.settings.reducedFx = (e.target as HTMLInputElement).checked; this.onSettings?.(); });
@@ -642,6 +643,26 @@ export class Match {
   onSettings: (() => void) | null = null;
 
   resultInfo: ((r: MatchResult) => { unlocked: string[]; research: number; specs: string[] }) | null = null;
+
+  /** mission won: the recorded fanfare, and (defence) the commander's voice over it with the fanfare stepping back.
+   *  Played through the music's <audio> route, which plays on iPad; Web Audio only when that route is not ready. */
+  private victory(voice: boolean): boolean {
+    const vol = this.settings.volume ?? 0.6; if (vol <= 0) return false;
+    if (!music.isUnlocked) return this.sfx.victory(voice);
+    clearTimeout(this.waveT);
+    if (!music.playShot('win_sting', 0.9 * vol)) return this.sfx.victory(voice);
+    if (voice && music.playShot('vo_win_en', Math.min(2, 1.8 * vol), 0.7)) {
+      music.rampShot('win_sting', 0.3 * vol, 0.55, 0.15); music.rampShot('win_sting', 0.65 * vol, 3.4, 0.5);
+    }
+    return true;
+  }
+  /** a held wave: the first second of the fanfare, softer, faded out */
+  private waveSecured() {
+    const vol = this.settings.volume ?? 0.6; if (vol <= 0) return;
+    if (!music.isUnlocked) { this.sfx.waveSecured(); return; }
+    if (music.playShot('win_sting', 0.55 * vol)) { music.rampShot('win_sting', 0, 1.1, 0.7); this.waveT = window.setTimeout(() => music.stopShot('win_sting'), 1900); }
+  }
+  private waveT = 0;
 
   private showResult() {
     const g = this.game; const r = g.result!;
