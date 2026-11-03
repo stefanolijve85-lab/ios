@@ -322,6 +322,9 @@ export function buildVan(): { g: THREE.Group; lights: THREE.Mesh[] } {
   return { g, lights };
 }
 
+/** render layer seen by the game camera but not by the wet-street reflection camera (which only sees layer 0) */
+export const NO_REFLECT_LAYER = 1;
+export function noReflection(o: THREE.Object3D) { o.traverse((c) => c.layers.set(NO_REFLECT_LAYER)); }
 /** turn per image-to-3D vehicle so its nose points to +z (set after looking at each model) */
 const VEHICLE_YAW: Record<string, number> = { delivery_van: Math.PI, supply_truck: 0 };
 /** an image-to-3D vehicle (any size and axis) fitted to a length in metres, long axis on z, standing on the ground */
@@ -717,8 +720,12 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   const propGroup = new THREE.Group(); group.add(propGroup);
   pendingFades.length = 0;
   policeBeacons.length = 0; policeSpots.length = 0; ambientFires.length = 0;
-  map.props.forEach((p, i) => buildProp(p, p.type === 'car' ? group : propGroup, i, cars, lampPos));
-  mergeStatic(propGroup);
+  // props without light of their own are left out of the wet-street reflection (they barely show in it and cost a full redraw)
+  const dryGroup = new THREE.Group(); group.add(dryGroup);
+  const DRY = new Set(['tree', 'palm', 'planter', 'bench', 'bollard', 'cafe_table', 'umbrella', 'fence', 'delivery_van', 'police_van', 'vehicle', 'object', 'kiosk', 'phonebox', 'shelter', 'column']);
+  map.props.forEach((p, i) => buildProp(p, p.type === 'car' ? group : DRY.has(p.type) ? dryGroup : propGroup, i, cars, lampPos));
+  mergeStatic(propGroup); mergeStatic(dryGroup);
+  noReflection(dryGroup); for (const c of cars.values()) { noReflection(c.intact); noReflection(c.burned); }
   group.updateMatrixWorld(true);
   for (const pf of pendingFades) {
     for (const m of pf.meshes) { m.material = (m.material as THREE.Material).clone(); (m.material as THREE.Material).transparent = true; }

@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import type { Game, Unit } from '../sim/game';
 import type { MapDef, Vec2 } from '../maps/types';
-import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, type WorldHandles } from './world';
+import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, noReflection, NO_REFLECT_LAYER, skyTexture, type WorldHandles } from './world';
 import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
@@ -211,12 +211,17 @@ export class MatchView {
     moon.castShadow = !reducedFx; (moon.shadow as THREE.LightShadow & { intensity: number }).intensity = 0.7; // soft, subtle shadows moon.shadow.mapSize.set(2048, 2048);
     const sc = moon.shadow.camera; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50; sc.near = 10; sc.far = 160; moon.shadow.bias = -0.0005;
     this.scene.add(moon, moon.target);
+    this.camera.layers.enable(NO_REFLECT_LAYER); // the game camera sees everything; the reflection only layer 0
     this.world = buildWorld(map, this.scene, reducedFx);
     // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
     for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
     if (!reducedFx) {
       this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
       this.scene.add(this.wet);
+      // the reflection is a full redraw of the street: while the camera stands still it is refreshed every third frame
+      // (flames and beacons in it still move), while panning or zooming every frame
+      { const w = this.wet; const orig = w.onBeforeRender.bind(w); const last = new THREE.Matrix4(); let n = 0;
+        w.onBeforeRender = (r, sc, cam, ...rest) => { n++; const still = cam.matrixWorld.equals(last); last.copy(cam.matrixWorld); if (still && n % 3 !== 0) return; orig(r, sc, cam, ...rest); }; }
       this.post = new Post(this.renderer, this.scene, this.camera);
     }
     this.fx = new Effects(this.scene, reducedFx);
@@ -629,7 +634,7 @@ export class MatchView {
       const n = this.reducedFx ? 10 : 26; const kinds: AnyKind[] = ['runner', 'carrier', 'vandal', 'heavy', 'thrower'];
       for (let i = 0; i < n; i++) {
         const lane = i % lanes.length, L = lanes[lane];
-        const h = createCharacter(kinds[i % kinds.length], 900 + i); h.icon.visible = false; h.root.visible = false; this.scene.add(h.root);
+        const h = createCharacter(kinds[i % kinds.length], 900 + i); noReflection(h.root); h.icon.visible = false; h.root.visible = false; this.scene.add(h.root);
         const x = L.x0 + Math.random() * (L.x1 - L.x0);
         this.backdrop.push({ h, x, z: L.z0 - 6 - Math.random() * 10, tx: x, tz: L.z0 + Math.random() * (L.z1 - L.z0), wait: Math.random() * 2, lane, speed: 1 + Math.random() * 0.9, flee: false });
       }
@@ -666,7 +671,7 @@ export class MatchView {
   private stepLitter(g: Game, dt: number) {
     if (!this.litter) {
       const max = this.reducedFx ? 60 : 180; const LT = litterTextures();
-      const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.InstancedMesh(geo, mat, max); m.count = 0; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); return m; };
+      const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.InstancedMesh(geo, mat, max); m.count = 0; m.receiveShadow = true; m.frustumCulled = false; m.layers.set(NO_REFLECT_LAYER); this.scene.add(m); return m; };
       this.litter = { kinds: [
         mk(crumpled(new THREE.PlaneGeometry(0.3, 0.22, 4, 3).rotateX(-Math.PI / 2), 0.025, 3), new THREE.MeshStandardMaterial({ map: LT.paper, roughness: 0.92, side: THREE.DoubleSide })), // printed paper, flyers
         mk(new THREE.BoxGeometry(0.42, 0.28, 0.32), new THREE.MeshStandardMaterial({ map: LT.cardboard, roughness: 0.95 })), // taped and labelled cardboard boxes
@@ -744,7 +749,7 @@ export class MatchView {
     for (const u of g.units) {
       seen.add(u.id);
       let h = this.humans.get(u.id);
-      if (!h) { h = createCharacter(u.kind, u.variant); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
+      if (!h) { h = createCharacter(u.kind, u.variant); noReflection(h.root); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
       // looting: the looter walks in through the broken front, grabs the goods inside and comes back out carrying them
@@ -809,7 +814,7 @@ export class MatchView {
       nseen.add(n.id);
       let c = this.npcVis.get(n.id);
       if (!c) {
-        c = createCharacter(n.role === 'patron' ? 'civilian' : n.role === 'police' ? 'security' : n.role, n.variant);
+        c = createCharacter(n.role === 'patron' ? 'civilian' : n.role === 'police' ? 'security' : n.role, n.variant); noReflection(c.root);
         if (n.role === 'police') c.icon.visible = false; // decorative police line: no faction icon, not selectable
         this.npcVis.set(n.id, c); this.scene.add(c.root); c.root.position.set(n.x, 0, n.z); }
       const k = 1 - Math.exp(-dt * 20);
@@ -850,7 +855,7 @@ export class MatchView {
     for (const b of g.barriers) {
       bseen.add(b.id);
       let m = this.barriers.get(b.id);
-      if (!m) { const slot = b.kind === 'barrier' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.kind === 'barrier' ? 'small' : 'large', b.size === 'large'); m.position.set(b.x, 0, b.z); m.rotation.y = (b.rot * Math.PI) / 180; this.scene.add(m); this.barriers.set(b.id, m); }
+      if (!m) { const slot = b.kind === 'barrier' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.kind === 'barrier' ? 'small' : 'large', b.size === 'large'); m.position.set(b.x, 0, b.z); m.rotation.y = (b.rot * Math.PI) / 180; noReflection(m); this.scene.add(m); this.barriers.set(b.id, m); }
       if (b.broken) { m.rotation.z = Math.min(1.45, b.brokenT * 4) * (b.size === 'small' ? 1 : 0.15); m.position.y = b.size === 'small' ? 0.05 : 0; if (b.size === 'large') m.children.forEach((c, i) => { c.rotation.y = i * 0.4; c.position.z = (i % 2) * 0.8; }); }
       else if (b.hp < b.maxHp) this.bar('b' + b.id, b.x, 1.6, b.z, b.hp / b.maxHp, '#e0e0e0');
     }
@@ -858,7 +863,7 @@ export class MatchView {
     // camera masts + coverage
     for (const c of g.cameras) {
       if (this.masts.has(c.id)) continue;
-      const m = (slotStatus('prop.camera_mast') === 'final' ? cloneModel('prop.camera_mast') : null) ?? buildMastModel(); m.position.set(c.x, 0, c.z); this.scene.add(m); this.masts.set(c.id, m);
+      const m = (slotStatus('prop.camera_mast') === 'final' ? cloneModel('prop.camera_mast') : null) ?? buildMastModel(); m.position.set(c.x, 0, c.z); noReflection(m); this.scene.add(m); this.masts.set(c.id, m);
     }
     // camera reach: one soft disc per camera, faint inside, a little stronger towards the rim and fading out (no hard edge)
     const want = isDef || this.reducedFx === false ? g.cameras : [];
@@ -914,7 +919,7 @@ export class MatchView {
     for (const [id, m] of this.dropMarkers) if (!dseen.has(id)) { this.scene.remove(m); this.dropMarkers.delete(id); }
     // supply truck
     if (g.truck && this.map.supply) {
-      if (!this.truck) { this.truck = buildTruck(); this.scene.add(this.truck); }
+      if (!this.truck) { this.truck = buildTruck(); noReflection(this.truck); this.scene.add(this.truck); }
       this.truck.position.set(g.truck.x, 0, g.truck.z); this.truck.rotation.y = g.truck.facing;
       this.truck.visible = g.truck.active || !g.truck.done;
     }

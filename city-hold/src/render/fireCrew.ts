@@ -9,6 +9,7 @@ import { createCharacter, type CharacterVisual } from './character';
 import type { Effects } from './effects';
 import { radialTexture } from './textures';
 import { cloneModel, slotStatus } from './assets';
+import { noReflection } from './world';
 import { fireEnginePark, FIRE_ENGINE_RUN } from '../maps/fireEngine';
 
 const RED = 0xa8121a;
@@ -182,7 +183,7 @@ export class FireCrew {
 
   private parking() { return fireEnginePark(this.map); }
   private started = false;
-  private build() { this.engine = buildFireEngine(); const p = this.parking(); this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.engine.g.visible = false; this.scene.add(this.engine.g); }
+  private build() { this.engine = buildFireEngine(); const p = this.parking(); this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.engine.g.visible = false; for (const c of this.engine.body.children) noReflection(c); for (const w of this.engine.wheels) noReflection(w); this.scene.add(this.engine.g); }
   /** build the engine during loading and compile its shaders, so it does not hitch or show black when it first drives in */
   prewarm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
     if (!this.engine) this.build();
@@ -250,6 +251,7 @@ export class FireCrew {
       const jet = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(true)); jet.visible = false; jet.frustumCulled = false;
       const mist = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(false)); mist.visible = false; mist.frustumCulled = false;
       const mate = createCharacter('firefighter', u.id * 7 + 3); mate.icon.visible = false; mate.root.visible = false;
+      noReflection(mate.root); noReflection(hose); noReflection(nozzle);
       this.scene.add(hose, nozzle, jet, mist, mate.root);
       c = { crumbs: [], hose, nozzle, jet, mist, jetKey: '', jetOn: 0, mate, matePos: new THREE.Vector3(), mateOut: false, rebuildT: 0 };
       this.crews.set(u.id, c);

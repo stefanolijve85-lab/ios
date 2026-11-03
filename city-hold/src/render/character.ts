@@ -125,7 +125,7 @@ class GltfCharacter implements CharacterVisual {
     const top = CASUAL_TOPS[Math.floor(r() * CASUAL_TOPS.length)], legs = CASUAL_LEGS[Math.floor(r() * CASUAL_LEGS.length)];
     model.traverse((o) => {
       const m = o as THREE.Mesh; if (!m.isMesh) return;
-      m.castShadow = true;
+      m.castShadow = false; // figures stand on their own soft contact shadow: a shadow-map pass for every skinned figure cost too much on iPad
       const mats = Array.isArray(m.material) ? m.material : [m.material];
       const out = mats.map((mm) => {
         const n = mm.name;
