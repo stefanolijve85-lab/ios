@@ -9,7 +9,7 @@ import { createCharacter, type CharacterVisual } from './character';
 import type { Effects } from './effects';
 import { radialTexture } from './textures';
 import { cloneModel, slotStatus } from './assets';
-import { fireEnginePark } from '../maps/fireEngine';
+import { fireEnginePark, FIRE_ENGINE_RUN } from '../maps/fireEngine';
 
 const RED = 0xa8121a;
 
@@ -189,7 +189,7 @@ export class FireCrew {
     if (ffs.length && !this.engine) {
       this.engine = buildFireEngine(); const p = this.parking();
       this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.scene.add(this.engine.g);
-      this.drive.left = 28; this.drive.v = 9; // comes up the street at about 30 km/h and brakes to a stop at its spot
+      this.drive.left = FIRE_ENGINE_RUN; this.drive.v = 10; // comes up the street at about 30 km/h and brakes to a stop at its spot
     }
     if (this.engine) this.stepDrive(dt, time);
     if (this.engine) {
@@ -223,7 +223,11 @@ export class FireCrew {
     }
     e.g.position.set(p.x - Math.sin(a) * d.left, 0, p.z - Math.cos(a) * d.left);
     // body on its springs: nose dips under braking and rocks back when it stops; a faint shake while the engine runs
-    const target = -decel * 0.006; d.pv += ((target - d.pitch) * 60 - d.pv * 7) * dt; d.pitch += d.pv * dt;
+    // integrated in small steps (a long frame or 3x speed made the explicit step blow up: the engine flipped over and vanished)
+    const target = -decel * 0.006; const n = Math.min(20, Math.ceil(dt / 0.008)), h = dt / Math.max(1, n);
+    for (let i = 0; i < n; i++) { d.pv += ((target - d.pitch) * 60 - d.pv * 7) * h; d.pitch += d.pv * h; }
+    if (!Number.isFinite(d.pitch) || !Number.isFinite(d.pv)) { d.pitch = 0; d.pv = 0; }
+    d.pitch = Math.max(-0.05, Math.min(0.05, d.pitch)); // a few degrees at most
     e.body.rotation.x = d.pitch; e.body.position.y = Math.sin(time * 31) * 0.004 + Math.abs(d.pitch) * 0.3;
     const lit = d.left > 0 ? 1 : 0.35; (e.heads[e.heads.length - 1].material as THREE.MeshBasicMaterial).opacity = lit;
   }
