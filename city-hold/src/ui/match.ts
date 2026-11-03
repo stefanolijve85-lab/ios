@@ -39,6 +39,8 @@ export class Match {
   speed = 1;
   paused = false;
   placing: BuildKind | null = null;
+  /** a barrier waiting to be turned before it is put down: its socket and angle (degrees) */
+  pending: { socket: string; x: number; z: number; rot: number } | null = null;
   /** tear gas armed: the next tap on the ground is where the canister lands */
   gasAim = false;
   private raf = 0;
@@ -161,7 +163,7 @@ export class Match {
   private onKey = (e: KeyboardEvent) => {
     if (!this.root.isConnected) { window.removeEventListener('keydown', this.onKey); return; }
     if (e.key === 'p' || e.key === ' ') { this.action('pause'); e.preventDefault(); }
-    if (e.key === 'Escape') { this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); this.view.selected.clear(); this.refreshHud(true); }
+    if (e.key === 'Escape') { this.pending = null; this.view.setGhost(null, null, false); this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); this.view.selected.clear(); this.refreshHud(true); }
   };
 
   private action(a: string, btn?: HTMLElement) {
@@ -182,7 +184,13 @@ export class Match {
         if (this.gasAim) this.toast('Tear gas: tap where it should land', 'info');
         break;
       }
-      case 'cancel': this.gasAim = false; this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); break;
+      case 'rotl': case 'rotr': if (this.pending && this.placing) { this.pending.rot = (this.pending.rot + (a === 'rotl' ? 22.5 : -22.5) + 360) % 360; this.view.setGhost(this.placing, this.pending, this.game.canPlace(this.placing, this.pending.socket, this.pending.rot).ok); } break;
+      case 'putdown': if (this.pending && this.placing) {
+        const r = this.game.place(this.placing, this.pending.socket, this.pending.rot);
+        if (r.ok) { this.sfx.play('place'); this.placing = null; this.pending = null; this.view.setGhost(null, null, false); this.view.showSockets = null; this.view.refreshSockets(this.game); }
+        else { this.sfx.play('deny'); this.toast(r.reason ?? 'Not available', 'bad'); }
+      } break;
+      case 'cancel': this.pending = null; this.view.setGhost(null, null, false); this.gasAim = false; this.placing = null; this.view.showSockets = null; this.view.refreshSockets(this.game); break;
       case 'selall': this.view.selected = new Set(this.game.defenders().filter((d) => d.kind === 'security').map((d) => d.id)); break;
       case 'selsquad': this.view.selected = new Set(this.game.attackers().filter((u) => u.state === 'approach').map((d) => d.id)); break;
       case 'route': {
@@ -197,7 +205,7 @@ export class Match {
     this.sfx.play('click');
     if (kind === 'barrier' || kind === 'concrete' || kind === 'camera') {
       if (this.game.budget < BALANCE.defence.costs[kind]) { this.toast('Insufficient budget', 'bad'); this.sfx.play('deny'); return; }
-      this.placing = this.placing === kind ? null : kind;
+      this.placing = this.placing === kind ? null : kind; this.pending = null; this.view.setGhost(null, null, false);
       this.view.showSockets = this.placing ? (id) => this.game.canPlace(this.placing!, id).ok : null;
       this.view.refreshSockets(this.game);
       if (this.placing) this.toast(`Tap a green socket to place the ${kind === 'concrete' ? 'concrete barrier (large sockets)' : kind}`, 'info');
@@ -220,7 +228,22 @@ export class Match {
       if (r.ok) this.view.showDestination(x, z, null, 0xe8e4d8); else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
       this.refreshHud(true); return;
     }
+    if (this.placing && this.pending) {
+      // turning the barrier: a tap anywhere points it there (any angle); the buttons turn it in steps and put it down
+      if (p.type === 'socket' && p.id !== this.pending.socket) { const s = g.map.sockets.find((so) => so.id === p.id)!; this.pending = { socket: s.id, x: s.x, z: s.z, rot: this.pending.rot }; }
+      else { const a = Math.atan2(-(p.z - this.pending.z), p.x - this.pending.x); this.pending.rot = Math.round(((a * 180) / Math.PI) / 5) * 5; }
+      this.view.setGhost(this.placing, this.pending, g.canPlace(this.placing, this.pending.socket, this.pending.rot).ok);
+      this.refreshHud(true); return;
+    }
     if (this.placing) {
+      if (p.type === 'socket' && this.placing !== 'camera') {
+        const s = g.map.sockets.find((so) => so.id === p.id)!;
+        if (!g.canPlace(this.placing, p.id).ok) { this.sfx.play('deny'); this.toast(g.canPlace(this.placing, p.id).reason ?? 'Not available', 'bad'); this.refreshHud(true); return; }
+        this.pending = { socket: s.id, x: s.x, z: s.z, rot: s.rot };
+        this.view.setGhost(this.placing, this.pending, true); this.sfx.play('click');
+        this.toast('Turn it: tap where it should point, or use the arrows · then Place', 'info');
+        this.refreshHud(true); return;
+      }
       if (p.type === 'socket') {
         const r = g.place(this.placing, p.id);
         if (r.ok) { this.sfx.play('place'); this.placing = null; this.view.showSockets = null; }
@@ -480,6 +503,7 @@ export class Match {
     const g = this.game; const a = this.el.actions;
     if (this.side === 'defence') {
       a.innerHTML = `<div class="incoming" data-inc>${this.incomingHtml()}</div>
+        ${this.pending ? `<div class="btnrow rotrow"><button data-a="rotl" aria-label="Turn left">⟲</button><span class="rotdeg">${Math.round(((this.pending.rot % 360) + 360) % 360)}°</span><button data-a="rotr" aria-label="Turn right">⟳</button><button class="primary" data-a="putdown">Place</button></div>` : ''}
         <div class="btnrow">${this.placing ? '<button data-a="cancel">Cancel placement</button>' : ''}${this.gasAim ? '<button data-a="cancel">Cancel tear gas</button>' : ''}<button data-a="selall">Select all security</button>
         <button class="gas ${this.gasAim ? 'active' : ''}" data-a="gas" data-gas ${g.phase !== 'wave' ? 'disabled' : ''}>Tear gas · ${BALANCE.tearGas.cost}</button>
         <button class="primary" data-a="startwave" ${g.phase !== 'prep' ? 'disabled' : ''}>Start wave ${Math.min(g.wave, BALANCE.defence.waves)}</button></div>`;

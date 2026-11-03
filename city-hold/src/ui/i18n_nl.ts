@@ -43,6 +43,7 @@ const PHRASES: [string, string][] = [
   ['Loot a store', 'Winkel plunderen'], ['Extract the loot', 'Buit wegbrengen'], ['Extraction reward', 'Buitbeloning'],
   // actions and info
   ['Your crew is back:', 'Je crew is terug:'], ['rioters from the last mission joined the group', 'rioters van de vorige missie doen weer mee'],
+  ['Turn it: tap where it should point, or use the arrows · then Place', 'Draai hem: tik waar hij naartoe moet wijzen of gebruik de pijlen · daarna Plaatsen'], ['Place', 'Plaatsen'],
   ['Select all security', 'Alle beveiliging selecteren'], ['Cancel tear gas', 'Traangas annuleren'], ['Tear gas: tap where it should land', 'Traangas: tik waar het moet landen'],
   ['Tear gas only during a wave', 'Traangas alleen tijdens een golf'], ['Needs an officer to throw it', 'Er is een agent nodig om te gooien'], ['Tear gas ready in', 'Traangas klaar over'],
   ['No officer within', 'Geen agent binnen'], ['Camera alarm: guards responding', 'Cameralarm: beveiligers komen eraan'], ['Camera alarm', 'Cameralarm'], ['Baton strike', 'Wapenstokslag'], ['Tear gas', 'Traangas'], ['Select approaching', 'Naderende selecteren'], ['Cancel placement', 'Plaatsen annuleren'],

@@ -51,11 +51,15 @@ export function staticObstacles(map: MapDef): StaticObstacleSet {
   return { rects, circles };
 }
 
-export function barrierRect(x: number, z: number, size: 'small' | 'large', rot: 0 | 90): Rect {
+/** footprint of a barrier turned rot degrees (0 = along x, 90 = along z, any angle in between) */
+export function barrierRect(x: number, z: number, size: 'small' | 'large', rot: number): Rect {
   const len = size === 'small' ? 2.6 : 4.6;
   const th = size === 'small' ? 0.5 : 0.9;
-  const hx = (rot === 0 ? len : th) / 2, hz = (rot === 0 ? th : len) / 2;
-  return { x0: x - hx, z0: z - hz, x1: x + hx, z1: z + hz };
+  const a = (rot * Math.PI) / 180; const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
+  const hx = (len * c + th * s) / 2, hz = (len * s + th * c) / 2;
+  const r: Rect = { x0: x - hx, z0: z - hz, x1: x + hx, z1: z + hz };
+  if (rot % 90 !== 0) r.obb = { cx: x, cz: z, hl: len / 2, ht: th / 2, a: -a }; // three.js rotation.y turns +x towards -z
+  return r;
 }
 
 class Heap {
@@ -113,7 +117,9 @@ export class NavGrid {
       const grow = (p: Rect): Rect => (p.x1 - p.x0 > p.z1 - p.z0 ? { x0: p.x0 - AGENT_R - 0.05, z0: p.z0, x1: p.x1 + AGENT_R + 0.05, z1: p.z1 } : { x0: p.x0, z0: p.z0 - AGENT_R - 0.05, x1: p.x1, z1: p.z1 + AGENT_R + 0.05 });
       const inPassage = passages.some((p) => rectContains(grow(p), x, z));
       for (const r of obs.rects) {
-        if (x > r.x0 - AGENT_R && x < r.x1 + AGENT_R && z > r.z0 - AGENT_R && z < r.z1 + AGENT_R) {
+        let inside = x > r.x0 - AGENT_R && x < r.x1 + AGENT_R && z > r.z0 - AGENT_R && z < r.z1 + AGENT_R;
+      if (inside && r.obb) { const o = r.obb; const dx = x - o.cx, dz = z - o.cz; const u = dx * Math.cos(o.a) + dz * Math.sin(o.a), v = -dx * Math.sin(o.a) + dz * Math.cos(o.a); inside = Math.abs(u) < o.hl + AGENT_R && Math.abs(v) < o.ht + AGENT_R; }
+      if (inside) {
           // building rects can be cut by passages
           if (inPassage && map.buildings.some((bd) => bd.rect === r)) continue;
           bl = true; break;

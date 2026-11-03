@@ -60,3 +60,16 @@ test('looting campaign: the rioters who got away join the next mission for free'
   for (let i = 0; i < 30 * 200 && !next.over; i++) next.step(1 / 30);
   expect(next.crewOut.length).toBeGreaterThan(0);
 });
+
+test('a barrier can be turned to any angle before it is put down; it blocks along that line', () => {
+  const g = new Game(PARIS, 'defence', { seed: 3 });
+  const s = PARIS.sockets.find((so) => so.size === 'small' && g.canPlace('barrier', so.id, 45).ok)!;
+  expect(g.place('barrier', s.id, 45).ok).toBe(true);
+  const b = g.barriers[0];
+  expect(b.rot).toBe(45);
+  // three.js rotation.y = 45deg points the long side towards (+x, -z): a point along that diagonal is blocked,
+  // a point the same distance along the other diagonal is free
+  const d = 1.0 / Math.SQRT2;
+  expect(g.nav.open(s.x + d, s.z - d)).toBe(false);
+  expect(g.nav.open(s.x + d * 2.2, s.z + d * 2.2)).toBe(true); // beyond the half-thickness + agent radius + one cell
+});

@@ -509,6 +509,24 @@ export class MatchView {
     });
   }
 
+  // ---- placement preview: the barrier as it will stand, before it is put down
+  private ghost: THREE.Group | null = null; private ghostKind = '';
+  setGhost(kind: string | null, at: { x: number; z: number; rot: number } | null, ok: boolean) {
+    if (!kind || !at) { if (this.ghost) this.ghost.visible = false; return; }
+    if (!this.ghost || this.ghostKind !== kind) {
+      if (this.ghost) this.scene.remove(this.ghost);
+      const big = kind === 'concrete';
+      this.ghost = buildBarrierModel(big ? 'large' : 'small', big);
+      this.ghost.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.material = new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.55, depthWrite: false }); } });
+      const ring = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.75, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.6, depthWrite: false })); ring.position.y = 0.06; ring.name = 'ring'; this.ghost.add(ring);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.5, 3).rotateZ(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false })); arrow.position.set(1.95, 0.1, 0); arrow.name = 'arrow'; this.ghost.add(arrow); // the drag handle direction
+      this.ghostKind = kind; this.scene.add(this.ghost);
+    }
+    this.ghost.visible = true; this.ghost.position.set(at.x, 0, at.z); this.ghost.rotation.y = (at.rot * Math.PI) / 180;
+    const col = ok ? 0x36e0ff : 0xff4a3a;
+    this.ghost.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.name !== 'arrow') (m.material as THREE.MeshBasicMaterial).color.setHex(col); });
+  }
+
   private backdrop: { h: CharacterVisual; x: number; z: number; tx: number; tz: number; wait: number; lane: number; speed: number; flee: boolean }[] = [];
   private stepBackdrop(g: Game, dt: number) {
     const lanes = this.map.backdropCrowd; if (!lanes?.length) return;
@@ -733,7 +751,7 @@ export class MatchView {
     for (const b of g.barriers) {
       bseen.add(b.id);
       let m = this.barriers.get(b.id);
-      if (!m) { const slot = b.kind === 'barrier' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.kind === 'barrier' ? 'small' : 'large', b.size === 'large'); m.position.set(b.x, 0, b.z); m.rotation.y = b.rot === 90 ? Math.PI / 2 : 0; this.scene.add(m); this.barriers.set(b.id, m); }
+      if (!m) { const slot = b.kind === 'barrier' ? 'prop.barrier' : 'prop.concrete'; m = ((slotStatus(slot) === 'final' ? cloneModel(slot) : null) as THREE.Group | null) ?? buildBarrierModel(b.kind === 'barrier' ? 'small' : 'large', b.size === 'large'); m.position.set(b.x, 0, b.z); m.rotation.y = (b.rot * Math.PI) / 180; this.scene.add(m); this.barriers.set(b.id, m); }
       if (b.broken) { m.rotation.z = Math.min(1.45, b.brokenT * 4) * (b.size === 'small' ? 1 : 0.15); m.position.y = b.size === 'small' ? 0.05 : 0; if (b.size === 'large') m.children.forEach((c, i) => { c.rotation.y = i * 0.4; c.position.z = (i % 2) * 0.8; }); }
       else if (b.hp < b.maxHp) this.bar('b' + b.id, b.x, 1.6, b.z, b.hp / b.maxHp, '#e0e0e0');
     }

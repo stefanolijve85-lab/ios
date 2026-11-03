@@ -1,7 +1,7 @@
 // Map definitions are the single geometric authority for navigation, placement and rendering.
 // Coordinates: metres, x to the right (east), z towards the camera (south). All rects are axis aligned.
 
-export interface Rect { x0: number; z0: number; x1: number; z1: number }
+export interface Rect { x0: number; z0: number; x1: number; z1: number; /** oriented barrier: centre, half sizes along/across, angle (rad, 0 = along x) */ obb?: { cx: number; cz: number; hl: number; ht: number; a: number } }
 export interface Circle { x: number; z: number; r: number }
 export interface Vec2 { x: number; z: number }
 

@@ -88,7 +88,7 @@ export interface Unit {
   escortSolo: boolean;
 }
 
-export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; rot: 0 | 90; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
+export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; /** degrees: 0 along x, 90 along z, any angle */ rot: number; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
 export interface CameraMast { id: number; socketId: string; x: number; z: number }
 /** tear gas canister: flies from the thrower for `flight` s, then a cloud grows to `r` and thins out at the end of its life */
 export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number }
@@ -392,7 +392,7 @@ export class Game {
     return ok;
   }
 
-  canPlace(kind: 'barrier' | 'concrete' | 'camera', socketId: string): ActionResult {
+  canPlace(kind: 'barrier' | 'concrete' | 'camera', socketId: string, rot?: number): ActionResult {
     const s = this.socket(socketId);
     if (!s) return { ok: false, reason: 'Invalid location' };
     if (this.socketUsed(socketId)) return { ok: false, reason: 'Socket occupied' };
@@ -401,7 +401,7 @@ export class Game {
     const cost = BALANCE.defence.costs[kind];
     if (this.budget < cost) return { ok: false, reason: 'Insufficient budget' };
     if (kind !== 'camera') {
-      const r = barrierRect(s.x, s.z, kind === 'concrete' ? 'large' : s.size, s.rot);
+      const r = barrierRect(s.x, s.z, kind === 'concrete' ? 'large' : s.size, rot ?? s.rot);
       // units standing on the spot block placement
       if (this.units.some((u) => u.x > r.x0 - 0.4 && u.x < r.x1 + 0.4 && u.z > r.z0 - 0.4 && u.z < r.z1 + 0.4)) return { ok: false, reason: 'Units are standing there' };
       if (!this.routesOpenWith(r)) return { ok: false, reason: 'Would block every route' };
@@ -409,25 +409,25 @@ export class Game {
     return { ok: true };
   }
 
-  place(kind: 'barrier' | 'concrete' | 'camera', socketId: string): ActionResult {
+  place(kind: 'barrier' | 'concrete' | 'camera', socketId: string, rot?: number): ActionResult {
     if (this.over) return { ok: false };
-    const chk = this.canPlace(kind, socketId);
+    const chk = this.canPlace(kind, socketId, rot);
     if (!chk.ok) return this.deny(chk.reason!);
     const s = this.socket(socketId)!;
     const cost = this.side === 'defence' ? BALANCE.defence.costs[kind] : 0;
     this.budget -= cost;
-    this.addStructure(kind, s);
+    this.addStructure(kind, s, rot);
     this.emit({ type: 'purchase', text: `${kind === 'camera' ? 'Camera mast' : kind === 'concrete' ? 'Concrete barrier' : 'Barrier'} placed (-${cost})`, x: s.x, z: s.z, amount: cost });
     return { ok: true };
   }
 
-  private addStructure(kind: 'barrier' | 'concrete' | 'camera', s: SocketDef) {
+  private addStructure(kind: 'barrier' | 'concrete' | 'camera', s: SocketDef, rot?: number) {
     if (kind === 'camera') { this.cameras.push({ id: this.nextId++, socketId: s.id, x: s.x, z: s.z }); return; }
     const size = kind === 'concrete' ? 'large' : s.size;
     const hp = kind === 'concrete' ? BALANCE.barrier.concreteHp : BALANCE.barrier.hp;
     // remove a previously broken barrier from this socket
     this.barriers = this.barriers.filter((b) => b.socketId !== s.id);
-    const b: Barrier = { id: this.nextId++, kind, socketId: s.id, x: s.x, z: s.z, size, rot: s.rot, hp, maxHp: hp, rect: barrierRect(s.x, s.z, size, s.rot), broken: false, brokenT: 0 };
+    const b: Barrier = { id: this.nextId++, kind, socketId: s.id, x: s.x, z: s.z, size, rot: rot ?? s.rot, hp, maxHp: hp, rect: barrierRect(s.x, s.z, size, rot ?? s.rot), broken: false, brokenT: 0 };
     this.barriers.push(b);
     this.nav.setBarrier(b.id, b.rect, true);
     for (const u of this.units) u.repathT = 99;
