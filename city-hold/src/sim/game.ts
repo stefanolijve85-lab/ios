@@ -71,6 +71,7 @@ export interface Unit {
   immuneT: number;
   /** shield officer: time of the last baton strike (view plays the swing); rioter: knocked off balance until this time */
   strikeAt: number; staggerUntil: number;
+  /** flinch away from a flashbang: velocity (m/s) until kickUntil */ kickX?: number; kickZ?: number; kickUntil?: number;
   /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
@@ -1117,9 +1118,16 @@ export class Game {
       if ((g.against === 'att') !== (u.side === 'att')) continue;
       const d = Math.hypot(u.x - g.x, u.z - g.z); if (d > F.radius) continue;
       u.staggerUntil = Math.max(u.staggerUntil, this.time + F.stun * (1 - (d / F.radius) * 0.5)); u.moving = false;
+      if (u.side === 'att' && u.heldBy < 0 && u.restrainBy < 0 && !['held', 'restrained', 'escorted'].includes(u.state)) {
+        // the blast makes him flinch: he staggers a step or two away from it, turned away with his arms over his face
+        const dx = u.x - g.x, dz = u.z - g.z, dl = Math.hypot(dx, dz) || 1, k = 2.4 * (1 - (d / F.radius) * 0.6);
+        u.kickX = (dx / dl) * k; u.kickZ = (dz / dl) * k; u.kickUntil = this.time + 0.55; u.facing = Math.atan2(dx, dz);
+        if (u.state === 'breach') { u.state = 'approach'; u.path = null; u.repathT = 99; } // knocked off the shutter: walks back to it afterwards
+      }
       if (u.side === 'att') {
         u.detectedUntil = Math.max(u.detectedUntil, this.time + 6);
-        if (u.carrying === 0 && (u.state === 'approach' || u.state === 'barrier') && this.rng.next() < F.panicChance) { u.state = 'flee'; u.targetStore = -1; this.setAttGoal(u); }
+        // empty-handed rioters may give up: also the ones that were wrecking a shutter right next to it
+        if (u.carrying === 0 && (u.state === 'approach' || u.state === 'barrier' || u.state === 'breach') && this.rng.next() < F.panicChance) { u.state = 'flee'; u.targetStore = -1; this.setAttGoal(u); }
       }
     }
   }
@@ -1155,7 +1163,11 @@ export class Game {
 
   private stepAttacker(u: Unit, dt: number) {
     u.stateT += dt;
-    if (u.staggerUntil > this.time && ['approach', 'extract', 'breach', 'barrier', 'collect', 'flee'].includes(u.state)) { u.moving = false; return; } // reeling from a baton strike or a flashbang
+    if (u.staggerUntil > this.time && ['approach', 'extract', 'breach', 'barrier', 'collect', 'flee'].includes(u.state)) { // reeling from a baton strike or a flashbang
+      u.moving = false;
+      if ((u.kickUntil ?? 0) > this.time) { const nx = u.x + (u.kickX ?? 0) * dt, nz = u.z + (u.kickZ ?? 0) * dt; if (this.nav.walkable(nx, nz)) { u.x = nx; u.z = nz; } }
+      return;
+    }
     const sp = this.speedOf(u);
     switch (u.state) {
       case 'approach': {

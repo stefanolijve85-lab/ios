@@ -795,7 +795,7 @@ export class MatchView {
       let firebomb = true;
       if (u.side === 'att' && g.time - u.throwBackAt < BALANCE.throw.duration) { pose = 'throw'; action = (g.time - u.throwBackAt) / BALANCE.throw.duration; firebomb = false; } // the full throw: wind-up, release, follow-through
       else if (u.side === 'att' && g.time - u.pickAt < 0.6) { pose = 'pickup'; action = (g.time - u.pickAt) / 0.6; firebomb = false; } // bends down and grabs the canister
-      else if (u.staggerUntil > g.time && pose !== 'strike' && pose !== 'throw' && !g.gas.some((c) => c.pick?.by === u.id)) pose = u.side === 'att' ? 'held' : 'brace'; // blinded and reeling
+      else if (u.staggerUntil > g.time && pose !== 'strike' && pose !== 'throw' && !g.gas.some((c) => c.pick?.by === u.id)) pose = u.side === 'att' ? (mv.moving ? 'flee' : 'held') : 'brace'; // blinded and reeling: stumbles away with the arms over the face
       h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action, firebomb);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
