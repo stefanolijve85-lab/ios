@@ -1,5 +1,5 @@
 // Local progress and settings (localStorage). Explicit reset is available from the menu.
-export interface Settings { volume: number; /** background music volume */ music?: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
+export interface Settings { /** the tablet default has been applied */ qualityV2?: boolean; volume: number; /** background music volume */ music?: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
   /** HUD size multiplier (phones benefit from larger) */ uiScale: number; /** short vibrations on key events (phones that support it) */ vibration: boolean;
   /** chosen figures per role (model slots); appearance only */ figures?: Record<string, string[]>;
   /** cities whose briefing has been shown once */ briefed?: string[] }
@@ -22,9 +22,14 @@ const KEY = 'cityhold.progress.v1';
 function coarsePointer(): boolean {
   try { return typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches; } catch { return false; }
 }
+/** mobile quality by default only on phones: a tablet (iPad) has the GPU and the screen for full quality */
+function phone(): boolean {
+  if (!coarsePointer()) return false;
+  try { return Math.min(screen.width, screen.height) < 600; } catch { return true; }
+}
 
 export function defaultProgress(): Progress {
-  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: coarsePointer(), showHints: true, language: 'nl', difficulty: 'normal', uiScale: 1, vibration: true } };
+  return { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0.6, reducedFx: phone(), showHints: true, language: 'nl', difficulty: 'normal', uiScale: 1, vibration: true } };
 }
 
 export interface StorageLike { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }
@@ -37,7 +42,10 @@ export function loadProgress(s: StorageLike | null = store()): Progress {
     const raw = s.getItem(KEY); if (!raw) return d;
     const p = JSON.parse(raw) as Partial<Progress>;
     if (p.version !== 1) return d;
-    return { ...d, ...p, settings: { ...d.settings, ...(p.settings ?? {}) }, unlocked: p.unlocked?.length ? p.unlocked : d.unlocked };
+    const out = { ...d, ...p, settings: { ...d.settings, ...(p.settings ?? {}) }, unlocked: p.unlocked?.length ? p.unlocked : d.unlocked };
+    // once: tablets that got mobile quality from the old default switch to full quality (a later manual choice stays)
+    if (!out.settings.qualityV2) { if (!phone()) out.settings.reducedFx = false; out.settings.qualityV2 = true; }
+    return out;
   } catch { return d; }
 }
 
