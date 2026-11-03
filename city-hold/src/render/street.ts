@@ -29,7 +29,7 @@ const LAMP_GEO = {
 };
 export function buildLamp(parent: THREE.Object3D): THREE.Group {
   const g = new THREE.Group(); parent.add(g);
-  const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(5) }); glow.name = 'glow';
+  const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd08a).multiplyScalar(3) }); glow.name = 'glow';
   m(LAMP_GEO.base, iron(), g);
   m(LAMP_GEO.pole, iron(), g, 0, 1.05 + 1.45);
   for (const y of [1.4, 3.85]) m(LAMP_GEO.ring, iron(), g, 0, y);

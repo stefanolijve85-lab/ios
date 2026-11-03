@@ -92,6 +92,7 @@ export class MatchView {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   private pitch = PITCH_DEFAULT;
+  private lastDist = 0;
   readonly world: WorldHandles;
   readonly fx: Effects;
   target = new THREE.Vector2();
@@ -835,7 +836,15 @@ export class MatchView {
     }
     this.floaters = this.floaters.filter((f) => { if (f.t > 1.8) { f.el.remove(); return false; } return true; });
     for (const [k, el] of this.bars) { if (el.dataset.seen !== '1') { el.remove(); this.bars.delete(k); } else el.dataset.seen = '0'; }
-    if (this.post) this.post.render(this.time); else this.renderer.render(this.scene, this.camera);
+    if (this.post) {
+      // zoomed in, lamp heads and wet-street highlights fill many pixels and the bloom blew them up into white blotches:
+      // the glow eases off as the camera comes closer, and stays calm while the zoom is still moving
+      const near = THREE.MathUtils.clamp((this.dist - this.minDist) / 30, 0, 1);
+      const zooming = Math.abs(this.dist - this.lastDist) > 0.05; this.lastDist = this.dist;
+      const wantS = (0.3 + 0.45 * near) * (zooming ? 0.6 : 1), wantT = 0.82 + (1 - near) * 0.12 + (zooming ? 0.05 : 0);
+      const b = this.post.bloom; b.strength += (wantS - b.strength) * 0.25; b.threshold += (wantT - b.threshold) * 0.25;
+      this.post.render(this.time);
+    } else this.renderer.render(this.scene, this.camera);
   }
 
   private fadeOccluders(g: Game) {

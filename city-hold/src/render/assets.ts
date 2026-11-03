@@ -74,7 +74,7 @@ function restoreGlow(root: THREE.Object3D) {
   root.traverse((o) => {
     const m = o as THREE.Mesh; if (!m.isMesh) return;
     const mats = Array.isArray(m.material) ? m.material : [m.material];
-    for (const mm of mats) if (mm.name === 'glow' && (mm as THREE.MeshBasicMaterial).color) (mm as THREE.MeshBasicMaterial).color.multiplyScalar(5);
+    for (const mm of mats) if (mm.name === 'glow' && (mm as THREE.MeshBasicMaterial).color) (mm as THREE.MeshBasicMaterial).color.multiplyScalar(3);
   });
 }
 
