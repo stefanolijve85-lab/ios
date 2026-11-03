@@ -32,7 +32,7 @@ export interface ViewInput {
   onTap(p: Pick, sx: number, sy: number): void;
 }
 
-const PITCH = THREE.MathUtils.degToRad(40); // oblique view of images 02/03: shopfronts readable, fountain in the middle
+const PITCH_DEFAULT = THREE.MathUtils.degToRad(40); // oblique view of images 02/03: shopfronts readable, fountain in the middle
 
 /** a steel crowd barrier lying flat on the ground: frame plus vertical bars, merged into one geometry */
 function fallenBarrierGeometry(): THREE.BufferGeometry {
@@ -48,6 +48,7 @@ export class MatchView {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
+  private pitch = PITCH_DEFAULT;
   readonly world: WorldHandles;
   readonly fx: Effects;
   target = new THREE.Vector2();
@@ -100,7 +101,8 @@ export class MatchView {
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
-    this.camera = new THREE.PerspectiveCamera(36, 1, 0.5, 400);
+    this.pitch = THREE.MathUtils.degToRad(map.camera.pitch ?? 40);
+    this.camera = new THREE.PerspectiveCamera(map.camera.fov ?? 36, 1, 0.5, 400);
     const pm = new THREE.PMREMGenerator(this.renderer);
     const env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene.environment = env; this.scene.environmentIntensity = 0.25;
@@ -152,7 +154,7 @@ export class MatchView {
     });
     this.bindInput();
     this.resize();
-    if (container.clientWidth < container.clientHeight) this.dist = Math.min(this.maxDist, map.camera.dist * 1.7);
+    if (container.clientWidth < container.clientHeight) { this.dist = Math.min(this.maxDist, map.camera.dist * (map.camera.portraitDist ?? 1.7)); if (map.camera.portraitZ !== undefined) this.target.y = map.camera.portraitZ; }
     window.addEventListener('resize', this.resize);
   }
 
@@ -186,6 +188,7 @@ export class MatchView {
   private updateCamera() {
     this.clampCamera();
     const t = this.target;
+    const PITCH = this.pitch;
     this.camera.position.set(t.x, Math.sin(PITCH) * this.dist, t.y + Math.cos(PITCH) * this.dist);
     this.camera.lookAt(t.x, 0, t.y);
   }

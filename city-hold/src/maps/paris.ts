@@ -80,8 +80,8 @@ export const PARIS: MapDef = {
     { rect: { x0: -46, z0: -76, x1: -25, z1: -46 }, height: 19, style: 'haussmann', backdrop: true },
     { rect: { x0: -17, z0: -76, x1: 17, z1: -46 }, height: 20, style: 'haussmann', backdrop: true },
     { rect: { x0: 25, z0: -76, x1: 46, z1: -46 }, height: 19, style: 'haussmann', backdrop: true },
-    { rect: { x0: -44, z0: 15, x1: -5, z1: 34 }, height: 7, style: 'haussmann', fadeable: true },
-    { rect: { x0: 5, z0: 15, x1: 44, z1: 34 }, height: 7, style: 'haussmann', fadeable: true },
+    { rect: { x0: -44, z0: 15, x1: -11, z1: 34 }, height: 7, style: 'haussmann', fadeable: true }, // corner blocks: the pedestrian street between them is wide, as in images 01/05
+    { rect: { x0: 11, z0: 15, x1: 44, z1: 34 }, height: 7, style: 'haussmann', fadeable: true },
   ],
   walls: [],
   water: [],
@@ -155,7 +155,7 @@ export const PARIS: MapDef = {
       { x: -21, z: -18 }, { x: -20, z: -24 }, { x: -21.5, z: -27 }, { x: 21, z: -17 }, { x: 20.5, z: -21 }, { x: 21.5, z: -27 }, { x: -12, z: 10 }, { x: 12, z: 10 },
     ],
   },
-  camera: { x: 0, z: -4, dist: 56 },
+  camera: { x: 0, z: -7, dist: 50, pitch: 42, fov: 44, portraitDist: 1.45, portraitZ: -5 }, // framed like images 01/05: the full main building with its roof, fountain in the middle
   playable: true,
   notes: 'Tutorial district. Four attacker approaches; the east service road is the defenders\' staging lane.',
 };

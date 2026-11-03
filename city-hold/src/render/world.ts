@@ -455,14 +455,20 @@ function fountainWaterFor(model: THREE.Object3D, parent: THREE.Group, outerR: nu
   const bowlR = upper.reduce((a, [r]) => Math.max(a, r), 0.6); const bowlY = upper.filter(([r]) => r > bowlR * 0.9).reduce((a, [, y]) => Math.max(a, y), top * 0.7);
   const animated: Scroll[] = [];
   const rip = rippleTexture().clone(); rip.repeat.set(3, 3); rip.needsUpdate = true; animated.push({ tex: rip, vx: 0.06, vy: 0.045 });
-  const water = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.78, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: rip, color: 0x6f8f8a, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55, depthWrite: false, emissive: 0x2e4440, emissiveIntensity: 0.5 }));
+  const water = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.86, 56).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: rip, color: 0x8a9a8c, roughness: 0.04, metalness: 0.5, transparent: true, opacity: 0.78, depthWrite: false, emissive: 0x6a5a34, emissiveIntensity: 0.75, envMapIntensity: 2.2 })); // lit golden from below
   water.position.y = waterY; parent.add(water);
-  const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,220,150,0.26)', 'rgba(255,200,120,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.3; const d = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20).rotateX(-Math.PI / 2), glow); d.position.set(Math.cos(a) * outerR * 0.58, waterY + 0.01, Math.sin(a) * outerR * 0.58); parent.add(d); }
+  const glow = new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,210,130,0.6)', 'rgba(255,190,110,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  // a ring of warm underwater lamps along the basin wall and a soft glow over the whole pool
+  for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2 + 0.3; const d = new THREE.Mesh(new THREE.CircleGeometry(0.95, 20).rotateX(-Math.PI / 2), glow); d.position.set(Math.cos(a) * outerR * 0.7, waterY + 0.012, Math.sin(a) * outerR * 0.7); parent.add(d); }
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(outerR * 0.86, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,200,120,0.22)', 'rgba(255,190,110,0.05)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  pool.position.y = waterY + 0.008; parent.add(pool);
+  // the glow spills onto the setts around the basin
+  const spill = new THREE.Mesh(new THREE.RingGeometry(outerR * 0.95, outerR + 3.2, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0.035, depthWrite: false, blending: THREE.AdditiveBlending }));
+  spill.position.y = 0.03; parent.add(spill);
   void reducedFx; // the falling sheet is one cheap mesh: shown on phones too, so the water visibly moves everywhere
   if (bowlY > waterY + 0.3) {
     const ft = fallingWaterTexture().clone(); ft.repeat.set(14, 1); ft.needsUpdate = true; animated.push({ tex: ft, vx: 0, vy: 1.4 });
-    const h = bowlY - waterY; const sheet = new THREE.Mesh(new THREE.CylinderGeometry(bowlR + 0.04, bowlR + 0.18, h, 40, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xf4fbff, opacity: 0.45 }));
+    const h = bowlY - waterY; const sheet = new THREE.Mesh(new THREE.CylinderGeometry(bowlR + 0.04, bowlR + 0.18, h, 40, 1, true), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xfff1d8, opacity: 0.6 }));
     sheet.position.y = waterY + h / 2; parent.add(sheet);
     // splash ring where the sheet meets the basin
     const ring = rippleTexture().clone(); ring.repeat.set(6, 1); ring.needsUpdate = true; animated.push({ tex: ring, vx: 0.25, vy: 0 });
@@ -595,16 +601,16 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
       // a final model (e.g. image-to-3D from concept 03): scaled to the basin inside the planter ring, standing on the ground
       const fg = new THREE.Group(); fg.position.set(f.x, 0, f.z); group.add(fg);
       const bb = new THREE.Box3().setFromObject(glbFountain); const size = bb.getSize(new THREE.Vector3());
-      const k = (2 * (f.r - 0.9)) / Math.max(size.x, size.z, 1e-3); glbFountain.scale.setScalar(k);
-      const c = bb.getCenter(new THREE.Vector3()); glbFountain.position.set(-c.x * k, -bb.min.y * k, -c.z * k);
+      const k = (2 * (f.r - 0.9)) / Math.max(size.x, size.z, 1e-3); glbFountain.scale.set(k, k * 0.82, k); // a touch lower and broader, as in images 01/05
+      const c = bb.getCenter(new THREE.Vector3()); glbFountain.position.set(-c.x * k, -bb.min.y * k * 0.82, -c.z * k);
       // image-to-3D models carry the concept's own night lighting in their colour texture and often no normals:
       // smooth the normals once and let the texture glow a little so it reads like the painting under our lights
       glbFountain.traverse((o) => {
         const m = o as THREE.Mesh; if (!m.isMesh) return;
         if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals();
         const src = m.material as THREE.MeshStandardMaterial; if (!src.isMeshStandardMaterial) return;
-        const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.7; mm.metalness = 0;
-        if (mm.map) { mm.emissive = new THREE.Color(0xffe2b8); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.28; } // lit warmly by the lamps around it
+        const mm = src.clone(); mm.flatShading = false; mm.roughness = 0.75; mm.metalness = 0; mm.color.multiply(new THREE.Color(0xc9b99e)); // weathered warm limestone, not white
+        if (mm.map) { mm.emissive = new THREE.Color(0xffc98a); mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.16; } // lit warmly from the water and the lamps
         mm.needsUpdate = true; m.material = mm;
       });
       fg.add(glbFountain); fh = { group: fg, animated: fountainWaterFor(glbFountain, fg, f.r - 0.9, reducedFx), spray: null };

@@ -112,7 +112,7 @@ export interface MapDef {
   /** marked loading lane (Sao Paulo) */
   loadingLane?: Rect;
   supply?: SupplyDef;
-  camera: { x: number; z: number; dist: number };
+  camera: { x: number; z: number; dist: number; /** degrees above the horizon (default 40) */ pitch?: number; fov?: number; /** portrait phones: distance factor and centre */ portraitDist?: number; portraitZ?: number };
   /** shown on the selector; must be true only when the district has been validated */
   playable: boolean;
   notes: string;
