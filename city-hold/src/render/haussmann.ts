@@ -247,10 +247,10 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   // street side, a zinc ridge, and stone chimney stacks with rows of terracotta pots on the party walls.
   if (map.id === 'paris' && b.fadeable) {
     const sl2 = pbr('slate', 3, 2);
-    const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x8d949e, roughness: 0.45, metalness: 0.25, envMapIntensity: 1.3, emissive: 0x262a32, emissiveIntensity: 1 }); // grey slate as in image 01, not a black-blue band
-    const zincM = new THREE.MeshStandardMaterial({ color: 0xb4bcc6, roughness: 0.32, metalness: 0.8, envMapIntensity: 1.3 });
-    const yardM = new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 0.6, metalness: 0.3 });
-    const stoneM = new THREE.MeshStandardMaterial({ map: T.stone, color: 0xcbbca0, roughness: 0.85 });
+    const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x7d7670, roughness: 0.7, metalness: 0.05, envMapIntensity: 0.35, emissive: 0x221f1d, emissiveIntensity: 1 }); // dark neutral slate as in image 01 (the sky reflection made it read as a blue band)
+    const zincM = new THREE.MeshStandardMaterial({ color: 0x6e6a66, roughness: 0.6, metalness: 0.2, envMapIntensity: 0.25 });
+    const yardM = new THREE.MeshStandardMaterial({ color: 0x23201e, roughness: 0.85, metalness: 0, envMapIntensity: 0.2 });
+    const stoneM = new THREE.MeshStandardMaterial({ map: T.stone, color: 0xb9a990, roughness: 0.9, emissive: 0x2a2018, emissiveIntensity: 1 });
     const potM = new THREE.MeshStandardMaterial({ color: 0xa5532e, roughness: 0.75 });
     // unit mansard section (depth 1 along z, extruded 1 along x): steep lower slope, shallow top deck
     const sec = new THREE.Shape([new THREE.Vector2(-0.5, 0), new THREE.Vector2(0.5, 0), new THREE.Vector2(0.34, 0.72), new THREE.Vector2(0, 1), new THREE.Vector2(-0.34, 0.72)]);
@@ -285,12 +285,17 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
       walls.pop();
       for (const wl of walls) {
         if (rnd() < 0.25) continue;
-        const sz = D * (0.35 + rnd() * 0.3); const off = (rnd() - 0.5) * D * 0.3; const top = wl.top + 0.9 + rnd() * 0.5;
-        stacks.add(M(wl.x, (top + H) / 2, row.zc + off, 0.75, top - H, sz));
-        stacks.add(M(wl.x, top + 0.05, row.zc + off, 0.9, 0.12, sz + 0.15));
+        const sz = 1.1 + rnd() * 1.1; const off = (rnd() - 0.5) * D * 0.45; const top = wl.top + 0.8 + rnd() * 0.6;
+        stacks.add(M(wl.x, (top + H) / 2, row.zc + off, 1.0, top - H, sz));
+        stacks.add(M(wl.x, top + 0.05, row.zc + off, 1.18, 0.16, sz + 0.18));
         const np = Math.max(2, Math.floor(sz / 0.45));
-        for (let k = 0; k < np; k++) potsB.add(M(wl.x, top + 0.3, row.zc + off - sz / 2 + 0.25 + k * ((sz - 0.5) / Math.max(1, np - 1)), 1, 0.45, 1));
+        for (let k = 0; k < np; k++) potsB.add(M(wl.x + (k % 2 ? 0.18 : -0.18) * (np > 3 ? 1 : 0), top + 0.3, row.zc + off - sz / 2 + 0.25 + k * ((sz - 0.5) / Math.max(1, np - 1)), 1, 0.4 + (k % 3) * 0.06, 1));
       }
+    }
+    for (let k = 0; k < Math.floor((r.x1 - r.x0) / 6); k++) {
+      const x = r.x0 + 2 + rnd() * (r.x1 - r.x0 - 4); const row = rows[k % 2]; const zz = row.zc + (rnd() - 0.5) * D * 0.4; const top = H + 3.6 + rnd() * 0.6; const sz = 0.9 + rnd() * 0.6;
+      stacks.add(M(x, (top + H) / 2, zz, sz, top - H, 0.8)); stacks.add(M(x, top + 0.05, zz, sz + 0.16, 0.14, 0.95));
+      for (let q = 0; q < 2; q++) potsB.add(M(x - sz / 4 + q * sz / 2, top + 0.28, zz, 1, 0.42, 1));
     }
     for (const bt of [houses, caps, yard, dBox, dCap, dLit, dDk, stacks, potsB]) { const m = bt.build(); if (m) { g.add(m); meshes.push(m); } }
     return { meshes, lights: [] };
