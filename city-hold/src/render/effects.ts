@@ -8,7 +8,7 @@ import { mat } from './humans';
 // (64 mobile / 160 desktop, from the presets). Effects never change gameplay: radius, damage and timing stay in
 // the simulation. depthTest on, depthWrite off; fire is additive, smoke/explosion/tear gas use normal alpha.
 
-export type FxKind = 'fire' | 'smoke' | 'sparks' | 'explosion' | 'tear_gas' | 'spray' | 'flare';
+export type FxKind = 'fire' | 'smoke' | 'sparks' | 'explosion' | 'tear_gas' | 'spray' | 'flare' | 'plume';
 
 interface Preset { life: [number, number]; scale: [number, number]; opacity: number; rise: [number, number]; drift: number; rate: [number, number]; blend: 'add' | 'normal'; spin: number }
 // effect_presets.json starting values (rise in m/s, scale start/end in m, spawn per s mobile/desktop)
@@ -16,13 +16,15 @@ const PRESETS: Record<FxKind, Preset> = {
   // fire: normal alpha reads as flames on both light and dark ground; additive washed into round blobs (compared in #fxroom)
   fire: { life: [0.5, 1.1], scale: [0.8, 1.9], opacity: 0.85, rise: [0.4, 1.0], drift: 0.15, rate: [4, 8], blend: 'normal', spin: 0.15 },
   smoke: { life: [3, 5], scale: [0.8, 2.8], opacity: 0.3, rise: [0.3, 0.6], drift: 0.2, rate: [2, 4], blend: 'normal', spin: 0.25 },
+  // tall dark smoke column of a big blaze (images 05/07): rises fast, spreads wide and leans with the wind high above the roofs
+  plume: { life: [9, 13], scale: [2.4, 10], opacity: 0.68, rise: [0.9, 1.3], drift: 0.15, rate: [2, 3.5], blend: 'normal', spin: 0.12 },
   sparks: { life: [0.2, 0.6], scale: [0.2, 0.5], opacity: 0.8, rise: [0.5, 1.5], drift: 1.4, rate: [2, 4], blend: 'add', spin: 2 },
   explosion: { life: [0.6, 1.1], scale: [0.25, 2.0], opacity: 0.9, rise: [0.2, 0.5], drift: 0.2, rate: [1, 2], blend: 'normal', spin: 0.4 },
   tear_gas: { life: [4, 7], scale: [1.0, 3.8], opacity: 0.55, rise: [0.02, 0.1], drift: 0.25, rate: [3, 6], blend: 'normal', spin: 0.15 },
   spray: { life: [0.5, 0.8], scale: [0.25, 0.9], opacity: 0.55, rise: [0.1, 0.3], drift: 0.4, rate: [10, 16], blend: 'normal', spin: 0.5 },
   flare: { life: [0.3, 0.5], scale: [0.2, 0.4], opacity: 0.9, rise: [0.5, 1.0], drift: 1.6, rate: [8, 14], blend: 'add', spin: 1 },
 };
-export const PARTICLE_CAP = { mobile: 80, desktop: 200 };
+export const PARTICLE_CAP = { mobile: 90, desktop: 240 };
 
 interface P { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; s0: number; s1: number; rot: number; vr: number; op: number; off: number }
 
@@ -65,7 +67,7 @@ class Field {
           if (useAtlas > 0.5) { st = clamp(st, 0.006, 0.994); float c = mod(vf, 4.0), r = floor(vf / 4.0); st = vec2((c + st.x) / 4.0, (3.0 - r + st.y) / 4.0); }
           vec4 t = texture2D(map, st);
           float a = t.a * va; if (a < 0.004) discard;
-          ${add ? 'gl_FragColor = vec4(t.rgb * tint * a, a);' : 'gl_FragColor = vec4(t.rgb * tint, a);'}
+          ${add ? 'gl_FragColor = vec4(t.rgb * tint * a, a);' : kind === 'plume' ? 'gl_FragColor = vec4(mix(vec3(0.62, 0.52, 0.44), vec3(0.34, 0.33, 0.35), clamp(vf / 16.0 + va * 0.2, 0.0, 1.0)) * (0.55 + 0.45 * t.r), a);' : 'gl_FragColor = vec4(t.rgb * tint, a);'}
         }`,
       transparent: true, depthTest: true, depthWrite: false,
       blending: add ? THREE.AdditiveBlending : THREE.NormalBlending,
@@ -80,7 +82,7 @@ class Field {
   setScale(h: number) { (this.points.material as THREE.ShaderMaterial).uniforms.scale.value = h * 1.45; }
   update(dt: number) {
     const k = this.kind;
-    const buoy = k === 'fire' ? 0.3 : k === 'sparks' || k === 'flare' || k === 'spray' ? -3.5 : 0.02;
+    const buoy = k === 'plume' ? -0.08 : k === 'fire' ? 0.3 : k === 'sparks' || k === 'flare' || k === 'spray' ? -3.5 : 0.02;
     for (const p of this.parts) {
       p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vy += buoy * dt; p.rot += p.vr * dt;
       if (k === 'smoke' || k === 'tear_gas') { p.vx *= 1 - dt * 0.15; p.vz *= 1 - dt * 0.15; }
@@ -125,18 +127,19 @@ export class Effects {
   constructor(scene: THREE.Scene, public reduced: boolean) {
     this.cap = reduced ? PARTICLE_CAP.mobile : PARTICLE_CAP.desktop;
     const c = this.cap;
-    const share: Record<FxKind, number> = { fire: 0.2, smoke: 0.2, sparks: 0.1, explosion: 0.05, tear_gas: 0.24, spray: 0.13, flare: 0.08 };
+    const share: Record<FxKind, number> = { fire: 0.18, smoke: 0.15, sparks: 0.08, explosion: 0.04, tear_gas: 0.2, spray: 0.1, flare: 0.07, plume: 0.26 };
     const n = (k: FxKind, min: number) => Math.max(min, Math.floor(c * share[k]));
     this.fields = {
       fire: new Field('fire', n('fire', 6), flameTexture(), 0xffffff, 'fire', 'fire'),
       smoke: new Field('smoke', n('smoke', 6), smokeTexture(), 0xa8a8b0, 'smoke', 'smoke'),
+      plume: new Field('plume', n('plume', 8), smokeTexture(), 0xffffff, 'tear_gas', 'tear_gas'), // lighter puffs, tinted warm-grey below; lit from below by the fires and the city: grey, not black
       sparks: new Field('sparks', n('sparks', 4), flameTexture(), 0xffffff, 'sparks'),
       explosion: new Field('explosion', n('explosion', 2), flameTexture(), 0xffffff, 'explosion'),
       tear_gas: new Field('tear_gas', n('tear_gas', 4), smokeTexture(), 0xd9d7cf, 'tear_gas', 'tear_gas'),
       spray: new Field('spray', n('spray', 4), smokeTexture(), 0xeaf6ff, 'tear_gas'),
       flare: new Field('flare', n('flare', 4), flameTexture(), 0x9feaff),
     };
-    for (const k of ['tear_gas', 'smoke', 'explosion', 'spray', 'fire', 'sparks', 'flare'] as FxKind[]) this.group.add(this.fields[k].points);
+    for (const k of ['plume', 'tear_gas', 'smoke', 'explosion', 'spray', 'fire', 'sparks', 'flare'] as FxKind[]) this.group.add(this.fields[k].points);
     scene.add(this.group);
     if (!reduced) for (let i = 0; i < 2; i++) { const l = new THREE.PointLight(0xff7a2a, 0, 14, 1.6); this.fireLights.push(l); this.group.add(l); }
   }
@@ -169,6 +172,7 @@ export class Effects {
   burn(id: string, x: number, z: number, strength: number) {
     this.emit(`fire:${id}`, 'fire', x, 0.25, z, 1.2, strength);
     this.emit(`smoke:${id}`, 'smoke', x, 2.0, z, 0.8, strength);
+    if (strength > 0.5) this.emit(`plume:${id}`, 'plume', x, 3.2, z, 0.8, strength * 0.7, 0.8); // a big blaze sends a column up
   }
 
   /** one-shot visual event, deduplicated by event id (never re-triggered by later updates) */
@@ -237,6 +241,7 @@ export class Effects {
       while (e.acc >= 1) {
         e.acc -= 1;
         if (e.kind === 'spray' && e.dir) this.spawn('spray', e.x, e.y, e.z, 0.1, { vx: e.dir[0] + (rnd() - 0.5) * 0.6, vy: e.dir[1] + rnd() * 0.4, vz: e.dir[2] + (rnd() - 0.5) * 0.6 });
+        else if (e.kind === 'plume') this.spawn('plume', e.x, e.y, e.z, e.spread, { vx: (rnd() - 0.5) * 0.5, vz: 1.9 + rnd() * 0.8, scaleMul: e.scale }); // climbs above the roofs, then the wind carries it out over the square (images 05/07)
         else if (e.kind === 'smoke') this.spawn('smoke', e.x, e.y, e.z, e.spread, { vx: 0.25 + rnd() * 0.3, vz: -0.15 - rnd() * 0.25, scaleMul: e.scale });
         else if (e.kind === 'fire') this.spawn('fire', e.x, e.y, e.z, e.spread, { vx: (rnd() - 0.5) * 0.2, vz: (rnd() - 0.5) * 0.2, scaleMul: e.scale, vy: e.scale < 1 ? 0.3 : undefined });
         else if (e.kind === 'tear_gas') { const a = rnd() * Math.PI * 2, v = 0.25 + rnd() * 0.5; this.spawn('tear_gas', e.x, e.y + rnd() * 0.4, e.z, e.spread, { vx: Math.cos(a) * v, vz: Math.sin(a) * v, vy: 0.03 + rnd() * 0.12, scaleMul: e.scale }); } // rolls out low over the ground

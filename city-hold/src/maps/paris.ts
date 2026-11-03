@@ -128,6 +128,7 @@ export const PARIS: MapDef = {
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)
   // the rest of the riot further up the two side streets (images 05/07): a crowd that is scenery, never part of the game
+  riotFires: [{ x: -19.4, z: -38, kind: 'car', rot: 0.35 }, { x: 20.1, z: -35.5, kind: 'car', rot: -0.25 }, { x: 21.2, z: -45, kind: 'bins' }, { x: -21.4, z: -50, kind: 'bins' }],
   backdropCrowd: [{ x0: -22.4, x1: -17.4, z0: -60, z1: -33 }, { x0: 17.4, x1: 22.4, z0: -60, z1: -33 }],
   glowLamps: ([[-16.2, -24], [-16.2, -30], [-16.2, -37], [-16.2, -44], [-16.2, -50], [-16.2, -56], [-16.2, -63], [-16.2, -70], [-23.6, -24], [-23.6, -30], [-23.6, -37], [-23.6, -44], [-23.6, -50], [-23.6, -56], [-23.6, -63], [-23.6, -70], [16.2, -24], [16.2, -30], [16.2, -37], [16.2, -44], [16.2, -50], [16.2, -56], [16.2, -63], [16.2, -70], [23.6, -24], [23.6, -30], [23.6, -37], [23.6, -44], [23.6, -50], [23.6, -56], [23.6, -63], [23.6, -70], [-36, -43.5], [-8, -43.5], [8, -43.5], [36, -43.5]] as const).map(([x, z]) => ({ x, z })),
   facadeDecals: [

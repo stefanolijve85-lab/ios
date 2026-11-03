@@ -97,6 +97,8 @@ export interface MapDef {
   ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
   /** side-street stretches beyond the play area where a background crowd gathers during a riot (decoration only) */
   backdropCrowd?: { x0: number; x1: number; z0: number; z1: number }[];
+  /** wrecks and bonfires beyond the play area that blaze up during a riot and smoulder between waves (decoration only) */
+  riotFires?: { x: number; z: number; kind: 'car' | 'bins'; rot?: number }[];
   facadeDecals?: FacadeDecal[];
   /** decorative street lamps for depth (side streets beyond the play area): pole, glow, pool and reflection only */
   glowLamps?: Vec2[];

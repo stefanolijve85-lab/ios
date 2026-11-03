@@ -11,6 +11,8 @@ import { cloneModel, slotStatus } from './assets';
 import { IncendiaryPool } from './thrown';
 import { createCharacter, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
+import { buildCar } from './world';
+import { radialTexture } from './textures';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
@@ -417,6 +419,35 @@ export class MatchView {
   }
 
   // ---- background riot crowd in the side streets beyond the play area (scenery: no icons, no gameplay, never tappable)
+  // ---- scenery fires up the side streets: burnt-out cars and bonfires of bins blaze during a riot, smoulder in between
+  private riotFx: { x: number; z: number; glow: THREE.Sprite; pool: THREE.Mesh; heat: number }[] | null = null;
+  private stepRiotFires(g: Game, dt: number) {
+    const list = this.map.riotFires; if (!list?.length) return;
+    if (!this.riotFx) {
+      this.riotFx = list.map((f, i) => {
+        if (f.kind === 'car') { const c = buildCar(0x333333, true); c.position.set(f.x, 0, f.z); c.rotation.y = f.rot ?? 0; this.scene.add(c); }
+        else for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.6), new THREE.MeshStandardMaterial({ color: k % 2 ? 0x2c3a2c : 0x3a3a3e, roughness: 0.8 })); b.position.set(f.x + (k % 2) * 0.8 - 0.4, 0.45, f.z + Math.floor(k / 2) * 0.7 - 0.35); b.rotation.y = i + k * 0.7; b.rotation.z = k === 3 ? 1.3 : 0; this.scene.add(b); }
+        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture('rgba(255,150,50,0.75)', 'rgba(255,90,20,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+        glow.position.set(f.x, 1.6, f.z); glow.scale.set(7, 7, 1); this.scene.add(glow);
+        const pool = new THREE.Mesh(new THREE.PlaneGeometry(11, 11).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(255,120,40,0.5)', 'rgba(255,90,20,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+        pool.position.set(f.x, 0.05, f.z + 1.5); this.scene.add(pool);
+        return { x: f.x, z: f.z, glow, pool, heat: 0 };
+      });
+    }
+    const riot = g.phase === 'wave' || (this.side === 'looters' && !g.over);
+    this.riotFx.forEach((r, i) => {
+      // each blaze catches a few seconds apart when a wave starts and dies down slowly after it
+      const want = riot ? 1 : 0.12; const rate = riot ? 0.25 + i * 0.05 : 0.04;
+      r.heat += (want - r.heat) * Math.min(1, dt * rate);
+      const flick = 0.85 + Math.sin(this.time * (11 + i) + i) * 0.1 + Math.sin(this.time * 23.7 + i * 2) * 0.05;
+      (r.glow.material as THREE.SpriteMaterial).opacity = Math.max(0, r.heat - 0.15) * flick;
+      (r.pool.material as THREE.MeshBasicMaterial).opacity = Math.max(0, r.heat - 0.15) * flick;
+      if (r.heat > 0.3) this.fx.emit(`rfire${i}`, 'fire', r.x, 0.5, r.z, 1.3, r.heat, 1.6);
+      if (r.heat > 0.05 && i < 2) this.fx.emit(`rplume${i}`, 'plume', r.x, 2.4, r.z, 1, Math.max(0.35, r.heat), 1.3); // the wrecks' smoke keeps smouldering
+      else if (r.heat > 0.3) this.fx.emit(`rsmoke${i}`, 'smoke', r.x, 2.2, r.z, 0.8, r.heat, 1.4);
+    });
+  }
+
   private backdrop: { h: CharacterVisual; x: number; z: number; tx: number; tz: number; wait: number; lane: number; speed: number; flee: boolean }[] = [];
   private stepBackdrop(g: Game, dt: number) {
     const lanes = this.map.backdropCrowd; if (!lanes?.length) return;
@@ -489,6 +520,7 @@ export class MatchView {
     this.time += dt;
     this.stepBackdrop(g, dt);
     this.stepLitter(g, dt);
+    this.stepRiotFires(g, dt);
     // keyboard pan
     const kp = this.dist * 0.9 * dt;
     if (this.keys.has('a') || this.keys.has('arrowleft')) this.target.x -= kp;
@@ -646,7 +678,7 @@ export class MatchView {
       else if (!f.ambient) this.bar('f' + f.id, f.x, 2.8, f.z, 1, '#ff5a2a', f.ttl >= 0 ? 'FIRE (burns out)' : '🔥 FIRE — send firefighter');
     }
     // decorative fires (burning barricade far up the side street): flames, smoke and flicker, never part of the game
-    this.world.ambientFires.forEach((f, i) => { if (!this.ambientBurning(g, f)) return; this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); });
+    this.world.ambientFires.forEach((f, i) => { if (!this.ambientBurning(g, f)) return; this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); this.fx.emit(`plume:amb${i}`, 'plume', f.x, 3.5, f.z, 1, 0.8, 1.3); });
     this.fx.setFireLights([...activeFires.filter((f) => !f.ambient), ...this.world.ambientFires.filter((f) => this.ambientBurning(g, f))], this.time);
     for (const u of g.units) if (u.kind === 'firefighter' && u.state === 'extinguish' && !u.moving) { const f = g.fires.find((ff) => ff.id === u.fireId); if (f) this.fx.sprayAt(u.x, u.z, f.x, f.z, dt, String(u.id)); }
     (window as unknown as { __fx?: unknown }).__fx = this.fx;
