@@ -218,7 +218,7 @@ describe('match outcomes', () => {
     run(l, 3600, (gg) => { if (gg.phase === 'prep') gg.startWave(); });
     expect(l.phase).toBe('lost');
     expect(l.stores.filter((s) => s.stock <= 0).length).toBeGreaterThanOrEqual(2);
-  });
+  }, 30000); // two full 12-wave matches: close to vitest's 5 s default on its own
 
   test('looters can win by extraction and lose by running out of units or time', () => {
     // the scripted looter is simple; across several seeds it must reach the objective at least once

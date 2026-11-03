@@ -1268,7 +1268,7 @@ export class Game {
       u.totalStuck += 4;
       // sidestep then repath
       const a = this.rng.next() * Math.PI * 2;
-      const nx = u.x + Math.cos(a) * 0.4, nz = u.z + Math.sin(a) * 0.4;
+      const nx = u.x + Math.cos(a) * 0.3, nz = u.z + Math.sin(a) * 0.3; // small enough that with the step and a shove it never reads as a jump
       if (this.nav.walkable(nx, nz)) { u.x = nx; u.z = nz; }
       this.setAttGoal(u);
       if (u.totalStuck > 40) { u.state = 'flee'; this.setAttGoal(u); }

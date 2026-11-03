@@ -5,21 +5,20 @@ import type { MapDef, PropDef } from './types';
 // and an open pedestrian street in the foreground between two roof blocks.
 
 const props: PropDef[] = [
-  // street lamps where a city would put them: on the pavement edge in front of the shops, on the kerbs of the side
-  // pavements, as a ring of four around the fountain basin, and along the foreground pavement flanking the street
+  // street lamps placed as in concept 02: on the pavement edge in front of the shops, on the kerbs of the side
+  // pavements, one by the café terrace, and a pair flanking the foreground street beside its two trees. The square
+  // around the fountain stays open (no lamp ring), which is what makes it read as a square.
   ...([[-14.5, -11.6], [-5, -11.6], [5, -11.6], [14.5, -11.6], // shop pavement
     [-22.8, -4], [22.8, -6], // side kerbs
-    [-5.4, -7.4], [5.4, -7.4], [-5.4, 3.4], [5.4, 3.4], // around the fountain
-    [-13.5, 13.4], [-6.2, 13.4], [6.2, 13.4], [13.5, 13.4]] as const) // foreground pavement
+    [-23.6, 1.2], // café terrace corner
+    [-9.2, 12.9], [9.2, 12.9]] as const) // foreground street, outside the two trees
     .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
   // side streets lit along both kerbs and lined with trees; the far lamps sit outside the play area and only add depth
   ...([[-17.7, -20], [17.7, -20], [-24.3, -32], [24.3, -31], [-17.7, -38], [17.7, -38], [-24.3, -47], [24.3, -47], [-17.7, -55], [17.7, -55]] as const)
     .map(([x, z]) => ({ type: 'lamp' as const, x, z, collide: true, r: 0.25 })),
   ...([[-24.1, -21.5], [24.1, -19], [-24.1, -36.5], [24.1, -36.5], [-24.1, -52], [24.1, -52]] as const)
     .map(([x, z]) => ({ type: 'tree' as const, x, z, collide: true, r: 0.7 })),
-  // trees and double lamps in front of and beside the fountain, as in images 01/02
-  { type: 'tree', x: -7.2, z: 5.2, collide: true, r: 0.8 },
-  { type: 'tree', x: 7.2, z: 5.2, collide: true, r: 0.8 },
+  // trees in planters beside the fountain, as in concept 02 (in front of it the square stays open)
   { type: 'tree', x: -11.5, z: -2.5, collide: true, r: 0.8 },
   { type: 'tree', x: 11.5, z: -2.5, collide: true, r: 0.8 },
   // planters with small trees
@@ -29,12 +28,14 @@ const props: PropDef[] = [
   { type: 'tree', x: 24, z: -16, collide: true, r: 0.9 },
   { type: 'planter', x: -15.5, z: -13, collide: true, r: 0.8 },
   { type: 'planter', x: 15.5, z: -13, collide: true, r: 0.8 },
-  { type: 'tree', x: -11, z: 11, collide: true, r: 0.9 },
-  { type: 'tree', x: -13, z: 12.8, collide: true, r: 0.9 },
-  { type: 'tree', x: 13, z: 12.8, collide: true, r: 0.9 },
-  { type: 'tree', x: 11, z: 11, collide: true, r: 0.9 },
-  { type: 'tree', x: -23.2, z: 1.2, collide: true, r: 0.8 },
-  { type: 'tree', x: 23.2, z: 1.2, collide: true, r: 0.8 },
+  // concept 02: two trees framing the foreground street with a lamp outside each, low planters along its pavement,
+  // and a tree in a planter on each side of the square (left by the café terrace, right in front of the east street)
+  { type: 'tree', x: -6.8, z: 12.2, collide: true, r: 0.9 },
+  { type: 'tree', x: 6.8, z: 12.2, collide: true, r: 0.9 },
+  { type: 'planter', x: -12.2, z: 11.6, collide: true, r: 0.7 },
+  { type: 'planter', x: 12.2, z: 11.6, collide: true, r: 0.7 },
+  { type: 'tree', x: -19.5, z: 1.8, collide: true, r: 0.8 },
+  { type: 'tree', x: 18.6, z: 3.1, collide: true, r: 0.8 },
   // bollards along the foreground pavement (gaps are walkable)
   ...[-9, -7, -3.4, 3.4, 7, 9, -13, 13].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
   // crowd-control fences against the side facades, as in images 02/03 (decor, off the walking lines)
