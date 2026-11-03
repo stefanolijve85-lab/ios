@@ -216,7 +216,7 @@
     "prop.fountain": {
       "file": "final/prop.fountain.glb",
       "status": "final",
-      "note": "Tripo H3.1 image-to-3D of a generated ornate Parisian fountain (three tiers, bronze figures), textures 1024 px"
+      "note": "Tripo H3.1 multiview (4 dry views, detailed) of the Paris fountain pack, simplified to 50k triangles, 2048 px textures; water is added in code"
     },
     "anim.run": {
       "file": "final/anim.run.glb",
