@@ -18,6 +18,7 @@ import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
 import { arrowTexture } from './textures';
 import { BALANCE } from '../config/balance';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export type Pick =
   | { type: 'unit'; id: number; x: number; z: number }
@@ -32,6 +33,16 @@ export interface ViewInput {
 }
 
 const PITCH = THREE.MathUtils.degToRad(40); // oblique view of images 02/03: shopfronts readable, fountain in the middle
+
+/** a steel crowd barrier lying flat on the ground: frame plus vertical bars, merged into one geometry */
+function fallenBarrierGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  const bar = (w: number, d: number, x: number, z: number) => parts.push(new THREE.BoxGeometry(w, 0.05, d).translate(x, 0, z));
+  bar(2.2, 0.06, 0, -0.5); bar(2.2, 0.06, 0, 0.5); bar(0.06, 1.06, -1.1, 0); bar(0.06, 1.06, 1.1, 0);
+  for (let i = 1; i < 12; i++) bar(0.03, 1, -1.1 + i * (2.2 / 12), 0);
+  bar(0.5, 0.06, -0.8, 0.75); bar(0.5, 0.06, 0.8, 0.75); // the feet
+  return mergeGeometries(parts)!;
+}
 
 export class MatchView {
   readonly renderer: THREE.WebGLRenderer;
@@ -491,6 +502,7 @@ export class MatchView {
 
   // ---- riot litter (image 07): paper, cardboard, bags and bottles pile up around broken shops and along the rioters'
   // routes as the riot goes on; it stays for the rest of the match. Scenery only, instanced (4 draw calls).
+  // (fallen barrier: a flat steel crowd fence, frame and bars, lying on the ground)
   private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number; spilled: Set<number> } | null = null;
   private stepLitter(g: Game, dt: number) {
     if (!this.litter) {
@@ -505,7 +517,9 @@ export class MatchView {
         mk(new THREE.BoxGeometry(0.42, 0.3, 0.32), new THREE.MeshStandardMaterial({ color: 0xb9b8b4, roughness: 0.75 })), // 5: white electronics boxes (image 06), toned for the night street
         mk(new THREE.BoxGeometry(0.14, 0.08, 0.14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.4 })), // 6: jewellery / phone boxes (per-piece colour)
         mk(new THREE.CircleGeometry(0.09, 3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xcfe6f2, roughness: 0.05, metalness: 0.9, emissive: 0x405060, emissiveIntensity: 0.6 })), // 7: glass shards
-      ], n: [0, 0, 0, 0, 0, 0, 0, 0], acc: 0, seed: 1, spilled: new Set() };
+        mk(new THREE.CylinderGeometry(0.32, 0.28, 0.9, 10).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2c3a2e, roughness: 0.55, metalness: 0.3 })), // 8: tipped-over bins (image 05)
+        mk(fallenBarrierGeometry(), new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.75 })), // 9: knocked-over crowd barriers (image 05)
+      ], n: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], acc: 0, seed: 1, spilled: new Set() };
       for (const k of [4, 6]) { this.litter.kinds[k].instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(max * 3), 3); }
     }
     const L = this.litter; const max = L.kinds[0].instanceMatrix.count;
@@ -513,9 +527,9 @@ export class MatchView {
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3();
     const COL = [0xb8242c, 0x2a4fa8, 0xe8e3d0, 0x1d1f24, 0xc98a2a, 0x3d7a4a, 0x8a3fa0, 0xd8d0c0]; const col = new THREE.Color();
     const drop = (x: number, z: number, spread: number, kind?: number) => {
-      const k = kind ?? [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= max) return;
+      const k = kind ?? [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= (k === 8 ? 8 : k === 9 ? 5 : max)) return;
       const px = x + (rnd() - 0.5) * spread, pz = z + (rnd() - 0.5) * spread * 0.6; if (!g.nav.walkable(px, pz)) return;
-      const y = [0.04, 0.14, 0.07, 0.05, 0.035, 0.18, 0.04, 0.02][k];
+      const y = [0.04, 0.14, 0.07, 0.05, 0.035, 0.18, 0.04, 0.02, 0.3, 0.04][k];
       e.set(k === 1 || k === 5 ? (rnd() < 0.3 ? Math.PI / 2 : 0) : 0, rnd() * Math.PI * 2, 0); q.setFromEuler(e); const s2 = 0.7 + rnd() * 0.6; sc.set(s2, k === 4 ? s2 * (0.6 + rnd()) : s2, s2);
       const i = L.n[k]++; L.kinds[k].setMatrixAt(i, m4.compose(pos.set(px, y, pz), q, sc));
       if (L.kinds[k].instanceColor) { L.kinds[k].setColorAt(i, col.setHex(COL[Math.floor(rnd() * COL.length)])); L.kinds[k].instanceColor!.needsUpdate = true; }
@@ -537,6 +551,15 @@ export class MatchView {
     for (const u of g.units) if (u.side === 'att' && (u.moving || u.state === 'collect') && rnd() < (u.carrying > 0 || u.state === 'collect' ? 0.25 : 0.06)) drop(u.x, u.z, 1.2);
     g.stores.forEach((s, i) => { if (s.structure <= 0 && rnd() < 0.45) { const sd = this.map.stores[i]; const goods = sd.kind === 'fashion' ? 4 : sd.kind === 'electronics' ? 5 : 6;
       drop(s.door.x + sd.normal.x * 2.2, s.door.z + sd.normal.z * 2.2, sd.width * 0.9, rnd() < (goods === 5 ? 0.25 : 0.5) ? goods : undefined); } });
+    // the whole square fills up as the riot goes on (image 05): paper and bags blow around, bins get tipped over and a
+    // few crowd barriers end up flat on the setts
+    if (g.phase === 'wave' || (this.side === 'looters' && !g.over)) {
+      const n = Math.min(3, Math.ceil(g.attackers().length / 4));
+      const b = this.map.bounds;
+      for (let i = 0; i < n; i++) drop(b.x0 + 6 + rnd() * (b.x1 - b.x0 - 12), b.z0 + 14 + rnd() * (b.z1 - b.z0 - 20), 1.5, rnd() < 0.7 ? 0 : undefined);
+      if (rnd() < 0.04) drop(b.x0 + 8 + rnd() * (b.x1 - b.x0 - 16), b.z0 + 16 + rnd() * (b.z1 - b.z0 - 24), 1, 8);
+      if (rnd() < 0.02) drop(b.x0 + 8 + rnd() * (b.x1 - b.x0 - 16), b.z0 + 16 + rnd() * (b.z1 - b.z0 - 24), 1, 9);
+    }
     // looters carrying goods lose a piece now and then
     for (const u of g.units) if (u.side === 'att' && u.carrying > 0 && u.moving && rnd() < 0.08 && u.carryStore >= 0) { const sd = this.map.stores[u.carryStore]; drop(u.x, u.z, 0.8, sd.kind === 'fashion' ? 4 : sd.kind === 'electronics' ? 5 : 6); }
   }
