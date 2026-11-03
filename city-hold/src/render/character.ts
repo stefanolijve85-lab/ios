@@ -124,7 +124,7 @@ class GltfCharacter implements CharacterVisual {
           // auto-rigged photo-textured model: a little self-light keeps it readable on the night street
           const c = (mm as THREE.MeshStandardMaterial).clone(); c.emissive = new THREE.Color(0xffffff); c.emissiveMap = c.map; c.emissiveIntensity = 0.22; c.roughness = 0.8; c.metalness = 0;
           // passers-by share three models: each gets its own colour cast and brightness so the crowd does not look cloned
-          if (kind === 'civilian') { const r2 = rng(variant * 7919 + 13); c.color.setHSL(r2(), 0.25 + r2() * 0.3, 0.55 + r2() * 0.35); }
+          if (kind === 'civilian' || kind === 'shopkeeper' || kind === 'helper') { const r2 = rng(variant * 7919 + 13); c.color.setHSL(r2(), 0.25 + r2() * 0.3, 0.55 + r2() * 0.35); }
           return c;
         }
         if (n === 'skin' || n === 'top' || n === 'legs') { const c = (mm as THREE.MeshStandardMaterial).clone(); c.color.setHex(n === 'skin' ? skin : n === 'top' ? top : legs); return c; }
@@ -255,7 +255,14 @@ export function createCharacter(kind: AnyKind, variant: number): CharacterVisual
   // a final model for the unit class wins over a temporary outfit placeholder; civilians alternate between the final street figures
   const own = characterSlot(kind, variant);
   const civ = kind === 'civilian' ? ['char.civilian', 'char.carrier', 'char.heavy'].filter((sl) => slotStatus(sl) === 'final') : [];
-  const slot = civ.length ? civ[variant % civ.length] : slotStatus(own) === 'final' ? own : slotStatus(`char.${kind}`) === 'final' ? `char.${kind}` : own;
+  // roles without their own finished model borrow a realistic rigged figure that fits (never the blocky placeholder)
+  const STAND_IN: Partial<Record<AnyKind, string[]>> = {
+    vandal: ['char.looter.01_tracksuit_arms_spread', 'char.runner', 'char.looter.07_navy_runner'],
+    thrower: ['char.runner', 'char.looter.07_navy_runner', 'char.looter.01_tracksuit_arms_spread'],
+    shopkeeper: ['char.civilian'], helper: ['char.civilian', 'char.carrier'],
+  };
+  const pool = (STAND_IN[kind] ?? []).filter((sl) => slotStatus(sl) === 'final');
+  const slot = civ.length ? civ[variant % civ.length] : slotStatus(own) === 'final' ? own : slotStatus(`char.${kind}`) === 'final' ? `char.${kind}` : pool.length ? pool[variant % pool.length] : own;
   const m = getModel(slot) ?? getModel(`char.${kind}`);
   if (m) return new GltfCharacter(kind, variant, m.scene, m.animations);
   return new ProcCharacter(buildHumanoid(kind, variant));

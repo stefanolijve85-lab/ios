@@ -43,7 +43,7 @@ export class Sfx {
   private static readonly REC_LEVEL = 0.28;
   private static readonly LOOP_LEVEL = 0.2;
   private loops = new Map<string, GainNode>();
-  private crackleT = 0; private hammerT = 0; private sirenT = 8; private shoutT = 4; private yellT = 3; private coughT = 2; private screamT = 5;
+  private crackleT = 0; private hammerT = 0; private sirenT = 30; private shoutT = 4; private yellT = 3; private coughT = 2; private screamT = 5;
   private _volume: number;
 
   constructor(volume: number) { this._volume = volume; }
@@ -195,7 +195,7 @@ export class Sfx {
       case 'gasLand': for (let i = 0; i < 3; i++) this.tone(o, rnd(1800, 2600), 0.06, 'triangle', 0.08 * g, { delay: i * 0.13 }); this.burst(o, 2.2, 0.22 * g, { type: 'highpass', freq: 3000, attack: 0.15, delay: 0.3 }); break; // clatter + hiss
       case 'strike': this.thud(o, g * 0.7); break;
       case 'scream': this.scream(o, g); break;
-      case 'wave': this.siren(this.out(this.world, rnd(-0.6, 0.6)), 0.5, 2.6); this.crowdShout(o, 1); break;
+      case 'wave': this.crowdShout(o, 1.3); this.crowdShout(this.out(this.world, rnd(-0.6, 0.6)), 0.8); break;
       case 'win': this.stinger(o, [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]], 0.13); break;
       case 'lose': this.stinger(o, [[392, 466, 587], [349, 415, 523], [262, 311, 392]], 0.13); break;
     }
@@ -220,7 +220,9 @@ export class Sfx {
       case 'gasLand': { const a = this.smp('cough', o, v * 0.7, { delay: 1.2 }); const b = this.smp('scream', o, v * 0.6, { delay: 0.5 }); this.smp('gas_hiss', o, v * 0.5); return a || b; }
       case 'strike': return this.smp('baton', o, v * 0.9);
       case 'scream': return this.smp('scream', o, v * 0.7);
-      case 'wave': { const a = this.smp('siren', this.out(this.world, rnd(-0.6, 0.6)), 0.22, { jitter: 0.02 }); const b = this.smp('crowd_shout', o, 0.22); return a || b; }
+      case 'wave': { // the riot starts: an angry roar rolls in, a bottle smashes somewhere
+        const a = this.smp('riot_yell', this.out(this.world, rnd(-0.5, 0.5)), 0.3, { jitter: 0.05 }); const b = this.smp('crowd_shout', o, 0.22, { delay: 0.35 });
+        this.smp('glass', this.out(this.world, rnd(-0.8, 0.8)), 0.12, { delay: rnd(0.8, 1.6) }); return a || b; }
       default: return false;
     }
   }
@@ -336,8 +338,8 @@ export class Sfx {
     // distant sirens and occasional shouts while a wave runs
     if (s.active) {
       this.sirenT -= dt;
-      if (this.sirenT <= 0 && this.smp('siren', this.out(this.amb, rnd(-0.9, 0.9)), 0.35, { jitter: 0.04 })) this.sirenT = rnd(14, 30);
-      else if (this.sirenT <= 0) { this.sirenT = rnd(14, 30); this.siren(this.out(this.amb, rnd(-0.9, 0.9)), 0.35, rnd(2.4, 4.2)); }
+      if (this.sirenT <= 0 && this.smp('siren', this.out(this.amb, rnd(-0.9, 0.9)), 0.16, { jitter: 0.04 })) this.sirenT = rnd(35, 70); // far away, now and then
+      else if (this.sirenT <= 0) { this.sirenT = rnd(35, 70); this.siren(this.out(this.amb, rnd(-0.9, 0.9)), 0.2, rnd(2.4, 4.2)); }
       this.shoutT -= dt;
       if (s.crowd > 2 && this.shoutT <= 0) { this.shoutT = rnd(3, 8) / Math.min(2, s.crowd / 5); if (!this.smp('crowd_shout', this.out(this.amb, rnd(-0.7, 0.7)), 0.25 + Math.min(0.4, s.crowd / 25))) this.crowdShout(this.out(this.amb, rnd(-0.7, 0.7)), 0.25 + Math.min(0.5, s.crowd / 20)); }
     }

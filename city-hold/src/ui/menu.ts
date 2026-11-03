@@ -145,14 +145,12 @@ export class Menu {
       <div class="rm-col">
         <h1 class="rm-title" aria-label="RIOTS"><span>RIOTS</span></h1>
         <div class="rm-brush" aria-hidden="true"></div>
-        <p class="rm-tag">${t.tagline}</p>
         <nav class="rm-nav">
           <button class="rm-cta" data-go="cities" data-autofocus>${t.play}</button>
           <button class="rm-link" data-go="progress">${t.progress}</button>
           <button class="rm-link" data-go="gallery">${t.collection}</button>
           <button class="rm-link" data-go="settings">${t.settings}</button>
         </nav>
-        <p class="rm-foot">${t.footer}</p>
       </div></main>`;
     this.wire('[data-go]', (el) => this.go(el.dataset.go as Screen));
     this.intro();
