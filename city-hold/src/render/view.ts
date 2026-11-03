@@ -131,6 +131,12 @@ export class MatchView {
   readonly world: WorldHandles;
   readonly fx: Effects;
   private fireCrew: FireCrew;
+  /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
+   *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
+  async warm(): Promise<void> {
+    for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* uploads on first use */ } }
+    try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
+  }
   /** where the fire engine stands (null until a firefighter is on the team) */
   fireEnginePos() { return this.fireCrew.enginePos(); }
   target = new THREE.Vector2();
@@ -177,7 +183,9 @@ export class MatchView {
 
   constructor(readonly container: HTMLElement, readonly map: MapDef, readonly side: 'defence' | 'looters', private input: ViewInput, readonly reducedFx: boolean) {
     this.renderer = new THREE.WebGLRenderer({ antialias: !reducedFx, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx ? 1.5 : 2));
+    // touch tablets at full quality render at 1.5x (a 2x iPad screen is 4x the pixels of 1x: that made play and sound stutter)
+    const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx || touch ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.42;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;

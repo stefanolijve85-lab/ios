@@ -80,6 +80,11 @@ export class Match {
     this.refreshHud(true);
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.loop);
+    // a loading cover until every shader is compiled and every texture is on the GPU (first visit on iPad showed black models)
+    const cover = document.createElement('div'); cover.className = 'rm-loading'; cover.style.zIndex = '50';
+    cover.innerHTML = `<span>${settings.language === 'en' ? 'Preparing the street…' : 'Straat wordt klaargezet…'}</span>`; this.root.appendChild(cover);
+    const was = this.paused; this.paused = true;
+    void this.view.warm().then(() => new Promise((r) => setTimeout(r, 250))).then(() => { cover.remove(); this.paused = was; this.last = performance.now(); });
   }
 
   private stopI18n: (() => void) | null = null;
