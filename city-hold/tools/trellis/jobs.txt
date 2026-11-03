@@ -1,4 +1,5 @@
 # name  image (relative to city-hold/assets)
+fire_engine fire_engine/reference.png
 paris_sweeper expansion18/paris/vehicle.png
 paris_wallace expansion18/paris/prop.png
 amsterdam_ev_van expansion18/amsterdam/vehicle.png

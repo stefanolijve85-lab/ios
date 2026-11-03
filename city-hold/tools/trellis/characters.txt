@@ -11,3 +11,9 @@ london_masked_woman pack02/london/character.png
 milan_courier pack02/milan/courier_poses/pose1_stand.png
 berlin_masked_man pack02/berlin/character.png
 rio_shopkeeper pack02/rio/character.png
+# shop security per city (replace the shared door-security figure; Paris keeps the current one)
+shop_security_saopaulo shop_security/saopaulo.png
+shop_security_berlin shop_security/berlin.png
+shop_security_milan shop_security/milan.png
+shop_security_london shop_security/london.png
+shop_security_amsterdam shop_security/amsterdam.png
