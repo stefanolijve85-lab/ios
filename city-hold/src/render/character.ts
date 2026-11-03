@@ -109,6 +109,9 @@ class GltfCharacter implements CharacterVisual {
   private held: HeldObject;
   /** this figure's own rhythm: standing clips a little faster or slower than its neighbours' */
   private tempo = 1;
+  /** shield officers: left-arm bones and their braced rotation */
+  private shieldArm: { bone: THREE.Object3D; q: THREE.Quaternion }[] = [];
+  private shieldW = 0; private shieldReady = false;
   /** standing personality: head and upper body settle differently per figure, and the gaze wanders on its own clock */
   private quirk: { head?: THREE.Object3D; spine?: THREE.Object3D; saved: THREE.Quaternion[]; tilt: number; lean: number; twist: number; freq: number; off: number; w: number; t: number } = { saved: [], tilt: 0, lean: 0, twist: 0, freq: 0.2, off: 0, w: 0, t: 0 };
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
@@ -183,8 +186,8 @@ class GltfCharacter implements CharacterVisual {
         arm.updateWorldMatrix(true, false); const ws = new THREE.Vector3(); arm.getWorldScale(ws); const rs = new THREE.Vector3(); model.getWorldScale(rs);
         sh.scale.setScalar(rs.x / ws.x); sh.position.set(0, 0, 0); arm.add(sh);
         // in bone space the forearm points along +Y: offset the shield in front of the forearm
-        sh.position.set(0.12 / (rs.x / ws.x) * (rs.x / ws.x), 0.05, 0.12).multiplyScalar(ws.x > 0 ? 1 / ws.x : 1);
-        sh.rotation.set(0, Math.PI / 2, 0);
+        sh.position.set(SHIELD_OFF[0], SHIELD_OFF[1], SHIELD_OFF[2]).multiplyScalar(ws.x > 0 ? 1 / ws.x : 1);
+        sh.rotation.set(SHIELD_OFF[4] ?? 0, SHIELD_OFF[3], 0); // upright in the braced pose
       }
       // baton in the right hand (struck with when sent into the crowd)
       const hand = model.getObjectByName('RightHand');
@@ -196,6 +199,9 @@ class GltfCharacter implements CharacterVisual {
     }
     this.mixer = new THREE.AnimationMixer(model);
     for (const c of clips) this.actions.set(c.name, this.mixer.clipAction(c));
+    // shield officers keep the shield up in front while they walk or run: the left arm holds its braced pose
+    // (sampled once from the brace clip) instead of swinging the shield with the run cycle
+    if (kind === 'shield' && this.actions.has('brace')) for (const n of ['Spine01', 'Spine02', 'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand']) { const bn = model.getObjectByName(n); if (bn) this.shieldArm.push({ bone: bn, q: new THREE.Quaternion() }); }
     this.root.add(contactShadow());
     this.icon = makeIcon(kind); this.root.add(this.icon);
     this.mixer.setTime(r() * 3);
@@ -257,6 +263,14 @@ class GltfCharacter implements CharacterVisual {
     this.play(clip, Math.min(2.6, Math.max(0.5, ts)));
     this.mixer.update(dt);
     this.applyQuirk(clip === 'idle' || clip === 'carry_idle' || clip === 'brace' || clip === 'guide', dt);
+    // the braced pose is read off the live figure the first time it stands fully braced (the posed clip only settles then)
+    if (this.shieldArm.length && !this.shieldReady && clip === 'brace' && this.current === this.actions.get('brace') && this.current.getEffectiveWeight() > 0.99 && this.current.time > 0.3) {
+      for (const s of this.shieldArm) s.q.copy(s.bone.quaternion); this.shieldReady = true;
+    }
+    if (this.shieldArm.length && this.shieldReady) {
+      const want = clip === 'walk' || clip === 'run' || clip === 'flee' ? 1 : 0; this.shieldW += (want - this.shieldW) * Math.min(1, dt * 8);
+      if (this.shieldW > 0.01) for (const s of this.shieldArm) s.bone.quaternion.slerp(s.q, this.shieldW);
+    }
   }
 }
 
@@ -301,6 +315,8 @@ const FIRE_KITS: Record<string, { suit: [number, number, number] | null; helmet:
   amsterdam: { suit: [0.64, 0.51, 0.34], helmet: [0.9, 0.93, 0.58] }, // tan, lime-white helmet
 };
 let fireKit = '';
+/** shield on the left forearm in bone space (forearm along +y): x, y, z offset in metres, turn about the forearm, tilt in the shield's own plane */
+const SHIELD_OFF: number[] = (window as unknown as { __shieldOff?: number[] }).__shieldOff ?? [-0.12, 0.05, -0.12, -Math.PI / 2, 0.7];
 export function setFireKit(city: string) { fireKit = city; }
 const kitCache = new Map<string, THREE.Texture>();
 function kitTexture(src: THREE.Texture, city: string): THREE.Texture | null {

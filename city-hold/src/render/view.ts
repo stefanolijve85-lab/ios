@@ -79,7 +79,7 @@ function crumpled(geo: THREE.BufferGeometry, amount: number, seed: number) {
   geo.computeVertexNormals(); return geo;
 }
 /** flashbang canister (reference image): dark steel body perforated with round ports, ribbed end caps, fuse head with
- *  a spoon lever and pull ring; shown about 2.5x real size so it reads from the game camera */
+ *  a spoon lever and pull ring; shown about 1.5x real size: still readable from the game camera without looking like a can of paint */
 let FLASH_PROTO: THREE.Group | null = null;
 function flashbangModel(): THREE.Object3D {
   if (!FLASH_PROTO) {
@@ -96,7 +96,7 @@ function flashbangModel(): THREE.Object3D {
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.035), steel); head.position.y = 0.122; g.add(head);
     const spoon = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.15, 0.022), steel); spoon.position.set(0.052, 0.045, 0); spoon.rotation.z = -0.12; g.add(spoon);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0045, 6, 18), steel); ring.position.set(0.045, 0.11, 0.02); ring.rotation.y = Math.PI / 2; g.add(ring);
-    g.scale.setScalar(2.5); g.traverse((o) => { (o as THREE.Mesh).castShadow = true; });
+    g.scale.setScalar(1.5); g.traverse((o) => { (o as THREE.Mesh).castShadow = true; });
     FLASH_PROTO = g;
   }
   return FLASH_PROTO.clone();

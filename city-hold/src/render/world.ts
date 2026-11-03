@@ -299,7 +299,7 @@ function policeVanModel(): { group: THREE.Group; beacons: THREE.Mesh[] } | null 
   inner.rotation.y = (along ? 0 : -Math.PI / 2) + POLICE_VAN_YAW;
   const group = new THREE.Group(); group.add(inner);
   const h = sz.y * k; const beacons: THREE.Mesh[] = [];
-  for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.24), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x, h + 0.02, 1.45); b.name = 'beacon'; group.add(b); beacons.push(b); }
+  for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.22), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x * 0.8, h - 0.07, 0.28); b.name = 'beacon'; group.add(b); beacons.push(b); }
   return { group, beacons };
 }
 /** turn applied to the police van model so its nose points to +z (set after looking at the model) */
@@ -401,7 +401,7 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
     }
     g.add(glb);
     if (p.type === 'lamp') lamps.push(new THREE.Vector3(p.x, LAMP_LIGHT_Y, p.z));
-    if (p.type === 'tree') { const ms: THREE.Mesh[] = []; glb.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.noMerge = true; ms.push(o as THREE.Mesh); } }); pendingFades.push({ meshes: ms, root: glb }); }
+    // trees in planters stay solid: people walk around the planter, and a fading planter read as running through it
     return;
   }
   // the café set model brings its own parasol: the separate parasols only keep their footprint
@@ -756,7 +756,7 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
   }
   // support van (staging point)
   const vanGlb = cloneModel('prop.van') as THREE.Group | null;
-  const pvm = map.id === 'paris' ? policeVanModel() : null; // Paris: the staging van is the concept's police van
+  const pvm = policeVanModel(); // the staging van is the concept's police van (image 17) in every city
   const { g: van, lights: vanLights } = pvm ? { g: pvm.group, lights: pvm.beacons } : vanGlb && slotStatus('prop.van') === 'final' ? { g: vanGlb, lights: beaconsOf(vanGlb) } : buildVan();
   van.position.set(map.van.x, 0, map.van.z); van.rotation.y = (map.van.rot * Math.PI) / 180; group.add(van);
   // extinguishers at the staging van (decorative, firefighters carry the hose)
