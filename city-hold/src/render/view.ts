@@ -345,7 +345,7 @@ export class MatchView {
     return { moving: m.on, speed: m.v };
   }
 
-  private gasVis = new Map<number, { can: THREE.Mesh; haze: THREE.Mesh }>();
+  private gasVis = new Map<number, { can: THREE.Mesh; haze: THREE.Mesh; ring: THREE.Mesh }>();
   private hazeTex: THREE.Texture | null = null;
   private drawGas(g: Game) {
     const T = BALANCE.tearGas; const live = new Set<number>();
@@ -359,8 +359,9 @@ export class MatchView {
       let v = this.gasVis.get(c.id);
       if (!v) {
         const can = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x5a6068, metalness: 0.6, roughness: 0.4 }));
-        const haze = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.hazeTex, color: 0xb9b8b2, transparent: true, opacity: 0, depthWrite: false }));
-        haze.renderOrder = 2; this.scene.add(can, haze); v = { can, haze }; this.gasVis.set(c.id, v);
+        const haze = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.hazeTex, color: 0xa9a69e, transparent: true, opacity: 0, depthWrite: false }));
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.94, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf2efe6, transparent: true, opacity: 0, depthWrite: false }));
+        haze.renderOrder = 2; ring.renderOrder = 3; this.scene.add(can, haze, ring); v = { can, haze, ring }; this.gasVis.set(c.id, v);
       }
       if (!c.landed) {
         const k = Math.min(1, c.t / T.flight);
@@ -373,14 +374,16 @@ export class MatchView {
       const life = Math.max(0, 1 - Math.max(0, c.t - (T.life - 3)) / 3);
       // the cloud: jet at the canister plus puffs around it, spread to the cloud's radius
       this.fx.emit(`gasc:${c.id}`, 'tear_gas', c.x, 0.25, c.z, 0.4, 2.2 * life, 1.1);
-      for (let i = 0; i < 4; i++) {
-        const a = i * 1.57 + c.id, rr = c.r * 0.55;
-        this.fx.emit(`gas${i}:${c.id}`, 'tear_gas', c.x + Math.cos(a) * rr, 0.4, c.z + Math.sin(a) * rr, c.r * 0.4, 0.9 * life, 1.5);
+      for (let i = 0; i < 6; i++) {
+        const a = i * 1.047 + c.id, rr = c.r * (i % 2 ? 0.7 : 0.4);
+        this.fx.emit(`gas${i}:${c.id}`, 'tear_gas', c.x + Math.cos(a) * rr, 0.5, c.z + Math.sin(a) * rr, c.r * 0.35, 1.1 * life, 1.6);
       }
       v.haze.position.set(c.x, 0.09, c.z); v.haze.scale.setScalar(Math.max(0.1, c.r * 1.35));
-      (v.haze.material as THREE.MeshBasicMaterial).opacity = 0.3 * Math.min(1, c.t / 1.2) * life;
+      (v.haze.material as THREE.MeshBasicMaterial).opacity = 0.42 * Math.min(1, c.t / 1.2) * life;
+      // a faint ring on the ground marks where the gas works
+      v.ring.position.set(c.x, 0.1, c.z); v.ring.scale.setScalar(Math.max(0.1, c.r)); (v.ring.material as THREE.MeshBasicMaterial).opacity = 0.4 * Math.min(1, c.t / 1.2) * life;
     }
-    for (const [id, v] of this.gasVis) if (!live.has(id)) { this.scene.remove(v.can, v.haze); v.can.geometry.dispose(); v.haze.geometry.dispose(); this.gasVis.delete(id); }
+    for (const [id, v] of this.gasVis) if (!live.has(id)) { this.scene.remove(v.can, v.haze, v.ring); v.can.geometry.dispose(); v.haze.geometry.dispose(); v.ring.geometry.dispose(); this.gasVis.delete(id); }
   }
 
   /** a scenery fire keeps burning until a firefighter has put out the game fire at that spot */

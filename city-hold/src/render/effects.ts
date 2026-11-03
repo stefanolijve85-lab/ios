@@ -20,11 +20,11 @@ const PRESETS: Record<FxKind, Preset> = {
   plume: { life: [9, 13], scale: [2.4, 10], opacity: 0.68, rise: [0.9, 1.3], drift: 0.15, rate: [2, 3.5], blend: 'normal', spin: 0.12 },
   sparks: { life: [0.2, 0.6], scale: [0.2, 0.5], opacity: 0.8, rise: [0.5, 1.5], drift: 1.4, rate: [2, 4], blend: 'add', spin: 2 },
   explosion: { life: [0.6, 1.1], scale: [0.25, 2.0], opacity: 0.9, rise: [0.2, 0.5], drift: 0.2, rate: [1, 2], blend: 'normal', spin: 0.4 },
-  tear_gas: { life: [4, 7], scale: [1.0, 3.8], opacity: 0.55, rise: [0.02, 0.1], drift: 0.25, rate: [3, 6], blend: 'normal', spin: 0.15 },
+  tear_gas: { life: [4, 7], scale: [1.4, 4.6], opacity: 0.8, rise: [0.02, 0.1], drift: 0.25, rate: [3, 6], blend: 'normal', spin: 0.15 },
   spray: { life: [0.5, 0.8], scale: [0.25, 0.9], opacity: 0.55, rise: [0.1, 0.3], drift: 0.4, rate: [10, 16], blend: 'normal', spin: 0.5 },
   flare: { life: [0.3, 0.5], scale: [0.2, 0.4], opacity: 0.9, rise: [0.5, 1.0], drift: 1.6, rate: [8, 14], blend: 'add', spin: 1 },
 };
-export const PARTICLE_CAP = { mobile: 90, desktop: 240 };
+export const PARTICLE_CAP = { mobile: 110, desktop: 280 };
 
 interface P { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; s0: number; s1: number; rot: number; vr: number; op: number; off: number }
 
@@ -67,7 +67,7 @@ class Field {
           if (useAtlas > 0.5) { st = clamp(st, 0.006, 0.994); float c = mod(vf, 4.0), r = floor(vf / 4.0); st = vec2((c + st.x) / 4.0, (3.0 - r + st.y) / 4.0); }
           vec4 t = texture2D(map, st);
           float a = t.a * va; if (a < 0.004) discard;
-          ${add ? 'gl_FragColor = vec4(t.rgb * tint * a, a);' : kind === 'plume' ? 'gl_FragColor = vec4(mix(vec3(0.62, 0.52, 0.44), vec3(0.34, 0.33, 0.35), clamp(vf / 16.0 + va * 0.2, 0.0, 1.0)) * (0.55 + 0.45 * t.r), a);' : 'gl_FragColor = vec4(t.rgb * tint, a);'}
+          ${add ? 'gl_FragColor = vec4(t.rgb * tint * a, a);' : kind === 'tear_gas' ? 'gl_FragColor = vec4(tint * (0.5 + 0.32 * t.r), min(1.0, t.a * 2.1) * va);' : kind === 'plume' ? 'gl_FragColor = vec4(mix(vec3(0.62, 0.52, 0.44), vec3(0.34, 0.33, 0.35), clamp(vf / 16.0 + va * 0.2, 0.0, 1.0)) * (0.55 + 0.45 * t.r), a);' : 'gl_FragColor = vec4(t.rgb * tint, a);'}
         }`,
       transparent: true, depthTest: true, depthWrite: false,
       blending: add ? THREE.AdditiveBlending : THREE.NormalBlending,
@@ -127,7 +127,7 @@ export class Effects {
   constructor(scene: THREE.Scene, public reduced: boolean) {
     this.cap = reduced ? PARTICLE_CAP.mobile : PARTICLE_CAP.desktop;
     const c = this.cap;
-    const share: Record<FxKind, number> = { fire: 0.18, smoke: 0.15, sparks: 0.08, explosion: 0.04, tear_gas: 0.2, spray: 0.1, flare: 0.07, plume: 0.26 };
+    const share: Record<FxKind, number> = { fire: 0.16, smoke: 0.13, sparks: 0.06, explosion: 0.04, tear_gas: 0.32, spray: 0.08, flare: 0.05, plume: 0.2 };
     const n = (k: FxKind, min: number) => Math.max(min, Math.floor(c * share[k]));
     this.fields = {
       fire: new Field('fire', n('fire', 6), flameTexture(), 0xffffff, 'fire', 'fire'),
