@@ -280,7 +280,7 @@ export function buildHumanoid(kind: AnyKind, variant: number, opts: BuildOpts = 
   return { root, body, torso, head, legs: legs as [THREE.Group, THREE.Group], knees: knees as [THREE.Group, THREE.Group], arms: arms as [THREE.Group, THREE.Group], elbows: elbows as [THREE.Group, THREE.Group], carry, bags, shield, extinguisher: ext, icon, phase: r() * 6, recoil: 0, kind };
 }
 
-export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw' | 'guide' | 'flee' | 'strike';
+export type Pose = 'idle' | 'walk' | 'breach' | 'collect' | 'held' | 'restrained' | 'escorted' | 'restrain' | 'escort' | 'brace' | 'extinguish' | 'barrier' | 'throw' | 'guide' | 'flee' | 'strike' | 'pickup';
 
 /** fraction of the throw clip at which the object leaves the hand (BALANCE.throw.releaseAt / duration) */
 export const THROW_RELEASE = 0.45 / 1.15;
@@ -328,6 +328,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export function animate(h: Humanoid, pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number) {
   if (pose === 'throw') { throwPose(h); return; }
   if (pose === 'strike') { throwPose(h, STRIKE_KEYS); return; }
+  if (pose === 'pickup') pose = 'collect'; // the procedural figure bends with its collect pose
   const run = speed > 3.3;
   h.phase += dt * (moving ? (run ? 9.5 : 7.5) * Math.min(1.3, Math.max(0.6, speed / 3)) : 2);
   const p = h.phase;

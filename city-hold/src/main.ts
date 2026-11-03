@@ -76,7 +76,8 @@ async function start() {
     return { unlocked, research: progress.research, specs };
   };
   music.setVolume(progress.settings.music ?? 0.5); music.play('mission');
-  (window as unknown as { __match: Match }).__match = match; // exposed for automated browser checks
+  (window as unknown as { __match: Match; __balance: typeof BALANCE }).__match = match; // exposed for automated browser checks
+  (window as unknown as { __balance: typeof BALANCE }).__balance = BALANCE;
 }
 
 function onExit(_r: MatchResult | null, action: 'menu' | 'restart' | 'next') {

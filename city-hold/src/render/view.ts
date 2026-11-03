@@ -455,6 +455,14 @@ export class MatchView {
     if (this.flashLight) this.flashLight.intensity = Math.max(0, 900 * (1 - k / 0.3));
   }
 
+  /** world position of a figure's right hand (rigged models), or about hand height beside it */
+  private handPos(unitId: number, out: THREE.Vector3): boolean {
+    const h = this.humans.get(unitId); if (!h) return false;
+    const r = h.root as THREE.Object3D & { __hand?: THREE.Object3D | null };
+    if (r.__hand === undefined) r.__hand = r.getObjectByName('RightHand') ?? r.getObjectByName('hand_socket') ?? null;
+    if (r.__hand) { r.__hand.getWorldPosition(out); return true; }
+    out.set(r.position.x + Math.cos(r.rotation.y) * 0.3, 1.1, r.position.z - Math.sin(r.rotation.y) * 0.3); return true;
+  }
   private gasVis = new Map<number, { can: THREE.Object3D; haze: THREE.Mesh; ring: THREE.Mesh }>();
   private hazeTex: THREE.Texture | null = null;
   private drawGas(g: Game) {
@@ -473,8 +481,13 @@ export class MatchView {
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.94, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf2efe6, transparent: true, opacity: 0, depthWrite: false }));
         haze.renderOrder = 2; ring.renderOrder = 3; this.scene.add(can, haze, ring); v = { can, haze, ring }; this.gasVis.set(c.id, v);
       }
+      // in an officer's hand through his wind-up, or in a rioter's hand once he has grabbed it
+      const inHand = !c.landed && c.t < 0 ? c.by : c.pick && c.pick.t > 0.35 + 0.6 * 0.55 ? c.pick.by : -1;
+      if (v.can.userData.base === undefined) v.can.userData.base = v.can.scale.x;
+      v.can.scale.setScalar(v.can.userData.base * (inHand >= 0 ? 0.6 : 1)); // true-ish size in the hand, larger on the ground so it reads
+      if (inHand >= 0 && this.handPos(inHand, this.tmpV)) { v.can.position.copy(this.tmpV); v.can.rotation.set(0, 0, 0.3); v.haze.visible = false; v.ring.visible = false; continue; }
       if (!c.landed) {
-        const k = Math.min(1, c.t / T.flight);
+        const k = Math.max(0, Math.min(1, c.t / T.flight));
         v.can.position.set(c.fromX + (c.x - c.fromX) * k, 1.5 + Math.sin(k * Math.PI) * 3.2 - k * 1.4, c.fromZ + (c.z - c.fromZ) * k);
         v.can.rotation.set(c.t * 9, 0, c.t * 5);
         if (c.kind === 'gas') this.fx.emit(`gast:${c.id}`, 'tear_gas', v.can.position.x, v.can.position.y, v.can.position.z, 0.05, 0.8, 0.35); // thin trail
@@ -738,9 +751,11 @@ export class MatchView {
       let action = u.state === 'throw' ? u.stateT / BALANCE.throw.duration : 0;
       if (u.kind === 'shield' && g.time - u.strikeAt < 0.6) { pose = 'strike'; action = (g.time - u.strikeAt) / 0.6; } // baton swing
       if (u.side === 'def' && g.time - u.gasThrowAt < BALANCE.throw.duration) { pose = 'throw'; action = (g.time - u.gasThrowAt) / BALANCE.throw.duration; } // lobs the canister
-      if (u.side === 'att' && g.time - u.throwBackAt < BALANCE.throw.duration * 0.6) { pose = 'throw'; action = 0.4 + 0.6 * ((g.time - u.throwBackAt) / (BALANCE.throw.duration * 0.6)); } // hurls the grenade back
-      else if (u.staggerUntil > g.time && pose !== 'strike' && pose !== 'throw') pose = u.side === 'att' ? 'held' : 'brace'; // blinded and reeling
-      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action);
+      let firebomb = true;
+      if (u.side === 'att' && g.time - u.throwBackAt < BALANCE.throw.duration) { pose = 'throw'; action = (g.time - u.throwBackAt) / BALANCE.throw.duration; firebomb = false; } // the full throw: wind-up, release, follow-through
+      else if (u.side === 'att' && g.time - u.pickAt < 0.6) { pose = 'pickup'; action = (g.time - u.pickAt) / 0.6; firebomb = false; } // bends down and grabs the canister
+      else if (u.staggerUntil > g.time && pose !== 'strike' && pose !== 'throw' && !g.gas.some((c) => c.pick?.by === u.id)) pose = u.side === 'att' ? 'held' : 'brace'; // blinded and reeling
+      h.update(pose, mv.moving, mv.speed, u.carrying > 0 || lootPhase === 'out', dt * (g.over ? 0.3 : 1), action, firebomb);
       // small flame on the cloth while the object is in the hand
       if (u.state === 'throw' && h.heldWick && h.heldWick(this.tmpV)) this.fx.emit(`held:${u.id}`, 'fire', this.tmpV.x, this.tmpV.y, this.tmpV.z, 0.02, 1, 0.22);
       // attackers outside detection are shown dimmer icons in defence mode (information from cameras)

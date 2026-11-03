@@ -20,7 +20,7 @@ test('tear gas: thrown by an officer, slows and scares rioters, costs budget and
   expect(g.budget).toBe(budget - BALANCE.tearGas.cost);
   expect(g.tearGas(a.x, a.z).ok).toBe(false); // cooldown
   const base = g.speedOf(a);
-  for (let i = 0; i < 30 * 2; i++) g.step(1 / 30);
+  for (let i = 0; i < 30 * 2.6; i++) g.step(1 / 30);
   const inside = g.attackers().filter((u) => g.inGas(u.x, u.z));
   expect(inside.length).toBeGreaterThan(0);
   expect(g.speedOf(inside[0])).toBeLessThan(base);

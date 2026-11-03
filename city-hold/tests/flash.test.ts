@@ -20,7 +20,7 @@ test('flashbang: thrown by an officer, goes off after its fuse and stuns the rio
     expect(g.flashBang(a.x, a.z).ok).toBe(true);
     expect(g.flashBang(a.x, a.z).ok).toBe(false); // cooldown
     let bang = false;
-    for (let i = 0; i < 30 * 3 && !bang; i++) { g.step(1 / 30); bang = g.events.some((e) => e.type === 'flashBang'); }
+    for (let i = 0; i < 30 * 4 && !bang; i++) { g.step(1 / 30); bang = g.events.some((e) => e.type === 'flashBang'); }
     expect(bang).toBe(true);
     const stunned = g.attackers().filter((u) => u.staggerUntil > g.time);
     expect(stunned.length).toBeGreaterThan(0);
@@ -35,7 +35,7 @@ test('a rioter can throw a grenade back: it then lands at the police and hurts t
     const { g, a, s } = setup();
     expect(g.flashBang(a.x, a.z).ok).toBe(true);
     let back = false, bang = false;
-    for (let i = 0; i < 30 * 5 && !bang; i++) { g.step(1 / 30); back ||= g.events.some((e) => e.type === 'throwBack'); bang = g.events.some((e) => e.type === 'flashBang'); }
+    for (let i = 0; i < 30 * 8 && !bang; i++) { g.step(1 / 30); back ||= g.events.some((e) => e.type === 'throwBack'); bang = g.events.some((e) => e.type === 'flashBang'); }
     expect(back).toBe(true);
     expect(bang).toBe(true);
     expect(s.staggerUntil).toBeGreaterThan(g.time - 0.1); // the officer was blinded by his own flashbang

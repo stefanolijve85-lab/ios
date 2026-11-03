@@ -76,6 +76,8 @@ export interface Unit {
   gasT: number; gasThrowAt: number;
   /** rioter: time it last threw a grenade back (view plays the throw) */
   throwBackAt: number;
+  /** rioter: time it bent down to pick a grenade up (view plays the pick-up) */
+  pickAt: number;
   barrierId: number;
   /** thrower: throws left, cooldown, release done in the current throw, aim */
   throwsLeft: number; throwCd: number; released: boolean; aim: ThrowTarget | null;
@@ -95,7 +97,8 @@ export interface CameraMast { id: number; socketId: string; x: number; z: number
 /** tear gas canister: flies from the thrower for `flight` s, then a cloud grows to `r` and thins out at the end of its life */
 export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number;
   /** tear gas cloud or flashbang */ kind: 'gas' | 'flash'; /** which side it hurts: the rioters, or the police once a rioter threw it back */ against: 'att' | 'def';
-  /** a rioter already tried (or managed) to throw this one back */ tried?: boolean }
+  /** a rioter already tried (or managed) to throw this one back */ tried?: boolean;
+  /** a rioter is picking it up: who, seconds into the move, and where it will be thrown */ pick?: { by: number; t: number; tx: number; tz: number } }
 export interface Fire { id: number; x: number; z: number; store: number; prop: number; progress: number; out: boolean; t: number; /** ground fires burn out by themselves */ ttl: number; /** a burning barricade placed in the scenery: harmless, burns until a firefighter puts it out */ ambient?: boolean }
 /** neutral people. patron = café guest, police = decorative police line (never acts, never blocks gameplay) */
 export type NpcRole = 'civilian' | 'shopkeeper' | 'helper' | 'patron' | 'police';
@@ -120,6 +123,9 @@ export interface GameOptions {
 }
 
 export interface ActionResult { ok: boolean; reason?: string }
+
+/** a rioter throwing a grenade back: step to it, bend and pick it up, then a full throw up to the release */
+const PICK = { walk: 0.35, bend: 0.6, total: 0.35 + 0.6 + BALANCE.throw.releaseAt };
 
 const DEF_KINDS: DefKind[] = ['security', 'shield', 'firefighter'];
 
@@ -239,7 +245,7 @@ export class Game {
       id: this.nextId++, side, kind, x: p.x, z: p.z, facing: 0, r: st.radius, variant: Math.floor(this.rng.next() * 1e6),
       state: side === 'def' ? 'idle' : 'approach', stateT: 0, path: null, pi: 0, goal: null, repathT: 0, moving: false, speedNow: 0,
       targetStore: -1, exitId: '', carrying: 0, pending: 0, carryStore: -1, capacity: 0, detectedUntil: -1, camSeen: 0, heldBy: -1, holdT: 0,
-      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, gasT: 0, gasThrowAt: -9, throwBackAt: -9, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
+      restrainP: 0, restrainBy: -1, immuneT: 0, strikeAt: -9, staggerUntil: 0, gasT: 0, gasThrowAt: -9, throwBackAt: -9, pickAt: -9, barrierId: -1, throwsLeft: kind === 'thrower' ? BALANCE.throw.throwsPerUnit : 0, throwCd: 0, released: false, aim: null, stuckT: 0, lastX: p.x, lastZ: p.z, totalStuck: 0,
       home: { x: p.x, z: p.z }, engage: -1, escortOf: -1, fireId: -1, selected: false, chaseT: 0, escortSolo: false,
     };
   }
@@ -1033,7 +1039,8 @@ export class Game {
     const by = this.gasThrower(x, z); if (!by) return this.deny(`No officer within ${T.range} m`);
     this.budget -= T.cost; if (kind === 'gas') this.gasReadyAt = this.time + T.cooldown; else this.flashReadyAt = this.time + T.cooldown;
     by.gasThrowAt = this.time; by.facing = Math.atan2(x - by.x, z - by.z);
-    this.gas.push({ id: this.nextId++, x, z, fromX: by.x, fromZ: by.z, t: 0, landed: false, r: 0, by: by.id, kind, against: 'att' });
+    // t starts negative: the canister stays in the officer's hand through the wind-up and leaves it at the release
+    this.gas.push({ id: this.nextId++, x, z, fromX: by.x, fromZ: by.z, t: -BALANCE.throw.releaseAt, landed: false, r: 0, by: by.id, kind, against: 'att' });
     this.emit({ type: 'gasThrow', text: `${kind === 'gas' ? 'Tear gas' : 'Flashbang'} (-${T.cost})`, x: by.x, z: by.z, amount: T.cost });
     return { ok: true };
   }
@@ -1044,6 +1051,7 @@ export class Game {
     const T = BALANCE.tearGas;
     const F = BALANCE.flashBang;
     for (const g of this.gas) {
+      if (g.pick) { this.stepPick(g, dt); continue; } // held still while a rioter picks it up
       g.t += dt;
       if (!g.landed && g.t >= T.flight) { g.landed = true; g.t = 0; if (g.kind === 'gas') this.emit({ type: 'gasLand', text: 'Tear gas', x: g.x, z: g.z }); }
       if (!g.landed) continue;
@@ -1072,10 +1080,28 @@ export class Game {
     const cops = this.defenders().filter((d) => d.kind !== 'firefighter' && Math.hypot(d.x - a.x, d.z - a.z) < F.throwBackRangeOut);
     const t = cops.sort((p, q) => Math.hypot(p.x - a.x, p.z - a.z) - Math.hypot(q.x - a.x, q.z - a.z))[0];
     if (!t) return;
-    const d = Math.hypot(t.x - a.x, t.z - a.z) || 1; const k = Math.max(0, (d - 0.8) / d);
-    const land = this.nav.nearestWalkable(a.x + (t.x - a.x) * k, a.z + (t.z - a.z) * k, 2) ?? { x: t.x, z: t.z };
-    g.fromX = a.x; g.fromZ = a.z; g.x = land.x; g.z = land.z; g.t = 0; g.landed = false; g.r = 0; g.against = 'def'; g.by = a.id;
-    a.throwBackAt = this.time; a.staggerUntil = this.time + 0.5; a.facing = Math.atan2(t.x - a.x, t.z - a.z);
+    // the rioter steps to the canister, bends down for it, straightens up and throws: see stepPick
+    g.pick = { by: a.id, t: 0, tx: t.x, tz: t.z }; g.r = 0;
+    a.staggerUntil = this.time + PICK.total + 0.3; a.moving = true;
+  }
+  private stepPick(g: Gas, dt: number) {
+    const p = g.pick!; const a = this.unit(p.by);
+    if (!a || a.state === 'removed' || a.state === 'escaped' || a.heldBy >= 0 || a.restrainBy >= 0 || a.state === 'escorted') { g.pick = undefined; return; } // stopped: it stays where it is
+    const was = p.t; p.t += dt;
+    if (p.t < PICK.walk) { // step up to it
+      const dx = g.x - a.x, dz = g.z - a.z, d = Math.hypot(dx, dz);
+      if (d > 0.45) { const st = Math.min(d - 0.45, 2.6 * dt); const nx = a.x + (dx / d) * st, nz = a.z + (dz / d) * st; if (this.nav.walkable(nx, nz)) { a.x = nx; a.z = nz; } a.facing = Math.atan2(dx, dz); a.moving = true; }
+      return;
+    }
+    a.moving = false;
+    if (was < PICK.walk) a.pickAt = this.time; // bends down
+    const throwAt = PICK.walk + PICK.bend;
+    if (was < throwAt && p.t >= throwAt) { a.throwBackAt = this.time; a.facing = Math.atan2(p.tx - a.x, p.tz - a.z); }
+    if (p.t < PICK.total) return;
+    // release: it flies at the officer and lands a little short of him
+    const d = Math.hypot(p.tx - a.x, p.tz - a.z) || 1; const k = Math.max(0, (d - 0.8) / d);
+    const land = this.nav.nearestWalkable(a.x + (p.tx - a.x) * k, a.z + (p.tz - a.z) * k, 2) ?? { x: p.tx, z: p.tz };
+    g.fromX = a.x; g.fromZ = a.z; g.x = land.x; g.z = land.z; g.t = 0; g.landed = false; g.r = 0; g.against = 'def'; g.by = a.id; g.pick = undefined;
     this.emit({ type: 'throwBack', text: `A rioter threw the ${g.kind === 'gas' ? 'tear gas' : 'flashbang'} back!`, x: a.x, z: a.z, side: 'att' });
   }
 

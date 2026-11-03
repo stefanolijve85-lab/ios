@@ -14,7 +14,7 @@ export interface CharacterVisual {
   /** world position of a held object's flame tip, if one is in hand */
   heldWick?(out: THREE.Vector3): boolean;
   /** action: 0..1 progress of a one-shot action (throw) */
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action?: number): void;
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action?: number, /** show the firebomb in the hand during a throw */ held?: boolean): void;
   /** gallery playback (rigged GLB figures) */
   clipNames?(): string[];
   previewClip?(name: string, dt: number): void;
@@ -201,15 +201,16 @@ class GltfCharacter implements CharacterVisual {
     a.timeScale = timeScale;
     if (a === this.current) return;
     a.reset().play();
-    if (this.current) a.crossFadeFrom(this.current, 0.3, false);
+    if (this.current) a.crossFadeFrom(this.current, name === 'throw' || name === 'strike' || name === 'pickup' ? 0.12 : 0.3, false); // one-shot moves blend in fast
     this.current = a;
   }
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0, held = true) {
     if (this.carry) this.carry.visible = carrying && pose !== 'throw';
-    this.held.update(pose === 'throw' && action < THROW_RELEASE);
-    if (pose === 'throw' || pose === 'strike') {
+    this.held.update(held && pose === 'throw' && action < THROW_RELEASE);
+    if (pose === 'throw' || pose === 'strike' || pose === 'pickup') {
       const a = this.actions.get(pose);
-      if (a) { this.play(pose, 1); a.paused = true; a.time = action * a.getClip().duration; this.mixer.update(0); return; }
+      // the clip is scrubbed by the action's progress, but the mixer clock still runs so the crossfade into it completes (it stayed invisible)
+      if (a) { this.play(pose, 1); a.paused = true; this.mixer.update(Math.max(dt, 1 / 60)); a.time = action * a.getClip().duration; this.mixer.update(0); return; }
     }
     let clip: string = pose;
     if ((pose === 'breach' || pose === 'barrier') && this.actions.has('smash')) clip = 'smash'; // crowbar blows on the shutter / barrier
@@ -245,10 +246,10 @@ class ProcCharacter implements CharacterVisual {
   heldWick(out: THREE.Vector3) { return this.held.wickWorld(out); }
   private held: HeldObject;
   constructor(private h: Humanoid) { this.root = h.root; this.icon = h.icon; this.held = new HeldObject(h.kind === 'security' || h.kind === 'shield' ? undefined : h.root.getObjectByName('hand_socket')); }
-  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0) {
+  update(pose: Pose, moving: boolean, speed: number, carrying: boolean, dt: number, action = 0, held = true) {
     this.h.actionT = action;
     animate(this.h, pose, moving, speed, carrying, dt);
-    this.held.update(pose === 'throw' && action < THROW_RELEASE);
+    this.held.update(held && pose === 'throw' && action < THROW_RELEASE);
   }
 }
 

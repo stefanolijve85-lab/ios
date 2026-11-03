@@ -15,7 +15,7 @@ interface PoseSpec {
   right?: (ph: number) => ArmPose;
   period?: number; // seconds per cycle (rounded to fit the base clip)
   spineYaw?: (ph: number) => number; // radians around up
-  spinePitch?: number; // radians, positive bends forward
+  spinePitch?: number | ((ph: number) => number); // radians, positive bends forward
   headPitch?: number;
 }
 
@@ -65,6 +65,14 @@ export const POSED_CLIPS: Record<string, PoseSpec> = {
       return { upper: m(up.upper, down.upper), fore: m(up.fore, down.fore) };
     }),
     spineYaw: (ph) => Math.sin(ph * TAU) * 0.08,
+  },
+  // picking something up off the street: bend from the waist, both hands reach down to the ground, straighten up
+  // (played as a one-shot, ph = progress)
+  pickup: {
+    base: ['idle'], period: 99, headPitch: 0.25,
+    spinePitch: (ph) => Math.sin(Math.min(1, ph / 0.75) * Math.PI) * 1.05,
+    ...both((ph) => { const k = Math.sin(Math.min(1, ph / 0.75) * Math.PI); const m = (x: V3, y: V3) => x.map((v, i) => v + (y[i] - v) * k) as V3;
+      return { upper: m([0.05, 0.12, -1], [0.55, 0.05, -0.85]), fore: m([0.25, -0.05, -1], [0.45, -0.1, -0.9]) }; }),
   },
   // standing still with a box in both arms
   carry_idle: { base: ['idle'], ...both(() => ({ upper: [0.35, 0.25, -0.9], fore: [0.95, -0.45, 0.25] })) },
@@ -135,8 +143,9 @@ export function addPosedClips(scene: THREE.Object3D, animations: THREE.Animation
       restore(); mixer.setTime(Math.min(t, dur - 1e-4)); scene.updateMatrixWorld(true);
       // torso first (arms are aimed in world space, so they follow the turned torso automatically)
       if (spine && (spec.spineYaw || spec.spinePitch)) {
+        const sp = typeof spec.spinePitch === 'function' ? spec.spinePitch(ph) : spec.spinePitch ?? 0;
         const q = new THREE.Quaternion().setFromAxisAngle(vU, spec.spineYaw ? spec.spineYaw(ph) : 0)
-          .multiply(new THREE.Quaternion().setFromAxisAngle(pitchAxis, spec.spinePitch ?? 0));
+          .multiply(new THREE.Quaternion().setFromAxisAngle(pitchAxis, sp));
         const l = turn(spine, q); push(spine.name, l); spine.quaternion.copy(l); scene.updateMatrixWorld(true);
       }
       if (head && spec.headPitch) { const l = turn(head, new THREE.Quaternion().setFromAxisAngle(pitchAxis, spec.headPitch)); push(head.name, l); }
