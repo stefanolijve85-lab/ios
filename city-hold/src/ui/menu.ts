@@ -182,11 +182,14 @@ export class Menu {
     };
     const startSound = () => {
       if (soundOn || vol <= 0) return Promise.resolve(soundOn);
-      return riot.play().then(() => { soundOn = true; soundBtn.hidden = true; fadeTo(0.22 * vol, 1500); return true; }).catch(() => false);
+      return riot.play().then(() => { soundOn = true; soundBtn.hidden = true; fadeTo(0.3 * vol, 1500); return true; }).catch(() => false);
     };
+    // the intro runs on the (tenser) mission track; the menu crossfades back to its own music when the intro ends
+    setTimeout(() => { if (!done) { music.play('mission'); music.setIntensity(1); } }, 0);
     let done = false;
     const close = () => {
       if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
+      music.setIntensity(0.4); music.play('menu');
       fadeTo(0, 900, () => riot.pause()); // the riot fades out, the menu music carries on
       setTimeout(() => el.remove(), 600);
     };
