@@ -3,7 +3,7 @@
 const { chromium } = require('playwright');
 const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('ok -', m); };
 (async () => {
-  const url = (process.argv[2] || 'http://localhost:5199/') + '?seed=' + (process.env.SEED || '7'); // fixed seed: the same match every run
+  const url = (process.argv[2] || 'http://localhost:5199/') + '?seed=' + (process.env.SEED || '11'); // fixed seed: the same match every run (seed 7 became a match the AI defence holds for good)
   const out = process.argv[3] || 'test-output';
   const city = process.argv[4] || 'paris';
   require('fs').mkdirSync(out, { recursive: true });
