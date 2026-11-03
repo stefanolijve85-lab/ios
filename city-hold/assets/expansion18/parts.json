@@ -1,0 +1,272 @@
+[
+ {
+  "city": "paris",
+  "part": "vehicle",
+  "name": "Veegwagen",
+  "box": [
+   11,
+   132,
+   892,
+   816
+  ],
+  "size": [
+   881,
+   684
+  ]
+ },
+ {
+  "city": "paris",
+  "part": "prop",
+  "name": "Drinkfontein",
+  "box": [
+   965,
+   0,
+   1249,
+   824
+  ],
+  "size": [
+   284,
+   824
+  ]
+ },
+ {
+  "city": "paris",
+  "part": "character",
+  "name": "Straatwerker",
+  "box": [
+   1388,
+   13,
+   1807,
+   830
+  ],
+  "size": [
+   419,
+   817
+  ]
+ },
+ {
+  "city": "amsterdam",
+  "part": "vehicle",
+  "name": "Bezorgvoertuig",
+  "box": [
+   21,
+   110,
+   917,
+   814
+  ],
+  "size": [
+   896,
+   704
+  ]
+ },
+ {
+  "city": "amsterdam",
+  "part": "prop",
+  "name": "Reddingsboeipost",
+  "box": [
+   1031,
+   15,
+   1328,
+   838
+  ],
+  "size": [
+   297,
+   823
+  ]
+ },
+ {
+  "city": "amsterdam",
+  "part": "character",
+  "name": "Fietsenmaker",
+  "box": [
+   1431,
+   0,
+   1779,
+   854
+  ],
+  "size": [
+   348,
+   854
+  ]
+ },
+ {
+  "city": "london",
+  "part": "vehicle",
+  "name": "Taxi",
+  "box": [
+   44,
+   59,
+   981,
+   670
+  ],
+  "size": [
+   937,
+   611
+  ]
+ },
+ {
+  "city": "london",
+  "part": "prop",
+  "name": "Straatprullenbak",
+  "box": [
+   1110,
+   4,
+   1449,
+   706
+  ],
+  "size": [
+   339,
+   702
+  ]
+ },
+ {
+  "city": "london",
+  "part": "character",
+  "name": "Ambulancehulpverlener",
+  "box": [
+   1733,
+   0,
+   2043,
+   715
+  ],
+  "size": [
+   310,
+   715
+  ]
+ },
+ {
+  "city": "milan",
+  "part": "vehicle",
+  "name": "Scooter",
+  "box": [
+   61,
+   68,
+   711,
+   711
+  ],
+  "size": [
+   650,
+   643
+  ]
+ },
+ {
+  "city": "milan",
+  "part": "prop",
+  "name": "IJskar",
+  "box": [
+   866,
+   0,
+   1551,
+   703
+  ],
+  "size": [
+   685,
+   703
+  ]
+ },
+ {
+  "city": "milan",
+  "part": "character",
+  "name": "Cafemedewerkster",
+  "box": [
+   1727,
+   4,
+   2083,
+   724
+  ],
+  "size": [
+   356,
+   720
+  ]
+ },
+ {
+  "city": "berlin",
+  "part": "vehicle",
+  "name": "Gemeentewagen",
+  "box": [
+   14,
+   7,
+   1064,
+   729
+  ],
+  "size": [
+   1050,
+   722
+  ]
+ },
+ {
+  "city": "berlin",
+  "part": "prop",
+  "name": "Elektriciteitskast",
+  "box": [
+   1140,
+   109,
+   1571,
+   709
+  ],
+  "size": [
+   431,
+   600
+  ]
+ },
+ {
+  "city": "berlin",
+  "part": "character",
+  "name": "Elektricien",
+  "box": [
+   1727,
+   0,
+   2087,
+   732
+  ],
+  "size": [
+   360,
+   732
+  ]
+ },
+ {
+  "city": "rio",
+  "part": "vehicle",
+  "name": "Gele taxi",
+  "box": [
+   7,
+   223,
+   901,
+   796
+  ],
+  "size": [
+   894,
+   573
+  ]
+ },
+ {
+  "city": "rio",
+  "part": "prop",
+  "name": "Verkoopkar",
+  "box": [
+   913,
+   0,
+   1398,
+   809
+  ],
+  "size": [
+   485,
+   809
+  ]
+ },
+ {
+  "city": "rio",
+  "part": "character",
+  "name": "Straatveger",
+  "box": [
+   1379,
+   8,
+   1834,
+   851
+  ],
+  "size": [
+   455,
+   843
+  ]
+ }
+]

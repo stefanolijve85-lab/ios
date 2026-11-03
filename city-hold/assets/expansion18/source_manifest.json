@@ -1,0 +1,62 @@
+[
+  {
+    "city_id": "paris",
+    "city": "Parijs",
+    "file": "references/paris/asset_sheet.png",
+    "vehicle": "Veegwagen",
+    "prop": "Drinkfontein",
+    "character": "Straatwerker",
+    "sha256": "63ff8adf239de40efbb6ec03487dfafa30bc9486a696b37918e442da93013f03",
+    "background_note": "Alpha aanwezig; randen controleren voor gebruik"
+  },
+  {
+    "city_id": "amsterdam",
+    "city": "Amsterdam",
+    "file": "references/amsterdam/asset_sheet.png",
+    "vehicle": "Bezorgvoertuig",
+    "prop": "Reddingsboeipost",
+    "character": "Fietsenmaker",
+    "sha256": "d822949ce50f403e3d6a5be4218dea6c5160d75a5ed0a4d08223926db6e56633",
+    "background_note": "Alpha aanwezig; randen controleren voor gebruik"
+  },
+  {
+    "city_id": "london",
+    "city": "Londen",
+    "file": "references/london/asset_sheet.png",
+    "vehicle": "Taxi",
+    "prop": "Straatprullenbak",
+    "character": "Ambulancehulpverlener",
+    "sha256": "9ab1697668020b7e183862cc35dacdc9a1065756becbe0dfcb26a4c5eba5ce38",
+    "background_note": "Alpha aanwezig; randen controleren voor gebruik"
+  },
+  {
+    "city_id": "milan",
+    "city": "Milaan",
+    "file": "references/milan/asset_sheet.png",
+    "vehicle": "Scooter",
+    "prop": "IJskar",
+    "character": "Cafemedewerkster",
+    "sha256": "89f2720bb7301ccfe7f75e1a19713ec6c917bd25d68d00ca33868174b952f3a3",
+    "background_note": "Witte achtergrond met gedeeltelijke alpha; nog vrijstaand maken"
+  },
+  {
+    "city_id": "berlin",
+    "city": "Berlijn",
+    "file": "references/berlin/asset_sheet.png",
+    "vehicle": "Gemeentewagen",
+    "prop": "Elektriciteitskast",
+    "character": "Elektricien",
+    "sha256": "5162c4e2c07217a489fe0b85b407e214bc25d7e252e93d66051f670a173ac7ae",
+    "background_note": "Alpha aanwezig; randen controleren voor gebruik"
+  },
+  {
+    "city_id": "rio",
+    "city": "Rio de Janeiro",
+    "file": "references/rio/asset_sheet.png",
+    "vehicle": "Gele taxi",
+    "prop": "Verkoopkar",
+    "character": "Straatveger",
+    "sha256": "e2f40850afdbbecbae7b955db2eb11521b424be63fd15144ed770ca6e7a65da9",
+    "background_note": "Alpha aanwezig; randen controleren voor gebruik"
+  }
+]
