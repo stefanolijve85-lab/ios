@@ -72,6 +72,17 @@ export class Sfx {
     }
     this.playVictory(c, voice); return true;
   }
+  /** settings test: load the mission-end recordings and report which work (an error says why, e.g. 404) */
+  async testVictory(): Promise<string> {
+    if (this._volume <= 0) return 'volume is 0';
+    const c = this.ensure(); if (!c) return 'no audio (AudioContext)';
+    if (c.state === 'suspended') await c.resume().catch(() => {});
+    const names = ['win_sting', this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl'];
+    const ok = await Promise.all(names.map((n) => this.loadOne(c, n)));
+    this.playVictory(c, true);
+    return names.map((n, i) => `${n}: ${ok[i] ? 'OK' : (this.loadErr.get(n) ?? 'not loaded')}`).join(' · ') + ` · audio ${c.state}`;
+  }
+  private loadErr = new Map<string, string>();
   private playVictory(c: Ctx, voice: boolean): boolean {
     const o = this.out(this.ui, 0); // not placed in the world: it must be heard whatever the zoom
     const sting = this.smp('win_sting', o, 0.6, { jitter: 0 });
@@ -121,7 +132,7 @@ export class Sfx {
           let peak = 0; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
           this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1 }); return true;
         })
-        .catch((e) => { console.warn('sound not loaded', name, e); this.loading.delete(name); return false; });
+        .catch((e) => { console.warn('sound not loaded', name, e); this.loadErr.set(name, String(e)); this.loading.delete(name); return false; });
       this.loading.set(name, p);
     }
     return p;

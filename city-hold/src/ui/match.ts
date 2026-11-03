@@ -377,7 +377,7 @@ export class Match {
         case 'impact': if (e.x !== undefined) this.view.fx.event(`impact:${e.id}`, 'explosion', e.x, e.z!); this.sfx.play('impact', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'held': this.sfx.play(e.text === 'Baton strike' ? 'strike' : 'held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
-        case 'waveEnd': this.sfx.play('win'); this.buzz(30); this.banner('WAVE SECURED', e.text); break;
+        case 'waveEnd': if (!this.game.over) this.sfx.play('win'); this.buzz(30); // the last wave ends in the victory sound instead this.banner('WAVE SECURED', e.text); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
         case 'won': {
           // defence: sting + radio voice ("Missie volbracht. Alle winkels zijn beveiligd."); looting: the sting alone (the line is about secured shops)
@@ -615,7 +615,9 @@ export class Match {
       <label>HUD size <select data-s="ui">${[[1, '100%'], [1.15, '115%'], [1.3, '130%']].map(([v, l]) => `<option value="${v}" ${Number(this.settings.uiScale || 1) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label><input type="checkbox" ${this.settings.vibration ? 'checked' : ''} data-s="vib"> Vibrate on events</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
+      <div class="btnrow"><button data-s="testwin">Test victory sound</button><span class="muted" data-s="testres"></span></div>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
+    m.querySelector<HTMLButtonElement>('[data-s="testwin"]')!.addEventListener('click', () => { const out = m.querySelector<HTMLElement>('[data-s="testres"]')!; out.textContent = '…'; void this.sfx.testVictory().then((t) => { out.textContent = t; }); });
     m.querySelector<HTMLInputElement>('[data-s="mus"]')!.addEventListener('input', (e) => { this.settings.music = Number((e.target as HTMLInputElement).value); music.setVolume(this.settings.music); this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { this.settings.volume = Number((e.target as HTMLInputElement).value); this.sfx.volume = this.settings.volume; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { this.settings.reducedFx = (e.target as HTMLInputElement).checked; this.onSettings?.(); });
