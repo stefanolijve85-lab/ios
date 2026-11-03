@@ -98,7 +98,7 @@ export class MatchView {
       this.scene.environment = t; this.scene.environmentIntensity = 0.55;
     }).catch(() => { /* keep fallback */ });
     this.scene.background = skyTexture();
-    this.scene.fog = new THREE.Fog(0x1a2440, 70, 190);
+    this.scene.fog = new THREE.Fog(0x2a3a5c, 115, 260); // haze only far down the side streets: the square itself stays clear (image 01)
     this.scene.add(new THREE.HemisphereLight(0x8a9ac8, 0x4a3e30, 0.85)); // blue-hour sky, cool wet ground bounce
     const moon = new THREE.DirectionalLight(0xa9bcff, 0.7);
     moon.position.set(-30, 60, 25); moon.target.position.set(0, 0, 0);

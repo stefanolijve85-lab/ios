@@ -247,7 +247,7 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   // street side, a zinc ridge, and stone chimney stacks with rows of terracotta pots on the party walls.
   if (map.id === 'paris' && b.fadeable) {
     const sl2 = pbr('slate', 3, 2);
-    const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x8a919b, roughness: 0.42, metalness: 0.25, envMapIntensity: 1.5, emissive: 0x1d2128, emissiveIntensity: 1 });
+    const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x8d949e, roughness: 0.45, metalness: 0.25, envMapIntensity: 1.3, emissive: 0x262a32, emissiveIntensity: 1 }); // grey slate as in image 01, not a black-blue band
     const zincM = new THREE.MeshStandardMaterial({ color: 0xb4bcc6, roughness: 0.32, metalness: 0.8, envMapIntensity: 1.3 });
     const yardM = new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 0.6, metalness: 0.3 });
     const stoneM = new THREE.MeshStandardMaterial({ map: T.stone, color: 0xcbbca0, roughness: 0.85 });

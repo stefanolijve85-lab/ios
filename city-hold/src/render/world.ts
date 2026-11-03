@@ -487,7 +487,9 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     const load = (f: string, srgb: boolean) => { const t = tl.load(`textures/${f}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.copy(rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
     const gm = ground.material as THREE.MeshStandardMaterial;
     gm.map = load('paris_setts_albedo.jpg', true); gm.normalMap = load('paris_setts_normal.jpg', false); gm.roughnessMap = load('paris_setts_rough.jpg', false);
-    gm.color.set(0xd9cbb6); gm.roughness = 0.85; gm.metalness = 0.3; gm.envMapIntensity = 2.4; gm.normalScale.set(1.1, 1.1); gm.needsUpdate = true;
+    gm.color.set(0xe2d8cc); gm.roughness = 0.62; gm.metalness = 0.3; gm.envMapIntensity = 3.0; // brighter wet granite reflecting the blue-hour sky (image 01) gm.normalScale.set(1.1, 1.1);
+    // the city glow lifts the stone between the lamp pools (image 01: grey-mauve wet setts, never black-blue)
+    gm.emissive = new THREE.Color(0xae948c); gm.emissiveMap = gm.map; gm.emissiveIntensity = 0.38; gm.needsUpdate = true;
   }
   // kerbs/pavement bands along every building
   for (const bd of map.buildings) {
