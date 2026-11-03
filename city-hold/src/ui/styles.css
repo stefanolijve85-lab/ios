@@ -211,3 +211,23 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
 .recruit-pop b { font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--orange); }
 .recruit-pop small { font-size: 12px; color: var(--muted); }
 @keyframes recruitBob { from { transform: translateY(0) rotate(-1.5deg); } to { transform: translateY(-6px) rotate(1.5deg); } }
+
+/* phones upright: the start-wave button spans the whole width under the other actions */
+@media (max-width: 700px) and (orientation: portrait) {
+  .actions .btnrow [data-a="startwave"], .actions .btnrow [data-a="dispatch"] { flex: 1 0 100%; width: 100%; min-height: 44px; font-size: 15px; }
+}
+/* phones sideways: the card row hugs the bottom edge (no stretched cards) so the street gets the screen */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bottom { align-items: flex-end; padding: 2px 6px 3px; background: linear-gradient(0deg, rgba(5, 9, 18, 0.85), rgba(5, 9, 18, 0)); }
+  .cards { align-items: flex-end; align-self: flex-end; }
+  .card { align-self: flex-end; height: auto; grid-template-rows: 26px auto auto; }
+  .card img { height: 26px; } .card .cl { font-size: 8px; } .card .cc { font-size: 11px; }
+  .actions { align-self: flex-end; }
+  .actions { flex: 0 0 auto; max-width: 38vw; }
+  .card { width: 62px; }
+  .actions .btnrow { display: grid; grid-template-columns: auto auto; }
+  .actions .btnrow [data-a="startwave"], .actions .btnrow [data-a="dispatch"] { grid-row: span 2; }
+  .actions .incoming { display: none; } /* the next-wave chips stay in Details */
+  .actions .btnrow { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
+  .actions .btnrow button { min-height: 30px; padding: 2px 8px; font-size: 11px; white-space: nowrap; }
+}
