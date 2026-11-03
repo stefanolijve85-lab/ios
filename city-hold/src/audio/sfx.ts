@@ -97,6 +97,15 @@ export class Sfx {
     const vo = this.smp(this.lang === 'en' ? 'vo_win_en' : 'vo_win_nl', hp, 1, { jitter: 0, delay: at });
     return sting || vo;
   }
+  /** a wave held: the opening of the victory fanfare, short and softer, faded out (no synthesised chime) */
+  waveSecured() {
+    if (this._volume <= 0) return; const c = this.ensure(); if (!c) return;
+    if (!this.buf.has('win_sting')) { void this.loadOne(c, 'win_sting'); return; }
+    const bus = c.createGain(); const t = c.currentTime;
+    bus.gain.setValueAtTime(0.6, t); bus.gain.setValueAtTime(0.6, t + 1.1); bus.gain.linearRampToValueAtTime(0, t + 1.8);
+    bus.connect(this.out(this.ui, 0));
+    this.smp('win_sting', bus, 0.95, { jitter: 0 });
+  }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }
 
   private ensure(): Ctx | null {
