@@ -156,11 +156,14 @@ export class Menu {
     this.intro();
   }
 
-  /** cinematic intro (video/intro.mp4: shield wall, Milan looters, Amsterdam firefighters) once per visit, over the main menu;
+  /** cinematic intro (video/intro.mp4: six cities) on every page load, over the main menu;
    *  any tap or key skips it. Not shown to automated browsers, so test clicks reach the menu directly. */
+  private introShown = false;
   private intro() {
-    let seen = false; try { seen = sessionStorage.getItem('riots.intro') === '1'; sessionStorage.setItem('riots.intro', '1'); } catch { /* private mode: show it */ }
-    if (seen || navigator.webdriver || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // on every page load (not when coming back to the menu from a match); tests can switch it off with this flag
+    let off = false; try { off = sessionStorage.getItem('riots.intro') === '1'; } catch { /* ignore */ }
+    if (this.introShown || off || navigator.webdriver || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    this.introShown = true;
     const nl = this.lang === 'nl';
     const el = document.createElement('div'); el.className = 'rm-intro';
     el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
