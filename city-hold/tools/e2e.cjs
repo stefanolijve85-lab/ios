@@ -30,7 +30,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   assert(st.budget >= 1500 && st.canvases === 1, 'defence match starts with budget ' + st.budget);
   // barrier via card + socket tap
   await p.click('.card[data-kind="barrier"]'); await p.waitForTimeout(300);
-  const sock = await p.evaluate(() => { const g = window.__match.game; return g.map.sockets.find((s) => s.size === 'small' && g.canPlace('barrier', s.id).ok); });
+  const sock = await p.evaluate(() => { const g = window.__match.game, v = window.__match.view; const r = v.renderer.domElement.getBoundingClientRect(); // a free socket that is on screen, above the card row
+    return g.map.sockets.find((s) => { if (s.size !== 'small' || !g.canPlace('barrier', s.id).ok) return false; const q = v.toScreen(s.x, 0.2, s.z); return q.x > 40 && q.x < r.width - 40 && q.y > 90 && q.y < r.height - 200; }); });
   let pt = await scr(sock.x, 0.2, sock.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(300);
   await p.click('[data-a="putdown"]'); await p.waitForTimeout(300); // turn step: confirm the direction
   st = await p.evaluate(() => ({ budget: window.__match.game.budget, n: window.__match.game.barriers.length }));

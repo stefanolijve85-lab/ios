@@ -122,6 +122,9 @@ function fallenBarrierGeometry(): THREE.BufferGeometry {
   return mergeGeometries(parts)!;
 }
 
+/** a texture whose image has arrived (uploading one that is still decoding only warns and uploads nothing) */
+function texReady(t: THREE.Texture): boolean { const im = t.image as { width?: number; data?: unknown } | null; return !!im && (!!im.width || !!im.data); }
+
 export class MatchView {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -155,7 +158,9 @@ export class MatchView {
   /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
    *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
   async warm(): Promise<void> {
-    for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* uploads on first use */ } }
+    // model textures still decoding: wait for them (up to 4 s) so they too are on the GPU before the cover lifts
+    for (let i = 0; i < 40 && loadedTextures().some((t) => !texReady(t)); i++) await new Promise((r) => setTimeout(r, 100));
+    for (const t of loadedTextures()) { if (!texReady(t)) continue; try { this.renderer.initTexture(t); } catch { /* uploads on first use */ } }
     try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
   }
   /** where the fire engine stands (null until a firefighter is on the team) */
@@ -209,7 +214,7 @@ export class MatchView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, reducedFx || touch ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.42;
-    this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoft was removed in this three.js (it fell back to PCF with a warning)
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
     this.pitch = THREE.MathUtils.degToRad(map.camera.pitch ?? 40);
@@ -252,7 +257,7 @@ export class MatchView {
     if (this.night) for (const l of this.world.lampLights) l.intensity *= 1.5; // the lamps own the night
     if (this.day) this.toDaylight();
     // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
-    for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
+    for (const t of loadedTextures()) { if (!texReady(t)) continue; try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
     if (!reducedFx) {
       this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
       if (this.day) (this.wet.material as THREE.ShaderMaterial).uniforms.color.value.set(0x4a4540); // damp, not a mirror, by day
