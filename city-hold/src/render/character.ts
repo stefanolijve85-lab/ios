@@ -130,6 +130,12 @@ class GltfCharacter implements CharacterVisual {
             const r2 = rng(variant * 7919 + 13); const base = new THREE.Color(pal[Math.floor(r2() * pal.length)]);
             c.color.setRGB(0.55, 0.55, 0.55).lerp(base, 0.55).multiplyScalar(1.15 + r2() * 0.3);
           }
+          else if (kind === 'runner' || kind === 'carrier' || kind === 'heavy' || kind === 'vandal' || kind === 'thrower') {
+            // rioters: dark street clothes, each with its own cast (navy, olive, grey, maroon, black) and brightness
+            const pal = [0x3a4660, 0x4a5236, 0x5a5a5e, 0x5a2e2e, 0x2a2a2e, 0x6a5a40];
+            const r2 = rng(variant * 4271 + 7); const base = new THREE.Color(pal[Math.floor(r2() * pal.length)]);
+            c.color.setRGB(0.7, 0.7, 0.7).lerp(base, 0.4).multiplyScalar(1.05 + r2() * 0.3);
+          }
           else if (kind === 'shopkeeper') { const r2 = rng(variant * 7919 + 13); c.color.setScalar(0.72 + r2() * 0.3); } // same uniform, a different build and shade per guard
           return c;
         }
@@ -139,7 +145,7 @@ class GltfCharacter implements CharacterVisual {
       m.material = Array.isArray(m.material) ? out : out[0];
     });
     model.scale.setScalar(0.95 + r() * 0.08);
-    if (kind === 'civilian') { model.scale.x *= 0.92 + r() * 0.18; model.scale.y *= 0.94 + r() * 0.12; model.scale.z = model.scale.x; } // tall, short, slim, broad
+    if (kind === 'civilian' || kind === 'runner' || kind === 'carrier' || kind === 'heavy' || kind === 'vandal' || kind === 'thrower') { model.scale.x *= 0.92 + r() * 0.18; model.scale.y *= 0.94 + r() * 0.12; model.scale.z = model.scale.x; } // tall, short, slim, broad
     this.root.add(model);
     this.carry = model.getObjectByName('carry') ?? null;
     if (!this.carry && model.getObjectByName('Hips')) {
@@ -268,6 +274,14 @@ export function createCharacter(kind: AnyKind, variant: number): CharacterVisual
     thrower: ['char.runner', 'char.looter.07_navy_runner', 'char.looter.01_tracksuit_arms_spread'],
     shopkeeper: ['char.security'], helper: ['char.civilian', 'char.carrier'], // each shop has its own door security
   };
+  // a looting group mixes every finished rioter model of the same build, so a group is never a row of clones
+  const MIX: Partial<Record<AnyKind, string[]>> = {
+    carrier: ['char.carrier', 'char.looter.07_navy_runner', 'char.looter.01_tracksuit_arms_spread', 'char.runner'],
+    runner: ['char.runner', 'char.looter.07_navy_runner', 'char.looter.01_tracksuit_arms_spread'],
+    heavy: ['char.heavy', 'char.carrier', 'char.looter.07_navy_runner'],
+  };
+  const mix = (MIX[kind] ?? []).filter((sl) => slotStatus(sl) === 'final');
+  if (mix.length > 1 && !(figureChoice[kind] ?? []).length) { const m2 = getModel(mix[variant % mix.length]); if (m2) return new GltfCharacter(kind, variant, m2.scene, m2.animations); }
   const pool = (STAND_IN[kind] ?? []).filter((sl) => slotStatus(sl) === 'final');
   const slot = civ.length ? civ[variant % civ.length] : slotStatus(own) === 'final' ? own : slotStatus(`char.${kind}`) === 'final' ? `char.${kind}` : pool.length ? pool[variant % pool.length] : own;
   const m = getModel(slot) ?? getModel(`char.${kind}`);
