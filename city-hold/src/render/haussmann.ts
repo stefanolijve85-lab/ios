@@ -248,7 +248,7 @@ export function buildHaussmann(b: BuildingDef, map: MapDef, parent: THREE.Group,
   if (map.id === 'paris' && b.fadeable) {
     const sl2 = pbr('slate', 3, 2);
     const slateM = new THREE.MeshStandardMaterial({ ...sl2, color: 0x7d7670, roughness: 0.7, metalness: 0.05, envMapIntensity: 0.35, emissive: 0x221f1d, emissiveIntensity: 1 }); // dark neutral slate as in image 01 (the sky reflection made it read as a blue band)
-    const zincM = new THREE.MeshStandardMaterial({ color: 0x6e6a66, roughness: 0.6, metalness: 0.2, envMapIntensity: 0.25 });
+    const zincM = new THREE.MeshStandardMaterial({ color: 0x4a4542, roughness: 0.7, metalness: 0.1, envMapIntensity: 0.15, emissive: 0x1c1816, emissiveIntensity: 1 }); // the flat ridge tops catch the blue sky: kept dark and warm
     const yardM = new THREE.MeshStandardMaterial({ color: 0x23201e, roughness: 0.85, metalness: 0, envMapIntensity: 0.2 });
     const stoneM = new THREE.MeshStandardMaterial({ map: T.stone, color: 0xb9a990, roughness: 0.9, emissive: 0x2a2018, emissiveIntensity: 1 });
     const potM = new THREE.MeshStandardMaterial({ color: 0xa5532e, roughness: 0.75 });
