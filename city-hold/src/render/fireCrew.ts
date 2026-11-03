@@ -181,19 +181,27 @@ export class FireCrew {
   constructor(private scene: THREE.Scene, private map: MapDef, private fx: Effects) {}
 
   private parking() { return fireEnginePark(this.map); }
-  enginePos(): { x: number; z: number } | null { return this.engine && this.engine.g.visible ? { x: this.engine.g.position.x, z: this.engine.g.position.z } : null; }
+  private started = false;
+  private build() { this.engine = buildFireEngine(); const p = this.parking(); this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.engine.g.visible = false; this.scene.add(this.engine.g); }
+  /** build the engine during loading and compile its shaders, so it does not hitch or show black when it first drives in */
+  prewarm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
+    if (!this.engine) this.build();
+    const e = this.engine!; const p = this.parking(); e.g.position.set(p.x, 0, p.z); e.g.visible = true;
+    try { renderer.compile(this.scene, camera); } catch { /* compiled on first draw instead */ }
+    e.g.visible = false;
+  }
+  enginePos(): { x: number; z: number } | null { return this.engine && this.started && this.engine.g.visible ? { x: this.engine.g.position.x, z: this.engine.g.position.z } : null; }
   private outletWorld(out: THREE.Vector3) { this.engine!.g.updateMatrixWorld(); return this.engine!.outlet.getWorldPosition(out); }
 
   update(g: Game, humans: Map<number, CharacterVisual>, dt: number, time: number) {
     const ffs = g.units.filter((u) => u.kind === 'firefighter' && u.side === 'def');
-    if (ffs.length && !this.engine) {
-      this.engine = buildFireEngine(); const p = this.parking();
-      this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.scene.add(this.engine.g);
+    if (ffs.length && !this.started) {
+      this.started = true; if (!this.engine) this.build();
       this.drive.left = FIRE_ENGINE_RUN; this.drive.v = 10; // comes up the street at about 30 km/h and brakes to a stop at its spot
     }
-    if (this.engine) this.stepDrive(dt, time);
+    if (this.engine && this.started) this.stepDrive(dt, time);
     if (this.engine) {
-      this.engine.g.visible = ffs.length > 0;
+      this.engine.g.visible = this.started && ffs.length > 0;
       // beacons: alternating double flashes, the halo follows
       this.engine.beacons.forEach((b, i) => {
         const ph = (time * 2.4 + (i % 2) * 0.5) % 1; const on = ph < 0.12 || (ph > 0.2 && ph < 0.32);

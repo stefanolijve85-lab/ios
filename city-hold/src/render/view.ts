@@ -7,7 +7,7 @@ import { buildBarrierModel, buildMastModel, buildWorld, buildTruck, skyTexture, 
 import { type Pose } from './humans';
 import { Effects } from './effects';
 import { Post } from './post';
-import { cloneModel, slotStatus } from './assets';
+import { cloneModel, loadedTextures, slotStatus } from './assets';
 import { IncendiaryPool } from './thrown';
 import { createCharacter, setFireKit, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
@@ -204,6 +204,8 @@ export class MatchView {
     const sc = moon.shadow.camera; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50; sc.near = 10; sc.far = 160; moon.shadow.bias = -0.0005;
     this.scene.add(moon, moon.target);
     this.world = buildWorld(map, this.scene, reducedFx);
+    // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
+    for (const t of loadedTextures()) { try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
     if (!reducedFx) {
       this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
       this.scene.add(this.wet);
@@ -212,6 +214,7 @@ export class MatchView {
     this.fx = new Effects(this.scene, reducedFx);
     setFireKit(map.id);
     this.fireCrew = new FireCrew(this.scene, map, this.fx);
+    this.fireCrew.prewarm(this.renderer, this.camera);
     if (!reducedFx) { this.flashLight = new THREE.PointLight(0xfff6e8, 0, 22, 1.6); this.scene.add(this.flashLight); }
     this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));

@@ -60,6 +60,12 @@ export function slotStatus(slot: string): 'final' | 'placeholder' | 'procedural'
 
 /** Returns the loaded model for a slot (shared; use cloneModel to place copies). */
 export function getModel(slot: string) { return loaded.get(slot) ?? null; }
+/** every texture of the models loaded so far (to upload them to the GPU before play starts) */
+export function loadedTextures(): THREE.Texture[] {
+  const out = new Set<THREE.Texture>();
+  for (const { scene } of loaded.values()) scene.traverse((o) => { const m = (o as THREE.Mesh).material; if (!m) return; for (const mt of (Array.isArray(m) ? m : [m]) as unknown as Record<string, unknown>[]) for (const v of Object.values(mt)) if (v && (v as THREE.Texture).isTexture) out.add(v as THREE.Texture); });
+  return [...out];
+}
 
 export function cloneModel(slot: string): THREE.Object3D | null {
   const m = loaded.get(slot);
