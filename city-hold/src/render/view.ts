@@ -451,11 +451,44 @@ export class MatchView {
     }
   }
 
+  // ---- riot litter (image 07): paper, cardboard, bags and bottles pile up around broken shops and along the rioters'
+  // routes as the riot goes on; it stays for the rest of the match. Scenery only, instanced (4 draw calls).
+  private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number } | null = null;
+  private stepLitter(g: Game, dt: number) {
+    if (!this.litter) {
+      const max = this.reducedFx ? 60 : 180;
+      const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.InstancedMesh(geo, mat, max); m.count = 0; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); return m; };
+      this.litter = { kinds: [
+        mk(new THREE.PlaneGeometry(0.32, 0.24).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xe8e3d8, roughness: 0.9, side: THREE.DoubleSide })), // paper
+        mk(new THREE.BoxGeometry(0.42, 0.28, 0.32), new THREE.MeshStandardMaterial({ color: 0xa77d4e, roughness: 0.95 })), // cardboard
+        mk(new THREE.SphereGeometry(0.16, 6, 4).scale(1, 0.55, 1.2), new THREE.MeshStandardMaterial({ color: 0x1d1e22, roughness: 0.4, metalness: 0.1 })), // bin bags
+        mk(new THREE.CylinderGeometry(0.035, 0.035, 0.26, 6).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2f5a35, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85 })), // bottles
+      ], n: [0, 0, 0, 0], acc: 0, seed: 1 };
+    }
+    const L = this.litter; const max = L.kinds[0].instanceMatrix.count;
+    const rnd = () => { L.seed = (L.seed * 16807) % 2147483647; return L.seed / 2147483647; };
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3();
+    const drop = (x: number, z: number, spread: number) => {
+      const k = [0, 0, 0, 1, 1, 2, 3][Math.floor(rnd() * 7)]; if (L.n[k] >= max) return;
+      const px = x + (rnd() - 0.5) * spread, pz = z + (rnd() - 0.5) * spread; if (!g.nav.walkable(px, pz)) return;
+      const y = k === 0 ? 0.04 : k === 1 ? 0.14 : k === 2 ? 0.07 : 0.05;
+      e.set(k === 1 ? (rnd() < 0.3 ? Math.PI / 2 : 0) : 0, rnd() * Math.PI * 2, 0); q.setFromEuler(e); const s2 = 0.7 + rnd() * 0.6; sc.set(s2, s2, s2);
+      L.kinds[k].setMatrixAt(L.n[k]++, m4.compose(pos.set(px, y, pz), q, sc)); L.kinds[k].count = L.n[k]; L.kinds[k].instanceMatrix.needsUpdate = true;
+    };
+    if (dt <= 0) return;
+    // rioters drop things as they go (more when carrying loot); broken shop fronts spill goods onto the pavement
+    L.acc += dt;
+    if (L.acc < 0.5) return; L.acc = 0;
+    for (const u of g.units) if (u.side === 'att' && (u.moving || u.state === 'collect') && rnd() < (u.carrying > 0 || u.state === 'collect' ? 0.25 : 0.06)) drop(u.x, u.z, 1.2);
+    g.stores.forEach((s, i) => { if (s.structure <= 0 && rnd() < 0.35) { const sd = this.map.stores[i]; drop(s.door.x + sd.normal.x * 1.8, s.door.z + sd.normal.z * 1.8, sd.width * 0.8); } });
+  }
+
   render(g: Game, dt: number) {
     if (this.disposed) return;
     this.gameRef = g;
     this.time += dt;
     this.stepBackdrop(g, dt);
+    this.stepLitter(g, dt);
     // keyboard pan
     const kp = this.dist * 0.9 * dt;
     if (this.keys.has('a') || this.keys.has('arrowleft')) this.target.x -= kp;
