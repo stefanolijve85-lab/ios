@@ -161,7 +161,8 @@
     "prop.delivery_van": {
       "file": "final/prop.delivery_van.glb",
       "status": "final",
-      "note": "Tripo H3.1 multiview (4 views, detailed) of the SOLOTECH van, simplified to 40k triangles"
+      "note": "Tripo H3.1 multiview (4 views, detailed) of the SOLOTECH van, simplified to 40k triangles",
+      "city": "paris"
     },
     "char.thrower": {
       "file": "placeholder/char_thrower.glb",
@@ -216,7 +217,8 @@
     "prop.fountain": {
       "file": "final/prop.fountain.glb",
       "status": "final",
-      "note": "Tripo H3.1 multiview (4 dry views, detailed) of the Paris fountain pack, simplified to 50k triangles, 2048 px textures; water is added in code"
+      "note": "Tripo H3.1 multiview (4 dry views, detailed) of the Paris fountain pack, simplified to 50k triangles, 2048 px textures; water is added in code",
+      "city": "paris"
     },
     "anim.run": {
       "file": "final/anim.run.glb",
@@ -415,7 +417,8 @@
     "prop.supply_truck": {
       "file": "final/prop.supply_truck.glb",
       "status": "final",
-      "note": "Tripo H3.1 multiview (4 views, detailed) of the SOLOTECH box truck, simplified to 40k triangles; roof panel added in code"
+      "note": "Tripo H3.1 multiview (4 views, detailed) of the SOLOTECH box truck, simplified to 40k triangles; roof panel added in code",
+      "city": "saopaulo"
     },
     "char.shop_security.paris": {
       "file": "final/char.shop_security.paris.glb",
