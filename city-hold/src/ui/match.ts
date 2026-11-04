@@ -11,7 +11,7 @@ import { setFigureChoices } from '../render/character';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
 /** cards that are neither a unit bought at the van nor a structure */
-type SpecialKind = 'romeo' | 'cannon';
+type SpecialKind = 'romeo' | 'cannon' | 'blus';
 
 const DEF_CARDS: { kind: DefKind | BuildKind | SpecialKind; label: string; img: string; note: string }[] = [
   { kind: 'security', label: 'Security', img: 'ui/10_security_officer.webp', note: 'Fast · intercepts one offender' },
@@ -21,6 +21,7 @@ const DEF_CARDS: { kind: DefKind | BuildKind | SpecialKind; label: string; img: 
   { kind: 'concrete', label: 'Concrete', img: 'ui/31_concrete_barriers.webp', note: '2× durability · large socket' },
   { kind: 'camera', label: 'Camera', img: 'ui/16_camera_mast.webp', note: 'Detection · no damage' },
   { kind: 'firefighter', label: 'Firefighter', img: 'ui/fx_firefighter_hose.webp', note: 'Extinguishes fires' },
+  { kind: 'blus', label: 'Fire tender', img: 'ui/blus.webp', note: 'Drives to a fire · puts it out' },
   { kind: 'cannon', label: 'Water cannon', img: 'ui/water_cannon.webp', note: 'Knocks rioters down · tap the spot' },
 ];
 
@@ -230,6 +231,12 @@ export class Match {
   private cardDef(kind: DefKind | BuildKind | SpecialKind) {
     this.sfx.play('click');
     if (kind === 'romeo') { this.openRomeoPick(); return; }
+    if (kind === 'blus') {
+      const c = this.game.canBlus(); if (!c.ok) { this.toast(c.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); return; }
+      this.blusAim = !this.blusAim; this.cannonAim = false;
+      if (this.blusAim) this.toast(this.settings.language === 'en' ? 'Tap the fire the tender should put out' : 'Tik de brand aan die de bluswagen moet blussen', 'info');
+      this.refreshHud(true); return;
+    }
     if (kind === 'cannon') {
       const c = this.game.canCannon(); if (!c.ok) { this.toast(c.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); return; }
       this.cannonAim = !this.cannonAim;
@@ -258,6 +265,13 @@ export class Match {
       const k = this.hackSkill; this.hackSkill = null;
       const r = g.deployHacker(k, p.x, p.z);
       if (r.ok) { this.sfx.play('buy'); this.showRecruit('ui/hacker.webp', 'Hacker'); const t = g.units.find((u) => u.hack?.skill === k); if (t?.hack) this.view.showDestination(t.hack.tx, t.hack.tz, null, 0xffb020); }
+      else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
+      this.refreshHud(true); return;
+    }
+    if (this.blusAim && isDef) {
+      this.blusAim = false;
+      const r = g.sendBlus(p.x, p.z);
+      if (r.ok) { this.sfx.play('buy'); this.sfx.play('dispatch'); const f = g.fires.find((ff) => ff.id === g.blus?.fireId); if (f) this.view.showDestination(f.x, f.z, null, 0xff6a3a); }
       else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
       this.refreshHud(true); return;
     }
@@ -459,6 +473,7 @@ export class Match {
   // ---- Romeo team: choose how they come in, then tap where they should go
   private romeoMode: 'public' | 'bus' | null = null;
   private cannonAim = false;
+  private blusAim = false;
   private romeoPick: HTMLElement | null = null;
   private openRomeoPick() {
     if (this.romeoPick) { this.closeRomeoPick(); return; }
@@ -574,6 +589,7 @@ export class Match {
       const cost = isDef ? (k === 'barrier' || k === 'concrete' || k === 'camera' ? g.placeCost(k) : BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs]) : BALANCE.looters.costs[k as AttKind];
       c.disabled = g.budget < cost || g.over;
       if (isDef && k === 'romeo') c.disabled = !g.canRomeo('public').ok && !g.canRomeo('bus').ok;
+      if (isDef && k === 'blus') { c.disabled = !g.canBlus().ok; c.classList.toggle('active', this.blusAim); }
       if (isDef && k === 'cannon') { c.disabled = !g.canCannon().ok; c.classList.toggle('active', this.cannonAim); }
       if (!isDef && k === 'hacker') c.disabled = !(['tablet', 'laptop', 'radio'] as const).some((h) => g.canHack(h).ok);
       // the first crowd barriers are free: the card says so (and how many are left)

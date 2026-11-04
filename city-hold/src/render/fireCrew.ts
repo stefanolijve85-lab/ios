@@ -195,7 +195,17 @@ export class FireCrew {
   private outletWorld(out: THREE.Vector3) { this.engine!.g.updateMatrixWorld(); return this.engine!.outlet.getWorldPosition(out); }
 
   update(g: Game, humans: Map<number, CharacterVisual>, dt: number, time: number) {
-    const ffs = g.units.filter((u) => u.kind === 'firefighter' && u.side === 'def');
+    const all = g.units.filter((u) => u.kind === 'firefighter' && u.side === 'def');
+    const ffs = all.filter((u) => !u.blusCrew); // the fire tender's man belongs to the tender, not to the parked engine
+    // the fire tender (bluswagen): the same truck, driving where the sim sends it
+    const b = g.blus;
+    if (b && b.state !== 'off') {
+      if (!this.blusE) { this.blusE = buildFireEngine(); for (const c of this.blusE.body.children) noReflection(c); for (const w of this.blusE.wheels) noReflection(w); this.scene.add(this.blusE.g); }
+      const E = this.blusE; const moved = Math.hypot(E.g.position.x - b.x, E.g.position.z - b.z);
+      E.g.position.set(b.x, 0, b.z); E.g.rotation.y = b.yaw; E.g.visible = true;
+      for (const w of E.wheels) w.rotation.x += moved / 0.52;
+      E.beacons.forEach((bc, i) => { const ph = (time * 2.4 + (i % 2) * 0.5) % 1; const on = ph < 0.12 || (ph > 0.2 && ph < 0.32); (bc.material as THREE.MeshBasicMaterial).color.setHex(on ? bc.userData.base : 0x220808); (bc.userData.halo as THREE.Sprite).visible = on; const pool = bc.userData.pool as THREE.Mesh | undefined; if (pool && i < 2) pool.visible = on; });
+    }
     if (ffs.length && !this.started) {
       this.started = true; if (!this.engine) this.build();
       this.drive.left = FIRE_ENGINE_RUN; this.drive.v = 10; // comes up the street at about 30 km/h and brakes to a stop at its spot
@@ -212,10 +222,11 @@ export class FireCrew {
       });
     }
     const seen = new Set<number>();
-    for (const u of ffs) {
-      const h = humans.get(u.id); if (!h || !this.engine) continue;
+    for (const u of all) {
+      const eng = u.blusCrew ? this.blusE : this.engine;
+      const h = humans.get(u.id); if (!h || !eng) continue;
       seen.add(u.id);
-      this.step(u, h, g, dt, time);
+      this.step(u, h, g, dt, time, eng);
     }
     for (const [id, c] of this.crews) if (!seen.has(id)) { this.scene.remove(c.hose, c.nozzle, c.jet, c.mist, c.mate.root); this.crews.delete(id); }
   }
@@ -259,7 +270,8 @@ export class FireCrew {
     return c;
   }
 
-  private step(u: Unit, h: CharacterVisual, g: Game, dt: number, time: number) {
+  private blusE: FireEngine | null = null;
+  private step(u: Unit, h: CharacterVisual, g: Game, dt: number, time: number, eng: FireEngine) {
     const c = this.crew(u);
     const pos = h.root.position; const yaw = h.root.rotation.y;
     const fwd = this.tmp.set(Math.sin(yaw), 0, Math.cos(yaw));
@@ -269,7 +281,7 @@ export class FireCrew {
     // the line comes off the engine as soon as he sets out: walking to a fire, or sent somewhere (then he picks up the
     // nearest fire there); walking back over it reels it in
     const out = !!fire || (away && (c.crumbs.length > 0 || u.state === 'move' || u.state === 'extinguish'));
-    const outlet = this.outletWorld(new THREE.Vector3());
+    eng.g.updateMatrixWorld(); const outlet = eng.outlet.getWorldPosition(new THREE.Vector3());
     // lay the line behind him: a breadcrumb every 0.7 m; walking back over it reels it in
     if (out) {
       if (!c.crumbs.length) c.crumbs.push(new THREE.Vector3(outlet.x, 0.05, outlet.z));
@@ -291,7 +303,7 @@ export class FireCrew {
       if (c.rebuildT <= 0) {
         c.rebuildT = 0.08;
         // outlet -> down to the street -> the laid line (gently snaking) -> up to the back of the nozzle
-        const pts: THREE.Vector3[] = [outlet.clone(), new THREE.Vector3(outlet.x, 0.06, outlet.z).addScaledVector(new THREE.Vector3(outlet.x - this.engine!.g.position.x, 0, outlet.z - this.engine!.g.position.z).normalize(), 0.5)];
+        const pts: THREE.Vector3[] = [outlet.clone(), new THREE.Vector3(outlet.x, 0.06, outlet.z).addScaledVector(new THREE.Vector3(outlet.x - eng.g.position.x, 0, outlet.z - eng.g.position.z).normalize(), 0.5)];
         c.crumbs.forEach((p, i) => { if (i === 0) return; const w = Math.sin(i * 1.7) * 0.18; pts.push(new THREE.Vector3(p.x + w * fwd.z, 0.05, p.z - w * fwd.x)); });
         const behind = hand.clone().addScaledVector(fwd, -0.5); behind.y = 0.05;
         const lastP = pts[pts.length - 1];

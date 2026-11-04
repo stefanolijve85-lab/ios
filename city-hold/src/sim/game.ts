@@ -78,6 +78,7 @@ export interface Unit {
   /** a hacker on a job (looting side): which skill, the target and the work done */ hack?: { skill: HackSkill; tx: number; tz: number; target: number; t: number; at: Vec2 | null };
   /** a guard sent to check a fake radio call: back to his post after this time */ distractUntil?: number;
   /** knocked off his feet by the water cannon: lies down until this time */ downUntil?: number;
+  /** the firefighter of the fire tender (bluswagen): back into the truck when the fire is out */ blusCrew?: boolean;
   /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
@@ -633,6 +634,75 @@ export class Game {
     for (const f of this.fires) if (!f.out && Math.hypot(f.x - c.tx, f.z - c.tz) < C.splash + 1) { f.progress += dt * 0.6; if (f.progress >= 1) { f.out = true; this.emit({ type: 'extinguished', text: 'Fire extinguished', x: f.x, z: f.z }); } }
   }
 
+  // ---- fire tender (bluswagen): drives to the chosen fire over open ground, one firefighter steps out and puts it out,
+  // climbs back in, and the tender is free again where it stands
+  blus: { x: number; z: number; yaw: number; state: 'off' | 'driving' | 'prep' | 'working' | 'packing' | 'ready'; t: number; path: Vec2[] | null; pi: number; fireId: number; crew: number } | null = null;
+  canBlus(): ActionResult {
+    if (this.side !== 'defence' || this.over) return { ok: false, reason: 'Not available' };
+    const b = this.blus; if (b && b.state !== 'off' && b.state !== 'ready') return { ok: false, reason: 'The fire tender is busy' };
+    if (this.budget < BALANCE.defence.costs.blus) return { ok: false, reason: 'Insufficient budget' };
+    if (!this.fires.some((f) => !f.out && !f.ambient)) return { ok: false, reason: 'Nothing is burning' };
+    return { ok: true };
+  }
+  sendBlus(x: number, z: number): ActionResult {
+    const chk = this.canBlus(); if (!chk.ok) return this.deny(chk.reason!);
+    const B = BALANCE.defence.blus;
+    const fire = this.fires.filter((f) => !f.out && !f.ambient && Math.hypot(f.x - x, f.z - z) < B.pick).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0];
+    if (!fire) return this.deny('Tap a burning shop or car');
+    // where it starts: where it stands, or (first time) the street entry nearest the fire
+    let from: Vec2;
+    if (this.blus && this.blus.state === 'ready') from = { x: this.blus.x, z: this.blus.z };
+    else { const ent = this.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - fire.x, a.z - fire.z) - Math.hypot(b.x - fire.x, b.z - fire.z))[0]; from = this.nav.nearestWalkable(ent.x, ent.z, 4) ?? { x: ent.x, z: ent.z }; }
+    // the stop: a few metres from the fire on the open side (towards the middle of the map, where the camera looks)
+    const bb = this.map.bounds; const cx = (bb.x0 + bb.x1) / 2, cz = (bb.z0 + bb.z1) / 2;
+    const dx = cx - fire.x, dz = cz - fire.z, dl = Math.hypot(dx, dz) || 1;
+    const stop = this.nav.nearestWalkable(fire.x + (dx / dl) * B.stopFrom, fire.z + (dz / dl) * B.stopFrom, 3) ?? this.nav.nearestWalkable(fire.x, fire.z, 6);
+    const path = stop ? this.nav.findPath(from, stop, 'solid', 0) : null;
+    if (!stop || !path) return this.deny('No way through to that fire');
+    this.budget -= BALANCE.defence.costs.blus;
+    this.blus = { x: from.x, z: from.z, yaw: Math.atan2(path[1 % path.length].x - from.x, path[1 % path.length].z - from.z), state: 'driving', t: 0, path, pi: 1, fireId: fire.id, crew: -1 };
+    this.emit({ type: 'purchase', text: `Fire tender on its way (-${BALANCE.defence.costs.blus})`, x: fire.x, z: fire.z, amount: BALANCE.defence.costs.blus });
+    return { ok: true };
+  }
+  private stepBlus(dt: number) {
+    const b = this.blus; if (!b) return; const B = BALANCE.defence.blus; b.t += dt;
+    const fire = this.fires.find((f) => f.id === b.fireId);
+    const fireGone = !fire || fire.out;
+    if (b.state === 'driving') {
+      let step = B.speed * Math.min(1, 0.35 + b.t * 0.4) * dt; // pulls away, then cruises
+      while (b.path && b.pi < b.path.length && step > 0) {
+        const p = b.path[b.pi]; const ddx = p.x - b.x, ddz = p.z - b.z, d = Math.hypot(ddx, ddz);
+        if (d < 1e-3) { b.pi++; continue; }
+        const want = Math.atan2(ddx, ddz); let dy = want - b.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; b.yaw += dy * Math.min(1, dt * 4);
+        const m = Math.min(step, d); b.x += (ddx / d) * m; b.z += (ddz / d) * m; step -= m; if (m >= d) b.pi++;
+      }
+      if (!b.path || b.pi >= b.path.length) { b.state = 'prep'; b.t = 0; }
+      return;
+    }
+    if (b.state === 'prep') {
+      if (fireGone) { b.state = 'ready'; return; }
+      if (b.t >= B.prep) {
+        // the firefighter steps out on the kerb side and goes for the fire with the hose
+        const sx = b.x + Math.cos(b.yaw) * 1.6, sz = b.z - Math.sin(b.yaw) * 1.6;
+        const u = this.spawnDefender('firefighter', { x: sx, z: sz }); u.blusCrew = true; u.fireId = b.fireId; u.state = 'extinguish'; u.home = { x: sx, z: sz };
+        this.setPath(u, this.nav.nearestWalkable(fire!.x, fire!.z, 4) ?? fire!);
+        b.crew = u.id; b.state = 'working'; b.t = 0;
+      }
+      return;
+    }
+    if (b.state === 'working') {
+      const u = this.unit(b.crew);
+      if (!u) { b.state = 'packing'; b.t = 0; return; }
+      // fire out (or gone): he walks back and climbs in
+      if (u.state !== 'extinguish') {
+        if (Math.hypot(u.x - u.home.x, u.z - u.home.z) < 0.8 || (u.state === 'idle' && !u.path)) { this.units = this.units.filter((o) => o !== u); b.crew = -1; b.state = 'packing'; b.t = 0; }
+        else if (u.state !== 'return') { u.state = 'return'; this.setPath(u, u.home); }
+      }
+      return;
+    }
+    if (b.state === 'packing' && b.t >= B.pack) b.state = 'ready';
+  }
+
   romeoReadyAt = 0;
   romeoTeams() { return Math.ceil(this.defenders().filter((d) => d.role === 'romeo').length / 2); }
   canRomeo(mode: 'public' | 'bus'): ActionResult {
@@ -890,6 +960,7 @@ export class Game {
     this.stepFires(dt);
     this.stepGas(dt);
     this.stepCannon(dt);
+    this.stepBlus(dt);
     this.stepDistractions();
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;
@@ -1344,11 +1415,11 @@ export class Game {
       // a fire right where he was sent (within 8 m) first; otherwise burning shops before cars and street fires, nearest first
       const key = (f: Fire) => { const d = Math.hypot(f.x - u.x, f.z - u.z); return d < 8 ? d - 1000 : (f.store < 0 ? 500 : 0) + d; };
       const fire = this.fires.filter((f) => !f.out && (!f.ambient || Math.hypot(f.x - u.x, f.z - u.z) < 8)).sort((a, b) => key(a) - key(b))[0];
-      if (fire && Math.hypot(fire.x - u.x, fire.z - u.z) < 40) { u.fireId = fire.id; u.state = 'extinguish'; this.setPath(u, fire); }
+      if (fire && !u.blusCrew && Math.hypot(fire.x - u.x, fire.z - u.z) < 40) { u.fireId = fire.id; u.state = 'extinguish'; this.setPath(u, fire); } // the tender's man only does the fire he was sent to
     }
     if (u.state === 'extinguish') {
       const f = this.fires.find((ff) => ff.id === u.fireId);
-      if (!f || f.out) { u.fireId = -1; if (this.side === 'defence') u.home = this.fireStationPoint(); this.goHome(u); return; } // back to the engine, also from a side street
+      if (!f || f.out) { u.fireId = -1; if (this.side === 'defence' && !u.blusCrew) u.home = this.fireStationPoint(); this.goHome(u); return; } // back to the engine, also from a side street
       const d = Math.hypot(f.x - u.x, f.z - u.z);
       // a car or street fire sits on ground he cannot stand on: the hose reaches further, and once he is as close as
       // he can get (path finished) he sprays from there instead of standing next to it
