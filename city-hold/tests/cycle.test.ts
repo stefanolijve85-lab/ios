@@ -19,7 +19,7 @@ describe('full game loop on the Paris street', () => {
     const sec = g.defenders().filter((d) => d.kind === 'security');
     g.moveUnits([sec[0].id], -10, -8); g.moveUnits([sec[1].id], 10, -8);
     g.moveUnits([g.defenders().find((d) => d.kind === 'shield')!.id], 0, -11);
-    const spent = 150 + 200 + 250 + 400;
+    const spent = 0 + 200 + 250 + 400; // the first crowd barrier is free
     expect(g.budget).toBe(1500 - spent);
     // 2. start the wave
     expect(g.startWave().ok).toBe(true);

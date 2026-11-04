@@ -207,6 +207,7 @@ export class Game {
     if (side === 'defence') {
       this.phase = 'prep';
       this.budget = BALANCE.defence.startBudget + bonus;
+      this.freeBarriers = BALANCE.defence.freeBarriers;
       // initial mobile reserve
       const sp = map.defenderSpawn;
       this.spawnDefender('security', { x: sp.x - 2, z: sp.z - 1 });
@@ -407,13 +408,21 @@ export class Game {
     return ok;
   }
 
+  /** crowd barriers still free to place (the defence starts with a few to build a first line) */
+  freeBarriers = 0;
+  /** what placing this costs now: a crowd barrier is free while free ones are left */
+  placeCost(kind: 'barrier' | 'concrete' | 'camera'): number {
+    if (this.side !== 'defence') return 0;
+    return kind === 'barrier' && this.freeBarriers > 0 ? 0 : BALANCE.defence.costs[kind];
+  }
+
   canPlace(kind: 'barrier' | 'concrete' | 'camera', socketId: string, rot?: number): ActionResult {
     const s = this.socket(socketId);
     if (!s) return { ok: false, reason: 'Invalid location' };
     if (this.socketUsed(socketId)) return { ok: false, reason: 'Socket occupied' };
     if (kind === 'concrete' && s.size !== 'large') return { ok: false, reason: 'Concrete barriers need a large socket' };
     if (kind !== 'concrete' && s.size !== 'small' && kind === 'camera') return { ok: false, reason: 'Cameras need a small socket' };
-    const cost = BALANCE.defence.costs[kind];
+    const cost = this.placeCost(kind);
     if (this.budget < cost) return { ok: false, reason: 'Insufficient budget' };
     if (kind !== 'camera') {
       const r = barrierRect(s.x, s.z, kind === 'concrete' ? 'large' : s.size, rot ?? s.rot);
@@ -429,10 +438,11 @@ export class Game {
     const chk = this.canPlace(kind, socketId, rot);
     if (!chk.ok) return this.deny(chk.reason!);
     const s = this.socket(socketId)!;
-    const cost = this.side === 'defence' ? BALANCE.defence.costs[kind] : 0;
+    const cost = this.placeCost(kind);
+    if (cost === 0 && kind === 'barrier' && this.side === 'defence') this.freeBarriers--;
     this.budget -= cost;
     this.addStructure(kind, s, rot);
-    this.emit({ type: 'purchase', text: `${kind === 'camera' ? 'Camera mast' : kind === 'concrete' ? 'Concrete barrier' : 'Barrier'} placed (-${cost})`, x: s.x, z: s.z, amount: cost });
+    this.emit({ type: 'purchase', text: `${kind === 'camera' ? 'Camera mast' : kind === 'concrete' ? 'Concrete barrier' : 'Barrier'} placed (${cost ? `-${cost}` : 'free'})`, x: s.x, z: s.z, amount: cost });
     return { ok: true };
   }
 

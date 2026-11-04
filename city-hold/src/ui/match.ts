@@ -217,7 +217,7 @@ export class Match {
   private cardDef(kind: DefKind | BuildKind) {
     this.sfx.play('click');
     if (kind === 'barrier' || kind === 'concrete' || kind === 'camera') {
-      if (this.game.budget < BALANCE.defence.costs[kind]) { this.toast('Insufficient budget', 'bad'); this.sfx.play('deny'); return; }
+      if (this.game.budget < this.game.placeCost(kind)) { this.toast('Insufficient budget', 'bad'); this.sfx.play('deny'); return; }
       this.placing = this.placing === kind ? null : kind; this.pending = null; this.view.setGhost(null, null, false);
       this.view.showSockets = this.placing ? (id) => this.game.canPlace(this.placing!, id).ok : null;
       this.view.refreshSockets(this.game);
@@ -483,8 +483,10 @@ export class Match {
     // cards affordability
     this.el.cards.querySelectorAll<HTMLButtonElement>('.card').forEach((c) => {
       const k = c.dataset.kind!;
-      const cost = isDef ? BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs] : BALANCE.looters.costs[k as AttKind];
+      const cost = isDef ? (k === 'barrier' || k === 'concrete' || k === 'camera' ? g.placeCost(k) : BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs]) : BALANCE.looters.costs[k as AttKind];
       c.disabled = g.budget < cost || g.over;
+      // the first crowd barriers are free: the card says so (and how many are left)
+      if (isDef && k === 'barrier') { const cc = c.querySelector<HTMLElement>('.cc'); const free = g.freeBarriers > 0; const txt = free ? `${this.settings.language === 'en' ? 'FREE' : 'GRATIS'} ×${g.freeBarriers}` : String(cost); if (cc && cc.textContent !== txt) { cc.textContent = txt; cc.classList.toggle('free', free); } }
       c.classList.toggle('active', this.placing === k);
     });
     this.updateHint();

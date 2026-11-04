@@ -9,6 +9,8 @@ export const BALANCE = {
   tickRate: 30,
   defence: {
     startBudget: 1500,
+    /** crowd barriers the defence may put down for free at the start, to build up a first line */
+    freeBarriers: 2,
     waveReward: 350,
     waves: 12,
     storesNeededToWin: 2,

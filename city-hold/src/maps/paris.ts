@@ -35,7 +35,7 @@ const props: PropDef[] = [
   { type: 'planter', x: -12.2, z: 11.6, collide: true, r: 0.7 },
   { type: 'planter', x: 12.2, z: 11.6, collide: true, r: 0.7 },
   { type: 'tree', x: -19.5, z: 1.8, collide: true, r: 0.8 },
-  { type: 'tree', x: 18.6, z: 3.1, collide: true, r: 0.8 },
+  { type: 'tree', x: 18.6, z: -5.2, collide: true, r: 0.8 }, // up beside the east street: no longer in front of the police van where the reserve stands
   // bollards along the foreground pavement (gaps are walkable)
   ...[-9, -7, -3.4, 3.4, 7, 9, -13, 13].map((x) => ({ type: 'bollard' as const, x, z: 8.5, collide: true, r: 0.15 })),
   // crowd-control fences against the side facades, as in images 02/03 (decor, off the walking lines)

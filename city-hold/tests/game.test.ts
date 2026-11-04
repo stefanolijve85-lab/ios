@@ -18,7 +18,13 @@ describe('economy', () => {
     expect(g.budget).toBe(850);
     expect(g.place('camera', 'p7').ok).toBe(true);
     expect(g.budget).toBe(650);
+    // the first crowd barriers are free
+    expect(g.freeBarriers).toBe(2);
     expect(g.place('barrier', 'p5').ok).toBe(true);
+    expect(g.budget).toBe(650);
+    expect(g.freeBarriers).toBe(1);
+    g.freeBarriers = 0; // then they cost again
+    expect(g.place('barrier', 'p4').ok).toBe(true);
     expect(g.budget).toBe(500);
     expect(g.buyUnit('shield').ok).toBe(true); // 400
     expect(g.budget).toBe(100);
