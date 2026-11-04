@@ -4,7 +4,10 @@ import { ASSET_Q } from '../assetVer';
  * as soon as the page opens (during the intro), kept as an in-memory blob, and moved into each loading screen, so it
  * starts on the first frame without waiting for the network. The first tap anywhere "unlocks" it for iPad/iPhone,
  * which otherwise may refuse to play a video that was not started from a tap (Low Power mode). */
-const SRC = `menu/loading.mp4${ASSET_Q}`;
+/** a phone held upright gets the 9:16 cut (cropped from the 1080p originals, full screen); everything else 16:9 */
+const PORTRAIT = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches && matchMedia('(orientation: portrait)').matches;
+const SRC = `menu/${PORTRAIT ? 'loading_portrait' : 'loading'}.mp4${ASSET_Q}`;
+const POSTER = PORTRAIT ? 'menu/loading_poster_portrait.jpg' : 'menu/loading_poster.jpg';
 let film: HTMLVideoElement | null = null;
 let warmed = false;
 
@@ -14,7 +17,7 @@ function filmEl(): HTMLVideoElement {
   v.className = 'rm-loadvid';
   v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = false;
   v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
-  v.preload = 'auto'; v.poster = 'menu/loading_poster.jpg'; // no source yet: it gets the downloaded copy (see warmLoadingFilm)
+  v.preload = 'auto'; v.poster = POSTER; // no source yet: it gets the downloaded copy (see warmLoadingFilm)
   // a loading screen that was replaced leaves the film detached: stop decoding it
   v.addEventListener('timeupdate', () => { if (!v.isConnected) v.pause(); });
   film = v;
@@ -68,7 +71,7 @@ export function startLoadingFilm(root: ParentNode) {
 let overlay: HTMLElement | null = null;
 export function showLoading(text: string) {
   if (overlay) { setLoadingText(text); return; }
-  overlay = document.createElement('div'); overlay.className = 'rm-loading rm-loading-global'; overlay.setAttribute('role', 'status');
+  overlay = document.createElement('div'); overlay.className = 'rm-loading rm-loading-global' + (PORTRAIT ? ' portrait' : ''); overlay.setAttribute('role', 'status');
   overlay.innerHTML = loadingInner(text); document.body.appendChild(overlay); startLoadingFilm(overlay);
 }
 export function setLoadingText(text: string) { const el = overlay?.querySelector('[data-l]'); if (el) el.textContent = text; }

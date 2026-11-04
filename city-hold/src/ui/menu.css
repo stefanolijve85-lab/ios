@@ -351,3 +351,7 @@
 /* the loading screen of a match start: on top of everything, fades out when the street is ready */
 .rm-loading-global { position: fixed; inset: 0; z-index: 80; transition: opacity .4s ease; }
 .rm-loading-global.out { opacity: 0; pointer-events: none; }
+/* phone upright: the 9:16 loading film fills the screen */
+.rm-loading.portrait { background-image: url(/menu/loading_poster_portrait.jpg); background-size: cover; }
+.rm-loading.portrait .rm-loadbg { display: none; }
+.rm-loading.portrait .rm-loadvid { object-fit: cover; }
