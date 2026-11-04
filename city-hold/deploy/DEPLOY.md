@@ -5,7 +5,7 @@ RIOTS is na `npm run build` alleen een map met bestanden (`dist/`): HTML, JavaSc
 naast de sites die er al staan. Die worden niet aangeraakt.
 
 ```
-internet ──▶ nginx :443 ──┬─▶ /var/www/riots            (riots.<domein>, statisch)
+internet ──▶ nginx :443 ──┬─▶ /var/www/riots            (riots.xitgames.com, statisch)
                           ├─▶ Kwizillo (ongewijzigd)
                           └─▶ Detepo   (ongewijzigd)
 ```
@@ -14,13 +14,14 @@ Toegang zoals bij Kwizillo: via de WireGuard-tunnel, `ssh -i ~/.ssh/kwizillo_dep
 
 ## Eenmalig
 
-1. **DNS**: een A-record voor de gekozen naam (bijv. `riots` onder je domein) naar `213.126.59.35`.
-2. **nginx**: in `nginx-riots.conf` `riots.example.nl` vervangen door de echte naam (2×), dan op de server:
+1. **DNS** bij de beheerder van xitgames.com: A-record `riots` → `213.126.59.35` (TTL 300, geen AAAA).
+   Controle: `dig +short riots.xitgames.com` geeft `213.126.59.35`.
+2. **nginx** (`nginx-riots.conf` staat al op `riots.xitgames.com`), op de server:
    ```bash
    sudo cp nginx-riots.conf /etc/nginx/sites-available/riots
    sudo ln -s /etc/nginx/sites-available/riots /etc/nginx/sites-enabled/riots
    sudo nginx -t && sudo systemctl reload nginx
-   sudo certbot --nginx -d riots.<domein>
+   sudo certbot --nginx -d riots.xitgames.com
    ```
    (`nginx-riots.conf` eerst naar de server: `scp -i ~/.ssh/kwizillo_deploy deploy/nginx-riots.conf solotech@10.88.0.2:`)
 
