@@ -6,7 +6,7 @@ import { BALANCE } from '../src/config/balance';
 const run = (g: Game, s: number) => { for (let i = 0; i < 30 * s; i++) g.step(1 / 30); };
 const burn = (g: Game, x: number, z: number, store = -1) => { const f = { id: 900 + g.fires.length, x, z, store, prop: -1, progress: 0, out: false, t: 0, ttl: 9999 }; g.fires.push(f); return f; };
 
-test('fire tender: drives to the fire, the firefighter puts it out, climbs back in, the tender is free again', () => {
+test('fire tender: drives to the fire, the firefighter puts it out, climbs back in, the tender backs out again', () => {
   const g = new Game(PARIS, 'defence', { seed: 2 }); g.budget = 3000;
   expect(g.canBlus().ok).toBe(false); // nothing burns yet
   const f = burn(g, 6, -6);
@@ -20,8 +20,10 @@ test('fire tender: drives to the fire, the firefighter puts it out, climbs back 
   expect(Math.hypot(g.blus!.x - f.x, g.blus!.z - f.z)).toBeLessThan(9);
   run(g, 40);
   expect(f.out).toBe(true);
-  expect(g.blus!.state).toBe('ready');
   expect(g.units.some((u) => u.blusCrew)).toBe(false); // back in the truck
+  run(g, 30);
+  expect(g.blus!.state).toBe('off'); // and it backed out of the square again
+  expect(g.canBlus().ok).toBe(false); // (nothing burns any more)
 });
 
 test('a fire out of reach is refused (no charge); a fire put out does no more damage', () => {

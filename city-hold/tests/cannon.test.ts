@@ -18,9 +18,9 @@ test('water cannon: drives in once, then knocks rioters at the target off their 
   let down = false;
   for (let i = 0; i < 30 * (C.drive + C.spray + 1) && !down; i++) { g.cannon!.tx = a.x; g.cannon!.tz = a.z; g.step(1 / 30); down = g.attackers().some((u) => (u.downUntil ?? 0) > g.time); }
   expect(down).toBe(true);
-  run(g, C.spray + 1);
-  expect(g.cannon!.state).toBe('ready');
-  expect(Math.hypot(g.cannon!.x - PARIS.waterCannon!.post.x, g.cannon!.z - PARIS.waterCannon!.post.z)).toBeLessThan(0.1);
+  run(g, C.spray + C.drive + 1);
+  expect(g.cannon!.state).toBe('home'); // it backed up the street again, out of the crowd's way
+  expect(Math.hypot(g.cannon!.x - PARIS.waterCannon!.home.x, g.cannon!.z - PARIS.waterCannon!.home.z)).toBeLessThan(0.1);
 });
 
 test('water cannon: out of reach and too close are refused without charge; cooldown after a spray', () => {
@@ -30,7 +30,7 @@ test('water cannon: out of reach and too close are refused without charge; coold
   expect(g.budget).toBe(b);
   expect(g.fireCannon(5, -8).ok).toBe(true);
   run(g, C.drive + C.spray + 1);
-  expect(g.canCannon().ok).toBe(false); // still cooling down
+  expect(g.canCannon().ok).toBe(false); // still busy backing out / cooling down
   run(g, C.cooldown);
   expect(g.canCannon().ok).toBe(true);
 });

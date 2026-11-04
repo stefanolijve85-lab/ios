@@ -205,7 +205,7 @@ export class FireCrew {
       E.g.position.set(b.x, 0, b.z); E.g.rotation.y = b.yaw; E.g.visible = true;
       for (const w of E.wheels) w.rotation.x += moved / 0.52;
       E.beacons.forEach((bc, i) => { const ph = (time * 2.4 + (i % 2) * 0.5) % 1; const on = ph < 0.12 || (ph > 0.2 && ph < 0.32); (bc.material as THREE.MeshBasicMaterial).color.setHex(on ? bc.userData.base : 0x220808); (bc.userData.halo as THREE.Sprite).visible = on; const pool = bc.userData.pool as THREE.Mesh | undefined; if (pool && i < 2) pool.visible = on; });
-    }
+    } else if (this.blusE) this.blusE.g.visible = false; // backed out of the square: gone
     if (ffs.length && !this.started) {
       this.started = true; if (!this.engine) this.build();
       this.drive.left = FIRE_ENGINE_RUN; this.drive.v = 10; // comes up the street at about 30 km/h and brakes to a stop at its spot

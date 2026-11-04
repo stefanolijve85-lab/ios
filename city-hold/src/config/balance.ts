@@ -22,7 +22,7 @@ export const BALANCE = {
     /** fire tender (bluswagen): drives to a chosen fire, one firefighter steps out and puts it out, back in, available again */
     blus: { speed: 7, stopFrom: 5.5, prep: 1.5, pack: 2, pick: 6 },
     /** water cannon: drives in once, then each spray costs costs.cannon; knocks rioters off their feet along the jet and at the target */
-    cannon: { cooldown: 22, range: 30, drive: 6, spray: 4.5, beam: 1.5, splash: 3.2, down: 1.7, push: 3.4, minDist: 4, panic: 0.45 },
+    cannon: { assist: 3.5, cooldown: 22, range: 30, drive: 6, spray: 4.5, beam: 1.5, splash: 3.2, down: 1.7, push: 3.4, minDist: 4, panic: 0.45 },
     /** plywood boards: a protection layer in front of the shopfront, broken before the shutter takes damage */
     boardsHp: 50,
     maxDefenders: 14,

@@ -141,7 +141,7 @@ export class MatchView {
   private stepCannonView(g: Game, dt: number) {
     const c = g.cannon; if (!c) return;
     if (!this.cannonG) {
-      const m = vehicleModel('prop.water_cannon.paris', 8.6, 0); this.cannonG = new THREE.Group();
+      const m = vehicleModel('prop.water_cannon.paris', 8.6, 0, 2.55, 3.55); this.cannonG = new THREE.Group(); // its real proportions: the model came out much too fat
       if (m) this.cannonG.add(m); else { const b = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.2, 8.6).translate(0, 1.6, 0), new THREE.MeshStandardMaterial({ color: 0xe8e8ec })); this.cannonG.add(b); }
       noReflection(this.cannonG); this.scene.add(this.cannonG);
       for (const core of [true, false]) { const j = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(core)); j.frustumCulled = false; j.visible = false; noReflection(j); this.scene.add(j); this.cannonJet.push(j); }

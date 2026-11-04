@@ -574,12 +574,12 @@ export class Game {
   }
 
   // ---- police water cannon (defence): drives in from up the street once, then sprays where the player taps
-  cannon: { x: number; z: number; state: 'home' | 'driving' | 'ready' | 'spraying'; t: number; tx: number; tz: number; readyAt: number; pending: Vec2 | null } | null = null;
+  cannon: { x: number; z: number; state: 'home' | 'driving' | 'ready' | 'spraying' | 'leaving'; t: number; tx: number; tz: number; readyAt: number; pending: Vec2 | null; /** the rioter it locked on to (follows him) */ lock?: number } | null = null;
   private cannonInit() { const w = this.map.waterCannon; if (w && this.side === 'defence') this.cannon = { x: w.home.x, z: w.home.z, state: 'home', t: 0, tx: 0, tz: 0, readyAt: 0, pending: null }; }
   canCannon(): ActionResult {
     const c = this.cannon; const C = BALANCE.defence.cannon;
     if (!c || this.over) return { ok: false, reason: 'No water cannon here' };
-    if (c.state === 'driving' || c.state === 'spraying') return { ok: false, reason: 'The water cannon is busy' };
+    if (c.state === 'driving' || c.state === 'spraying' || c.state === 'leaving') return { ok: false, reason: 'The water cannon is busy' };
     if (this.time < c.readyAt) return { ok: false, reason: `Ready in ${Math.ceil(c.readyAt - this.time)} s` };
     if (this.budget < BALANCE.defence.costs.cannon) return { ok: false, reason: 'Insufficient budget' };
     return { ok: true };
@@ -587,10 +587,14 @@ export class Game {
   fireCannon(x: number, z: number): ActionResult {
     const chk = this.canCannon(); if (!chk.ok) return this.deny(chk.reason!);
     const c = this.cannon!; const C = BALANCE.defence.cannon; const post = this.map.waterCannon!.post;
+    // aim help: a tap within a few metres of rioters locks on to the nearest one, and the jet follows him
+    const near = this.attackers().filter((a) => !['held', 'restrained', 'escorted', 'removed', 'escaped'].includes(a.state) && Math.hypot(a.x - x, a.z - z) < C.assist)
+      .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0];
+    if (near) { x = near.x; z = near.z; }
     const d = Math.hypot(x - post.x, z - post.z);
     if (d > C.range) return this.deny('Out of the water cannon\'s reach');
     if (d < C.minDist + 1) return this.deny('Too close to the water cannon');
-    this.budget -= BALANCE.defence.costs.cannon; c.readyAt = this.time + C.cooldown; c.tx = x; c.tz = z;
+    this.budget -= BALANCE.defence.costs.cannon; c.readyAt = this.time + C.cooldown; c.tx = x; c.tz = z; c.lock = near?.id;
     if (c.state === 'home') { c.state = 'driving'; c.t = 0; } else { c.state = 'spraying'; c.t = 0; this.emit({ type: 'cannon', text: 'Water cannon!', x, z }); }
     this.emit({ type: 'purchase', text: `Water cannon (-${BALANCE.defence.costs.cannon})`, x, z, amount: BALANCE.defence.costs.cannon });
     return { ok: true };
@@ -604,8 +608,18 @@ export class Game {
       if (k >= 1) { c.state = 'spraying'; c.t = 0; this.emit({ type: 'cannon', text: 'Water cannon!', x: c.tx, z: c.tz }); }
       return;
     }
+    if (c.state === 'leaving') {
+      // reverses up the street to where it waits (slowly at first), so it never stands in the crowd's way
+      const k = Math.min(1, c.t / C.drive); const e = k * k;
+      c.x = w.post.x + (w.home.x - w.post.x) * e; c.z = w.post.z + (w.home.z - w.post.z) * e;
+      if (k >= 1) c.state = 'home';
+      return;
+    }
     if (c.state !== 'spraying') return;
-    if (c.t >= C.spray) { c.state = 'ready'; return; }
+    if (c.t >= C.spray) { c.state = 'leaving'; c.t = 0; c.lock = undefined; return; } // done: it backs out of the way again
+    // locked on: the jet follows him while he is in reach and on his feet (once he is down it stays where he fell)
+    const L0 = c.lock !== undefined ? this.unit(c.lock) : undefined;
+    if (L0 && L0.side === 'att' && !((L0.downUntil ?? 0) > this.time) && Math.hypot(L0.x - c.x, L0.z - c.z) < C.range) { c.tx += (L0.x - c.tx) * Math.min(1, dt * 6); c.tz += (L0.z - c.tz) * Math.min(1, dt * 6); }
     // the jet: from the truck to the target; everyone on the line (past the first metres) or in the splash goes down
     const dx = c.tx - c.x, dz = c.tz - c.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L;
     const reach = Math.min(1, c.t / 0.6); // the stream reaches out over the first moment
@@ -636,10 +650,10 @@ export class Game {
 
   // ---- fire tender (bluswagen): drives to the chosen fire over open ground, one firefighter steps out and puts it out,
   // climbs back in, and the tender is free again where it stands
-  blus: { x: number; z: number; yaw: number; state: 'off' | 'driving' | 'prep' | 'working' | 'packing' | 'ready'; t: number; path: Vec2[] | null; pi: number; fireId: number; crew: number } | null = null;
+  blus: { x: number; z: number; yaw: number; state: 'off' | 'driving' | 'prep' | 'working' | 'packing' | 'leaving' | 'ready'; t: number; path: Vec2[] | null; pi: number; fireId: number; crew: number; reverse?: boolean } | null = null;
   canBlus(): ActionResult {
     if (this.side !== 'defence' || this.over) return { ok: false, reason: 'Not available' };
-    const b = this.blus; if (b && b.state !== 'off' && b.state !== 'ready') return { ok: false, reason: 'The fire tender is busy' };
+    const b = this.blus; if (b && b.state !== 'off') return { ok: false, reason: 'The fire tender is busy' };
     if (this.budget < BALANCE.defence.costs.blus) return { ok: false, reason: 'Insufficient budget' };
     if (!this.fires.some((f) => !f.out && !f.ambient)) return { ok: false, reason: 'Nothing is burning' };
     return { ok: true };
@@ -651,8 +665,7 @@ export class Game {
     if (!fire) return this.deny('Tap a burning shop or car');
     // where it starts: where it stands, or (first time) the street entry nearest the fire
     let from: Vec2;
-    if (this.blus && this.blus.state === 'ready') from = { x: this.blus.x, z: this.blus.z };
-    else { const ent = this.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - fire.x, a.z - fire.z) - Math.hypot(b.x - fire.x, b.z - fire.z))[0]; from = this.nav.nearestWalkable(ent.x, ent.z, 4) ?? { x: ent.x, z: ent.z }; }
+    { const ent = this.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - fire.x, a.z - fire.z) - Math.hypot(b.x - fire.x, b.z - fire.z))[0]; from = this.nav.nearestWalkable(ent.x, ent.z, 4) ?? { x: ent.x, z: ent.z }; }
     // the stop: a few metres from the fire on the open side (towards the middle of the map, where the camera looks)
     const bb = this.map.bounds; const cx = (bb.x0 + bb.x1) / 2, cz = (bb.z0 + bb.z1) / 2;
     const dx = cx - fire.x, dz = cz - fire.z, dl = Math.hypot(dx, dz) || 1;
@@ -668,15 +681,15 @@ export class Game {
     const b = this.blus; if (!b) return; const B = BALANCE.defence.blus; b.t += dt;
     const fire = this.fires.find((f) => f.id === b.fireId);
     const fireGone = !fire || fire.out;
-    if (b.state === 'driving') {
-      let step = B.speed * Math.min(1, 0.35 + b.t * 0.4) * dt; // pulls away, then cruises
+    if (b.state === 'driving' || b.state === 'leaving') {
+      let step = B.speed * Math.min(1, 0.35 + b.t * 0.4) * dt * (b.reverse ? 0.55 : 1); // pulls away, then cruises; reverses slower
       while (b.path && b.pi < b.path.length && step > 0) {
         const p = b.path[b.pi]; const ddx = p.x - b.x, ddz = p.z - b.z, d = Math.hypot(ddx, ddz);
         if (d < 1e-3) { b.pi++; continue; }
-        const want = Math.atan2(ddx, ddz); let dy = want - b.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; b.yaw += dy * Math.min(1, dt * 4);
+        const want = Math.atan2(ddx, ddz) + (b.reverse ? Math.PI : 0); let dy = want - b.yaw; // reversing: the nose points away from where it goes while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; b.yaw += dy * Math.min(1, dt * 4);
         const m = Math.min(step, d); b.x += (ddx / d) * m; b.z += (ddz / d) * m; step -= m; if (m >= d) b.pi++;
       }
-      if (!b.path || b.pi >= b.path.length) { b.state = 'prep'; b.t = 0; }
+      if (!b.path || b.pi >= b.path.length) { if (b.state === 'leaving') { b.state = 'off'; b.reverse = false; } else { b.state = 'prep'; b.t = 0; } }
       return;
     }
     if (b.state === 'prep') {
@@ -700,7 +713,8 @@ export class Game {
       }
       return;
     }
-    if (b.state === 'packing' && b.t >= B.pack) b.state = 'ready';
+    // packed up: it backs out the way it came and leaves the square free
+    if (b.state === 'packing' && b.t >= B.pack) { b.path = b.path ? [...b.path].reverse() : null; b.pi = 1; b.state = 'leaving'; b.reverse = true; b.t = 0; }
   }
 
   romeoReadyAt = 0;

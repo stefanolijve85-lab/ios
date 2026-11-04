@@ -298,13 +298,15 @@ function policeVanModel(): { group: THREE.Group; beacons: THREE.Mesh[] } | null 
   const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
   const along = sz.z >= sz.x; const k = 5.8 / Math.max(sz.x, sz.z);
   const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m); inner.scale.setScalar(k);
+  const dims = POLICE_VAN_DIMS[slot]; if (dims) inner.scale.set(along ? dims[0] / sz.x : 5.8 / sz.x, dims[1] / sz.y, along ? 5.8 / sz.z : dims[0] / sz.z); // [width, height]: the Paris van came out too fat
   inner.rotation.y = (along ? 0 : -Math.PI / 2) + (POLICE_VAN_YAW[slot] ?? 0);
   const group = new THREE.Group(); group.add(inner);
-  const h = sz.y * k; const beacons: THREE.Mesh[] = [];
+  const h = sz.y * inner.scale.y; const beacons: THREE.Mesh[] = [];
   for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.22), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x * 0.8, h - 0.07, POLICE_VAN_BEACON_Z[slot] ?? 0.28); b.name = 'beacon'; group.add(b); beacons.push(b); }
   return { group, beacons };
 }
 /** turn applied to the police van model so its nose points to +z (set after looking at the model) */
+const POLICE_VAN_DIMS: Record<string, [number, number]> = { 'prop.police_van.paris': [2.05, 2.55] };
 const POLICE_VAN_YAW: Record<string, number> = { 'prop.police_van': 0, 'prop.police_van.paris': Math.PI };
 /** where the flashing beacon blocks sit along the roof (m from the middle, + is the nose) per model */
 const POLICE_VAN_BEACON_Z: Record<string, number> = { 'prop.police_van': 0.28, 'prop.police_van.paris': 2.05 };
@@ -332,12 +334,15 @@ export function noReflection(o: THREE.Object3D) { o.traverse((c) => c.layers.set
 /** turn per image-to-3D vehicle so its nose points to +z (set after looking at each model) */
 const VEHICLE_YAW: Record<string, number> = { delivery_van: Math.PI, supply_truck: 0 };
 /** an image-to-3D vehicle (any size and axis) fitted to a length in metres, long axis on z, standing on the ground */
-export function vehicleModel(slot: string, len: number, yaw = 0): THREE.Group | null {
+/** an image-to-3D vehicle fitted to its real length; given a width and height too, each axis is fitted on its own (the
+ *  four-view models of the Paris pack came out too short and fat: a water cannon as wide as it is long) */
+export function vehicleModel(slot: string, len: number, yaw = 0, wid?: number, h?: number): THREE.Group | null {
   if (slotStatus(slot) !== 'final') return null;
   const m = cloneModel(slot); if (!m) return null;
   const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
   const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m);
   inner.rotation.y = (sz.x > sz.z ? -Math.PI / 2 : 0) + yaw; inner.scale.setScalar(len / Math.max(sz.x, sz.z));
+  if (wid && h) { const alongX = sz.x > sz.z; inner.scale.set(alongX ? len / sz.x : wid / sz.x, h / Math.max(sz.y, 1e-3), alongX ? wid / sz.z : len / sz.z); }
   m.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } });
   const g = new THREE.Group(); g.add(inner); return g;
 }
@@ -496,7 +501,11 @@ export function buildProp(p: PropDef, parent: THREE.Group, i: number, cars: Worl
       const m = p.model ? finalProp(p.model) : null; if (!m) break;
       const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
       const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m);
-      if (p.type === 'vehicle') { if (sz.x > sz.z) inner.rotation.y = Math.PI / 2; inner.scale.setScalar((p.len ?? 4.4) / Math.max(sz.x, sz.z)); }
+      if (p.type === 'vehicle') {
+        if (sz.x > sz.z) inner.rotation.y = Math.PI / 2; inner.scale.setScalar((p.len ?? 4.4) / Math.max(sz.x, sz.z));
+        // real width and height when given: each axis fitted on its own (four-view models can come out too fat)
+        if (p.wid && p.h) { const alongX = sz.x > sz.z; inner.scale.set(alongX ? (p.len ?? 4.4) / sz.x : p.wid / sz.x, p.h / Math.max(sz.y, 1e-3), alongX ? p.wid / sz.z : (p.len ?? 4.4) / sz.z); }
+      }
       else inner.scale.setScalar((p.h ?? 1.2) / Math.max(sz.y, 1e-3));
       m.traverse((o) => { const me = o as THREE.Mesh; if (me.isMesh) { me.castShadow = true; me.receiveShadow = true; } });
       g.add(inner); break;

@@ -61,11 +61,11 @@ const props: PropDef[] = [
   { type: 'delivery_van', x: 23.0, z: -24, rot: 0, collide: true },
   // Paris pack (image-to-3D): a police car behind the staging van, a dusty red van parked far up the west street, a scooter
   // on the foreground pavement and the water cannon waiting at the top of the east street (scenery, beyond the play area)
-  { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -18.6, rot: 0, len: 4.6, wid: 1.9, collide: true },
-  { type: 'vehicle', model: 'prop.van_red.paris', x: -23.4, z: -37.5, rot: 180, len: 4.4, wid: 1.9 },
-  { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.9, wid: 0.7, collide: true },
-  { type: 'vehicle', model: 'prop.taxi.paris', x: 17.8, z: -40.5, rot: 180, len: 4.8, wid: 1.85 },
-  { type: 'vehicle', model: 'prop.solotech_van.paris', x: -19.8, z: -41.5, rot: 0, len: 5.2, wid: 2.0 },
+  { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -18.6, rot: 0, len: 4.6, wid: 1.82, h: 1.62, collide: true },
+  { type: 'vehicle', model: 'prop.van_red.paris', x: -23.4, z: -37.5, rot: 180, len: 4.4, wid: 1.82, h: 1.85 },
+  { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.95, wid: 0.72, h: 1.4, collide: true },
+  { type: 'vehicle', model: 'prop.taxi.paris', x: 17.8, z: -40.5, rot: 180, len: 4.9, wid: 1.85, h: 1.5 },
+  { type: 'vehicle', model: 'prop.solotech_van.paris', x: -19.8, z: -41.5, rot: 0, len: 5.3, wid: 2.0, h: 2.45 },
   { type: 'shelter', x: -16, z: 14.05, rot: 180, collide: true },
   { type: 'bench', x: -23.9, z: -13, rot: 90, collide: true, r: 0.75 },
   { type: 'bench', x: 23.9, z: -13, rot: -90, collide: true, r: 0.75 },
@@ -133,7 +133,7 @@ export const PARIS: MapDef = {
   ],
   van: { x: 22.6, z: 1.5, rot: 0 },
   fireEngine: { x: 15.6, z: 6.9, rot: 90 },
-  waterCannon: { home: { x: 20.6, z: -38 }, post: { x: 20.6, z: -19.5 }, rot: 180 }, // waits up the east street, sprays from its mouth // along the kerb of the foreground block, facing the cross street
+  waterCannon: { home: { x: 19.9, z: -38 }, post: { x: 19.9, z: -19.5 }, rot: 180 }, // waits up the east street, sprays from its mouth // along the kerb of the foreground block, facing the cross street
   defenderSpawn: { x: 19.2, z: 0.5 }, // far enough from the foreground block that its roof never hides the staging team
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)

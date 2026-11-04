@@ -535,7 +535,7 @@ export class Match {
   }
 
   toast(text: string, kind: 'good' | 'bad' | 'info') {
-    const t = document.createElement('div'); t.className = 'toast ' + kind; t.textContent = text;
+    const t = document.createElement('div'); t.className = 'toast t-' + kind; t.textContent = text; // (not plain 'info': that is the info panel's class and squeezed the toast to 18 px)
     this.el.toasts.prepend(t);
     while (this.el.toasts.children.length > 4) this.el.toasts.lastChild!.remove();
     setTimeout(() => t.classList.add('fade'), 2600); setTimeout(() => t.remove(), 3300);
