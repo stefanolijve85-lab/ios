@@ -114,7 +114,7 @@ export class Menu {
     document.title = 'RIOTS';
     const s = menuState.screen;
     this.galleryOff?.(); this.galleryOff = null;
-    warmLoadingFilm(); // the loading film downloads while the player is in the menus
+    if (s !== 'main') warmLoadingFilm(); // the loading film downloads in the menus (on the start screen: after the intro)
     if (s === 'main') this.main(); else if (s === 'cities') this.cities(); else if (s === 'side') this.side(); else if (s === 'progress') this.progress(); else if (s === 'gallery') this.gallery(); else this.settings();
     const first = this.app.querySelector<HTMLElement>('[data-autofocus]');
     // focus for keyboard/screen readers without drawing the focus ring on a mouse/touch visit
@@ -166,13 +166,16 @@ export class Menu {
   private intro() {
     // on every page load (not when coming back to the menu from a match); tests can switch it off with this flag
     let off = false; try { off = sessionStorage.getItem('riots.intro') === '1'; } catch { /* ignore */ }
-    if (this.introShown || off || navigator.webdriver || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (this.introShown || off || navigator.webdriver) { warmLoadingFilm(); return; } // (a phone set to reduce motion still gets the film: it is not a parallax effect)
     this.introShown = true;
     const nl = this.lang === 'nl';
     const el = document.createElement('div'); el.className = 'rm-intro';
-    el.innerHTML = `<video src="video/intro.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-sound" hidden>${nl ? '🔊 Tik voor geluid' : '🔊 Tap for sound'}</button><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
+    // phones and tablets get the 720p cut (half the download: on mobile data the 1080p one stalled on its first frame)
+    const small = matchMedia('(pointer: coarse)').matches || Math.max(screen.width, screen.height) <= 1366;
+    el.innerHTML = `<video src="video/${small ? 'intro_720' : 'intro'}.mp4" poster="video/intro_poster.jpg" autoplay muted playsinline preload="auto"></video><div class="rm-intro-shade" aria-hidden="true"></div><div class="rm-intro-logo" role="img" aria-label="RIOTS"><span class="rm-logo rm-intro-word">RIOTS</span><div class="rm-brush rm-intro-brush"></div></div><button class="rm-intro-sound" hidden>${nl ? '🔊 Tik voor geluid' : '🔊 Tap for sound'}</button><button class="rm-intro-skip">${nl ? 'Overslaan' : 'Skip'}</button>`;
     document.body.appendChild(el);
     const v = el.querySelector('video')!;
+    v.muted = true; v.defaultMuted = true; v.playsInline = true; // set as properties too: iOS checks these before it lets a film start by itself
     const soundBtn = el.querySelector<HTMLButtonElement>('.rm-intro-sound')!;
     // the mission track and a riot ambience under the intro (both through the music module, which routes them via Web
     // Audio so they fade on iPhone too). Phones only allow sound after a released tap: until then a button asks for one;
@@ -185,10 +188,13 @@ export class Menu {
       if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
       music.ambience('riot', 0); music.setIntensity(0.4); music.play('menu'); // the riot fades out, the menu music takes over
       setTimeout(() => el.remove(), 600);
+      warmLoadingFilm(); // the loading film downloads now that the intro no longer needs the connection
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     v.addEventListener('ended', close); v.addEventListener('error', close);
-    el.addEventListener('click', () => { soundBtn.hidden = true; }); // the music module itself starts the sound on this tap
+    // a tap turns the sound on (the music module starts it on this tap) and also starts the film when the phone did not
+    // let it start by itself (Low Power Mode blocks autoplay; the poster would just stand there)
+    el.addEventListener('click', () => { soundBtn.hidden = true; if (v.paused) void v.play().catch(() => {}); });
     el.querySelector('.rm-intro-skip')!.addEventListener('click', (e) => { e.stopPropagation(); close(); });
     window.addEventListener('keydown', onKey, true);
     void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
