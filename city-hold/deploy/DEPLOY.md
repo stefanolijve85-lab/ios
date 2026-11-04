@@ -14,8 +14,10 @@ Toegang zoals bij Kwizillo: via de WireGuard-tunnel, `ssh -i ~/.ssh/kwizillo_dep
 
 ## Eenmalig
 
-1. **DNS** bij de beheerder van xitgames.com: A-record `riots` → `213.126.59.35` (TTL 300, geen AAAA).
-   Controle: `dig +short riots.xitgames.com` geeft `213.126.59.35`.
+1. **DNS** bij de beheerder van xitgames.com: A-record `riots` → `84.86.23.137` (TTL 300, geen AAAA).
+   Controle: `dig +short riots.xitgames.com` geeft `84.86.23.137`.
+   Het publieke adres van de server is `84.86.23.137` (zoals kwizillo.nl en xitgames.com); het oude
+   `213.126.59.35` uit de Kwizillo-documentatie is niet meer van deze server.
 2. **nginx** (`nginx-riots.conf` staat al op `riots.xitgames.com`), op de server:
    ```bash
    sudo cp nginx-riots.conf /etc/nginx/sites-available/riots
@@ -41,3 +43,14 @@ Bouwt de game, stuurt alleen gewijzigde bestanden naar de server en zet ze in `/
   een hash van alle bestanden, dus na een update met nieuwe modellen wordt alles één keer
   opnieuw geladen, daarna komt het uit het geheugen.
 - Geen omweg via de Mac thuis en zijn uploadsnelheid.
+
+## Certificaat
+
+Het eerste certificaat (geldig tot 2 februari 2027) is via een DNS-record gemaakt (`--manual`), omdat het
+DNS-record toen nog naar het oude adres wees. Nu het adres klopt, kan het automatisch verlengen via
+nginx zoals de andere sites. Eenmalig op de server:
+
+```bash
+sudo certbot --nginx -d riots.xitgames.com --force-renewal
+sudo certbot renew --dry-run
+```
