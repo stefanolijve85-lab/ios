@@ -461,6 +461,30 @@
       "status": "final",
       "note": "Tripo H3.1 multiview (4 views) of the Paris police water cannon (Paris pack), 30k triangles, 1024 px",
       "city": "paris"
+    },
+    "char.hacker.tablet": {
+      "file": "final/char.hacker.tablet.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the tablet hacker sheet, Paris pack), 44 credits",
+      "city": "paris"
+    },
+    "char.romeo": {
+      "file": "final/char.romeo.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the Romeo sheet, Paris pack), 44 credits",
+      "city": "paris"
+    },
+    "prop.solotech_van.paris": {
+      "file": "final/prop.solotech_van.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the SOLOTECH van (Paris pack), 18k triangles, 1024 px",
+      "city": "paris"
+    },
+    "prop.taxi.paris": {
+      "file": "final/prop.taxi.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the Paris taxi (Paris pack), 20k triangles, 1024 px",
+      "city": "paris"
     }
   }
 }

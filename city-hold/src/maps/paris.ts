@@ -64,6 +64,8 @@ const props: PropDef[] = [
   { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -18.6, rot: 0, len: 4.6, wid: 1.9, collide: true },
   { type: 'vehicle', model: 'prop.van_red.paris', x: -23.4, z: -37.5, rot: 180, len: 4.4, wid: 1.9 },
   { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.9, wid: 0.7, collide: true },
+  { type: 'vehicle', model: 'prop.taxi.paris', x: 17.8, z: -40.5, rot: 180, len: 4.8, wid: 1.85 },
+  { type: 'vehicle', model: 'prop.solotech_van.paris', x: -19.8, z: -41.5, rot: 0, len: 5.2, wid: 2.0 },
   { type: 'vehicle', model: 'prop.water_cannon.paris', x: 20.6, z: -37, rot: 180, len: 8.6, wid: 2.55 },
   { type: 'shelter', x: -16, z: 14.05, rot: 180, collide: true },
   { type: 'bench', x: -23.9, z: -13, rot: 90, collide: true, r: 0.75 },
