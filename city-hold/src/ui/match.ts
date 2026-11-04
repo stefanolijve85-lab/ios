@@ -69,6 +69,7 @@ export class Match {
     this.sfx = new Sfx(settings.volume);
     this.root = document.createElement('div'); this.root.className = 'match';
     host.appendChild(this.root);
+    performance.mark('match:view');
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx, settings.timeOfDay ?? 'evening');
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
@@ -82,6 +83,7 @@ export class Match {
     // iOS only plays Web Audio after a touch: unlock on the first one (also starts the street ambience)
     // iOS only grants sound on a released tap (touchend/click), not on pointerdown
     for (const ev of ['pointerdown', 'touchend', 'click']) this.root.addEventListener(ev, () => this.sfx.unlock(), { capture: true });
+    performance.mark('match:view-done');
     this.renderCycle();
     this.setupHints();
     this.refreshHud(true);
@@ -89,8 +91,8 @@ export class Match {
     this.raf = requestAnimationFrame(this.loop);
     // a loading cover until every shader is compiled and every texture is on the GPU (first visit on iPad showed black models)
     showLoading(settings.language === 'en' ? 'Preparing the street…' : 'Straat wordt klaargezet…'); // the one from the start tap, or a new one (restart)
-    const was = this.paused; this.paused = true;
-    void this.view.warm().then(() => new Promise((r) => setTimeout(r, 250))).then(() => { hideLoading(); this.paused = was; this.last = performance.now(); });
+    const was = this.paused; this.paused = true; this.warming = true;
+    void this.view.warm().then(() => { this.warming = false; this.view.render(this.game, 0); }).then(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 120)))).then(() => { hideLoading(); this.paused = was; this.last = performance.now(); });
   }
 
   private stopI18n: (() => void) | null = null;
@@ -105,6 +107,8 @@ export class Match {
 
   /** tablets and phones draw at most ~60 frames a second: a 120 Hz iPad otherwise asks for twice the frames, misses
    *  half of them and the motion judders. An even 60 looks smoother than an uneven 80-120. */
+  /** shaders and textures are being prepared under the loading screen */
+  private warming = false;
   private frameCap = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches ? 1000 / 60 - 2.5 : 0;
   private loop = (t: number) => {
     if (this.frameCap && t - this.last < this.frameCap) { this.raf = requestAnimationFrame(this.loop); return; }
@@ -116,7 +120,7 @@ export class Match {
       while (this.acc >= step && n < 8) { this.game.step(step); this.acc -= step; n++; }
     }
     this.handleEvents(this.game.drainEvents());
-    this.view.render(this.game, this.paused ? 0 : dt * this.speed);
+    if (!this.warming) this.view.render(this.game, this.paused ? 0 : dt * this.speed); // nothing is drawn under the loading screen: the first frame would compile every shader in one go
     this.updateAudio(dt);
     music.setIntensity(this.paused || this.game.over ? 0.2 : (this.game.phase === 'wave' || this.game.phase === 'running') ? 1 : 0.3);
     this.hudRefreshT -= dt;

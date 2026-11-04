@@ -190,6 +190,7 @@ export class MatchView {
   /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
    *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
   async warm(): Promise<void> {
+    performance.mark('warm:start');
     // model textures still decoding: wait for them (up to 4 s) so they too are on the GPU before the cover lifts
     for (let i = 0; i < 40 && loadedTextures().some((t) => !texReady(t)); i++) await new Promise((r) => setTimeout(r, 100));
     // in small batches with a frame in between: the loading film keeps moving while the GPU is filled
@@ -197,9 +198,11 @@ export class MatchView {
     for (const t of loadedTextures()) {
       if (!texReady(t)) continue;
       try { this.renderer.initTexture(t); } catch { /* uploads on first use */ }
-      if (++n % 6 === 0) await new Promise((r) => requestAnimationFrame(() => r(null)));
+      if (++n % 2 === 0) await new Promise((r) => requestAnimationFrame(() => r(null))); // two at a time: the film gets a frame in between
     }
+    performance.mark('warm:textures-done');
     try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
+    performance.mark('warm:compiled');
   }
   /** where the fire engine stands (null until a firefighter is on the team) */
   fireEnginePos() { return this.fireCrew.enginePos(); }
@@ -295,7 +298,9 @@ export class MatchView {
     }
     this.camera.layers.enable(NO_REFLECT_LAYER); // the game camera sees everything; the reflection only layer 0
     setFacadeDaylight(this.day); setWorldDaylight(this.day);
+    performance.mark('view:world');
     this.world = buildWorld(map, this.scene, reducedFx);
+    performance.mark('view:world-done');
     // tablets and phones: every point light is paid for on every lit pixel. Keep the two street lamps nearest the
     // middle of the square as real lights; the others keep their glow, pool and wet-street streak (all textures)
     if (touch && this.world.lampLights.length > 2) {
@@ -306,8 +311,7 @@ export class MatchView {
     }
     if (this.night) for (const l of this.world.lampLights) l.intensity *= 1.5; // the lamps own the night
     if (this.day) this.toDaylight();
-    // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
-    for (const t of loadedTextures()) { if (!texReady(t)) continue; try { this.renderer.initTexture(t); } catch { /* a texture still decoding uploads on first use */ } }
+    // (model textures go to the GPU in warm(), in small batches, while the loading film keeps playing)
     if (!reducedFx) {
       this.wet = buildWetStreet(map.bounds, groundTexture(map.ground), container.clientWidth || 1280, container.clientHeight || 720);
       if (this.day) (this.wet.material as THREE.ShaderMaterial).uniforms.color.value.set(0x4a4540); // damp, not a mirror, by day
@@ -319,6 +323,7 @@ export class MatchView {
       this.post = new Post(this.renderer, this.scene, this.camera, touch);
       if (this.day) this.post.grade.uniforms.day.value = 1;
     }
+    performance.mark('view:fx');
     this.fx = new Effects(this.scene, reducedFx);
     setFireKit(map.id);
     this.fireCrew = new FireCrew(this.scene, map, this.fx);

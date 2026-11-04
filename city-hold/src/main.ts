@@ -68,6 +68,7 @@ async function start() {
   await breathe(); // the text and the film get a frame before the street is built
   app.innerHTML = '';
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);
+  performance.mark('match:new');
   match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action), chosenSide === 'looters' ? (progress.crew ?? []) as AttKind[] : []);
   match.onSettings = () => saveProgress(progress);
   match.resultInfo = (r: MatchResult) => {
