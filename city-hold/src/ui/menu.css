@@ -206,6 +206,23 @@
   .rm-foot { display: none; }
   .rm-cityinfo { top: 44vh; }
   .rm-country { margin: 2px 0; }
+  /* choose your city: no small logo over the title, the city block higher so it clears the card row */
+  .rm-cities .rm-logo-sm { display: none; }
+  .rm-cities .rm-cityinfo { top: calc(26vh + var(--st)); }
+  .rm-cities .rm-cityname { font-size: clamp(26px, 12vh, 52px); }
+  /* choose your side: the mission bar is one low row pinned to the bottom (city, difficulty, start), the two side
+     cards take the height that is left (an iPhone with Safari's bars leaves only ~250 px) */
+  .rm-side .rm-h1 { font-size: clamp(24px, 10vh, 44px); top: calc(3vh + var(--st)); }
+  .rm-side .rm-sides { top: calc(max(15vh, 46px) + var(--st)); height: auto; bottom: calc(70px + var(--sb)); }
+  .rm-side .rm-sidetitle { font-size: clamp(22px, 9vh, 48px); bottom: 22%; }
+  .rm-side .rm-sidedesc { font-size: clamp(11px, 3.6vh, 16px); right: 4%; }
+  .rm-side .rm-mission { top: auto; bottom: calc(6px + var(--sb)); height: 58px; grid-template-columns: 1fr auto; gap: 10px; padding: 6px 8px 6px 12px; }
+  .rm-side .rm-mthumb, .rm-side .rm-difflabel { display: none; }
+  .rm-side .rm-mtext { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .rm-side .rm-mcity { font-size: 22px; margin: 0; white-space: nowrap; }
+  .rm-side .rm-diff { margin: 0; gap: 6px; }
+  .rm-side .rm-diffbtn { height: 44px; min-height: 44px; min-width: 0; font-size: 13px; padding: 0 10px; }
+  .rm-side .rm-start { height: 46px; min-width: 0; font-size: 18px; padding: 0 16px; }
 }
 
 /* ---------------- collection (Collectie) ---------------- */
