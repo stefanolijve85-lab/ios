@@ -51,3 +51,20 @@ export function startLoadingFilm(root: ParentNode) {
   slot.replaceWith(v);
   void v.play().catch(() => { /* blocked: the sharp poster frame stays */ });
 }
+
+/* One loading screen for the whole start of a match: it is put on the page (outside the app, so nothing the app
+ * rebuilds removes it) when the player taps Start, shows the download progress, stays up while the street is built and
+ * every shader and texture is prepared, and only then fades out. The film keeps playing the whole time. */
+let overlay: HTMLElement | null = null;
+export function showLoading(text: string) {
+  if (overlay) { setLoadingText(text); return; }
+  overlay = document.createElement('div'); overlay.className = 'rm-loading rm-loading-global'; overlay.setAttribute('role', 'status');
+  overlay.innerHTML = loadingInner(text); document.body.appendChild(overlay); startLoadingFilm(overlay);
+}
+export function setLoadingText(text: string) { const el = overlay?.querySelector('[data-l]'); if (el) el.textContent = text; }
+export function hideLoading() {
+  const o = overlay; if (!o) return; overlay = null;
+  o.classList.add('out'); setTimeout(() => { o.remove(); if (film && !film.isConnected) film.pause(); }, 450);
+}
+/** let the browser paint (and the film advance) before a long piece of work */
+export function breathe(): Promise<void> { return new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0))); }

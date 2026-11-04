@@ -162,7 +162,13 @@ export class MatchView {
   async warm(): Promise<void> {
     // model textures still decoding: wait for them (up to 4 s) so they too are on the GPU before the cover lifts
     for (let i = 0; i < 40 && loadedTextures().some((t) => !texReady(t)); i++) await new Promise((r) => setTimeout(r, 100));
-    for (const t of loadedTextures()) { if (!texReady(t)) continue; try { this.renderer.initTexture(t); } catch { /* uploads on first use */ } }
+    // in small batches with a frame in between: the loading film keeps moving while the GPU is filled
+    let n = 0;
+    for (const t of loadedTextures()) {
+      if (!texReady(t)) continue;
+      try { this.renderer.initTexture(t); } catch { /* uploads on first use */ }
+      if (++n % 6 === 0) await new Promise((r) => requestAnimationFrame(() => r(null)));
+    }
     try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
   }
   /** where the fire engine stands (null until a firefighter is on the team) */

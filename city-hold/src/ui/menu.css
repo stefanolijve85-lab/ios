@@ -348,3 +348,6 @@
   .rm-nav .rm-cta { height: 44px; margin-bottom: 4px; }
   .rm-link { min-height: 40px; height: 40px; }
 }
+/* the loading screen of a match start: on top of everything, fades out when the street is ready */
+.rm-loading-global { position: fixed; inset: 0; z-index: 80; transition: opacity .4s ease; }
+.rm-loading-global.out { opacity: 0; pointer-events: none; }

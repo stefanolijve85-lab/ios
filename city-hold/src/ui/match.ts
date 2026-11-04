@@ -4,7 +4,7 @@ import type { MapDef } from '../maps/types';
 import { MatchView, type Pick } from '../render/view';
 import { Sfx, type Listener } from '../audio/sfx';
 import { music } from '../audio/music';
-import { loadingInner, startLoadingFilm } from './loading';
+import { hideLoading, showLoading } from './loading';
 import type { Settings } from '../save';
 import { translateLive } from './i18n_nl';
 import { setFigureChoices } from '../render/character';
@@ -86,10 +86,9 @@ export class Match {
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.loop);
     // a loading cover until every shader is compiled and every texture is on the GPU (first visit on iPad showed black models)
-    const cover = document.createElement('div'); cover.className = 'rm-loading'; cover.style.zIndex = '50';
-    cover.innerHTML = loadingInner(settings.language === 'en' ? 'Preparing the street…' : 'Straat wordt klaargezet…'); this.root.appendChild(cover); startLoadingFilm(cover);
+    showLoading(settings.language === 'en' ? 'Preparing the street…' : 'Straat wordt klaargezet…'); // the one from the start tap, or a new one (restart)
     const was = this.paused; this.paused = true;
-    void this.view.warm().then(() => new Promise((r) => setTimeout(r, 250))).then(() => { cover.remove(); this.paused = was; this.last = performance.now(); });
+    void this.view.warm().then(() => new Promise((r) => setTimeout(r, 250))).then(() => { hideLoading(); this.paused = was; this.last = performance.now(); });
   }
 
   private stopI18n: (() => void) | null = null;

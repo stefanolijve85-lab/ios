@@ -4,7 +4,7 @@ import { CITY_INFO, CITY_ORDER, MAPS } from './maps';
 import { Match, type MatchResult } from './ui/match';
 import { loadProgress, recordResult, resetProgress, saveProgress, type Progress } from './save';
 import type { Side } from './sim/game';
-import { loadingInner, startLoadingFilm, warmLoadingFilm } from './ui/loading';
+import { breathe, setLoadingText, showLoading, warmLoadingFilm } from './ui/loading';
 warmLoadingFilm(); // the loading film downloads during the intro
 import { loadAssets, loadCityAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
@@ -58,10 +58,12 @@ async function start() {
   match?.dispose(); match = null;
   (window as unknown as { __match: Match | null }).__match = null;
   const nl = progress.settings.language !== 'en';
-  app.innerHTML = `<div class="rm-loading" role="status">${loadingInner(`${nl ? 'Laden' : 'Loading'}…`)}</div>`; startLoadingFilm(app);
-  await loadAssets('models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${d}/${t}`; });
+  showLoading(`${nl ? 'Laden' : 'Loading'}…`); // stays up until the match has prepared every shader (Match hides it)
+  await loadAssets('models/', (d, t) => setLoadingText(`${nl ? 'Laden' : 'Loading'}… ${d}/${t}`));
   if (Object.values(progress.settings.figures ?? {}).flat().some((sl) => sl.startsWith('char.alt.'))) await loadCityAssets('collection', 'models/'); // chosen earlier figures
-  await loadCityAssets(map.id, 'models/', (d, t) => { const el = app.querySelector('[data-l]'); if (el) el.textContent = `${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`; });
+  await loadCityAssets(map.id, 'models/', (d, t) => setLoadingText(`${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`));
+  setLoadingText(nl ? 'Straat wordt klaargezet…' : 'Preparing the street…');
+  await breathe(); // the text and the film get a frame before the street is built
   app.innerHTML = '';
   const tutorial = chosenCity === 'paris' && !(progress.completed.paris?.[chosenSide]);
   match = new Match(app, map, chosenSide, progress.settings, progress.perks, tutorial, (r, action) => onExit(r, action), chosenSide === 'looters' ? (progress.crew ?? []) as AttKind[] : []);
