@@ -15,6 +15,14 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.goto(url); await p.waitForTimeout(800);
   if (city !== 'paris') await p.evaluate((c) => { const k = 'cityhold.progress.v1'; const pr = JSON.parse(localStorage.getItem(k) || 'null') || { version: 1, unlocked: ['paris'], completed: {}, research: 0, perks: [], tutorialDone: false, matches: 0, settings: { volume: 0, reducedFx: false, showHints: true } }; pr.unlocked = ['paris', 'amsterdam', 'london', 'milan', 'berlin', 'saopaulo']; pr.tutorialDone = true; localStorage.setItem(k, JSON.stringify(pr)); }, city), await p.reload(), await p.waitForTimeout(600);
   const ff = (sec) => p.evaluate((s) => { const g = window.__match.game; for (let i = 0; i < s * 30 && !g.over; i++) g.step(1 / 30); }, sec);
+  // point the camera at a spot first (a player pans there), then project it to the screen
+  const focus = async (x, z) => {
+    await p.evaluate(([x, z]) => { window.__match.view.target.set(x, z); window.__match.view.dist = Math.min(window.__match.view.dist, 30); }, [x, z]);
+    // the camera glides there (frame-rate dependent in software rendering): wait until the spot stops moving on screen
+    let last = null;
+    for (let i = 0; i < 40; i++) { await p.waitForTimeout(250); const q = await p.evaluate(([x, z]) => window.__match.view.toScreen(x, 0, z), [x, z]); if (last && Math.hypot(q.x - last.x, q.y - last.y) < 0.5) break; last = q; }
+  };
+  const focusStore = (i) => p.evaluate((i) => window.__match.game.stores[i].door, i).then((d) => focus(d.x, d.z));
   const scr = (x, y, z) => p.evaluate(([x, y, z]) => { const v = window.__match.view; const s = v.toScreen(x, y, z); const r = v.renderer.domElement.getBoundingClientRect(); return { x: s.x + r.left, y: s.y + r.top }; }, [x, y, z]);
   const play = async (side) => {
     if (!(await p.$('main.rm-side'))) { if (await p.$('main.rm-main')) await p.click('.rm-cta'); await p.click(`[data-city="${city}"]`); await p.click('[data-next]'); }
@@ -30,8 +38,8 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   assert(st.budget >= 1500 && st.canvases === 1, 'defence match starts with budget ' + st.budget);
   // barrier via card + socket tap
   await p.click('.card[data-kind="barrier"]'); await p.waitForTimeout(300);
-  const sock = await p.evaluate(() => { const g = window.__match.game, v = window.__match.view; const r = v.renderer.domElement.getBoundingClientRect(); // a free socket that is on screen, above the card row
-    return g.map.sockets.find((s) => { if (s.size !== 'small' || !g.canPlace('barrier', s.id).ok) return false; const q = v.toScreen(s.x, 0.2, s.z); return q.x > 40 && q.x < r.width - 40 && q.y > 90 && q.y < r.height - 200; }); });
+  const sock = await p.evaluate(() => { const g = window.__match.game; return g.map.sockets.find((s) => s.size === 'small' && g.canPlace('barrier', s.id).ok); });
+  await focus(sock.x, sock.z);
   let pt = await scr(sock.x, 0.2, sock.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(300);
   await p.click('[data-a="putdown"]'); await p.waitForTimeout(300); // turn step: confirm the direction
   st = await p.evaluate(() => ({ budget: window.__match.game.budget, n: window.__match.game.barriers.length }));
@@ -42,15 +50,17 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   assert(b2 === st.budget, 'tapping non-socket ground cancels placement without charge');
   // select reserve and move it
   const u = await p.evaluate(() => { const d = window.__match.game.defenders()[0]; return { id: d.id, x: d.x, z: d.z }; });
-  pt = await scr(u.x, 1, u.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(200);
+  await focus(u.x, u.z); pt = await scr(u.x, 1, u.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(700); // a tap is resolved after the double-tap window
   const selected = await p.evaluate(() => window.__match.view.selected.size);
-  assert(selected === 1, 'tap selects the reserve team');
-  const tgt = await p.evaluate(() => { const s = window.__match.game.stores[0]; const n = window.__match.map.stores[0].normal; return { x: s.door.x + n.x * 5, z: s.door.z + n.z * 5 }; });
+  const why = selected === 1 ? '' : JSON.stringify(await p.evaluate(([x, y]) => { const m = window.__match; const el = document.elementFromPoint(x, y); return { pt: [Math.round(x), Math.round(y)], pk: m.view.pick(x, y), el: el && (el.className || el.tagName), toast: [...document.querySelectorAll('.toast')].map((t) => t.textContent).slice(-2) }; }, [pt.x, pt.y]));
+  assert(selected === 1, 'tap selects the reserve team ' + why);
+  const tgt = await p.evaluate(() => { const g = window.__match.game; const s = g.stores[0]; const n = window.__match.map.stores[0].normal; return g.nav.nearestWalkable(s.door.x + n.x * 5, s.door.z + n.z * 5, 4) ?? { x: s.door.x + n.x * 5, z: s.door.z + n.z * 5 }; }); // a walkable spot (Amsterdam: not the canal)
+  await focus(tgt.x, tgt.z);
   pt = await scr(tgt.x, 0, tgt.z); await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(200);
   const mv = await p.evaluate(() => window.__match.game.defenders()[0].state);
   assert(mv === 'move', 'tap on ground orders a move (state ' + mv + ')');
   // store label -> upgrade shutter
-  await p.click('.store-label >> nth=0'); await p.waitForTimeout(200);
+  await focusStore(0); await p.click('.store-label >> nth=0'); await p.waitForTimeout(200);
   await p.click('[data-u="shutter"]'); await p.waitForTimeout(200);
   const lv = await p.evaluate(() => window.__match.game.stores[0].shutterLevel);
   assert(lv === 2, 'store upgraded to shutter level 2 from the panel');
@@ -68,7 +78,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   if (st.phase === 'prep') assert(st.rew === 1 && (st.budget === before + 350 || (truckPay > 0 && st.budget > before + 350)), `wave reward applied exactly once (${before} -> ${st.budget}${truckPay ? ', supply truck delivered' : ''})`);
   if (st.phase === 'prep') {
     // spend the reward: upgrade a second store through the UI
-    await p.click('.store-label >> nth=1'); await p.waitForTimeout(300);
+    await focusStore(1); await p.click('.store-label >> nth=1'); await p.waitForTimeout(300);
     const b0 = await p.evaluate(() => window.__match.game.budget);
     await p.click('[data-u="shutter"]'); await p.waitForTimeout(300);
     const up = await p.evaluate(() => ({ b: window.__match.game.budget, lv: window.__match.game.stores[1].shutterLevel, max: window.__match.game.stores[1].maxStructure }));
@@ -93,7 +103,7 @@ const assert = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log(
   await p.click('[data-r="menu"]'); await p.waitForTimeout(500);
   // ---------------- looters
   await play('looters');
-  await p.click('.store-label >> nth=2'); await p.waitForTimeout(200);
+  await focusStore(2); await p.click('.store-label >> nth=2'); await p.waitForTimeout(200);
   const tsel = await p.evaluate(() => window.__match.game.looterTarget);
   assert(tsel === 2, 'tapping a store label sets the looter target');
   await p.click('.card[data-kind="carrier"]'); await p.click('.card[data-kind="carrier"]'); await p.click('.card[data-kind="runner"]');
