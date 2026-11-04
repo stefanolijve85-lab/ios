@@ -40,7 +40,7 @@ const T: Record<Lang, Record<string, string>> = {
     volume: 'Geluid', musicVol: 'Muziek', tod: 'Dagdeel', todDay: 'Dag', todEve: 'Avond', todNight: 'Nacht', quality: 'Grafische kwaliteit', qHigh: 'Hoog (pc)', qMobile: 'Mobiel (licht)', hints: 'Speltips tonen', language: 'Taal', uiScale: 'HUD-grootte', vibration: 'Trillen bij gebeurtenissen',
     danger: 'Gevarenzone', reset: 'VOORTGANG WISSEN', resetConfirm: 'Weet je het zeker? Alle steden, onderzoek en instellingen worden gewist.', resetYes: 'JA, WISSEN', cancel: 'ANNULEREN',
     campaign: 'CAMPAGNE', research: 'ONDERZOEK', points: 'punten', buy: 'KOPEN', owned: 'IN BEZIT', won: 'gewonnen', matches: 'Gespeelde missies',
-    defShort: 'verdedigd', lootShort: 'geplunderd', hudNote: 'De speelinterface is (nog) Engelstalig.',
+    defShort: 'verdedigd', lootShort: 'geplunderd',
   },
   en: {
     tagline: 'Every street counts.', play: 'PLAY', progress: 'PROGRESS', collection: 'COLLECTION', settings: 'SETTINGS', footer: 'Tactical city strategy',
@@ -52,7 +52,7 @@ const T: Record<Lang, Record<string, string>> = {
     volume: 'Sound', musicVol: 'Music', tod: 'Time of day', todDay: 'Day', todEve: 'Evening', todNight: 'Night', quality: 'Graphics quality', qHigh: 'High (desktop)', qMobile: 'Mobile (light)', hints: 'Show tips', language: 'Language', uiScale: 'HUD size', vibration: 'Vibrate on events',
     danger: 'Danger zone', reset: 'ERASE PROGRESS', resetConfirm: 'Are you sure? All cities, research and settings will be erased.', resetYes: 'YES, ERASE', cancel: 'CANCEL',
     campaign: 'CAMPAIGN', research: 'RESEARCH', points: 'points', buy: 'BUY', owned: 'OWNED', won: 'won', matches: 'Missions played',
-    defShort: 'defended', lootShort: 'looted', hudNote: 'The in-game interface is in English.',
+    defShort: 'defended', lootShort: 'looted',
   },
 };
 
@@ -317,7 +317,6 @@ export class Menu {
         <label class="rm-row"><span>${t.hints}</span><input type="checkbox" ${s.showHints ? 'checked' : ''} data-s="hints"></label>
         <div class="rm-row"><span>${t.uiScale}</span><span class="rm-seg">${[1, 1.15, 1.3].map((v) => `<button class="rm-diffbtn ${Number(s.uiScale || 1) === v ? 'on' : ''}" data-ui="${v}">${Math.round(v * 100)}%</button>`).join('')}</span></div>
         <label class="rm-row"><span>${t.vibration}</span><input type="checkbox" ${s.vibration ? 'checked' : ''} data-s="vib"></label>
-        <p class="rm-muted">${t.hudNote}</p>
         <details class="rm-danger" ${confirmReset ? 'open' : ''}><summary>${t.danger}</summary>
           ${confirmReset ? `<p>${t.resetConfirm}</p><div class="rm-seg"><button class="rm-small warn" data-reset-yes>${t.resetYes}</button><button class="rm-small" data-reset-no>${t.cancel}</button></div>` : `<button class="rm-small warn" data-reset>${t.reset}</button>`}
         </details>

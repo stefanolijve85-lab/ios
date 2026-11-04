@@ -459,7 +459,7 @@
     "prop.water_cannon.paris": {
       "file": "final/prop.water_cannon.paris.glb",
       "status": "final",
-      "note": "Tripo H3.1 multiview (4 views) of the Paris police water cannon (Paris pack), 30k triangles, 1024 px",
+      "note": "Water cannon truck v2 (tripo multiview from the user's 4-view sheet)",
       "city": "paris"
     },
     "char.hacker.tablet": {
@@ -470,7 +470,7 @@
     "char.romeo": {
       "file": "final/char.romeo.glb",
       "status": "final",
-      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the Romeo sheet, Paris pack), 44 credits \u2014 loaded in every city (the Romeo team card is everywhere)"
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the Romeo sheet, Paris pack), 44 credits — loaded in every city (the Romeo team card is everywhere)"
     },
     "prop.solotech_van.paris": {
       "file": "final/prop.solotech_van.paris.glb",
