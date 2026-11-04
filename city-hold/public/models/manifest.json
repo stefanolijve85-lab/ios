@@ -431,6 +431,12 @@
       "status": "final",
       "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from the user's London shop security picture), 44 credits",
       "city": "london"
+    },
+    "prop.police_van.paris": {
+      "file": "final/prop.police_van.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views, detailed) of the Paris police van from the Paris asset pack, simplified to 30k triangles, 1024 px textures",
+      "city": "paris"
     }
   }
 }

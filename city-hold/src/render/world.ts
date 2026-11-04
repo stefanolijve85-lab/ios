@@ -301,11 +301,13 @@ function policeVanModel(): { group: THREE.Group; beacons: THREE.Mesh[] } | null 
   inner.rotation.y = (along ? 0 : -Math.PI / 2) + (POLICE_VAN_YAW[slot] ?? 0);
   const group = new THREE.Group(); group.add(inner);
   const h = sz.y * k; const beacons: THREE.Mesh[] = [];
-  for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.22), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x * 0.8, h - 0.07, 0.28); b.name = 'beacon'; group.add(b); beacons.push(b); }
+  for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.22), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x * 0.8, h - 0.07, POLICE_VAN_BEACON_Z[slot] ?? 0.28); b.name = 'beacon'; group.add(b); beacons.push(b); }
   return { group, beacons };
 }
 /** turn applied to the police van model so its nose points to +z (set after looking at the model) */
-const POLICE_VAN_YAW: Record<string, number> = { 'prop.police_van': 0 };
+const POLICE_VAN_YAW: Record<string, number> = { 'prop.police_van': 0, 'prop.police_van.paris': Math.PI };
+/** where the flashing beacon blocks sit along the roof (m from the middle, + is the nose) per model */
+const POLICE_VAN_BEACON_Z: Record<string, number> = { 'prop.police_van': 0.28, 'prop.police_van.paris': 2.05 };
 
 function beaconsOf(o: THREE.Object3D): THREE.Mesh[] {
   const out: THREE.Mesh[] = [];
