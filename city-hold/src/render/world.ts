@@ -291,19 +291,21 @@ export function buildCar(color: number, burned: boolean): THREE.Group {
 /** the police van of the concept (image-to-3D, slot prop.police_van): 5.8 m long, nose to +z, with two flashing
  *  beacon blocks laid over its own light bar so the view can blink them like the procedural van's */
 function policeVanModel(): { group: THREE.Group; beacons: THREE.Mesh[] } | null {
-  if (slotStatus('prop.police_van') !== 'final') return null;
-  const m = cloneModel('prop.police_van'); if (!m) return null;
+  // a city's own police van (prop.police_van.<city>, e.g. the French navy one for Paris) before the generic one
+  const own = `prop.police_van.${worldCity}`; const slot = slotStatus(own) === 'final' ? own : 'prop.police_van';
+  if (slotStatus(slot) !== 'final') return null;
+  const m = cloneModel(slot); if (!m) return null;
   const bb = new THREE.Box3().setFromObject(m); const sz = bb.getSize(new THREE.Vector3()); const c = bb.getCenter(new THREE.Vector3());
   const along = sz.z >= sz.x; const k = 5.8 / Math.max(sz.x, sz.z);
   const inner = new THREE.Group(); m.position.set(-c.x, -bb.min.y, -c.z); inner.add(m); inner.scale.setScalar(k);
-  inner.rotation.y = (along ? 0 : -Math.PI / 2) + POLICE_VAN_YAW;
+  inner.rotation.y = (along ? 0 : -Math.PI / 2) + (POLICE_VAN_YAW[slot] ?? 0);
   const group = new THREE.Group(); group.add(inner);
   const h = sz.y * k; const beacons: THREE.Mesh[] = [];
   for (const x of [-0.45, 0.45]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.22), new THREE.MeshBasicMaterial({ color: 0x2a5cff })); b.position.set(x * 0.8, h - 0.07, 0.28); b.name = 'beacon'; group.add(b); beacons.push(b); }
   return { group, beacons };
 }
 /** turn applied to the police van model so its nose points to +z (set after looking at the model) */
-const POLICE_VAN_YAW = 0;
+const POLICE_VAN_YAW: Record<string, number> = { 'prop.police_van': 0 };
 
 function beaconsOf(o: THREE.Object3D): THREE.Mesh[] {
   const out: THREE.Mesh[] = [];
@@ -567,6 +569,7 @@ function fountainWaterFor(model: THREE.Object3D, parent: THREE.Group, outerR: nu
 }
 
 export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean): WorldHandles {
+  worldCity = map.id;
   const group = new THREE.Group(); scene.add(group);
   const b = map.bounds; const W = b.x1 - b.x0 + 80, D = b.z1 - b.z0 + 80;
   const gt = groundTexture(map.ground).clone(); gt.repeat.set(W / 3.5, D / 3.5); gt.needsUpdate = true;
@@ -837,6 +840,8 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
 
 /** daylight mode for things built or loaded after the world is made (set by the view before buildWorld) */
 let worldDay = false;
+/** the city being built (for city-specific model slots) */
+let worldCity = '';
 export function setWorldDaylight(day: boolean) { worldDay = day; }
 /** facade paintings that have a daylight version next to them (<name>_day.jpg) */
 const DAY_FACADES = new Set(['textures/facades/paris_main.jpg']);
