@@ -437,6 +437,30 @@
       "status": "final",
       "note": "Tripo H3.1 multiview (4 views, detailed) of the Paris police van from the Paris asset pack, simplified to 30k triangles, 1024 px textures",
       "city": "paris"
+    },
+    "prop.van_red.paris": {
+      "file": "final/prop.van_red.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the dusty red delivery van (Paris pack), 16k triangles, 1024 px",
+      "city": "paris"
+    },
+    "prop.police_car.paris": {
+      "file": "final/prop.police_car.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the Paris police car (Paris pack), 22k triangles, 1024 px",
+      "city": "paris"
+    },
+    "prop.scooter.paris": {
+      "file": "final/prop.scooter.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the Paris scooter (Paris pack), 9k triangles, 1024 px",
+      "city": "paris"
+    },
+    "prop.water_cannon.paris": {
+      "file": "final/prop.water_cannon.paris.glb",
+      "status": "final",
+      "note": "Tripo H3.1 multiview (4 views) of the Paris police water cannon (Paris pack), 30k triangles, 1024 px",
+      "city": "paris"
     }
   }
 }

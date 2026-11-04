@@ -59,6 +59,12 @@ const props: PropDef[] = [
   { type: 'car', x: -23.2, z: -27.2, rot: 90, collide: true, burnable: true },
   // street-props pack: generic delivery van, bus shelter on the foreground pavement, benches at the kerb
   { type: 'delivery_van', x: 23.0, z: -24, rot: 0, collide: true },
+  // Paris pack (image-to-3D): a police car behind the staging van, a dusty red van parked far up the west street, a scooter
+  // on the foreground pavement and the water cannon waiting at the top of the east street (scenery, beyond the play area)
+  { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -18.6, rot: 0, len: 4.6, wid: 1.9, collide: true },
+  { type: 'vehicle', model: 'prop.van_red.paris', x: -23.4, z: -37.5, rot: 180, len: 4.4, wid: 1.9 },
+  { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.9, wid: 0.7, collide: true },
+  { type: 'vehicle', model: 'prop.water_cannon.paris', x: 20.6, z: -37, rot: 180, len: 8.6, wid: 2.55 },
   { type: 'shelter', x: -16, z: 14.05, rot: 180, collide: true },
   { type: 'bench', x: -23.9, z: -13, rot: 90, collide: true, r: 0.75 },
   { type: 'bench', x: 23.9, z: -13, rot: -90, collide: true, r: 0.75 },
