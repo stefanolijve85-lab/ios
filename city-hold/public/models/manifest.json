@@ -425,6 +425,12 @@
       "status": "final",
       "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from the user's Paris shop security picture), 44 credits",
       "city": "paris"
+    },
+    "char.shop_security.london": {
+      "file": "final/char.shop_security.london.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging in one pass (A-pose reference from the user's London shop security picture), 44 credits",
+      "city": "london"
     }
   }
 }
