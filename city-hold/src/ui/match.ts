@@ -99,7 +99,11 @@ export class Match {
     this.root.remove();
   }
 
+  /** tablets and phones draw at most ~60 frames a second: a 120 Hz iPad otherwise asks for twice the frames, misses
+   *  half of them and the motion judders. An even 60 looks smoother than an uneven 80-120. */
+  private frameCap = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches ? 1000 / 60 - 2.5 : 0;
   private loop = (t: number) => {
+    if (this.frameCap && t - this.last < this.frameCap) { this.raf = requestAnimationFrame(this.loop); return; }
     const dt = Math.min(0.1, (t - this.last) / 1000); this.last = t;
     if (!this.paused && !this.game.over) {
       this.acc += dt * this.speed;

@@ -135,6 +135,8 @@ export class MatchView {
   readonly fx: Effects;
   private fireCrew: FireCrew;
   private night = false;
+  private touchDevice = false;
+  private frameNo = 0;
   private day = false;
   /** daylight: lamps off, their pools and streaks hidden, self-lit surfaces (windows, paintings, lanterns) toned down.
    *  Fires, beacons and effects are added later and keep their light. */
@@ -215,6 +217,10 @@ export class MatchView {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.42;
     this.renderer.shadowMap.enabled = !reducedFx; this.renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoft was removed in this three.js (it fell back to PCF with a warning)
+    // tablets and phones: the shadow map is redrawn every fourth frame only (people cast no shadow; only a vehicle
+    // driving in moves one, and 15 updates a second keep that smooth)
+    if (touch) this.renderer.shadowMap.autoUpdate = false;
+    this.touchDevice = touch;
     this.renderer.domElement.className = 'game-canvas';
     container.appendChild(this.renderer.domElement);
     this.pitch = THREE.MathUtils.degToRad(map.camera.pitch ?? 40);
@@ -254,6 +260,14 @@ export class MatchView {
     this.camera.layers.enable(NO_REFLECT_LAYER); // the game camera sees everything; the reflection only layer 0
     setFacadeDaylight(this.day); setWorldDaylight(this.day);
     this.world = buildWorld(map, this.scene, reducedFx);
+    // tablets and phones: every point light is paid for on every lit pixel. Keep the two street lamps nearest the
+    // middle of the square as real lights; the others keep their glow, pool and wet-street streak (all textures)
+    if (touch && this.world.lampLights.length > 2) {
+      const keep = [...this.world.lampLights].sort((a, b) => a.position.lengthSq() - b.position.lengthSq()).slice(0, 2);
+      for (const l of this.world.lampLights) if (!keep.includes(l)) l.parent?.remove(l);
+      this.world.lampLights.splice(0, this.world.lampLights.length, ...keep);
+      for (const l of keep) l.intensity *= 1.4; // they light a little more of the square
+    }
     if (this.night) for (const l of this.world.lampLights) l.intensity *= 1.5; // the lamps own the night
     if (this.day) this.toDaylight();
     // upload every model texture to the GPU now: otherwise a model shows black for a moment the first time it comes into view (iPad)
@@ -266,7 +280,7 @@ export class MatchView {
       // (flames and beacons in it still move), while panning or zooming every frame
       { const w = this.wet; const orig = w.onBeforeRender.bind(w); const last = new THREE.Matrix4(); let n = 0;
         w.onBeforeRender = (r, sc, cam, ...rest) => { n++; const still = cam.matrixWorld.equals(last); last.copy(cam.matrixWorld); if (still && n % 3 !== 0) return; orig(r, sc, cam, ...rest); }; }
-      this.post = new Post(this.renderer, this.scene, this.camera);
+      this.post = new Post(this.renderer, this.scene, this.camera, touch);
       if (this.day) this.post.grade.uniforms.day.value = 1;
     }
     this.fx = new Effects(this.scene, reducedFx);
@@ -774,6 +788,7 @@ export class MatchView {
   }
 
   render(g: Game, dt: number) {
+    if (this.touchDevice && (this.frameNo++ % 4 === 0)) this.renderer.shadowMap.needsUpdate = true;
     if (this.disposed) return;
     this.gameRef = g;
     this.time += dt;

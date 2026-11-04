@@ -29,7 +29,8 @@ export class Post {
   composer: EffectComposer;
   bloom: UnrealBloomPass;
   grade: ShaderPass;
-  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
+  /** light: tablets and phones, where the bloom runs at half resolution (it is soft anyway) */
+  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, private light = false) {
     this.composer = new EffectComposer(renderer);
     this.composer.addPass(new RenderPass(scene, camera));
     // mobile GPUs (iPad/iPhone) can leave a stray NaN or infinite pixel (wet reflections, normal maps at grazing angles);
@@ -48,7 +49,10 @@ export class Post {
     this.composer.addPass(this.grade);
     this.composer.addPass(new OutputPass());
   }
-  setSize(w: number, h: number, pr: number) { this.composer.setPixelRatio(pr); this.composer.setSize(w, h); }
+  setSize(w: number, h: number, pr: number) {
+    this.composer.setPixelRatio(pr); this.composer.setSize(w, h);
+    if (this.light) this.bloom.setSize(Math.round(w * pr * 0.5), Math.round(h * pr * 0.5));
+  }
   render(t: number) { this.grade.uniforms.time.value = t % 100; this.composer.render(); }
   dispose() { this.composer.dispose(); }
 }
