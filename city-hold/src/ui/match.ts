@@ -422,6 +422,7 @@ export class Match {
       hoses: near(hoses, 2),
       active: g.phase === 'wave' || g.phase === 'running',
       paused: this.paused || g.over,
+      over: g.over,
       fountain: this.map.fountain ? this.hear(this.map.fountain.x, this.map.fountain.z) : null,
       gas: near(g.gas.filter((c) => c.landed && c.r > 0.5), 3),
       panic: (() => { const at = g.attackers(); if (!at.length) return 0; const p = at.filter((u) => u.gasT > 0.3 || u.state === 'flee' || u.state === 'held' || u.staggerUntil > g.time).length; return Math.min(1, p / Math.max(3, at.length * 0.6)); })(),

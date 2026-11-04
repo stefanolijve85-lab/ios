@@ -26,6 +26,7 @@ export interface AmbienceState {
   /** 0..1 how much of the crowd is in panic (in gas, fleeing, being struck) */ panic?: number;
   /** rioters smashing shutters and barriers right now */ smashing?: number;
   /** the match is paused or a modal is open */ paused: boolean;
+  /** the match is over: the street falls silent (the fanfare and the voice have the stage) */ over?: boolean;
   /** the map has a fountain in view */ fountain?: Listener | null;
 }
 
@@ -328,7 +329,7 @@ export class Sfx {
       this.bed = { crowd: crowd.g, crowdF: crowd.f, hum: hum.g, roar: roar.g, roarP, hiss: hiss.g, hissP, water: water.g, waterP };
     }
     const b = this.bed; const k = 0.4; // smoothing time constant (s)
-    const quiet = s.paused ? 0.35 : 1;
+    const quiet = s.over ? 0 : s.paused ? 0.35 : 1;
     b.hum.gain.setTargetAtTime(0.16 * quiet, t, k);
     // crowd: grows with the number of rioters, with a slow irregular swell
     const crowdLvl = Math.min(1, s.crowd / 10) * (s.active ? 1 : 0.4);
