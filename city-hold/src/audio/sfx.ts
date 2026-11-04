@@ -40,7 +40,7 @@ export class Sfx {
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
-    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'gas_launch', 'gas_hiss', 'smash', 'baton',
+    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'cough_2', 'cough_3', 'cough_loop', 'gas_launch', 'gas_hiss', 'smash', 'baton',
     'victory_def', 'victory_loot', 'vo_wave_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
@@ -257,7 +257,7 @@ export class Sfx {
       case 'supply': if (!this.smp('horn', o, v * 0.8)) return false; this.tone(o, 900, 0.18, 'triangle', 0.08, { delay: 0.7 }); this.tone(o, 1200, 0.25, 'triangle', 0.08, { delay: 0.82 }); return true;
       case 'dispatch': return this.smp('crowd_shout', o, v * 0.7);
       case 'gasThrow': return this.smp('gas_launch', o, v * 0.9);
-      case 'gasLand': { const a = this.smp('cough', o, v * 0.7, { delay: 1.2 }); const b = this.smp('scream', o, v * 0.6, { delay: 0.5 }); this.smp('gas_hiss', o, v * 0.5); return a || b; }
+      case 'gasLand': { const a = this.smp('cough', o, v * 0.7, { delay: 1.2 }); this.smp('cough_2', o, v * 0.6, { delay: 1.9 }); this.smp('cough_3', o, v * 0.55, { delay: 2.6 }); const b = this.smp('scream', o, v * 0.6, { delay: 0.5 }); this.smp('gas_hiss', o, v * 0.5); return a || b; }
       case 'strike': return this.smp('baton', o, v * 0.9);
       case 'scream': return this.smp('scream', o, v * 0.7);
       case 'flashBang': { if (!this.smp('flashbang', o, v * 1.1)) return false; this.tone(o, 3700, 2.2, 'sine', 0.035 * g, { attack: 0.1, delay: 0.15 }); return true; } // recording plus a faint ear-ringing
@@ -347,6 +347,8 @@ export class Sfx {
     { const l = this.loop('panic_loop', this.amb); if (l) l.gain.setTargetAtTime(panic * 1.3 * quiet, t, 0.6); }
     const gasL = (s.gas ?? []).reduce((a, f) => (f.gain > a.gain ? f : a), { pan: 0, gain: 0 });
     { const l = this.loop('gas_hiss', this.amb); if (l) l.gain.setTargetAtTime(gasL.gain * 0.35 * quiet, t, 0.4); }
+    // a whole group choking in the cloud under the single coughs (ElevenLabs, 8 s loop)
+    { const l = this.loop('cough_loop', this.amb); if (l) l.gain.setTargetAtTime(Math.min(1, gasL.gain * 1.2) * 0.5 * quiet, t, 0.5); }
     rec('fire_loop', b.roarP, fireLvl * 0.8, b.roar, fireLvl * 0.5);
     rec('hose_loop', b.hissP, hose.gain * 0.45, b.hiss, hose.gain * 0.12);
     // fire crew: water sizzling on the flames where the jet hits, the pump labouring at the engine, the nozzle opening
@@ -378,7 +380,7 @@ export class Sfx {
     // coughing from inside the gas, panicked screams when the crowd breaks, angry yells while they smash
     if (s.active) {
       this.coughT -= dt;
-      if (gasL.gain > 0.05 && this.coughT <= 0) { this.coughT = rnd(2.5, 5); const o = this.out(this.amb, gasL.pan + rnd(-0.2, 0.2)); if (!this.smp('cough', o, 0.3 * gasL.gain, { jitter: 0.1 })) for (let i = 0; i < 4; i++) this.burst(o, 0.12, 0.12 * gasL.gain, { type: 'bandpass', freq: rnd(500, 900), q: 2, delay: i * rnd(0.18, 0.3) }); }
+      if (gasL.gain > 0.05 && this.coughT <= 0) { this.coughT = rnd(0.9, 2.2); const o = this.out(this.amb, gasL.pan + rnd(-0.35, 0.35)); const pick = (['cough', 'cough_2', 'cough_3'] as const)[Math.floor(Math.random() * 3)]; if (!this.smp(pick, o, 0.42 * gasL.gain, { jitter: 0.12 }) && !this.smp('cough', o, 0.42 * gasL.gain, { jitter: 0.12 })) for (let i = 0; i < 4; i++) this.burst(o, 0.12, 0.12 * gasL.gain, { type: 'bandpass', freq: rnd(500, 900), q: 2, delay: i * rnd(0.18, 0.3) }); }
       this.screamT -= dt;
       if (panic > 0.15 && this.screamT <= 0) { this.screamT = rnd(3, 7) / (0.5 + panic); const o = this.out(this.amb, rnd(-0.7, 0.7)); if (!this.smp('scream', o, 0.2 + panic * 0.25, { jitter: 0.12 })) this.scream(o, 0.5 + panic); }
       this.yellT -= dt;
