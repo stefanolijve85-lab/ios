@@ -815,7 +815,7 @@ export class MatchView {
     for (const u of g.units) {
       seen.add(u.id);
       let h = this.humans.get(u.id);
-      if (!h) { h = (u.role === 'romeo' && slotStatus('char.romeo') === 'final' ? createCharacterFromSlot('char.romeo', u.kind, u.variant) : null) ?? createCharacter(u.kind, u.variant); noReflection(h.root); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
+      if (!h) { const own = u.role === 'romeo' ? 'char.romeo' : u.hack ? `char.hacker.${u.hack.skill}` : ''; h = (own && slotStatus(own) === 'final' ? createCharacterFromSlot(own, u.kind, u.variant) : null) ?? createCharacter(u.kind, u.variant); noReflection(h.root); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
       // looting: the looter walks in through the broken front, grabs the goods inside and comes back out carrying them
@@ -899,7 +899,7 @@ export class MatchView {
     // stores
     g.stores.forEach((s, i) => {
       const v = this.world.stores[i];
-      v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0, s.boards / s.boardsMax);
+      v.update(s.structure / s.maxStructure, s.stock / 100, s.shutterLevel, s.structure <= 0 || (s.openUntil ?? 0) > g.time, s.boards / s.boardsMax); // a hacked shutter stands open
       v.setScorched?.(s.scorched);
       if (v.justBroke) this.fx.event(`glass:${i}:${Math.round(g.time * 10)}`, 'glass', s.door.x, s.door.z);
       const el = this.storeLabels[i]; const sd = this.map.stores[i];
@@ -915,6 +915,7 @@ export class MatchView {
       el.classList.toggle('empty', s.stock <= 0);
       el.classList.toggle('damaged', s.structure < s.maxStructure * 0.6 && s.stock > 0);
       if (s.structure < s.maxStructure && s.structure > 0 && g.units.some((u) => u.state === 'breach' && u.targetStore === i)) this.bar('s' + i, s.door.x, 3.2, s.door.z, s.structure / s.maxStructure, '#ff5a3a', 'SHUTTER');
+      if ((s.openUntil ?? 0) > g.time) this.bar('so' + i, s.door.x, 3.6, s.door.z, (s.openUntil! - g.time) / BALANCE.looters.hacker.shutterOpen, '#ffb020', 'OPEN');
     });
     // barriers
     const bseen = new Set<number>();
@@ -931,8 +932,11 @@ export class MatchView {
       if (this.masts.has(c.id)) continue;
       const m = (slotStatus('prop.camera_mast') === 'final' ? cloneModel('prop.camera_mast') : null) ?? buildMastModel(); m.position.set(c.x, 0, c.z); noReflection(m); this.scene.add(m); this.masts.set(c.id, m);
     }
+    // hackers at work, and what they switched off (time left)
+    for (const u of g.units) if (u.hack && u.hack.t > 0) this.bar('h' + u.id, u.x, 2.3, u.z, u.hack.t / BALANCE.looters.hacker.work, '#ffb020', 'HACK');
+    for (const c of g.cameras) if ((c.offUntil ?? 0) > g.time) this.bar('co' + c.id, c.x, 4.4, c.z, (c.offUntil! - g.time) / BALANCE.looters.hacker.cameraOff, '#ffb020', 'OFFLINE');
     // camera reach: one soft disc per camera, faint inside, a little stronger towards the rim and fading out (no hard edge)
-    const want = isDef || this.reducedFx === false ? g.cameras : [];
+    const want = (isDef || this.reducedFx === false ? g.cameras : []).filter((c) => !((c.offUntil ?? 0) > g.time)); // a hacked camera shows no reach
     const r = g.cameraRadius();
     while (this.coverage.children.length > want.length) this.coverage.remove(this.coverage.children[this.coverage.children.length - 1]);
     want.forEach((c, i) => {

@@ -465,8 +465,7 @@
     "char.hacker.tablet": {
       "file": "final/char.hacker.tablet.glb",
       "status": "final",
-      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the tablet hacker sheet, Paris pack), 44 credits",
-      "city": "paris"
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the tablet hacker sheet, Paris pack), 44 credits"
     },
     "char.romeo": {
       "file": "final/char.romeo.glb",
@@ -484,6 +483,16 @@
       "status": "final",
       "note": "Tripo H3.1 multiview (4 views) of the Paris taxi (Paris pack), 20k triangles, 1024 px",
       "city": "paris"
+    },
+    "char.hacker.laptop": {
+      "file": "final/char.hacker.laptop.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the laptop hacker sheet, Paris pack), 44 credits"
+    },
+    "char.hacker.radio": {
+      "file": "final/char.hacker.radio.glb",
+      "status": "final",
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the radio hacker sheet, Paris pack), 44 credits"
     }
   }
 }

@@ -1,5 +1,5 @@
 import { BALANCE, KIND_LABEL, type AttKind, type DefKind } from '../config/balance';
-import { Game, type GameEvent, type Side } from '../sim/game';
+import { Game, type GameEvent, type HackSkill, type Side } from '../sim/game';
 import type { MapDef } from '../maps/types';
 import { MatchView, type Pick } from '../render/view';
 import { Sfx, type Listener } from '../audio/sfx';
@@ -173,6 +173,11 @@ export class Match {
         b.addEventListener('click', () => { const r = this.game.recruit(c.kind); if (r.ok) { this.sfx.play('buy'); this.showRecruit(c.img, c.label); } this.refreshHud(true); });
         cards.appendChild(b);
       }
+      // the hacker: not part of the crew; one trip per skill, aimed at a camera, a shutter or a spot for a fake call
+      const hb = document.createElement('button'); hb.className = 'card'; hb.dataset.kind = 'hacker';
+      hb.innerHTML = `<img src="ui/hacker.webp" alt=""><span class="cl">Hacker</span><span class="cc">${BALANCE.looters.hacker.cost}</span><span class="cn">Camera · shutter · fake call</span>`;
+      hb.addEventListener('click', () => { this.sfx.play('click'); this.openHackPick(); });
+      cards.appendChild(hb);
     }
     window.addEventListener('keydown', this.onKey);
     if (!isDef && this.game.squad.length) setTimeout(() => this.toast(`Your crew is back: ${this.game.squad.length} rioters from the last mission joined the group`, 'good'), 600);
@@ -241,6 +246,13 @@ export class Match {
   private onTap(p: Pick, _sx: number, _sy: number) {
     const g = this.game; const isDef = this.side === 'defence';
     if (g.over) return;
+    if (this.hackSkill && !isDef) {
+      const k = this.hackSkill; this.hackSkill = null;
+      const r = g.deployHacker(k, p.x, p.z);
+      if (r.ok) { this.sfx.play('buy'); this.showRecruit('ui/hacker.webp', 'Hacker'); const t = g.units.find((u) => u.hack?.skill === k); if (t?.hack) this.view.showDestination(t.hack.tx, t.hack.tz, null, 0xffb020); }
+      else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
+      this.refreshHud(true); return;
+    }
     if (this.romeoMode && isDef) {
       const mode = this.romeoMode; this.romeoMode = null;
       const r = g.deployRomeo(mode, p.x, p.z);
@@ -449,6 +461,30 @@ export class Match {
   }
   private closeRomeoPick() { this.romeoPick?.remove(); this.romeoPick = null; }
 
+  // ---- hacker (looting side): pick the skill, then tap the target (a camera, a shop shutter, a spot for a fake call)
+  private hackSkill: HackSkill | null = null;
+  private openHackPick() {
+    if (this.romeoPick) { this.closeRomeoPick(); return; }
+    const g = this.game; const en = this.settings.language === 'en'; const H = BALANCE.looters.hacker;
+    const opt = (k: HackSkill, label: string, sub: string) => { const c = g.canHack(k); return `<button data-hack="${k}" ${c.ok ? '' : 'disabled'}><b>${label}</b><small>${c.ok ? sub : c.reason}</small></button>`; };
+    const el = document.createElement('div'); el.className = 'romeo-pick hack-pick';
+    el.innerHTML = `<header>Hacker · ${H.cost}</header>`
+      + opt('tablet', en ? 'Tablet: camera offline' : 'Tablet: camera uit', en ? `one camera goes dark for ${H.cameraOff} s` : `één camera ${H.cameraOff} s uit`)
+      + opt('laptop', en ? 'Laptop: open a shutter' : 'Laptop: rolluik open', en ? `an electric shutter stands open ${H.shutterOpen} s` : `een elektrisch rolluik ${H.shutterOpen} s open`)
+      + opt('radio', en ? 'Radio: fake call' : 'Portofoon: afleiding', en ? `one free guard goes to look (${H.distract} s)` : `één vrije bewaker gaat kijken (${H.distract} s)`)
+      + `<button data-hack="x" class="ghost">${en ? 'Cancel' : 'Annuleren'}</button>`;
+    el.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-hack]'); if (!b || b.disabled) return;
+      const k = b.dataset.hack; this.closeRomeoPick();
+      if (k === 'tablet' || k === 'laptop' || k === 'radio') {
+        this.hackSkill = k;
+        this.toast(k === 'tablet' ? (en ? 'Tap a security camera' : 'Tik een beveiligingscamera aan') : k === 'laptop' ? (en ? 'Tap a shop shutter' : 'Tik een winkelrolluik aan') : (en ? 'Tap where the fake call should send a guard' : 'Tik waar de nepmelding een bewaker heen stuurt'), 'info');
+        this.refreshHud(true);
+      }
+    });
+    this.root.appendChild(el); this.romeoPick = el;
+  }
+
   private showCardPop(kind: DefKind | BuildKind | SpecialKind) {
     const c = DEF_CARDS.find((d) => d.kind === kind); if (!c) return;
     const img = kind === 'firefighter' ? `ui/firefighters/${this.game.map.id}.webp` : c.img;
@@ -521,6 +557,7 @@ export class Match {
       const cost = isDef ? (k === 'barrier' || k === 'concrete' || k === 'camera' ? g.placeCost(k) : BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs]) : BALANCE.looters.costs[k as AttKind];
       c.disabled = g.budget < cost || g.over;
       if (isDef && k === 'romeo') c.disabled = !g.canRomeo('public').ok && !g.canRomeo('bus').ok;
+      if (!isDef && k === 'hacker') c.disabled = !(['tablet', 'laptop', 'radio'] as const).some((h) => g.canHack(h).ok);
       // the first crowd barriers are free: the card says so (and how many are left)
       if (isDef && k === 'barrier') { const cc = c.querySelector<HTMLElement>('.cc'); const free = g.freeBarriers > 0; const txt = free ? `${this.settings.language === 'en' ? 'FREE' : 'GRATIS'} ×${g.freeBarriers}` : String(cost); if (cc && cc.textContent !== txt) { cc.textContent = txt; cc.classList.toggle('free', free); } }
       c.classList.toggle('active', this.placing === k);

@@ -28,6 +28,9 @@ export const BALANCE = {
     timeLimit: 8 * 60,
     targetStock: 60,
     costs: { runner: 100, carrier: 150, vandal: 200, heavy: 200, thrower: 175 } as Record<AttKind, number>,
+    /** the hacker: walks to a target, works on it, then leaves; one skill per trip. tablet: a camera goes dark;
+     *  laptop: a store's electric shutter stands open; radio: a fake call sends one patrolling guard to look */
+    hacker: { cost: 200, seenAt: 0.35, work: 3.5, reach: 2.6, reachTablet: 7, reachRadio: 22, cooldown: 20, cameraOff: 15, shutterOpen: 12, distract: 10, pick: 7 },
     budgetPerExtractedStock: 25,
     upgradeCost: 300,
     capacityUpgrade: 1.3,

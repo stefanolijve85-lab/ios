@@ -31,6 +31,8 @@ export interface Store {
   boardsMax: number;
   /** visible fire damage stays after extinguishing (soot); separate from stock */
   scorched: boolean;
+  /** an electric shutter a hacker holds open until this time (looters walk straight in; nobody is shut in) */
+  openUntil?: number;
 }
 
 export type AttState = 'approach' | 'throw' | 'breach' | 'collect' | 'extract' | 'flee' | 'barrier' | 'held' | 'restrained' | 'escorted' | 'removed' | 'escaped';
@@ -73,6 +75,8 @@ export interface Unit {
   strikeAt: number; staggerUntil: number;
   /** flinch away from a flashbang: velocity (m/s) until kickUntil */ kickX?: number; kickZ?: number; kickUntil?: number;
   /** a security officer of the Romeo team (plainclothes duo): same job as security, own look and deployment */ role?: 'romeo';
+  /** a hacker on a job (looting side): which skill, the target and the work done */ hack?: { skill: HackSkill; tx: number; tz: number; target: number; t: number; at: Vec2 | null };
+  /** a guard sent to check a fake radio call: back to his post after this time */ distractUntil?: number;
   /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
@@ -96,7 +100,8 @@ export interface Unit {
 }
 
 export interface Barrier { id: number; /** what the player bought: crowd barrier or concrete block */ kind: 'barrier' | 'concrete'; socketId: string; x: number; z: number; size: 'small' | 'large'; /** degrees: 0 along x, 90 along z, any angle */ rot: number; hp: number; maxHp: number; rect: Rect; broken: boolean; brokenT: number }
-export interface CameraMast { id: number; socketId: string; x: number; z: number }
+export type HackSkill = 'tablet' | 'laptop' | 'radio';
+export interface CameraMast { id: number; socketId: string; x: number; z: number; /** taken offline by a hacker until */ offUntil?: number }
 /** tear gas canister: flies from the thrower for `flight` s, then a cloud grows to `r` and thins out at the end of its life */
 export interface Gas { id: number; x: number; z: number; fromX: number; fromZ: number; t: number; landed: boolean; r: number; by: number;
   /** tear gas cloud or flashbang */ kind: 'gas' | 'flash'; /** which side it hurts: the rioters, or the police once a rioter threw it back */ against: 'att' | 'def';
@@ -485,6 +490,86 @@ export class Game {
 
   // ---- Romeo team: a plainclothes police duo. 'public': on foot through the nearest street entry, among the crowd;
   // 'bus': out of the police van, one after the other. Then they work as security (intercept, hold, escort).
+  // ---- hackers (looting side): one class, three outfits, one skill per trip
+  hackReadyAt: Record<HackSkill, number> = { tablet: 0, laptop: 0, radio: 0 };
+  /** the valid target nearest a tapped spot, or why there is none */
+  hackTarget(skill: HackSkill, x: number, z: number): { ok: boolean; reason?: string; target?: number; tx?: number; tz?: number } {
+    const H = BALANCE.looters.hacker; const near = (px: number, pz: number) => Math.hypot(px - x, pz - z) < H.pick;
+    if (skill === 'tablet') {
+      const c = this.cameras.filter((cm) => near(cm.x, cm.z)).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0];
+      if (!c) return { ok: false, reason: 'Tap near a security camera' };
+      if ((c.offUntil ?? 0) > this.time) return { ok: false, reason: 'That camera is already offline' };
+      return { ok: true, target: c.id, tx: c.x, tz: c.z };
+    }
+    if (skill === 'laptop') {
+      const s = this.stores.filter((st) => near(st.door.x, st.door.z)).sort((a, b) => Math.hypot(a.door.x - x, a.door.z - z) - Math.hypot(b.door.x - x, b.door.z - z))[0];
+      if (!s) return { ok: false, reason: 'Tap near a shop shutter' };
+      if (s.structure <= 0) return { ok: false, reason: 'That shutter is already broken' };
+      if ((s.openUntil ?? 0) > this.time) return { ok: false, reason: 'That shutter is already open' };
+      return { ok: true, target: s.idx, tx: s.door.x, tz: s.door.z };
+    }
+    const p = this.nav.nearestWalkable(x, z, 3); if (!p) return { ok: false, reason: 'No valid spot there' };
+    if (!this.defenders().some((d) => d.kind === 'security' && (d.state === 'idle' || d.state === 'return'))) return { ok: false, reason: 'No patrol free to send' };
+    return { ok: true, target: -1, tx: p.x, tz: p.z };
+  }
+  canHack(skill: HackSkill): ActionResult {
+    if (this.side !== 'looters' || this.over) return { ok: false, reason: 'Not available' };
+    if (this.time < this.hackReadyAt[skill]) return { ok: false, reason: `Ready in ${Math.ceil(this.hackReadyAt[skill] - this.time)} s` };
+    if (this.units.some((u) => u.hack?.skill === skill && u.state === 'approach')) return { ok: false, reason: 'Already on the way' };
+    if (this.budget < BALANCE.looters.hacker.cost) return { ok: false, reason: 'Insufficient budget' };
+    return { ok: true };
+  }
+  deployHacker(skill: HackSkill, x: number, z: number): ActionResult {
+    const chk = this.canHack(skill); if (!chk.ok) return this.deny(chk.reason!);
+    const t = this.hackTarget(skill, x, z); if (!t.ok) return this.deny(t.reason!);
+    const ent = this.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - t.tx!, a.z - t.tz!) - Math.hypot(b.x - t.tx!, b.z - t.tz!))[0];
+    const H = BALANCE.looters.hacker; this.budget -= H.cost; this.hackReadyAt[skill] = this.time + H.cooldown;
+    const start = this.nav.nearestWalkable(ent.x, ent.z, 4) ?? { x: ent.x, z: ent.z };
+    const u = this.baseUnit('att', 'runner', start); u.capacity = 0; u.targetStore = -1; u.exitId = ent.id;
+    u.hack = { skill, tx: t.tx!, tz: t.tz!, target: t.target!, t: 0, at: null };
+    this.units.push(u);
+    this.emit({ type: 'purchase', text: `Hacker sent (${skill}) (-${H.cost})`, x: start.x, z: start.z, amount: H.cost });
+    return { ok: true };
+  }
+  /** walk to a spot within reach of the target, work on it with a progress bar, apply the effect, then leave */
+  private stepHacker(u: Unit, dt: number, sp: number) {
+    const h = u.hack!; const H = BALANCE.looters.hacker;
+    const lost = h.skill === 'tablet' ? !this.cameras.some((c) => c.id === h.target) : h.skill === 'laptop' ? this.stores[h.target].structure <= 0 : false;
+    if (lost) { this.hackDone(u, false); return; }
+    if (!h.at) {
+      // the tablet works on the camera from a few metres, the radio call from well back; the laptop needs the shutter's
+      // control box: a spot that far from the target on the side he comes from
+      const reach = h.skill === 'tablet' ? H.reachTablet : h.skill === 'radio' ? H.reachRadio : H.reach;
+      const dx = u.x - h.tx, dz = u.z - h.tz, dl = Math.hypot(dx, dz) || 1, k = Math.min(reach, Math.max(0, dl - 0.5)) / dl;
+      h.at = this.nav.nearestWalkable(h.tx + dx * k, h.tz + dz * k, 3) ?? this.nav.nearestWalkable(h.tx, h.tz, 5) ?? { x: u.x, z: u.z }; this.setPath(u, h.at);
+    }
+    if (Math.hypot(u.x - h.at.x, u.z - h.at.z) > 0.5) { u.repathT += dt; if (!u.path || u.repathT > 50) this.setPath(u, h.at); this.follow(u, dt, sp); h.t = 0; return; }
+    u.moving = false; u.facing = Math.atan2(h.tx - u.x, h.tz - u.z);
+    h.t += dt;
+    if (h.t >= H.work) this.hackDone(u, true);
+  }
+  private hackDone(u: Unit, ok: boolean) {
+    const h = u.hack!; const H = BALANCE.looters.hacker;
+    if (ok) {
+      if (h.skill === 'tablet') { const c = this.cameras.find((cm) => cm.id === h.target); if (c) c.offUntil = this.time + H.cameraOff; this.emit({ type: 'info', text: `Camera offline for ${H.cameraOff} s`, x: h.tx, z: h.tz }); }
+      else if (h.skill === 'laptop') { this.stores[h.target].openUntil = this.time + H.shutterOpen; this.emit({ type: 'info', text: `${this.stores[h.target].name}: shutter open for ${H.shutterOpen} s`, x: h.tx, z: h.tz }); }
+      else {
+        // a fake call: the nearest free guard (not one already chasing or holding someone) goes to look, then returns
+        const d = this.defenders().filter((g) => g.kind === 'security' && (g.state === 'idle' || g.state === 'return')).sort((a, b) => Math.hypot(a.x - h.tx, a.z - h.tz) - Math.hypot(b.x - h.tx, b.z - h.tz))[0];
+        if (d) { d.state = 'move'; d.goal = { x: h.tx, z: h.tz }; this.setPath(d, d.goal); d.distractUntil = this.time + H.distract; }
+        this.emit({ type: 'info', text: d ? 'Fake call: a guard goes to check' : 'Fake call: nobody free to send', x: h.tx, z: h.tz });
+      }
+    }
+    u.hack = undefined; u.state = 'flee'; u.stateT = 0; this.setAttGoal(u); // job done (or target gone): off the map
+  }
+  /** guards sent by a fake call go back to their post when the time is up */
+  private stepDistractions() {
+    for (const d of this.units) if (d.distractUntil !== undefined && this.time >= d.distractUntil) {
+      d.distractUntil = undefined;
+      if (d.state === 'move' || d.state === 'idle') { d.state = 'return'; this.setPath(d, d.home); }
+    }
+  }
+
   romeoReadyAt = 0;
   romeoTeams() { return Math.ceil(this.defenders().filter((d) => d.role === 'romeo').length / 2); }
   canRomeo(mode: 'public' | 'bus'): ActionResult {
@@ -741,6 +826,7 @@ export class Game {
     this.stepNpcs(dt);
     this.stepFires(dt);
     this.stepGas(dt);
+    this.stepDistractions();
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;
     this.drops = this.drops.filter((d) => d.t < 6);
@@ -850,21 +936,21 @@ export class Game {
 
   inCamera(x: number, z: number): boolean {
     const r = this.cameraRadius();
-    return this.cameras.some((c) => (c.x - x) ** 2 + (c.z - z) ** 2 < r * r);
+    return this.cameras.some((c) => !((c.offUntil ?? 0) > this.time) && (c.x - x) ** 2 + (c.z - z) ** 2 < r * r);
   }
 
   private stepDetection(dt: number) {
     const delay = this.cameraSpec === 'fast' ? BALANCE.camera.fastDelay : BALANCE.camera.detectDelay;
     const defs = this.defenders();
     for (const a of this.attackers()) {
-      if (this.inCamera(a.x, a.z)) {
+      if (!a.hack && this.inCamera(a.x, a.z)) { // a hacker looks like any passer-by to a camera
         const was = a.camSeen; a.camSeen += dt;
         if (a.camSeen >= delay) a.detectedUntil = this.time + 4;
         if (was < delay && a.camSeen >= delay) this.cameraAlarm(a); // crossed the camera's watch zone: guards respond
       } else a.camSeen = 0;
       const low = this.nav.lowSight[this.nav.idx(a.x, a.z)] === 1;
       for (const d of defs) {
-        const sight = (BALANCE.units[d.kind] as { sight: number }).sight * (low ? 0.5 : 1);
+        const sight = (BALANCE.units[d.kind] as { sight: number }).sight * (low ? 0.5 : 1) * (a.hack ? BALANCE.looters.hacker.seenAt : 1); // a hacker in plain clothes is only noticed up close
         if (sight > 0 && (d.x - a.x) ** 2 + (d.z - a.z) ** 2 < sight * sight) { a.detectedUntil = this.time + 3; break; }
       }
     }
@@ -1222,6 +1308,7 @@ export class Game {
       return;
     }
     const sp = this.speedOf(u);
+    if (u.hack && u.state === 'approach') { this.stepHacker(u, dt, sp); return; }
     switch (u.state) {
       case 'approach': {
         const s = this.stores[u.targetStore];
@@ -1249,6 +1336,7 @@ export class Game {
       case 'breach': {
         u.moving = false;
         const s = this.stores[u.targetStore];
+        if ((s.openUntil ?? 0) > this.time) { u.state = 'collect'; u.stateT = 0; this.beginCollect(u); break; } // a hacker holds the shutter open
         const rate = (BALANCE.units[u.kind] as { breakRate: number }).breakRate;
         if (s.boards > 0) {
           // boards absorb the attack first; the shutter is untouched until they are gone
