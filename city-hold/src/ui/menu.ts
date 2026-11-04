@@ -153,8 +153,10 @@ export class Menu {
           <button class="rm-link" data-go="gallery">${t.collection}</button>
           <button class="rm-link" data-go="settings">${t.settings}</button>
         </nav>
+        ${fullscreenOffer() ? `<button class="rm-fs" data-fs>${this.lang === 'nl' ? 'VOLLEDIG SCHERM' : 'FULL SCREEN'}</button>` : ''}
       </div></main>`;
     this.wire('[data-go]', (el) => this.go(el.dataset.go as Screen));
+    this.wire('[data-fs]', () => goFullscreen(this.lang));
     this.intro();
   }
 
@@ -327,4 +329,38 @@ export class Menu {
     this.wire('[data-reset-no]', () => this.settings(false));
     this.wire('[data-reset-yes]', () => { this.host.reset(); menuState.city = 'paris'; menuState.history = []; menuState.screen = 'main'; this.render(); });
   }
+}
+
+// ---- full screen: browsers that can (iPad, Android, desktop) get a button; iPhone Safari cannot make a page full
+// screen, so there the button explains how to put RIOTS on the home screen, which opens it as an app without bars
+function isStandalone(): boolean {
+  return matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+}
+function canFullscreen(): boolean {
+  const d = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+  return typeof d.requestFullscreen === 'function' || typeof d.webkitRequestFullscreen === 'function';
+}
+const IPHONE = /iPhone|iPod/.test(navigator.userAgent);
+function fullscreenOffer(): boolean {
+  if (isStandalone() || document.fullscreenElement) return false;
+  return canFullscreen() || IPHONE;
+}
+function goFullscreen(lang: 'nl' | 'en') {
+  const d = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+  if (canFullscreen() && !IPHONE) {
+    const p = d.requestFullscreen ? d.requestFullscreen({ navigationUI: 'hide' }) : (d.webkitRequestFullscreen?.(), Promise.resolve());
+    void Promise.resolve(p).then(() => { const o = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }; return o?.lock?.('landscape'); }).catch(() => {});
+    document.querySelector('.rm-fs')?.remove();
+    return;
+  }
+  // iPhone: how to add it to the home screen
+  const nl = lang === 'nl';
+  const el = document.createElement('div'); el.className = 'rm-fshelp'; el.setAttribute('role', 'dialog');
+  el.innerHTML = `<div class="rm-fsbox"><b>${nl ? 'Volledig scherm op iPhone' : 'Full screen on iPhone'}</b>
+    <ol><li>${nl ? 'Tik onderaan Safari op <span class="rm-fsico">Deel</span> (vierkantje met pijl omhoog).' : 'Tap <span class="rm-fsico">Share</span> in Safari (the square with the arrow).'}</li>
+    <li>${nl ? 'Kies <b>Zet op beginscherm</b> en tik op <b>Voeg toe</b>.' : 'Choose <b>Add to Home Screen</b> and tap <b>Add</b>.'}</li>
+    <li>${nl ? 'Open RIOTS voortaan met het icoon op je beginscherm: zonder adresbalk, over het hele scherm.' : 'From now on open RIOTS from its home screen icon: no address bar, the whole screen.'}</li></ol>
+    <button class="rm-cta" data-close>OK</button></div>`;
+  el.addEventListener('click', (e) => { if (e.target === el || (e.target as HTMLElement).closest('[data-close]')) el.remove(); });
+  document.body.appendChild(el);
 }
