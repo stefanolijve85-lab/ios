@@ -16,7 +16,9 @@ export const BALANCE = {
     storesNeededToWin: 2,
     storeStructure: 100,
     storeStock: 100,
-    costs: { security: 250, shield: 400, barrier: 150, camera: 200, concrete: 350, firefighter: 250, boards: 120, repair: 200 },
+    costs: { security: 250, shield: 400, barrier: 150, camera: 200, concrete: 350, firefighter: 250, boards: 120, repair: 200, romeo: 450 },
+    /** Romeo team: a plainclothes police duo, sent in through the crowd or out of the police van; the cost buys both */
+    romeo: { cooldown: 25, maxTeams: 2, busExitGap: 0.9 },
     /** plywood boards: a protection layer in front of the shopfront, broken before the shutter takes damage */
     boardsHp: 50,
     maxDefenders: 14,

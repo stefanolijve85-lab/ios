@@ -10,10 +10,13 @@ import { translateLive } from './i18n_nl';
 import { setFigureChoices } from '../render/character';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
+/** cards that are neither a unit bought at the van nor a structure */
+type SpecialKind = 'romeo';
 
-const DEF_CARDS: { kind: DefKind | BuildKind; label: string; img: string; note: string }[] = [
+const DEF_CARDS: { kind: DefKind | BuildKind | SpecialKind; label: string; img: string; note: string }[] = [
   { kind: 'security', label: 'Security', img: 'ui/10_security_officer.webp', note: 'Fast · intercepts one offender' },
   { kind: 'shield', label: 'Shield team', img: 'ui/fx_shield_officer.webp', note: 'Slow · holds up to 3' },
+  { kind: 'romeo', label: 'Romeo team', img: 'ui/romeo.webp', note: 'Plainclothes duo · crowd or van' },
   { kind: 'barrier', label: 'Barrier', img: 'ui/15_barrier.webp', note: 'Slows a lane · breakable' },
   { kind: 'concrete', label: 'Concrete', img: 'ui/31_concrete_barriers.webp', note: '2× durability · large socket' },
   { kind: 'camera', label: 'Camera', img: 'ui/16_camera_mast.webp', note: 'Detection · no damage' },
@@ -218,8 +221,9 @@ export class Match {
     this.refreshHud(true);
   }
 
-  private cardDef(kind: DefKind | BuildKind) {
+  private cardDef(kind: DefKind | BuildKind | SpecialKind) {
     this.sfx.play('click');
+    if (kind === 'romeo') { this.openRomeoPick(); return; }
     if (kind === 'barrier' || kind === 'concrete' || kind === 'camera') {
       if (this.game.budget < this.game.placeCost(kind)) { this.toast('Insufficient budget', 'bad'); this.sfx.play('deny'); return; }
       this.placing = this.placing === kind ? null : kind; this.pending = null; this.view.setGhost(null, null, false);
@@ -238,6 +242,13 @@ export class Match {
   private onTap(p: Pick, _sx: number, _sy: number) {
     const g = this.game; const isDef = this.side === 'defence';
     if (g.over) return;
+    if (this.romeoMode && isDef) {
+      const mode = this.romeoMode; this.romeoMode = null;
+      const r = g.deployRomeo(mode, p.x, p.z);
+      if (r.ok) { this.sfx.play('buy'); this.showCardPop('romeo'); this.view.showDestination(p.x, p.z, null, 0x4fd2ff); this.view.selected = new Set(g.defenders().filter((d) => d.role === 'romeo').slice(-2).map((d) => d.id)); }
+      else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
+      this.refreshHud(true); return;
+    }
     if (this.gasAim && isDef) {
       this.gasAim = false;
       if (p.type === 'socket' || p.type === 'entry') { this.refreshHud(true); return; }
@@ -418,10 +429,31 @@ export class Match {
   /** a short enlarged look at the figure just added to the group (pointer-transparent: never blocks the next tap) */
   private recruitPop: HTMLDivElement | null = null; private recruitT = 0;
   /** defence: the picked unit or object shown large for a moment, as with the looting crew */
-  private showCardPop(kind: DefKind | BuildKind) {
+  // ---- Romeo team: choose how they come in, then tap where they should go
+  private romeoMode: 'public' | 'bus' | null = null;
+  private romeoPick: HTMLElement | null = null;
+  private openRomeoPick() {
+    if (this.romeoPick) { this.closeRomeoPick(); return; }
+    const g = this.game; const en = this.settings.language === 'en';
+    const opt = (mode: 'public' | 'bus', label: string, sub: string) => { const c = g.canRomeo(mode); return `<button data-romeo="${mode}" ${c.ok ? '' : 'disabled'}><b>${label}</b><small>${c.ok ? sub : c.reason}</small></button>`; };
+    const el = document.createElement('div'); el.className = 'romeo-pick';
+    el.innerHTML = `<header>${en ? 'Romeo team' : 'Romeo-team'} · ${BALANCE.defence.costs.romeo}</header>`
+      + opt('public', en ? 'Through the crowd' : 'Via publiek', en ? 'on foot from the nearest street' : 'te voet vanaf de dichtstbijzijnde straat')
+      + opt('bus', en ? 'Out of the police van' : 'Uit politiebus', en ? 'step out at the van' : 'stappen uit bij de bus')
+      + `<button data-romeo="x" class="ghost">${en ? 'Cancel' : 'Annuleren'}</button>`;
+    el.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-romeo]'); if (!b || b.disabled) return;
+      const m = b.dataset.romeo; this.closeRomeoPick();
+      if (m === 'public' || m === 'bus') { this.romeoMode = m; this.toast(en ? 'Tap where the Romeo team should go' : 'Tik waar het Romeo-team heen moet', 'info'); this.refreshHud(true); }
+    });
+    this.root.appendChild(el); this.romeoPick = el;
+  }
+  private closeRomeoPick() { this.romeoPick?.remove(); this.romeoPick = null; }
+
+  private showCardPop(kind: DefKind | BuildKind | SpecialKind) {
     const c = DEF_CARDS.find((d) => d.kind === kind); if (!c) return;
     const img = kind === 'firefighter' ? `ui/firefighters/${this.game.map.id}.webp` : c.img;
-    this.showRecruit(img, c.label, kind === 'barrier' || kind === 'concrete' || kind === 'camera' ? '' : `+1 · ${this.game.defenders().filter((u) => u.kind === kind).length}`);
+    this.showRecruit(img, c.label, kind === 'barrier' || kind === 'concrete' || kind === 'camera' ? '' : kind === 'romeo' ? `+2 · ${this.game.romeoTeams()}/${BALANCE.defence.romeo.maxTeams}` : `+1 · ${this.game.defenders().filter((u) => u.kind === kind).length}`);
   }
   private showRecruit(img: string | null, label: string, sub?: string) {
     if (!img) return;
@@ -489,6 +521,7 @@ export class Match {
       const k = c.dataset.kind!;
       const cost = isDef ? (k === 'barrier' || k === 'concrete' || k === 'camera' ? g.placeCost(k) : BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs]) : BALANCE.looters.costs[k as AttKind];
       c.disabled = g.budget < cost || g.over;
+      if (isDef && k === 'romeo') c.disabled = !g.canRomeo('public').ok && !g.canRomeo('bus').ok;
       // the first crowd barriers are free: the card says so (and how many are left)
       if (isDef && k === 'barrier') { const cc = c.querySelector<HTMLElement>('.cc'); const free = g.freeBarriers > 0; const txt = free ? `${this.settings.language === 'en' ? 'FREE' : 'GRATIS'} ×${g.freeBarriers}` : String(cost); if (cc && cc.textContent !== txt) { cc.textContent = txt; cc.classList.toggle('free', free); } }
       c.classList.toggle('active', this.placing === k);

@@ -9,7 +9,7 @@ import { Effects } from './effects';
 import { Post } from './post';
 import { cloneModel, loadedTextures, slotStatus } from './assets';
 import { IncendiaryPool } from './thrown';
-import { createCharacter, setFireKit, type CharacterVisual } from './character';
+import { createCharacter, createCharacterFromSlot, setFireKit, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
 import { buildCar } from './world';
 import { radialTexture, setFacadeDaylight } from './textures';
@@ -809,7 +809,7 @@ export class MatchView {
     for (const u of g.units) {
       seen.add(u.id);
       let h = this.humans.get(u.id);
-      if (!h) { h = createCharacter(u.kind, u.variant); noReflection(h.root); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
+      if (!h) { h = (u.role === 'romeo' && slotStatus('char.romeo') === 'final' ? createCharacterFromSlot('char.romeo', u.kind, u.variant) : null) ?? createCharacter(u.kind, u.variant); noReflection(h.root); this.humans.set(u.id, h); this.scene.add(h.root); h.root.position.set(u.x, 0, u.z); }
       // smooth visual position (sim runs at fixed rate)
       const k = 1 - Math.exp(-dt * 20);
       // looting: the looter walks in through the broken front, grabs the goods inside and comes back out carrying them

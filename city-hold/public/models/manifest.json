@@ -471,8 +471,7 @@
     "char.romeo": {
       "file": "final/char.romeo.glb",
       "status": "final",
-      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the Romeo sheet, Paris pack), 44 credits",
-      "city": "paris"
+      "note": "Meshy 7 image-to-3D with rigging (A-pose front of the Romeo sheet, Paris pack), 44 credits \u2014 loaded in every city (the Romeo team card is everywhere)"
     },
     "prop.solotech_van.paris": {
       "file": "final/prop.solotech_van.paris.glb",

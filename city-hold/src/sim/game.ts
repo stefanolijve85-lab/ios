@@ -72,6 +72,7 @@ export interface Unit {
   /** shield officer: time of the last baton strike (view plays the swing); rioter: knocked off balance until this time */
   strikeAt: number; staggerUntil: number;
   /** flinch away from a flashbang: velocity (m/s) until kickUntil */ kickX?: number; kickZ?: number; kickUntil?: number;
+  /** a security officer of the Romeo team (plainclothes duo): same job as security, own look and deployment */ role?: 'romeo';
   /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
@@ -480,6 +481,48 @@ export class Game {
     const r = Math.max(0.85, 0.32 * n);
     for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; out.push({ x: x + Math.sin(a) * r, z: z + Math.cos(a) * r, face: a }); }
     return out;
+  }
+
+  // ---- Romeo team: a plainclothes police duo. 'public': on foot through the nearest street entry, among the crowd;
+  // 'bus': out of the police van, one after the other. Then they work as security (intercept, hold, escort).
+  romeoReadyAt = 0;
+  romeoTeams() { return Math.ceil(this.defenders().filter((d) => d.role === 'romeo').length / 2); }
+  canRomeo(mode: 'public' | 'bus'): ActionResult {
+    if (this.side !== 'defence' || this.over) return { ok: false, reason: 'Not available' };
+    const R = BALANCE.defence.romeo;
+    if (this.romeoTeams() >= R.maxTeams) return { ok: false, reason: `At most ${R.maxTeams} Romeo teams` };
+    if (this.time < this.romeoReadyAt) return { ok: false, reason: `Ready in ${Math.ceil(this.romeoReadyAt - this.time)} s` };
+    if (this.budget < BALANCE.defence.costs.romeo) return { ok: false, reason: 'Insufficient budget' };
+    if (mode === 'bus') {
+      const ex = this.romeoBusExit();
+      if (!ex) return { ok: false, reason: 'No police van' };
+      if (this.units.some((u) => Math.hypot(u.x - ex.x, u.z - ex.z) < 0.9)) return { ok: false, reason: 'The van door is blocked' };
+    }
+    return { ok: true };
+  }
+  /** the spot beside the police van's side door where the team steps out */
+  private romeoBusExit(): Vec2 | null { const v = this.map.van; return v ? this.nav.nearestWalkable(v.x - 2.2, v.z + 1.5, 3) : null; }
+  deployRomeo(mode: 'public' | 'bus', x: number, z: number): ActionResult {
+    const chk = this.canRomeo(mode); if (!chk.ok) return this.deny(chk.reason!);
+    const dest = this.nav.nearestWalkable(x, z, 4); if (!dest) return this.deny('No valid spot there');
+    let start: Vec2;
+    if (mode === 'bus') start = this.romeoBusExit()!;
+    else {
+      const ent = this.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - dest.x, a.z - dest.z) - Math.hypot(b.x - dest.x, b.z - dest.z))[0];
+      start = this.nav.nearestWalkable(ent.x, ent.z, 4) ?? dest;
+    }
+    const cost = BALANCE.defence.costs.romeo; this.budget -= cost; this.romeoReadyAt = this.time + BALANCE.defence.romeo.cooldown;
+    const ids: number[] = [];
+    for (let i = 0; i < 2; i++) {
+      const u = this.spawnDefender('security', { x: start.x + (mode === 'public' ? (i ? 0.7 : -0.7) : 0), z: start.z + (mode === 'public' ? 0.4 * i : 0) });
+      u.role = 'romeo'; ids.push(u.id);
+      // out of the van one after the other: the second waits at the door a moment
+      if (mode === 'bus' && i === 1) u.staggerUntil = this.time + BALANCE.defence.romeo.busExitGap;
+    }
+    this.moveUnits(ids, dest.x, dest.z);
+    for (const id of ids) { const u = this.unit(id); if (u) u.home = { x: u.goal?.x ?? dest.x, z: u.goal?.z ?? dest.z }; }
+    this.emit({ type: 'purchase', text: `Romeo team ${mode === 'bus' ? 'out of the police van' : 'through the crowd'} (-${cost})`, x: start.x, z: start.z, amount: cost });
+    return { ok: true };
   }
 
   moveUnits(ids: number[], x: number, z: number): ActionResult {

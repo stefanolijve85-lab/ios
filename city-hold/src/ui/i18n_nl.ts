@@ -14,7 +14,7 @@ const PHRASES: [string, string][] = [
   ['Mobile quality — lighter: no reflections, glow or shadows (applies on restart)', 'Mobiele kwaliteit — lichter: geen reflecties, gloed of schaduwen (na herstart)'],
   ['Show tutorial tips', 'Speltips tonen'], ['HUD size', 'HUD-grootte'], ['Vibrate on events', 'Trillen bij gebeurtenissen'], ['Volume', 'Volume'], ['Music', 'Muziek'],
   // cards
-  ['Security team', 'Beveiligingsteam'], ['Shield team', 'Schildteam'], ['Firefighter', 'Brandweer'], ['Heavy carrier', 'Zware drager'],
+  ['Security team', 'Beveiligingsteam'], ['Shield team', 'Schildteam'], ['Romeo team', 'Romeo-team'], ['Plainclothes duo · crowd or van', 'Duo in burger · publiek of bus'], ['Firefighter', 'Brandweer'], ['Heavy carrier', 'Zware drager'],
   ['Security', 'Beveiliging'], ['Barrier', 'Dranghek'], ['Concrete', 'Betonblok'], ['Camera', 'Camera'],
   ['Runner', 'Renner'], ['Carrier', 'Drager'], ['Thrower', 'Werper'], ['Vandal', 'Vandaal'],
   ['Fast · intercepts one offender', 'Snel · onderschept één dader'], ['Slow · holds up to 3', 'Traag · houdt er tot 3 vast'],
