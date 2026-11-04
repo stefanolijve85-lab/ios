@@ -11,7 +11,7 @@ import { setFigureChoices } from '../render/character';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
 /** cards that are neither a unit bought at the van nor a structure */
-type SpecialKind = 'romeo';
+type SpecialKind = 'romeo' | 'cannon';
 
 const DEF_CARDS: { kind: DefKind | BuildKind | SpecialKind; label: string; img: string; note: string }[] = [
   { kind: 'security', label: 'Security', img: 'ui/10_security_officer.webp', note: 'Fast · intercepts one offender' },
@@ -21,6 +21,7 @@ const DEF_CARDS: { kind: DefKind | BuildKind | SpecialKind; label: string; img: 
   { kind: 'concrete', label: 'Concrete', img: 'ui/31_concrete_barriers.webp', note: '2× durability · large socket' },
   { kind: 'camera', label: 'Camera', img: 'ui/16_camera_mast.webp', note: 'Detection · no damage' },
   { kind: 'firefighter', label: 'Firefighter', img: 'ui/fx_firefighter_hose.webp', note: 'Extinguishes fires' },
+  { kind: 'cannon', label: 'Water cannon', img: 'ui/water_cannon.webp', note: 'Knocks rioters down · tap the spot' },
 ];
 
 const ATT_CARDS: { kind: AttKind; label: string; img: string | null; note: string }[] = [
@@ -158,6 +159,7 @@ export class Match {
     const cards = this.el.cards;
     if (isDef) {
       for (const c of DEF_CARDS) {
+        if (c.kind === 'cannon' && !this.game.map.waterCannon) continue; // only where a water cannon is stationed (Paris)
         const b = document.createElement('button'); b.className = 'card'; b.dataset.kind = c.kind;
         const cost = BALANCE.defence.costs[c.kind];
         // the fire crew wears the city's own kit (ui/firefighters/<city>.webp); falls back to the generic picture
@@ -228,6 +230,12 @@ export class Match {
   private cardDef(kind: DefKind | BuildKind | SpecialKind) {
     this.sfx.play('click');
     if (kind === 'romeo') { this.openRomeoPick(); return; }
+    if (kind === 'cannon') {
+      const c = this.game.canCannon(); if (!c.ok) { this.toast(c.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); return; }
+      this.cannonAim = !this.cannonAim;
+      if (this.cannonAim) this.toast(this.settings.language === 'en' ? 'Tap where the water cannon should spray' : 'Tik waar het waterkanon moet spuiten', 'info');
+      this.refreshHud(true); return;
+    }
     if (kind === 'barrier' || kind === 'concrete' || kind === 'camera') {
       if (this.game.budget < this.game.placeCost(kind)) { this.toast('Insufficient budget', 'bad'); this.sfx.play('deny'); return; }
       this.placing = this.placing === kind ? null : kind; this.pending = null; this.view.setGhost(null, null, false);
@@ -250,6 +258,13 @@ export class Match {
       const k = this.hackSkill; this.hackSkill = null;
       const r = g.deployHacker(k, p.x, p.z);
       if (r.ok) { this.sfx.play('buy'); this.showRecruit('ui/hacker.webp', 'Hacker'); const t = g.units.find((u) => u.hack?.skill === k); if (t?.hack) this.view.showDestination(t.hack.tx, t.hack.tz, null, 0xffb020); }
+      else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
+      this.refreshHud(true); return;
+    }
+    if (this.cannonAim && isDef) {
+      this.cannonAim = false;
+      const r = g.fireCannon(p.x, p.z);
+      if (r.ok) { this.sfx.play('buy'); this.view.showDestination(p.x, p.z, null, 0x7fd4ff); }
       else { this.toast(r.reason ?? 'Not available', 'bad'); this.sfx.play('deny'); }
       this.refreshHud(true); return;
     }
@@ -412,6 +427,7 @@ export class Match {
         case 'held': this.sfx.play(e.text === 'Baton strike' ? 'strike' : 'held', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); break;
         case 'waveStart': this.sfx.play('wave'); this.toast(e.text, 'info'); break;
         case 'waveEnd': if (!this.game.over) this.waveSecured(); this.buzz(30); // the last wave ends in the victory sound instead this.banner('WAVE SECURED', e.text); break;
+        case 'cannon': this.sfx.waterCannon(BALANCE.defence.cannon.spray, e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.buzz([30, 30, 60]); break;
         case 'supply': this.sfx.play('supply', e.x !== undefined ? this.hear(e.x, e.z!) : undefined); this.toast(e.text, 'good'); if (e.x !== undefined) this.view.floatText(e.x, e.z!, `+${e.amount}`, 'cyan'); break;
         case 'won': {
           // defence: sting + radio voice ("Missie volbracht. Alle winkels zijn beveiligd."); looting: the sting alone (the line is about secured shops)
@@ -442,6 +458,7 @@ export class Match {
   /** defence: the picked unit or object shown large for a moment, as with the looting crew */
   // ---- Romeo team: choose how they come in, then tap where they should go
   private romeoMode: 'public' | 'bus' | null = null;
+  private cannonAim = false;
   private romeoPick: HTMLElement | null = null;
   private openRomeoPick() {
     if (this.romeoPick) { this.closeRomeoPick(); return; }
@@ -557,6 +574,7 @@ export class Match {
       const cost = isDef ? (k === 'barrier' || k === 'concrete' || k === 'camera' ? g.placeCost(k) : BALANCE.defence.costs[k as keyof typeof BALANCE.defence.costs]) : BALANCE.looters.costs[k as AttKind];
       c.disabled = g.budget < cost || g.over;
       if (isDef && k === 'romeo') c.disabled = !g.canRomeo('public').ok && !g.canRomeo('bus').ok;
+      if (isDef && k === 'cannon') { c.disabled = !g.canCannon().ok; c.classList.toggle('active', this.cannonAim); }
       if (!isDef && k === 'hacker') c.disabled = !(['tablet', 'laptop', 'radio'] as const).some((h) => g.canHack(h).ok);
       // the first crowd barriers are free: the card says so (and how many are left)
       if (isDef && k === 'barrier') { const cc = c.querySelector<HTMLElement>('.cc'); const free = g.freeBarriers > 0; const txt = free ? `${this.settings.language === 'en' ? 'FREE' : 'GRATIS'} ×${g.freeBarriers}` : String(cost); if (cc && cc.textContent !== txt) { cc.textContent = txt; cc.classList.toggle('free', free); } }

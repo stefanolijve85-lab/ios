@@ -128,7 +128,7 @@ export function buildFireEngine(): FireEngine {
 }
 
 /** a water jet: a tube along a ballistic arc with a scrolling, broken-up stream shader */
-function jetMaterial(core: boolean): THREE.ShaderMaterial {
+export function jetMaterial(core: boolean): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     uniforms: { uTime: { value: 0 }, uOn: { value: 0 } },

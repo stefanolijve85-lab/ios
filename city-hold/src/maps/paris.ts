@@ -66,7 +66,6 @@ const props: PropDef[] = [
   { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.9, wid: 0.7, collide: true },
   { type: 'vehicle', model: 'prop.taxi.paris', x: 17.8, z: -40.5, rot: 180, len: 4.8, wid: 1.85 },
   { type: 'vehicle', model: 'prop.solotech_van.paris', x: -19.8, z: -41.5, rot: 0, len: 5.2, wid: 2.0 },
-  { type: 'vehicle', model: 'prop.water_cannon.paris', x: 20.6, z: -37, rot: 180, len: 8.6, wid: 2.55 },
   { type: 'shelter', x: -16, z: 14.05, rot: 180, collide: true },
   { type: 'bench', x: -23.9, z: -13, rot: 90, collide: true, r: 0.75 },
   { type: 'bench', x: 23.9, z: -13, rot: -90, collide: true, r: 0.75 },
@@ -133,7 +132,8 @@ export const PARIS: MapDef = {
     { id: 'L4', x: -28.5, z: 9, size: 'large', rot: 90 },
   ],
   van: { x: 22.6, z: 1.5, rot: 0 },
-  fireEngine: { x: 15.6, z: 6.9, rot: 90 }, // along the kerb of the foreground block, facing the cross street
+  fireEngine: { x: 15.6, z: 6.9, rot: 90 },
+  waterCannon: { home: { x: 20.6, z: -38 }, post: { x: 20.6, z: -19.5 }, rot: 180 }, // waits up the east street, sprays from its mouth // along the kerb of the foreground block, facing the cross street
   defenderSpawn: { x: 19.2, z: 0.5 }, // far enough from the foreground block that its roof never hides the staging team
   lowSight: [],
   // the three upper floors of the shop building as painted in concept 01 (floors above the shop fascia up to the cornice)

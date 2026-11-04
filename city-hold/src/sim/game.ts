@@ -77,6 +77,7 @@ export interface Unit {
   /** a security officer of the Romeo team (plainclothes duo): same job as security, own look and deployment */ role?: 'romeo';
   /** a hacker on a job (looting side): which skill, the target and the work done */ hack?: { skill: HackSkill; tx: number; tz: number; target: number; t: number; at: Vec2 | null };
   /** a guard sent to check a fake radio call: back to his post after this time */ distractUntil?: number;
+  /** knocked off his feet by the water cannon: lies down until this time */ downUntil?: number;
   /** where a guard faces once at his post (formation: outward in a ring, towards the street in front of a shop) */
   holdFacing?: number;
   /** seconds spent in tear gas (rioters); time of the last gas throw (officers) */
@@ -118,7 +119,7 @@ export interface Projectile { id: number; owner: number; x: number; y: number; z
 export interface Drop { id: number; x: number; z: number; amount: number; t: number }
 export interface Truck { x: number; z: number; facing: number; seg: number; done: boolean; rewarded: boolean; waitT: number; active: boolean; blocked: boolean }
 
-export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm' | 'gasThrow' | 'gasLand' | 'flashBang' | 'throwBack';
+export type EventType = 'purchase' | 'denied' | 'intercept' | 'extract' | 'breach' | 'fire' | 'extinguished' | 'barrierBroken' | 'waveStart' | 'waveEnd' | 'won' | 'lost' | 'upgrade' | 'held' | 'recovered' | 'dispatch' | 'supply' | 'info' | 'collect' | 'release' | 'impact' | 'alarm' | 'gasThrow' | 'gasLand' | 'flashBang' | 'throwBack' | 'cannon';
 export interface GameEvent { type: EventType; text: string; x?: number; z?: number; amount?: number; side?: 'def' | 'att'; id?: number }
 
 export interface GameOptions {
@@ -212,6 +213,7 @@ export class Game {
     this.looterRoute = map.entries.find((e) => e.spawn)!.id;
     if (side === 'defence') {
       this.phase = 'prep';
+      this.cannonInit();
       this.budget = BALANCE.defence.startBudget + bonus;
       this.freeBarriers = BALANCE.defence.freeBarriers;
       // initial mobile reserve
@@ -570,6 +572,67 @@ export class Game {
     }
   }
 
+  // ---- police water cannon (defence): drives in from up the street once, then sprays where the player taps
+  cannon: { x: number; z: number; state: 'home' | 'driving' | 'ready' | 'spraying'; t: number; tx: number; tz: number; readyAt: number; pending: Vec2 | null } | null = null;
+  private cannonInit() { const w = this.map.waterCannon; if (w && this.side === 'defence') this.cannon = { x: w.home.x, z: w.home.z, state: 'home', t: 0, tx: 0, tz: 0, readyAt: 0, pending: null }; }
+  canCannon(): ActionResult {
+    const c = this.cannon; const C = BALANCE.defence.cannon;
+    if (!c || this.over) return { ok: false, reason: 'No water cannon here' };
+    if (c.state === 'driving' || c.state === 'spraying') return { ok: false, reason: 'The water cannon is busy' };
+    if (this.time < c.readyAt) return { ok: false, reason: `Ready in ${Math.ceil(c.readyAt - this.time)} s` };
+    if (this.budget < BALANCE.defence.costs.cannon) return { ok: false, reason: 'Insufficient budget' };
+    return { ok: true };
+  }
+  fireCannon(x: number, z: number): ActionResult {
+    const chk = this.canCannon(); if (!chk.ok) return this.deny(chk.reason!);
+    const c = this.cannon!; const C = BALANCE.defence.cannon; const post = this.map.waterCannon!.post;
+    const d = Math.hypot(x - post.x, z - post.z);
+    if (d > C.range) return this.deny('Out of the water cannon\'s reach');
+    if (d < C.minDist + 1) return this.deny('Too close to the water cannon');
+    this.budget -= BALANCE.defence.costs.cannon; c.readyAt = this.time + C.cooldown; c.tx = x; c.tz = z;
+    if (c.state === 'home') { c.state = 'driving'; c.t = 0; } else { c.state = 'spraying'; c.t = 0; this.emit({ type: 'cannon', text: 'Water cannon!', x, z }); }
+    this.emit({ type: 'purchase', text: `Water cannon (-${BALANCE.defence.costs.cannon})`, x, z, amount: BALANCE.defence.costs.cannon });
+    return { ok: true };
+  }
+  private stepCannon(dt: number) {
+    const c = this.cannon; if (!c) return; const C = BALANCE.defence.cannon; const w = this.map.waterCannon!;
+    c.t += dt;
+    if (c.state === 'driving') {
+      const k = Math.min(1, c.t / C.drive); const e = 1 - (1 - k) * (1 - k); // brakes into its spot
+      c.x = w.home.x + (w.post.x - w.home.x) * e; c.z = w.home.z + (w.post.z - w.home.z) * e;
+      if (k >= 1) { c.state = 'spraying'; c.t = 0; this.emit({ type: 'cannon', text: 'Water cannon!', x: c.tx, z: c.tz }); }
+      return;
+    }
+    if (c.state !== 'spraying') return;
+    if (c.t >= C.spray) { c.state = 'ready'; return; }
+    // the jet: from the truck to the target; everyone on the line (past the first metres) or in the splash goes down
+    const dx = c.tx - c.x, dz = c.tz - c.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L;
+    const reach = Math.min(1, c.t / 0.6); // the stream reaches out over the first moment
+    for (const a of this.attackers()) {
+      if (a.heldBy >= 0 || a.restrainBy >= 0 || ['held', 'restrained', 'escorted', 'removed', 'escaped'].includes(a.state)) continue;
+      if ((a.downUntil ?? 0) > this.time - 0.4) continue; // already lying there
+      const px = a.x - c.x, pz = a.z - c.z, along = px * ux + pz * uz, side = Math.abs(px * uz - pz * ux);
+      const onBeam = along > C.minDist && along < L * reach && side < C.beam;
+      const inSplash = reach >= 1 && Math.hypot(a.x - c.tx, a.z - c.tz) < C.splash;
+      if (!onBeam && !inSplash) continue;
+      // knocked off his feet and pushed away along the jet; whatever he carried lands on the street
+      a.downUntil = this.time + C.down; a.staggerUntil = Math.max(a.staggerUntil, this.time + C.down + 0.5); a.moving = false;
+      const ox = inSplash ? a.x - c.tx : ux, oz = inSplash ? a.z - c.tz : uz, ol = Math.hypot(ox, oz) || 1;
+      a.kickX = (ox / ol * 0.4 + ux * 0.6) * C.push; a.kickZ = (oz / ol * 0.4 + uz * 0.6) * C.push; a.kickUntil = this.time + 0.6;
+      a.detectedUntil = Math.max(a.detectedUntil, this.time + 5);
+      if (a.carrying > 0 && a.carryStore >= 0) {
+        const s = this.stores[a.carryStore]; s.reserved = Math.max(0, s.reserved - a.carrying - a.pending);
+        this.drops.push({ id: this.nextId++, x: a.x, z: a.z, amount: a.carrying, t: 0 }); this.recovered += a.carrying + a.pending;
+        this.emit({ type: 'recovered', text: `${a.carrying} stock knocked loose`, x: a.x, z: a.z, amount: a.carrying });
+        a.carrying = 0; a.pending = 0;
+      }
+      if (a.state === 'breach' || a.state === 'collect') { a.state = 'approach'; a.path = null; a.repathT = 99; }
+      if (a.carrying === 0 && this.rng.next() < C.panic) { a.state = 'flee'; a.targetStore = -1; this.setAttGoal(a); }
+    }
+    // and it puts out what burns where it lands
+    for (const f of this.fires) if (!f.out && Math.hypot(f.x - c.tx, f.z - c.tz) < C.splash + 1) { f.progress += dt * 0.6; if (f.progress >= 1) { f.out = true; this.emit({ type: 'extinguished', text: 'Fire extinguished', x: f.x, z: f.z }); } }
+  }
+
   romeoReadyAt = 0;
   romeoTeams() { return Math.ceil(this.defenders().filter((d) => d.role === 'romeo').length / 2); }
   canRomeo(mode: 'public' | 'bus'): ActionResult {
@@ -826,6 +889,7 @@ export class Game {
     this.stepNpcs(dt);
     this.stepFires(dt);
     this.stepGas(dt);
+    this.stepCannon(dt);
     this.stepDistractions();
     this.stepTruck(dt);
     for (const d of this.drops) d.t += dt;

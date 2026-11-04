@@ -40,7 +40,7 @@ export class Sfx {
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
-    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'cough_2', 'cough_3', 'cough_loop', 'gas_launch', 'gas_hiss', 'smash', 'baton',
+    'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'cough_2', 'cough_3', 'cough_loop', 'water_cannon_start', 'water_cannon_loop', 'gas_launch', 'gas_hiss', 'smash', 'baton',
     'victory_def', 'victory_loot', 'vo_wave_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
@@ -76,6 +76,15 @@ export class Sfx {
     this.smp('vo_wave_en', this.out(this.ui, 0), 1, { jitter: 0 });
   }
   private loadErr = new Map<string, string>();
+  /** the water cannon: pump and first blast, then the roaring jet for the length of the spray, faded out */
+  waterCannon(seconds: number, opt?: { pan?: number; gain?: number }) {
+    if (this._volume <= 0) return; const c = this.ensure(); if (!c) return;
+    const bus = c.createGain(); const t = c.currentTime; const g = opt?.gain ?? 1;
+    bus.gain.setValueAtTime(g, t); bus.gain.setValueAtTime(g, t + seconds); bus.gain.linearRampToValueAtTime(0, t + seconds + 0.6);
+    bus.connect(this.out(this.world, opt?.pan ?? 0));
+    this.smp('water_cannon_start', bus, 1.0, { jitter: 0 });
+    this.smp('water_cannon_loop', bus, 0.9, { jitter: 0, delay: 0.6 });
+  }
   unlock() { const c = this.ensure(); if (c && c.state === 'suspended') void c.resume(); }
 
   private ensure(): Ctx | null {

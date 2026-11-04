@@ -112,6 +112,8 @@ export interface MapDef {
   van: { x: number; z: number; rot: number };
   /** where the fire engine parks (scenery; defaults to behind the van) */
   fireEngine?: { x: number; z: number; rot: number };
+  /** police water cannon: waits at `home` (out of play), drives to `post` on first use and sprays from there */
+  waterCannon?: { home: { x: number; z: number }; post: { x: number; z: number }; rot: number };
   defenderSpawn: Vec2;
   /** reduced detection under covered areas */
   lowSight: Rect[];

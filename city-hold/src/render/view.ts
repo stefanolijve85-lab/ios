@@ -11,14 +11,14 @@ import { cloneModel, loadedTextures, slotStatus } from './assets';
 import { IncendiaryPool } from './thrown';
 import { createCharacter, createCharacterFromSlot, setFireKit, type CharacterVisual } from './character';
 import type { AnyKind } from './humans';
-import { buildCar } from './world';
+import { buildCar, vehicleModel } from './world';
 import { radialTexture, setFacadeDaylight } from './textures';
 import { buildWetStreet } from './wet';
 import { groundTexture } from './textures';
 import type { Reflector } from 'three/addons/objects/Reflector.js';
 import { arrowTexture } from './textures';
 import { BALANCE } from '../config/balance';
-import { FireCrew } from './fireCrew';
+import { FireCrew, jetMaterial } from './fireCrew';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export type Pick =
@@ -134,6 +134,36 @@ export class MatchView {
   readonly world: WorldHandles;
   readonly fx: Effects;
   private fireCrew: FireCrew;
+  // ---- police water cannon: the truck (image-to-3D, Paris pack) and its jet from the roof cannon
+  private cannonG: THREE.Group | null = null;
+  private cannonJet: THREE.Mesh[] = [];
+  private cannonKey = ''; private cannonOn = 0;
+  private stepCannonView(g: Game, dt: number) {
+    const c = g.cannon; if (!c) return;
+    if (!this.cannonG) {
+      const m = vehicleModel('prop.water_cannon.paris', 8.6, 0); this.cannonG = new THREE.Group();
+      if (m) this.cannonG.add(m); else { const b = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.2, 8.6).translate(0, 1.6, 0), new THREE.MeshStandardMaterial({ color: 0xe8e8ec })); this.cannonG.add(b); }
+      noReflection(this.cannonG); this.scene.add(this.cannonG);
+      for (const core of [true, false]) { const j = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(core)); j.frustumCulled = false; j.visible = false; noReflection(j); this.scene.add(j); this.cannonJet.push(j); }
+    }
+    const G = this.cannonG; G.position.set(c.x, 0, c.z); G.rotation.y = 0; // drives in nose first towards the square (+z)
+    const spraying = c.state === 'spraying';
+    this.cannonOn = Math.max(0, Math.min(1, this.cannonOn + (spraying ? dt * 2.2 : -dt * 3)));
+    for (const j of this.cannonJet) j.visible = this.cannonOn > 0;
+    if (this.cannonOn <= 0) return;
+    const from = new THREE.Vector3(c.x, 3.55, c.z + 2.4); const to = new THREE.Vector3(c.tx, 0.5, c.tz);
+    const key = `${c.tx.toFixed(1)},${c.tz.toFixed(1)}`;
+    if (key !== this.cannonKey) {
+      this.cannonKey = key; const dist = from.distanceTo(to); const arc = 0.5 + dist * 0.06; const pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= 20; i++) { const t = i / 20; const p = from.clone().lerp(to, t); p.y += Math.sin(t * Math.PI) * arc * (1 - t * 0.4); pts.push(p); }
+      const curve = new THREE.CatmullRomCurve3(pts);
+      this.cannonJet[0].geometry.dispose(); this.cannonJet[0].geometry = new THREE.TubeGeometry(curve, 60, 0.11, 10, false);
+      this.cannonJet[1].geometry.dispose(); this.cannonJet[1].geometry = new THREE.TubeGeometry(curve, 60, 0.3, 10, false);
+    }
+    for (const j of this.cannonJet) { const mat = j.material as THREE.ShaderMaterial; mat.uniforms.uTime.value = this.time; mat.uniforms.uOn.value = this.cannonOn; }
+    if (this.cannonOn > 0.8) { this.fx.emit('cannon:splash', 'spray', to.x, 0.4, to.z, 1.6, 1, 1.4); this.fx.emit('cannon:mist', 'tear_gas', to.x, 0.8, to.z, 1.2, 0.35, 1.2); }
+  }
+
   private night = false;
   private touchDevice = false;
   private frameNo = 0;
@@ -842,6 +872,8 @@ export class MatchView {
       }
       let df = face - h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       h.root.rotation.y += df * Math.min(1, dt * (u.moving ? 12 : 3)); // standing turns are unhurried
+      // knocked off his feet by the water cannon: falls back flat (about the feet), gets up again after
+      { const down = (u.downUntil ?? 0) > g.time; const want = down ? -1.38 : 0; if (down || h.root.rotation.x !== 0) { h.root.rotation.order = 'YXZ'; const dx = want - h.root.rotation.x; h.root.rotation.x = Math.abs(dx) < 0.01 ? want : h.root.rotation.x + dx * Math.min(1, dt * (down ? 9 : 3)); } }
       const mv = this.motion(u.id, h.root.position, dt);
       let pose = this.poseOf(u); if (pose === 'walk' || pose === 'idle') pose = mv.moving ? 'walk' : (u.kind === 'shield' ? 'brace' : 'idle');
       else if (pose === 'brace' && mv.moving) pose = 'walk';
@@ -972,6 +1004,7 @@ export class MatchView {
     this.world.ambientFires.forEach((f, i) => { if (!this.ambientBurning(g, f)) return; this.fx.emit(`fire:amb${i}`, 'fire', f.x, 0.3, f.z, 1.4, 1, 1.8); this.fx.emit(`smoke:amb${i}`, 'smoke', f.x, 2.6, f.z, 1.2, 0.7, 1.8); this.fx.emit(`plume:amb${i}`, 'plume', f.x, 3.5, f.z, 1, 0.8, 1.3); });
     this.fx.setFireLights([...activeFires.filter((f) => !f.ambient), ...this.world.ambientFires.filter((f) => this.ambientBurning(g, f))], this.time);
     this.fireCrew.update(g, this.humans, dt, this.time); // engine, hose line, second man and water jet (scenery)
+    this.stepCannonView(g, dt);
     (window as unknown as { __fx?: unknown }).__fx = this.fx;
     // dropped goods markers
     const dseen = new Set<number>();
