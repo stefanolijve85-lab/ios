@@ -4,7 +4,9 @@ import { CITY_INFO, CITY_ORDER, MAPS } from './maps';
 import { Match, type MatchResult } from './ui/match';
 import { loadProgress, recordResult, resetProgress, saveProgress, type Progress } from './save';
 import type { Side } from './sim/game';
-import { breathe, setLoadingText, showLoading } from './ui/loading';
+import { breathe, filmReady, setLoadingText, showLoading, warmLoadingFilm } from './ui/loading';
+// a computer has the bandwidth: the loading film downloads right away (phones and tablets wait until after the intro)
+if (typeof matchMedia !== 'undefined' && !matchMedia('(pointer: coarse)').matches) warmLoadingFilm();
 import { loadAssets, loadCityAssets, SLOTS, slotStatus } from './render/assets';
 import { showroom } from './showroom';
 import { Menu, menuState } from './ui/menu';
@@ -58,6 +60,7 @@ async function start() {
   (window as unknown as { __match: Match | null }).__match = null;
   const nl = progress.settings.language !== 'en';
   showLoading(`${nl ? 'Laden' : 'Loading'}…`); // stays up until the match has prepared every shader (Match hides it)
+  await filmReady(4000); // the film first, in full: it must not share the connection with the models and stall
   await loadAssets('models/', (d, t) => setLoadingText(`${nl ? 'Laden' : 'Loading'}… ${d}/${t}`));
   if (Object.values(progress.settings.figures ?? {}).flat().some((sl) => sl.startsWith('char.alt.'))) await loadCityAssets('collection', 'models/'); // chosen earlier figures
   await loadCityAssets(map.id, 'models/', (d, t) => setLoadingText(`${nl ? 'Laden' : 'Loading'}… ${map.city} ${d}/${t}`));

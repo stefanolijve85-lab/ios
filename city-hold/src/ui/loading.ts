@@ -14,28 +14,37 @@ function filmEl(): HTMLVideoElement {
   v.className = 'rm-loadvid';
   v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = false;
   v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
-  v.preload = 'auto'; v.poster = 'menu/loading_poster.jpg'; v.src = SRC;
+  v.preload = 'auto'; v.poster = 'menu/loading_poster.jpg'; // no source yet: it gets the downloaded copy (see warmLoadingFilm)
   // a loading screen that was replaced leaves the film detached: stop decoding it
   v.addEventListener('timeupdate', () => { if (!v.isConnected) v.pause(); });
   film = v;
   return v;
 }
 
+/** the whole film in memory (an object URL), once downloaded */
+let blobUrl = '';
+let readyResolve: (() => void) | null = null;
+const ready = new Promise<void>((r) => { readyResolve = r; });
+/** resolves when the film is in memory, or after `ms` (then it streams from the network instead) */
+export function filmReady(ms: number): Promise<void> { return Promise.race([ready, new Promise<void>((r) => setTimeout(r, ms))]); }
+
+/** download the film in full (once): it then plays from memory and can never stall on the network while the street's
+ *  models are downloading at the same time */
 export function warmLoadingFilm() {
   if (warmed) return; warmed = true;
   const v = filmEl();
-  try { v.load(); } catch { /* ignore */ }
   try {
     void fetch(SRC).then((r) => (r.ok ? r.blob() : null)).then((b) => {
-      if (!b || v.isConnected) return; // never swap the source under a playing loading screen
-      v.src = URL.createObjectURL(b); v.load();
-    }).catch(() => {});
-  } catch { /* ignore */ }
+      if (b) { blobUrl = URL.createObjectURL(b); if (!v.currentSrc && !v.isConnected) v.src = blobUrl; }
+      readyResolve?.();
+    }).catch(() => readyResolve?.());
+  } catch { readyResolve?.(); }
+  // iPad/iPhone: a film first started from a tap may later start by itself; every tap tries until that worked once
   const unlock = () => {
-    if (v.isConnected) return;
-    void v.play().then(() => { if (!v.isConnected) v.pause(); }).catch(() => {});
+    if (v.isConnected || !v.currentSrc) return;
+    void v.play().then(() => { if (!v.isConnected) v.pause(); window.removeEventListener('pointerdown', unlock, true); }).catch(() => {});
   };
-  window.addEventListener('pointerdown', unlock, { capture: true, once: true });
+  window.addEventListener('pointerdown', unlock, true);
 }
 
 export function loadingInner(text: string): string {
@@ -48,8 +57,9 @@ export function startLoadingFilm(root: ParentNode) {
   warmLoadingFilm();
   const slot = root.querySelector('.rm-loadslot'); if (!slot) return;
   const v = filmEl();
-  slot.replaceWith(v);
-  void v.play().catch(() => { /* blocked: the sharp poster frame stays */ });
+  slot.replaceWith(v); // the poster (its first frame) shows at once
+  const go = () => { if (!v.currentSrc) v.src = blobUrl || SRC; void v.play().catch(() => { /* blocked: the poster stays */ }); };
+  if (blobUrl || v.currentSrc) go(); else void filmReady(4000).then(go); // wait for the copy in memory rather than stream it
 }
 
 /* One loading screen for the whole start of a match: it is put on the page (outside the app, so nothing the app
