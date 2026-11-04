@@ -232,3 +232,9 @@ small { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
   .actions .btnrow { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
   .actions .btnrow button { min-height: 30px; padding: 2px 8px; font-size: 11px; white-space: nowrap; }
 }
+/* in-match settings: time of day (day / evening / night), next to the other options */
+.todrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.todrow > span { margin-right: 6px; }
+.todrow button { min-height: 36px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: inherit; font-weight: 700; }
+.todrow button.on { border-color: var(--cyan); color: var(--cyan); }
+.side-att .todrow button.on { border-color: var(--orange); color: var(--orange); }

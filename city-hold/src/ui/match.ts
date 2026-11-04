@@ -635,9 +635,12 @@ export class Match {
       <label>HUD size <select data-s="ui">${[[1, '100%'], [1.15, '115%'], [1.3, '130%']].map(([v, l]) => `<option value="${v}" ${Number(this.settings.uiScale || 1) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label><input type="checkbox" ${this.settings.vibration ? 'checked' : ''} data-s="vib"> Vibrate on events</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
-      <div class="btnrow"><button data-s="testwin">Test victory sound</button><span class="muted" data-s="testres"></span></div>
+      <div class="todrow"><span>${this.settings.language === 'en' ? 'Time of day' : 'Dagdeel'}</span>${(['day', 'evening', 'night'] as const).map((d) => `<button class="${(this.settings.timeOfDay ?? 'evening') === d ? 'on' : ''}" data-tod="${d}">${({ day: ['Dag', 'Day'], evening: ['Avond', 'Evening'], night: ['Nacht', 'Night'] } as const)[d][this.settings.language === 'en' ? 1 : 0]}</button>`).join('')}<small class="muted">${this.settings.language === 'en' ? 'applies on restart' : 'geldt na herstart'}</small></div>
       <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
-    m.querySelector<HTMLButtonElement>('[data-s="testwin"]')!.addEventListener('click', () => { const out = m.querySelector<HTMLElement>('[data-s="testres"]')!; out.textContent = '…'; out.textContent = this.victory(true) ? 'playing (music route)' : 'not available'; void this.sfx; });
+    m.querySelectorAll<HTMLButtonElement>('[data-tod]').forEach((b) => b.addEventListener('click', () => {
+      this.settings.timeOfDay = b.dataset.tod as 'day' | 'evening' | 'night'; this.onSettings?.();
+      m.querySelectorAll('[data-tod]').forEach((x) => x.classList.toggle('on', x === b));
+    }));
     m.querySelector<HTMLInputElement>('[data-s="mus"]')!.addEventListener('input', (e) => { this.settings.music = Number((e.target as HTMLInputElement).value); music.setVolume(this.settings.music); this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="vol"]')!.addEventListener('input', (e) => { this.settings.volume = Number((e.target as HTMLInputElement).value); this.sfx.volume = this.settings.volume; this.onSettings?.(); });
     m.querySelector<HTMLInputElement>('[data-s="fx"]')!.addEventListener('change', (e) => { this.settings.reducedFx = (e.target as HTMLInputElement).checked; this.onSettings?.(); });
