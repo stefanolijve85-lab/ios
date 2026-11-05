@@ -1065,6 +1065,11 @@ export class Game {
     const ai = BALANCE.looters.ai;
     for (let i = 0; i < ai.security + DIFFICULTY[this.difficulty].aiExtraSecurity; i++) { const st = [s0, s2, mid][i % 3]; const a = this.spawnDefender('security', guardPos(st, 7)); a.home = { x: a.x, z: a.z }; }
     for (let i = 0; i < ai.shield; i++) { const c = this.spawnDefender('shield', guardPos(mid, 2.2)); c.home = { x: c.x, z: c.z }; }
+    // a plainclothes Romeo duo among the people on the square, in front of the middle shop
+    for (let t = 0; t < ai.romeo; t++) for (let i = 0; i < 2; i++) {
+      const p = ai.romeoAt === 'van' ? (this.romeoBusExit() ?? m.defenderSpawn) : guardPos(mid, 9.5); const at = this.nav.nearestWalkable(p.x + (i ? 0.8 : -0.8) + t * 3, p.z, 3) ?? p;
+      const r = this.spawnDefender('security', at); r.role = 'romeo'; r.home = { x: r.x, z: r.z };
+    }
     const f = this.spawnDefender('firefighter', m.defenderSpawn); f.home = { x: f.x, z: f.z };
     // one camera on the socket closest to the middle store
     const smalls = m.sockets.filter((s) => s.size === 'small');
@@ -1097,6 +1102,17 @@ export class Game {
       u.home = this.nav.nearestWalkable(s.door.x + sd.normal.x * 5, s.door.z + sd.normal.z * 5) ?? u.home;
       u.state = 'return'; this.setPath(u, u.home);
       this.emit({ type: 'info', text: 'Defence AI deployed a security team' });
+    } else if (threat[hot] > 0 && this.time > dif.aiReinforceAfter + 15 && this.aiBudget >= BALANCE.defence.costs.romeo && this.romeoTeams() < BALANCE.looters.ai.maxRomeo) {
+      // a second plainclothes duo steps out of the police van and goes for the shop under attack
+      this.aiBudget -= BALANCE.defence.costs.romeo;
+      const start = this.romeoBusExit() ?? this.map.defenderSpawn; const sd = this.map.stores[hot]; const s = this.stores[hot];
+      const dest = this.nav.nearestWalkable(s.door.x + sd.normal.x * 6, s.door.z + sd.normal.z * 6) ?? start;
+      for (let i = 0; i < 2; i++) {
+        const u = this.spawnDefender('security', start); u.role = 'romeo';
+        if (i === 1) u.staggerUntil = this.time + BALANCE.defence.romeo.busExitGap;
+        u.home = { x: dest.x + (i ? 0.8 : -0.8), z: dest.z }; u.state = 'return'; this.setPath(u, u.home);
+      }
+      this.emit({ type: 'info', text: 'Defence AI sent a Romeo team' });
     }
     if (!this.aiBarrierPlaced && this.time > 75 && this.aiBudget >= 250) {
       const used = new Map<string, number>();

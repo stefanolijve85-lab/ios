@@ -7,6 +7,7 @@ import { music } from '../audio/music';
 import { hideLoading, showLoading } from './loading';
 import type { Settings } from '../save';
 import { translateLive } from './i18n_nl';
+import { around, runWalkthrough, type WStep } from './walkthrough';
 import { setFigureChoices } from '../render/character';
 
 type BuildKind = 'barrier' | 'concrete' | 'camera';
@@ -92,13 +93,14 @@ export class Match {
     // a loading cover until every shader is compiled and every texture is on the GPU (first visit on iPad showed black models)
     showLoading(settings.language === 'en' ? 'Preparing the street…' : 'Straat wordt klaargezet…'); // the one from the start tap, or a new one (restart)
     const was = this.paused; this.paused = true; this.warming = true;
-    void this.view.warm().then(() => { this.warming = false; this.view.render(this.game, 0); }).then(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 120)))).then(() => { hideLoading(); this.paused = was; this.last = performance.now(); });
+    void this.view.warm().then(() => { this.warming = false; this.view.render(this.game, 0); }).then(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 120)))).then(() => { hideLoading(); this.paused = was; this.last = performance.now(); if (!(this.settings.walkthrough ?? []).includes(this.side)) setTimeout(() => this.walkthrough(), 450); });
   }
 
   private stopI18n: (() => void) | null = null;
   private stopTb: (() => void) | null = null;
   private buzz(ms: number | number[]) { if (this.settings.vibration) try { navigator.vibrate?.(ms); } catch { /* not supported */ } }
   dispose() {
+    this.wtClose?.(); this.wtClose = null;
     this.stopI18n?.(); this.stopTb?.(); this.sfx.dispose();
     cancelAnimationFrame(this.raf);
     this.view.dispose();
@@ -747,6 +749,45 @@ export class Match {
     }));
   }
 
+  // ------------------------------------------------------------------ first-time walkthrough
+  private wtClose: (() => void) | null = null;
+  private walkthrough() {
+    if (this.wtClose || this.game.over) return;
+    const en = this.settings.language === 'en'; const g = this.game; const T = (nl: string, e: string) => (en ? e : nl);
+    const q = (sel: string) => this.root.querySelector(sel);
+    const qa = (sel: string) => [...this.root.querySelectorAll(sel)];
+    // a spot on the street, as a box on screen
+    const world = (x: number, z: number, r = 70) => { const c = this.view.renderer.domElement.getBoundingClientRect(); const s = this.view.toScreen(x, 0.5, z); const cx = c.left + s.x, cy = c.top + s.y; return s.behind || cx < 0 || cx > window.innerWidth || cy < 50 || cy > window.innerHeight * 0.62 ? null : new DOMRect(cx - r, cy - r, r * 2, r * 2); }; // (off screen or under the cards: no spotlight)
+    const stores = () => around(...qa('.store-label'));
+    const stats = () => around(...qa('.topbar .stat'));
+    const cards = () => around(q('[data-k="cards"]'));
+    const tbtns = () => around(q('.tbtns'));
+    const steps: WStep[] = this.side === 'defence' ? [
+      { title: T('Welkom bij RIOTS', 'Welcome to RIOTS'), text: T(`Er breken rellen uit. Jij verdedigt de winkels op dit plein tegen ${BALANCE.defence.waves} golven relschoppers. Houd er minstens ${BALANCE.defence.storesNeededToWin} van de ${g.stores.length} met voorraad, dan win je.`, `Riots are breaking out. You defend the shops on this square against ${BALANCE.defence.waves} waves of rioters. Keep at least ${BALANCE.defence.storesNeededToWin} of the ${g.stores.length} stocked and you win.`) },
+      { at: stores, title: T('Deze winkels bescherm je', 'These are the shops you protect'), text: T('Het balkje onder elk schild is de voorraad. Relschoppers breken het rolluik open en dragen de spullen weg. Tik een winkel aan om hem te versterken.', 'The bar under each shield is the stock. Rioters break the shutter and carry the goods off. Tap a shop to strengthen it.') },
+      { at: stats, title: T('Je overzicht', 'Your overview'), text: T('Je budget, de golf waarin je zit en hoeveel winkels nog voorraad hebben.', 'Your budget, the current wave and how many shops still hold stock.') },
+      { at: () => around(q('[data-inc]')), title: T('Hier komen ze binnen', 'This is where they come in'), text: T('Hier zie je wie de volgende golf is en via welke straat ze komen. Op de kaart wijzen oranje pijlen die straten aan: zet je verdediging daar neer.', 'This shows who the next wave is and which street they come by. Orange arrows on the map point out those streets: put your defence there.') },
+      { at: cards, title: T('Je verdediging', 'Your defence'), text: T('Tik een kaart om in te zetten. Beveiliging en schildteam onderscheppen relschoppers, dranghekken en betonblokken remmen ze af, camera\'s zien ze eerder. Je eerste 2 dranghekken zijn gratis. Schuif de rij opzij voor meer.', 'Tap a card to deploy. Security and shield teams intercept rioters, barriers and concrete slow them down, cameras spot them sooner. Your first 2 barriers are free. Swipe the row for more.') },
+      { at: () => { const d = g.defenders()[0]; return d ? world(d.x, d.z, 55) : null; }, title: T('Je mensen besturen', 'Moving your people'), text: T('Tik een eigen agent (blauwe ring) en dan een plek op straat: hij loopt erheen. Slepen schuift het beeld, met twee vingers zoom je.', 'Tap one of your officers (blue ring), then a spot on the street: he walks there. Drag to pan, pinch to zoom.') },
+      { at: () => around(q('[data-gas]'), q('[data-flash]')), title: T('Traangas en flashbang', 'Tear gas and flashbang'), text: T('Tijdens een golf: tik de knop en daarna waar hij moet landen. Ze kosten budget en laden even op.', 'During a wave: tap the button, then where it should land. They cost budget and need a moment to recharge.') },
+      { at: () => around(q('[data-a="startwave"]')), title: T('Start de golf', 'Start the wave'), text: T('Klaar? Start de golf. Na elke golf krijg je budget erbij voor meer verdediging, en via Details en upgrades maak je winkels en teams sterker.', 'Ready? Start the wave. After each wave you get more budget for defence, and Details & upgrades makes shops and teams stronger.') },
+      { at: tbtns, title: T('Pauze en instellingen', 'Pause and settings'), text: T('Pauze, snelheid, opnieuw beginnen, instellingen (taal, geluid, dag of nacht, deze uitleg) en het menu. Succes!', 'Pause, speed, restart, settings (language, sound, day or night, this walkthrough) and the menu. Good luck!') },
+    ] : [
+      { title: T('Welkom bij RIOTS', 'Welcome to RIOTS'), text: T(`Jij leidt de plunderaars. Haal binnen de tijd ${g.lootTarget} voorraad weg uit de winkels en breng het via een straat naar buiten. De beveiliging probeert je te onderscheppen.`, `You lead the looters. Within the time, take ${g.lootTarget} stock out of the shops and get it away down a street. Security will try to stop you.`) },
+      { at: stats, title: T('Je overzicht', 'Your overview'), text: T('Je budget, de resterende tijd en hoeveel voorraad je al hebt weggehaald.', 'Your budget, the time left and how much stock you have taken so far.') },
+      { at: cards, title: T('Werf je groep', 'Recruit your group'), text: T('Renners zijn snel, dragers nemen meer mee, werpers gooien, vandalen breken rolluiken sneller open en de hacker zet een camera uit, opent een rolluik of lokt een bewaker weg. Schuif de rij opzij voor meer.', 'Runners are fast, carriers take more, throwers throw, vandals break shutters faster and the hacker switches a camera off, opens a shutter or lures a guard away. Swipe the row for more.') },
+      { at: stores, title: T('Kies je doel', 'Choose your target'), text: T('Tik een van deze winkels aan: daar gaat je groep heen.', 'Tap one of these shops: that is where your group goes.') },
+      { at: () => around(q('.steps')), title: T('Volg de stappen', 'Follow the steps'), text: T('1 groep, 2 doel, 3 route (de straat waarlangs ze komen en terugvluchten; tik de knop of een oranje pijl op de kaart). De stap die oplicht is de volgende.', '1 group, 2 target, 3 route (the street they come in and flee by; tap the button or an orange arrow on the map). The glowing step is the next one.') },
+      { at: () => around(q('[data-a="dispatch"]')), title: T('Stuur op pad', 'Dispatch'), text: T('Alles gekozen? Stuur ze op pad. Alleen buit die de straat uit komt telt. Tip: de beveiliging pikt losse groepjes er snel uit, één grote groep tegelijk komt verder.', 'All set? Send them off. Only loot that gets out down the street counts. Tip: security picks off small groups quickly; one big group at once gets further.') },
+      { at: tbtns, title: T('Pauze en instellingen', 'Pause and settings'), text: T('Pauze, snelheid, opnieuw beginnen, instellingen (taal, geluid, dag of nacht, deze uitleg) en het menu. Succes!', 'Pause, speed, restart, settings (language, sound, day or night, this walkthrough) and the menu. Good luck!') },
+    ];
+    const was = this.paused; this.paused = true;
+    this.wtClose = runWalkthrough(steps, en, () => {
+      this.wtClose = null; this.paused = was && !this.el.modal.classList.contains('hidden') ? was : false; this.last = performance.now();
+      const seen = new Set(this.settings.walkthrough ?? []); seen.add(this.side); this.settings.walkthrough = [...seen]; this.onSettings?.();
+    });
+  }
+
   // ------------------------------------------------------------------ settings & result
   private showSettings() {
     const m = this.el.modal; this.paused = true;
@@ -760,7 +801,8 @@ export class Match {
       <label><input type="checkbox" ${this.settings.vibration ? 'checked' : ''} data-s="vib"> Vibrate on events</label>
       <p class="muted">Controls: drag to pan · wheel / pinch to zoom · tap a unit, then the ground to move · P pause · WASD pan.</p>
       <div class="todrow"><span>${this.settings.language === 'en' ? 'Time of day' : 'Dagdeel'}</span>${(['day', 'evening', 'night'] as const).map((d) => `<button class="${(this.settings.timeOfDay ?? 'evening') === d ? 'on' : ''}" data-tod="${d}">${({ day: ['Dag', 'Day'], evening: ['Avond', 'Evening'], night: ['Nacht', 'Night'] } as const)[d][this.settings.language === 'en' ? 1 : 0]}</button>`).join('')}<small class="muted">${this.settings.language === 'en' ? 'applies on restart' : 'geldt na herstart'}</small></div>
-      <div class="btnrow"><button class="primary" data-s="close">Resume</button></div></div>`;
+      <div class="btnrow"><button data-s="wt">${this.settings.language === 'en' ? 'Show the walkthrough again' : 'Uitleg opnieuw bekijken'}</button><button class="primary" data-s="close">Resume</button></div></div>`;
+    m.querySelector('[data-s="wt"]')!.addEventListener('click', () => { m.classList.add('hidden'); this.walkthrough(); });
     m.querySelectorAll<HTMLButtonElement>('[data-tod]').forEach((b) => b.addEventListener('click', () => {
       this.settings.timeOfDay = b.dataset.tod as 'day' | 'evening' | 'night'; this.onSettings?.();
       m.querySelectorAll('[data-tod]').forEach((x) => x.classList.toggle('on', x === b));

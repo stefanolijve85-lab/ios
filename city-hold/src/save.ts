@@ -2,7 +2,8 @@
 export interface Settings { /** the tablet default has been applied */ qualityV2?: boolean; /** light of the street: daylight, blue-hour evening (default) or night */ timeOfDay?: 'day' | 'evening' | 'night'; volume: number; /** background music volume */ music?: number; reducedFx: boolean; showHints: boolean; language: 'nl' | 'en'; difficulty: 'normal' | 'hard' | 'expert';
   /** HUD size multiplier (phones benefit from larger) */ uiScale: number; /** short vibrations on key events (phones that support it) */ vibration: boolean;
   /** chosen figures per role (model slots); appearance only */ figures?: Record<string, string[]>;
-  /** cities whose briefing has been shown once */ briefed?: string[] }
+  /** cities whose briefing has been shown once */ briefed?: string[];
+  /** sides whose first-time walkthrough has been shown */ walkthrough?: string[] }
 export interface Progress {
   version: 1;
   unlocked: string[];

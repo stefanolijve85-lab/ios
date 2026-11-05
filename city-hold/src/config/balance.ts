@@ -28,7 +28,7 @@ export const BALANCE = {
     maxDefenders: 14,
   },
   looters: {
-    startBudget: 1000,
+    startBudget: 1250, // (the AI defence is stronger since: Romeo duo, reinforcements after 20 s; a big group at once can win)
     timeLimit: 8 * 60,
     targetStock: 60,
     costs: { runner: 100, carrier: 150, vandal: 200, heavy: 200, thrower: 175 } as Record<AttKind, number>,
@@ -41,7 +41,7 @@ export const BALANCE = {
     speedUpgrade: 1.15,
     maxActive: 14,
     /** AI defence composition and income in looter mode */
-    ai: { security: 1, shield: 1, camera: true, income: 90, incomeEvery: 40, maxSecurity: 4, reinforceAfter: 45 },
+    ai: { security: 1, shield: 1, romeo: 1, romeoAt: 'van', camera: true, income: 135, incomeEvery: 30, maxSecurity: 6, maxRomeo: 2, reinforceAfter: 20 },
   },
   units: {
     security: { speed: 3.6, sight: 9, restrainTime: 2.0, radius: 0.35 },
@@ -120,9 +120,9 @@ export type Difficulty = 'normal' | 'hard' | 'expert';
 /** Difficulty only scales the opposition (stats of the player's own units never change).
  *  defence: more and faster attackers per wave; looters: richer AI defence, sooner reinforcement, one extra guard on expert. */
 export const DIFFICULTY: Record<Difficulty, { waveMul: number; attackerSpeedMul: number; aiIncomeMul: number; aiExtraSecurity: number; aiMaxSecurityBonus: number; aiReinforceAfter: number; aiDefenderSpeedMul: number; lootTargetMul: number }> = {
-  normal: { waveMul: 1, attackerSpeedMul: 1, aiIncomeMul: 1, aiExtraSecurity: 0, aiMaxSecurityBonus: 0, aiReinforceAfter: 45, aiDefenderSpeedMul: 1, lootTargetMul: 1 },
-  hard: { waveMul: 1.45, attackerSpeedMul: 1.08, aiIncomeMul: 1.4, aiExtraSecurity: 0, aiMaxSecurityBonus: 1, aiReinforceAfter: 35, aiDefenderSpeedMul: 1, lootTargetMul: 1.1 },
-  expert: { waveMul: 1.9, attackerSpeedMul: 1.15, aiIncomeMul: 1.8, aiExtraSecurity: 0, aiMaxSecurityBonus: 2, aiReinforceAfter: 25, aiDefenderSpeedMul: 1.1, lootTargetMul: 1.3 },
+  normal: { waveMul: 1, attackerSpeedMul: 1, aiIncomeMul: 1, aiExtraSecurity: 0, aiMaxSecurityBonus: 0, aiReinforceAfter: 20, aiDefenderSpeedMul: 1, lootTargetMul: 1 },
+  hard: { waveMul: 1.45, attackerSpeedMul: 1.08, aiIncomeMul: 1.4, aiExtraSecurity: 0, aiMaxSecurityBonus: 1, aiReinforceAfter: 16, aiDefenderSpeedMul: 1, lootTargetMul: 1.1 },
+  expert: { waveMul: 1.9, attackerSpeedMul: 1.15, aiIncomeMul: 1.8, aiExtraSecurity: 1, aiMaxSecurityBonus: 2, aiReinforceAfter: 12, aiDefenderSpeedMul: 1.1, lootTargetMul: 1.3 },
 };
 
 export const KIND_LABEL: Record<UnitKind, string> = {

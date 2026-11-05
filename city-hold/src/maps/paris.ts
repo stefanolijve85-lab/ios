@@ -45,7 +45,7 @@ const props: PropDef[] = [
   { type: 'umbrella', x: -21.6, z: -2.8, collide: true, r: 0.3 },
   // police van with flashing lights at the crowd fence by the east side street, and a burning barricade far up the
   // north-west side street (both decorative, as in image 02)
-  { type: 'police_van', x: 23.2, z: -12.6, rot: 0, collide: true },
+  { type: 'police_van', x: 23.2, z: -18.6, rot: 0, collide: true }, // further up the street, the white police car between it and the navy staging van (they stood nose to tail)
   { type: 'barricade_fire', x: -20.5, z: -33 },
   // police line in front of the staging van (decor, as in images 02/03)
   { type: 'fence', x: 25.6, z: 5.3, rot: 0, collide: true, r: 0.5 },
@@ -61,7 +61,7 @@ const props: PropDef[] = [
   { type: 'delivery_van', x: 23.0, z: -24, rot: 0, collide: true },
   // Paris pack (image-to-3D): a police car behind the staging van, a dusty red van parked far up the west street, a scooter
   // on the foreground pavement and the water cannon waiting at the top of the east street (scenery, beyond the play area)
-  { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -18.6, rot: 0, len: 4.6, wid: 1.82, h: 1.62, collide: true },
+  { type: 'vehicle', model: 'prop.police_car.paris', x: 23.0, z: -12.6, rot: 0, len: 4.6, wid: 1.82, h: 1.62, collide: true },
   { type: 'vehicle', model: 'prop.van_red.paris', x: -23.4, z: -37.5, rot: 180, len: 4.4, wid: 1.82, h: 1.85 },
   { type: 'vehicle', model: 'prop.scooter.paris', x: 14.2, z: 13.7, rot: 90, len: 1.95, wid: 0.72, h: 1.4, collide: true },
   { type: 'vehicle', model: 'prop.taxi.paris', x: 17.8, z: -40.5, rot: 180, len: 4.9, wid: 1.85, h: 1.5 },

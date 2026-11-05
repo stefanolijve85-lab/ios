@@ -227,10 +227,13 @@ describe('match outcomes', () => {
   }, 30000); // two full 12-wave matches: close to vitest's 5 s default on its own
 
   test('looters can win by extraction and lose by running out of units or time', () => {
-    // the scripted looter is simple; across several seeds it must reach the objective at least once
-    const wins = [1, 2, 3, 4, 5, 6].map((seed) => { const w = new Game(PARIS, 'looters', { seed }); run(w, 480, autoLooter(w)); return w; }).filter((w) => w.phase === 'won');
+    // a big group at once can beat the AI defence (that is the way to play it); small groups get picked off
+    const wins = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => { const w = new Game(PARIS, 'looters', { seed }); run(w, 480, autoLooter(w, { squad: 12 })); return w; }).filter((w) => w.phase === 'won');
     expect(wins.length).toBeGreaterThan(0);
     expect(wins[0].extracted).toBeGreaterThanOrEqual(60);
+    // and the stronger AI defence (Romeo duo, early reinforcements) is not hopeless: the simple bot still gets loot out
+    const plain = [1, 2, 3, 4, 5, 6].map((seed) => { const w = new Game(PARIS, 'looters', { seed }); run(w, 480, autoLooter(w)); return w.extracted; });
+    expect(plain.reduce((a, b) => a + b, 0) / plain.length).toBeGreaterThan(12);
     const l = new Game(PARIS, 'looters', { seed: 3 });
     run(l, 480, autoLooter(l, { route: 'nw', target: 1 }));
     expect(l.phase).toBe('lost');
@@ -245,7 +248,7 @@ describe('match outcomes', () => {
     const g = new Game(PARIS, 'looters', { seed: 1 });
     expect(g.looterUpgradeChoose('speed').ok).toBe(true);
     expect(g.looterUpgradeChoose('capacity').ok).toBe(false);
-    expect(g.budget).toBe(700);
+    expect(g.budget).toBe(BALANCE.looters.startBudget - BALANCE.looters.upgradeCost);
     g.setLooterTarget(0); g.recruit('carrier'); g.dispatch(); g.step(dt);
     const u = g.attackers()[0];
     expect(g.speedOf(u)).toBeCloseTo(BALANCE.units.carrier.speed * BALANCE.looters.speedUpgrade);

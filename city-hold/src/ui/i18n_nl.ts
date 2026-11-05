@@ -81,7 +81,7 @@ const PHRASES: [string, string][] = [
   ['Concrete barriers need a large socket', 'Betonblokken horen op een grote plek'], ['Invalid location', 'Ongeldige plek'], ['Not available', 'Niet beschikbaar'],
   ['Socket occupied', 'Plek bezet'], ['Units are standing there', 'Daar staan eenheden'], ['Would block every route', 'Zou alle routes blokkeren'],
   ['Barrier knocked over', 'Dranghek omvergeduwd'], ['Defence AI deployed a security team', 'Verdediging zette een beveiligingsteam in'],
-  ['Defence AI placed a concrete barrier', 'Verdediging plaatste een betonblok'], ['Fire extinguished', 'Brand geblust'], ['Shield contact', 'Schildcontact'],
+  ['Defence AI sent a Romeo team', 'Verdediging stuurde een Romeo-team'], ['Defence AI placed a concrete barrier', 'Verdediging plaatste een betonblok'], ['Fire extinguished', 'Brand geblust'], ['Shield contact', 'Schildcontact'],
   ['Intercept ordered', 'Onderschepping bevolen'], ['Not a legal build socket — placement cancelled', 'Geen geldige plek — plaatsen geannuleerd'],
   ['Fire — select a firefighter, then tap the fire', 'Brand — selecteer de brandweer en tik daarna op het vuur'],
   ['ready at the van — tap the map to move it', 'staat klaar bij het busje — tik de kaart om te verplaatsen'],

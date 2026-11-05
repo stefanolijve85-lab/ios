@@ -32,17 +32,19 @@ export function autoDefence(g: Game) {
   };
 }
 
-export function autoLooter(g: Game, opts: { route?: string; target?: number } = {}) {
+export function autoLooter(g: Game, opts: { route?: string; target?: number; farFromVan?: boolean; squad?: number } = {}) {
   return (gg: Game) => {
     if (gg.attackers().length + gg.dispatchQueue.length > 0) return;
     // pick the store with the fewest defenders nearby, and the closest route to it
     const guard = (i: number) => gg.defenders().filter((d) => Math.hypot(d.x - gg.stores[i].door.x, d.z - gg.stores[i].door.z) < 8).length;
-    const target = opts.target ?? gg.stores.filter((s) => s.stock > 0).map((s) => s.idx).sort((a, b) => guard(a) - guard(b))[0] ?? 0;
+    // a smarter player also keeps away from the police van, where the reinforcements come from
+    const van = gg.map.van; const far = (i: number) => (opts.farFromVan && van ? -Math.hypot(gg.stores[i].door.x - van.x, gg.stores[i].door.z - van.z) / 10 : 0);
+    const target = opts.target ?? gg.stores.filter((s) => s.stock > 0).map((s) => s.idx).sort((a, b) => guard(a) + far(a) - guard(b) - far(b))[0] ?? 0;
     gg.setLooterTarget(target);
     const door = gg.stores[target].door;
     const route = opts.route ?? gg.map.entries.filter((e) => e.spawn).sort((a, b) => Math.hypot(a.x - door.x, a.z - door.z) - Math.hypot(b.x - door.x, b.z - door.z))[0].id;
     gg.setLooterRoute(route);
-    while (gg.budget >= 150 && gg.squad.length < 6) if (!gg.recruit(gg.squad.length % 3 === 2 ? 'runner' : 'carrier').ok) break;
+    while (gg.budget >= 150 && gg.squad.length < (opts.squad ?? 6)) if (!gg.recruit(gg.squad.length % 3 === 2 ? 'runner' : 'carrier').ok) break;
     if (gg.squad.length === 0 && gg.budget >= 100) gg.recruit('runner');
     if (gg.squad.length) gg.dispatch();
   };
