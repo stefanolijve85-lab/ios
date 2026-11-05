@@ -31,7 +31,7 @@ export function runWalkthrough(steps: WStep[], en: boolean, done: () => void): (
     card.querySelector('h3')!.textContent = s.title;
     card.querySelector('p')!.textContent = s.text;
     card.querySelector('.wt-next')!.textContent = i === steps.length - 1 ? (en ? "Let's play!" : 'Spelen!') : (en ? 'Next →' : 'Volgende →');
-    const cw = Math.min(360, W - 24); card.style.width = `${cw}px`;
+    const cw = Math.min(W >= 700 && H >= 700 ? 440 : 360, W - 24); card.style.width = `${cw}px`; // tablets and desktops: a little larger
     if (!r) {
       hole.style.display = 'none'; dim.style.display = 'block';
       card.style.left = `${(W - cw) / 2}px`; card.style.top = ''; card.style.bottom = ''; card.style.top = `${Math.max(12, H / 2 - card.offsetHeight / 2)}px`;

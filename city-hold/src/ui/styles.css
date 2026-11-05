@@ -289,3 +289,4 @@ body:has(.side-def) .wt-hole { border-color: var(--cyan); box-shadow: 0 0 0 200v
 body:has(.side-def) .wt-card { border-color: rgba(54, 224, 255, 0.55); }
 body:has(.side-def) .wt-card small { color: var(--cyan); }
 body:has(.side-def) .wt-card .wt-next { background: var(--cyan); color: #04141a; }
+@media (min-width: 700px) and (min-height: 700px) { .wt-card { font-size: 16px; padding: 18px 20px 14px; } .wt-card h3 { font-size: 21px; } .wt-btns button { min-height: 46px; font-size: 16px; } }
