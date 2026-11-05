@@ -105,7 +105,7 @@ const PHRASES: [string, string][] = [
   ['At most', 'Maximaal'], ['Romeo teams', 'Romeo-teams'], ['No police van', 'Geen politiebus'], ['The van door is blocked', 'De busdeur is geblokkeerd'],
   ['out of the police van', 'uit de politiebus'], ['through the crowd', 'via het publiek'],
   ['Hit a wall', 'Tegen een muur'], ['Impact', 'Inslag'], ['Throw', 'Worp'], ['Fire at', 'Brand bij'], ['Vehicle fire', 'Voertuigbrand'], ['Small fire on the street', 'Klein vuur op straat'],
-  ['HACK', 'HACKEN'], ['OFFLINE', 'UIT'], ['runner', 'renner'], ['response range', 'bereik'], ['— reach', '— haal er'],
+  ['Carries', 'Draagt'], ['HACK', 'HACKEN'], ['OFFLINE', 'UIT'], ['runner', 'renner'], ['response range', 'bereik'], ['— reach', '— haal er'],
   ["Cameras detect offenders sooner and extend your teams' response range. Tap Camera, then a socket.", "Camera's ontdekken daders eerder en vergroten het bereik van je teams. Tik Camera en daarna een plek."],
   // end of a match
   ['stores lost all stock.', 'winkels hebben geen voorraad meer.'], ['waves repelled with', 'golven afgeslagen met'], ['stores holding stock', 'winkels met voorraad'], ['All', 'Alle'],
