@@ -150,7 +150,7 @@ export class Sfx {
     const c = this.ctx; const src = c.createBufferSource(); src.buffer = e.b;
     src.playbackRate.value = (opt.rate ?? 1) * (1 + (Math.random() * 2 - 1) * (opt.jitter ?? 0.06)); // no two hits sound identical
     const g = c.createGain(); g.gain.value = gain * e.norm * Sfx.REC_LEVEL;
-    src.connect(g).connect(dst); src.start(c.currentTime + (opt.delay ?? 0));
+    src.connect(g).connect(dst); src.start(c.currentTime + (opt.delay ?? 0), e.ls); // from the first real sample: no decoder padding delay
     return true;
   }
   /** a looping recording (two copies at slightly different speeds, so a short loop does not sound repetitive) */
