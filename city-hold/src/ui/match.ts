@@ -226,7 +226,9 @@ export class Match {
       case 'selsquad': this.view.selected = new Set(this.game.attackers().filter((u) => u.state === 'approach').map((d) => d.id)); break;
       case 'route': {
         const sp = this.map.entries.filter((e) => e.spawn); const i = sp.findIndex((e) => e.id === this.game.looterRoute);
-        this.game.setLooterRoute(sp[(i + 1) % sp.length].id); break;
+        // the first tap confirms the route already shown (often the right one); later taps cycle through the streets
+        if (this.routeChosen) this.game.setLooterRoute(sp[(i + 1) % sp.length].id); else this.routeChosen = true;
+        this.renderActions(); break;
       }
     }
     this.refreshHud(true);
@@ -346,7 +348,7 @@ export class Match {
         else { g.setLooterTarget(p.idx); this.view.highlightStore = p.idx; this.sfx.play('click'); }
       }
     } else if (p.type === 'entry') {
-      if (!isDef) { g.setLooterRoute(p.id); this.sfx.play('click'); this.toast(`Route: ${this.map.entries.find((e) => e.id === p.id)!.name}`, 'info'); }
+      if (!isDef) { g.setLooterRoute(p.id); this.routeChosen = true; this.renderActions(); this.sfx.play('click'); this.toast(`Route: ${this.map.entries.find((e) => e.id === p.id)!.name}`, 'info'); }
     } else if (p.type === 'fire') {
       const sel = [...this.view.selected];
       if (isDef && sel.length) { if (g.orderExtinguish(sel, p.id).ok) this.sfx.play('click'); }
@@ -619,6 +621,10 @@ export class Match {
   }
 
   private lastPhase = '';
+  /** looting: the route was confirmed by the player (button or an arrow on the map) at least once this mission */
+  private routeChosen = false;
+  private lootKey = '';
+  private lootState() { const g = this.game; return `${g.squad.length}|${g.looterTarget}|${g.looterRoute}|${this.routeChosen}|${g.looterTarget >= 0 ? g.stores[g.looterTarget].stock : ''}`; }
 
   private refreshDynamicInfo() {
     const dyn = this.el.info.querySelector('[data-dyn]');
@@ -633,7 +639,7 @@ export class Match {
       const inc = this.el.actions.querySelector('[data-inc]'); if (inc) inc.innerHTML = this.incomingHtml();
       if (this.game.phase !== this.lastPhase) { this.lastPhase = this.game.phase; this.refreshHud(true); }
     } else {
-      const sq = this.el.actions.querySelector('[data-squad]'); if (sq && sq.childElementCount !== this.game.squad.length) this.renderActions();
+      if (this.lootState() !== this.lootKey) this.renderActions(); // a choice was made (cards, a store or an arrow on the map)
     }
   }
 
@@ -657,10 +663,20 @@ export class Match {
     } else {
       const tgt = g.looterTarget >= 0 ? g.stores[g.looterTarget] : null;
       const route = this.map.entries.find((e) => e.id === g.looterRoute)!;
-      a.innerHTML = `<div class="squad"><small>GROUP (${g.squad.length})</small><div data-squad class="chips">${g.squad.map((k, i) => `<button class="chip k-${k}" data-rm="${i}">${KIND_LABEL[k]} ✕</button>`).join('') || '<span class="muted">Recruit units with the cards</span>'}</div></div>
-        <div class="tgt"><small>TARGET</small><b>${tgt ? `${tgt.name} · stock ${tgt.stock}` : 'Tap a store'}</b></div>
-        <div class="tgt"><small>ROUTE</small><button data-a="route">${route.name} ⟳</button></div>
-        <div class="btnrow"><button data-a="selsquad">Select approaching</button><button class="primary" data-a="dispatch" ${g.squad.length && tgt ? '' : 'disabled'}>Dispatch</button></div>`;
+      // the three choices in order, one row: the one to make now lights up, the made ones get a tick; Dispatch only
+      // lights up once all three are made (the route has to be confirmed once per mission)
+      const done = [g.squad.length > 0, !!tgt, this.routeChosen];
+      const now = done.indexOf(false);
+      const cls = (i: number) => `step${done[i] ? ' done' : ''}${now === i ? ' next' : ''}`;
+      const mark = (i: number) => `<i>${done[i] ? '✓' : i + 1}</i>`;
+      a.innerHTML = `<div class="steps">
+          <div class="${cls(0)}">${mark(0)}<small>GROUP</small><b>${g.squad.length ? `${g.squad.length} units` : 'Tap a card'}</b></div>
+          <div class="${cls(1)}">${mark(1)}<small>TARGET</small><b>${tgt ? `${tgt.name} · ${tgt.stock}` : 'Tap a store'}</b></div>
+          <button class="${cls(2)}" data-a="route">${mark(2)}<small>ROUTE</small><b>${route.name} ⟳</b></button>
+        </div>
+        ${g.squad.length ? `<div data-squad class="chips squadchips">${g.squad.map((k, i) => `<button class="chip k-${k}" data-rm="${i}">${KIND_LABEL[k]} ✕</button>`).join('')}</div>` : ''}
+        <div class="btnrow lootrow"><button class="primary${now < 0 ? ' go' : ''}" data-a="dispatch" ${now < 0 ? '' : 'disabled'}>Dispatch</button></div>`;
+      this.lootKey = this.lootState();
       a.querySelectorAll<HTMLButtonElement>('[data-rm]').forEach((b) => b.addEventListener('click', () => { g.unrecruit(Number(b.dataset.rm)); this.refreshHud(true); }));
     }
     a.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => this.action(b.dataset.a!, b)));

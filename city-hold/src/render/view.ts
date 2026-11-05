@@ -148,8 +148,8 @@ export class MatchView {
   }
   private cannonKey = ''; private cannonOn = 0;
   private stepCannonView(g: Game, dt: number) {
-    const c = g.cannon; if (!c) return;
-    this.ensureCannon();
+    const c = g.cannon; if (!c) { if (this.cannonG) this.cannonG.visible = false; return; } // (looting side: no cannon at all)
+    this.ensureCannon(); this.cannonG!.visible = true;
     const G = this.cannonG!; G.position.set(c.x, 0, c.z); G.rotation.y = 0; // drives in nose first towards the square (+z)
     const spraying = c.state === 'spraying';
     this.cannonOn = Math.max(0, Math.min(1, this.cannonOn + (spraying ? dt * 2.2 : -dt * 3)));
@@ -227,6 +227,7 @@ export class MatchView {
     performance.mark('warm:compiled');
     await this.uploadGeometry();
     for (const o of stand) this.scene.remove(o);
+    if (this.cannonG) this.cannonG.visible = false; // built at the origin for the warm-up only: it appears when the sim has a cannon
     this.fireCrew.endPrewarm();
     performance.mark('warm:uploaded');
   }
