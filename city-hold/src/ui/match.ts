@@ -73,7 +73,7 @@ export class Match {
     this.view = new MatchView(this.root, map, side, { onTap: (p, sx, sy) => this.onTap(p, sx, sy) }, settings.reducedFx, settings.timeOfDay ?? 'evening');
     this.buildHud();
     this.sfx.lang = settings.language === 'en' ? 'en' : 'nl';
-    music.prepareShots(['victory_def', 'victory_loot', 'vo_wave_en']); // the victory recordings, played like the music (works on iPad)
+    music.prepareShots([this.vo('victory_def'), 'victory_loot', this.vo('vo_wave')]); // the victory recordings, played like the music (works on iPad)
     this.sfx.unlock(); // create the audio graph now so the recordings start loading with the match (it resumes on the first tap)
     if (settings.language !== 'en') this.stopI18n = translateLive(this.root); // Dutch HUD, labels and messages
     this.root.style.setProperty('--ui-scale', String(settings.uiScale || 1));
@@ -766,15 +766,17 @@ export class Match {
    *  Web Audio only when that route is not unlocked yet. */
   private victory(defence: boolean): boolean {
     const vol = this.settings.volume ?? 0.6; if (vol <= 0) return false;
-    const name = defence ? 'victory_def' : 'victory_loot';
-    music.stopShot('vo_wave_en');
+    const name = defence ? this.vo('victory_def') : 'victory_loot';
+    music.stopShot(this.vo('vo_wave'));
     if (music.isUnlocked && music.playShot(name, 1.0 * vol)) return true;
     return this.sfx.victory(defence);
   }
+  /** the commander's recordings in the chosen language (victory_def / victory_def_nl, vo_wave_en / vo_wave_nl) */
+  private vo(base: 'victory_def' | 'vo_wave') { const nl = this.settings.language !== 'en'; return base === 'vo_wave' ? (nl ? 'vo_wave_nl' : 'vo_wave_en') : (nl ? 'victory_def_nl' : 'victory_def'); }
   /** a held wave: the commander on the radio ("Wave cleared. Hold the line.") */
   private waveSecured() {
     const vol = this.settings.volume ?? 0.6; if (vol <= 0) return;
-    if (music.isUnlocked && music.playShot('vo_wave_en', 1.0 * vol)) return;
+    if (music.isUnlocked && music.playShot(this.vo('vo_wave'), 1.0 * vol)) return;
     this.sfx.waveSecured();
   }
 

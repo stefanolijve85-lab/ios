@@ -42,7 +42,7 @@ export class Sfx {
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
     'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'cough_2', 'cough_3', 'cough_loop', 'water_cannon_start', 'water_cannon_loop', 'gas_launch', 'gas_hiss', 'smash', 'baton',
-    'victory_def', 'victory_loot', 'vo_wave_en', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
+    'victory_def', 'victory_def_nl', 'victory_loot', 'vo_wave_en', 'vo_wave_nl', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
   private buf = new Map<string, { b: AudioBuffer; norm: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
@@ -66,15 +66,16 @@ export class Sfx {
   victory(defence = true): boolean {
     if (this._volume <= 0) return false; const c = this.ensure(); if (!c) return false;
     if (c.state === 'suspended') void c.resume();
-    const name = defence ? 'victory_def' : 'victory_loot';
+    const name = defence ? (this.lang === 'nl' ? 'victory_def_nl' : 'victory_def') : 'victory_loot';
     if (!this.buf.has(name)) { void this.loadOne(c, name).then((ok) => { if (ok) this.smp(name, this.out(this.ui, 0), 1, { jitter: 0 }); }); return true; }
     return this.smp(name, this.out(this.ui, 0), 1, { jitter: 0 });
   }
   /** a held wave (Web Audio fallback): the radio line */
   waveSecured() {
     if (this._volume <= 0) return; const c = this.ensure(); if (!c) return;
-    if (!this.buf.has('vo_wave_en')) { void this.loadOne(c, 'vo_wave_en'); return; }
-    this.smp('vo_wave_en', this.out(this.ui, 0), 1, { jitter: 0 });
+    const vo = this.lang === 'nl' ? 'vo_wave_nl' : 'vo_wave_en';
+    if (!this.buf.has(vo)) { void this.loadOne(c, vo); return; }
+    this.smp(vo, this.out(this.ui, 0), 1, { jitter: 0 });
   }
   private loadErr = new Map<string, string>();
   /** the water cannon: pump and first blast, then the roaring jet for the length of the spray, faded out */
@@ -131,7 +132,7 @@ export class Sfx {
   }
   private loadSamples(c: Ctx) {
     // the mission-end lines first, so they are always ready in time
-    for (const n of ['victory_def', 'victory_loot', 'vo_wave_en']) void this.loadOne(c, n);
+    for (const n of this.lang === 'nl' ? ['victory_def_nl', 'victory_loot', 'vo_wave_nl'] : ['victory_def', 'victory_loot', 'vo_wave_en']) void this.loadOne(c, n);
     for (const name of Sfx.SAMPLES) void this.loadOne(c, name);
   }
   /** play a recorded sound; false when it is not loaded (caller synthesises instead) */
