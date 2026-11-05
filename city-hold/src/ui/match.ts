@@ -403,7 +403,7 @@ export class Match {
 
   /** where a sound at (x, z) sits for the listener: stereo position from the screen, quieter off-screen and zoomed out */
   private hear(x: number, z: number): Listener {
-    const sc = this.view.toScreen(x, 0.8, z); const w = this.root.clientWidth || 1, h = this.root.clientHeight || 1;
+    const sc = this.view.toScreen(x, 0.8, z); const w = this.view.scr.width, h = this.view.scr.height; // no layout read per sound
     const pan = Math.max(-1, Math.min(1, (sc.x / w) * 2 - 1)) * 0.85;
     const out = Math.max(0, -sc.x, sc.x - w, -sc.y, sc.y - h) / Math.max(w, h); // how far off-screen (screen sizes)
     const zoom = Math.max(0.45, Math.min(1.15, 48 / this.view.dist));

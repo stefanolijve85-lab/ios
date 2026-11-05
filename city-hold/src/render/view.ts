@@ -372,6 +372,7 @@ export class MatchView {
 
   dispose() {
     this.disposed = true;
+    this.scrObs?.disconnect(); this.scrObs = null;
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown); window.removeEventListener('keyup', this.onKeyUp);
     this.post?.dispose(); this.wet?.dispose(); this.fx.dispose();
@@ -404,10 +405,18 @@ export class MatchView {
     return this.raycaster.ray.intersectPlane(this.groundPlane, p) ? { x: p.x, z: p.z } : null;
   }
 
+  /** the canvas size, read once per frame: reading it per label (between DOM writes) forced a layout each time */
+  readonly scr = { width: 1, height: 1 };
+  private scrDirty = true; private scrObs: ResizeObserver | null = null;
+  private measureScreen() {
+    if (!this.scrObs && typeof ResizeObserver !== 'undefined') { this.scrObs = new ResizeObserver(() => { this.scrDirty = true; }); this.scrObs.observe(this.renderer.domElement); }
+    if (!this.scrDirty && this.scrObs) return; // unchanged since the last read: no layout at all
+    const r = this.renderer.domElement.getBoundingClientRect(); this.scr.width = r.width || 1; this.scr.height = r.height || 1; this.scrDirty = false;
+  }
+  private scrV = new THREE.Vector3();
   toScreen(x: number, y: number, z: number): { x: number; y: number; behind: boolean } {
-    const v = new THREE.Vector3(x, y, z).project(this.camera);
-    const r = this.renderer.domElement.getBoundingClientRect();
-    return { x: (v.x * 0.5 + 0.5) * r.width, y: (-v.y * 0.5 + 0.5) * r.height, behind: v.z > 1 };
+    const v = this.scrV.set(x, y, z).project(this.camera);
+    return { x: (v.x * 0.5 + 0.5) * this.scr.width, y: (-v.y * 0.5 + 0.5) * this.scr.height, behind: v.z > 1 };
   }
 
   // ------------------------------------------------------------------ input
@@ -463,7 +472,7 @@ export class MatchView {
 
   /** screen-space picking with generous touch targets */
   pick(sx: number, sy: number): Pick {
-    const r = this.renderer.domElement.getBoundingClientRect();
+    const r = this.renderer.domElement.getBoundingClientRect(); this.measureScreen();
     const lx = sx - r.left, ly = sy - r.top;
     const near = (x: number, y: number, z: number, rad: number) => { const s = this.toScreen(x, y, z); const d = Math.hypot(s.x - lx, s.y - ly); return d < rad ? d : Infinity; };
     const touchR = Math.max(26, 900 / this.dist);
@@ -572,7 +581,7 @@ export class MatchView {
     this.fx.event(`flash:${x.toFixed(1)}:${z.toFixed(1)}:${this.time.toFixed(2)}`, 'sparks', x, z);
     for (let i = 0; i < 3; i++) this.fx.emit(`flsm:${this.time.toFixed(2)}:${i}`, 'smoke', x + (i - 1) * 0.4, 0.4, z, 0.5, 1, 0.8);
     // the screen whites out briefly, more when the bang is near the middle of the view and the camera is close
-    const sc = this.toScreen(x, 1, z); const w = this.container.clientWidth, h = this.container.clientHeight;
+    const sc = this.toScreen(x, 1, z); const w = this.scr.width, h = this.scr.height;
     const off = Math.hypot(sc.x / w - 0.5, sc.y / h - 0.5); const near = THREE.MathUtils.clamp(40 / this.dist, 0.4, 1.4);
     const amt = THREE.MathUtils.clamp((0.75 - off) * near, 0, 0.85);
     if (amt > 0.03) {
@@ -726,7 +735,7 @@ export class MatchView {
     this.ghost.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.name !== 'arrow') (m.material as THREE.MeshBasicMaterial).color.setHex(col); });
   }
 
-  private backdrop: { h: CharacterVisual; x: number; z: number; tx: number; tz: number; wait: number; lane: number; speed: number; flee: boolean }[] = [];
+  private backdrop: { h: CharacterVisual; x: number; z: number; tx: number; tz: number; wait: number; lane: number; speed: number; flee: boolean; adt?: number }[] = [];
   private stepBackdrop(g: Game, dt: number) {
     const lanes = this.map.backdropCrowd; if (!lanes?.length) return;
     const riot = g.phase === 'wave' || (this.side === 'looters' && !g.over);
@@ -739,6 +748,7 @@ export class MatchView {
         this.backdrop.push({ h, x, z: L.z0 - 6 - Math.random() * 10, tx: x, tz: L.z0 + Math.random() * (L.z1 - L.z0), wait: Math.random() * 2, lane, speed: 1 + Math.random() * 0.9, flee: false });
       }
     }
+    let bi = 0;
     for (const b of this.backdrop) {
       const L = lanes[b.lane];
       if (riot && !b.h.root.visible) { b.h.root.visible = true; b.z = L.z0 - 6 - Math.random() * 10; b.tz = L.z0 + Math.random() * (L.z1 - L.z0); } // walk in from far up the street
@@ -760,7 +770,11 @@ export class MatchView {
         let df = Math.PI - b.h.root.rotation.y; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2; b.h.root.rotation.y += df * Math.min(1, dt * 2);
       }
       b.h.root.position.set(b.x, 0, b.z);
-      b.h.update(moving ? (b.flee ? 'flee' : 'walk') : 'idle', moving, moving ? (b.flee ? 2.6 : b.speed) : 0, false, dt);
+      // far-off crowd: on phones and tablets each figure's skeleton is posed every other frame (half of them per frame),
+      // with the time gathered in between: a third of all animation work, invisible at that distance
+      b.adt = (b.adt ?? 0) + dt; bi++;
+      if (this.touchDevice && ((this.frameNo + bi) & 1)) continue;
+      b.h.update(moving ? (b.flee ? 'flee' : 'walk') : 'idle', moving, moving ? (b.flee ? 2.6 : b.speed) : 0, false, b.adt); b.adt = 0;
     }
   }
 
@@ -831,6 +845,7 @@ export class MatchView {
   render(g: Game, dt: number) {
     if (this.touchDevice && (this.frameNo++ % 4 === 0)) this.renderer.shadowMap.needsUpdate = true;
     if (this.disposed) return;
+    this.measureScreen(); // one layout read per frame, before any label is written
     this.gameRef = g;
     this.time += dt;
     this.stepBackdrop(g, dt);

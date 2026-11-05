@@ -13,7 +13,7 @@ function collect(): Set<string> {
   let seed = 3;
   for (const map of Object.values(MAPS)) {
     if (!map.playable) continue;
-    for (const side of ['defence', 'looting'] as const) {
+    for (const side of ['defence', 'looters'] as const) {
       const g = new Game(map, side, { seed: seed++ });
       const add = (r?: { reason?: string }) => { if (r?.reason) texts.add(r.reason); };
       const pokes = () => {
@@ -35,7 +35,7 @@ function collect(): Set<string> {
       const bot = side === 'defence' ? autoDefence(g) : autoLooter(g);
       for (let t = 0; t < 1500 && !g.over; t += 1 / 30) {
         if (side === 'defence' && g.phase === 'prep' && !g.over) { bot(g); add(g.startWave()); }
-        else if (side === 'looting') bot(g);
+        else if (side === 'looters') bot(g);
         if (Math.floor(t * 30) % 900 === 0) pokes();
         g.step(1 / 30);
         for (const e of g.drainEvents()) if (e.text) texts.add(e.text);

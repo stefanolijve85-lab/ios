@@ -135,8 +135,15 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // word-like phrases only replace at word boundaries (so "stock" does not hit "restock"), symbols anywhere
 const rules = sorted.map(([en, nl]) => [new RegExp((/^\w/.test(en) ? '\\b' : '') + esc(en) + (/\w$/.test(en) ? '\\b' : ''), 'g'), nl] as [RegExp, string]);
 
+// the HUD rewrites the same few hundred strings every frame (bars, timers, labels): translate each one once
+const cache = new Map<string, string>();
 export function toDutch(text: string): string {
   if (!/[A-Za-z]{2}/.test(text)) return text;
+  const hit = cache.get(text); if (hit !== undefined) return hit;
+  if (cache.size > 4000) cache.clear();
+  const out = translate(text); cache.set(text, out); return out;
+}
+function translate(text: string): string {
   // single pass per rule over the string; placeholders keep translated parts from being matched again
   const parts: string[] = []; let out = text;
   for (const [re, nl] of rules) out = out.replace(re, () => { parts.push(nl); return `\u0000${parts.length - 1}\u0000`; });
