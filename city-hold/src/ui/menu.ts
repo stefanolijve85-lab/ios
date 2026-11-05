@@ -18,6 +18,7 @@ const DIFF_NOTE: Record<'nl' | 'en', Record<Side, Record<Difficulty, string>>> =
 import { CITY_ORDER, MAPS } from '../maps';
 import type { Progress } from '../save';
 import type { Side } from '../sim/game';
+import { canvasVideoSupported, playOnCanvas } from './mp4canvas';
 
 // RIOTS menu, built from assets/riots_ui (references 02-04). Real semantic UI; the artwork is text-free crops
 // (tools/prepare_menu_art.py) and existing city concept images. Screen order:
@@ -185,7 +186,7 @@ export class Menu {
     setTimeout(() => { if (!done) { music.play('mission'); music.setIntensity(1); music.ambience('riot', 0.3 * vol); } }, 0);
     if (!music.isUnlocked && vol > 0) setTimeout(() => { if (!done && !music.isUnlocked) soundBtn.hidden = false; }, 300);
     const close = () => {
-      if (done) return; done = true; el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
+      if (done) return; done = true; stopCanvas?.(); el.classList.add('out'); window.removeEventListener('keydown', onKey, true);
       music.ambience('riot', 0); music.setIntensity(0.4); music.play('menu'); // the riot fades out, the menu music takes over
       setTimeout(() => el.remove(), 600);
       warmLoadingFilm(); // the loading film downloads now that the intro no longer needs the connection
@@ -194,10 +195,24 @@ export class Menu {
     v.addEventListener('ended', close); v.addEventListener('error', close);
     // a tap turns the sound on (the music module starts it on this tap) and also starts the film when the phone did not
     // let it start by itself (Low Power Mode blocks autoplay; the poster would just stand there)
-    el.addEventListener('click', () => { soundBtn.hidden = true; if (v.paused) void v.play().catch(() => {}); });
-    el.querySelector('.rm-intro-skip')!.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+    let onCanvas = false; let stopCanvas: (() => void) | null = null;
+    el.addEventListener('click', () => { soundBtn.hidden = true; if (v.paused && !onCanvas) void v.play().catch(() => {}); });
+    el.querySelector('.rm-intro-skip')!.addEventListener('click', (e) => { e.stopPropagation(); stopCanvas?.(); close(); });
     window.addEventListener('keydown', onKey, true);
-    void v.play().catch(() => { /* autoplay blocked: the poster stays until a tap */ });
+    // iPhone/iPad in Low Power Mode refuse every video that starts by itself, muted or not: then the same film is decoded
+    // and drawn on a canvas (WebCodecs), which is allowed, so the intro still starts at once without a tap
+    const fallback = () => {
+      if (onCanvas || done || !v.paused || !canvasVideoSupported()) return;
+      onCanvas = true;
+      const cv = document.createElement('canvas'); cv.className = 'rm-intro-canvas'; v.after(cv);
+      void playOnCanvas(v.currentSrc || v.src, cv, close).then((stop) => {
+        if (!stop) { onCanvas = false; cv.remove(); return; } // could not: the poster stays until a tap
+        stopCanvas = stop; v.style.display = 'none';
+        if (done) stop();
+      });
+    };
+    void v.play().catch(fallback);
+    setTimeout(() => { if (v.paused && v.currentTime === 0) fallback(); }, 900); // a refusal that never rejects (seen on iOS)
   }
 
   // ---------------------------------------------------------------- 03 city selection

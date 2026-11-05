@@ -317,7 +317,7 @@
 /* cinematic intro over the main menu */
 .rm-intro { position: fixed; inset: 0; z-index: 1000; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity .55s ease; }
 .rm-intro.out { opacity: 0; pointer-events: none; }
-.rm-intro video { width: 100%; height: 100%; object-fit: cover; }
+.rm-intro video, .rm-intro canvas.rm-intro-canvas { width: 100%; height: 100%; object-fit: cover; }
 /* RIOTS logo as its own layer over the video: real text, so it stays crisp at any size; fades in with a slight settle */
 .rm-intro-shade { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(70% 55% at 50% 50%, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.12) 60%, rgba(0, 0, 0, 0) 100%); opacity: 0; animation: rmIntroFade 0.9s ease-out 0.35s forwards; }
 .rm-intro-logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; opacity: 0; animation: rmIntroLogo 1.1s cubic-bezier(.2, .7, .2, 1) 0.45s forwards; }
