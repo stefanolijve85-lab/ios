@@ -800,14 +800,15 @@ export class MatchView {
         const lane = i % lanes.length, L = lanes[lane];
         const h = createCharacter(kinds[i % kinds.length], 900 + i); noReflection(h.root); h.icon.visible = false; h.root.visible = false; this.scene.add(h.root);
         const x = L.x0 + Math.random() * (L.x1 - L.x0);
-        this.backdrop.push({ h, x, z: L.z0 - 6 - Math.random() * 10, tx: x, tz: L.z0 + Math.random() * (L.z1 - L.z0), wait: Math.random() * 2, lane, speed: 1 + Math.random() * 0.9, flee: false });
+        const st = L.enter ? { x: L.enter.x + (Math.random() - 0.5) * 4, z: L.enter.z + (Math.random() - 0.5) * 4 } : { x, z: L.z0 - 6 - Math.random() * 10 };
+        this.backdrop.push({ h, x: st.x, z: st.z, tx: x, tz: L.z0 + Math.random() * (L.z1 - L.z0), wait: Math.random() * 2, lane, speed: 1 + Math.random() * 0.9, flee: false });
       }
     }
     let bi = 0;
     for (const b of this.backdrop) {
       const L = lanes[b.lane];
-      if (riot && !b.h.root.visible) { b.h.root.visible = true; b.z = L.z0 - 6 - Math.random() * 10; b.tz = L.z0 + Math.random() * (L.z1 - L.z0); } // walk in from far up the street
-      if (!riot && b.h.root.visible) { b.tz = L.z0 - 14; b.flee = false; } // the riot is over: everyone drifts off
+      if (riot && !b.h.root.visible) { b.h.root.visible = true; if (L.enter) { b.x = L.enter.x + (Math.random() - 0.5) * 4; b.z = L.enter.z + (Math.random() - 0.5) * 4; b.tx = L.x0 + Math.random() * (L.x1 - L.x0); } else b.z = L.z0 - 6 - Math.random() * 10; b.tz = L.z0 + Math.random() * (L.z1 - L.z0); } // walk in from far up the street
+      if (!riot && b.h.root.visible) { if (L.enter) { b.tx = L.enter.x; b.tz = L.enter.z; } else b.tz = L.z0 - 14; b.flee = false; } // the riot is over: everyone drifts off
       if (!b.h.root.visible) continue;
       const dx = b.tx - b.x, dz = b.tz - b.z, d = Math.hypot(dx, dz);
       let moving = false;

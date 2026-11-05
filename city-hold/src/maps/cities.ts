@@ -40,6 +40,10 @@ export const AMSTERDAM: MapDef = {
     { type: 'bench', x: -8, z: 9, collide: true, r: 0.8 }, { type: 'bench', x: 8, z: 9, collide: true, r: 0.8 },
     { type: 'kiosk', x: -12, z: 17, collide: true, r: 1.3 },
     { type: 'car', x: 6, z: -9, rot: 0, collide: true, burnable: true },
+    // cars parked along the south quay, nose to tail with the canal rail as on any Amsterdam gracht
+    { type: 'car', x: -25.5, z: 6.3, rot: 90, collide: true, burnable: true }, { type: 'car', x: 24.5, z: 6.3, rot: 90, collide: true, burnable: true },
+    // a small café terrace on the south side (patrons sit here)
+    ...([[10.5, 12.6], [13.6, 12.6]] as const).map(([x, z]) => ({ type: 'cafe_table' as const, x, z, collide: true, r: 0.85 })),
   ],
   // canal houses from the Amsterdam pack (BLAD trapgevel, KADE hoekpand) along the shop quay, plus bike racks and bollards
   landmarks: [
@@ -48,6 +52,25 @@ export const AMSTERDAM: MapDef = {
     { slot: 'prop.bike_rack', x: -25, z: -13.6, rot: 90, width: 0.9 }, { slot: 'prop.bike_rack', x: 21, z: -13.6, rot: 90, width: 0.9 },
     ...[-28, -22, -6, 0, 6, 22, 28].map((x) => ({ slot: 'prop.bollard_ams', x, z: -4.9, rot: 0, width: 0.3 })),
   ],
+  // the rest of the riot beyond the play area: burning cars and bins on the far quays and up the south street,
+  // a crowd milling at the quay ends and in the south street (scenery only), lamps glowing down the quays
+  riotFires: [{ x: -37, z: 9.5, kind: 'car', rot: 0.25 }, { x: 37.5, z: -9.5, kind: 'car', rot: -0.3 }, { x: 36, z: 11.5, kind: 'bins' }, { x: -36.5, z: -10.5, kind: 'bins' }, { x: 4, z: 31, kind: 'bins' }],
+  backdropCrowd: [
+    { x0: -42, x1: -34, z0: 6.5, z1: 13, enter: { x: -52, z: 9.5 } }, { x0: 34, x1: 42, z0: 6.5, z1: 13, enter: { x: 52, z: 9.5 } },
+    { x0: -5, x1: 5, z0: 26, z1: 33, enter: { x: 0, z: 44 } },
+  ],
+  glowLamps: ([[-36, -6], [-44, -6], [36, -6], [44, -6], [-38, 6], [-46, 6], [38, 6], [46, 6], [-9, 27], [9, 27], [-9, 35], [9, 35]] as const).map(([x, z]) => ({ x, z })),
+  ambient: {
+    patrons: [{ x: 10.5, z: 11.6, facing: 0 }, { x: 13.6, z: 13.7, facing: Math.PI }, { x: 11.6, z: 13.3, facing: -2.2 }, { x: 14.6, z: 12.0, facing: -0.8 }],
+    // police line at the staging van, facing the quay
+    police: [{ x: 29.4, z: -12.6, facing: -Math.PI / 2 }, { x: 29.4, z: -10.6, facing: -Math.PI / 2 }, { x: 29.4, z: -8.6, facing: -Math.PI / 2 }],
+    // shop windows, the canal rails (looking at the water), the bridges and the kiosk
+    browse: [
+      { x: -20, z: -13.3 }, { x: -16, z: -13.3 }, { x: -5, z: -13.3 }, { x: -1, z: -13.3 }, { x: 10, z: -13.3 }, { x: 14, z: -13.3 },
+      { x: -24, z: -5.3 }, { x: -2, z: -5.3 }, { x: 3, z: -5.3 }, { x: 24, z: -5.3 }, { x: -22, z: 5.4 }, { x: -4, z: 5.4 }, { x: 4, z: 5.4 }, { x: 22, z: 5.4 },
+      { x: -13.5, z: 0 }, { x: 13.5, z: 0 }, { x: -12, z: 15.2 }, { x: 0, z: 14 }, { x: -20, z: 10 }, { x: 20, z: 10 },
+    ],
+  },
   stores: [
     { name: 'Phones', kind: 'phones', color: 0x23345a, front: { x: -18, z: -15 }, normal: { x: 0, z: 1 }, width: 6 },
     { name: 'Jewellery', kind: 'jewellery', color: 0x6a2232, front: { x: -3, z: -15 }, normal: { x: 0, z: 1 }, width: 6 },

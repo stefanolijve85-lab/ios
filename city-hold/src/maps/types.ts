@@ -100,7 +100,7 @@ export interface MapDef {
   /** ambient life (no gameplay effect): café guests at terrace tables, a decorative police line, points where passers-by stop */
   ambient?: { patrons: Spot[]; police: Spot[]; browse: Vec2[] };
   /** side-street stretches beyond the play area where a background crowd gathers during a riot (decoration only) */
-  backdropCrowd?: { x0: number; x1: number; z0: number; z1: number }[];
+  backdropCrowd?: { x0: number; x1: number; z0: number; z1: number; /** where they walk in from and leave to (default: further up the street, -z) */ enter?: Vec2 }[];
   /** wrecks and bonfires beyond the play area that blaze up during a riot and smoulder between waves (decoration only) */
   riotFires?: { x: number; z: number; kind: 'car' | 'bins'; rot?: number }[];
   facadeDecals?: FacadeDecal[];

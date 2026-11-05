@@ -665,14 +665,21 @@ export function buildWorld(map: MapDef, scene: THREE.Scene, reducedFx: boolean):
     wm.position.y = 0.008; // below the wet-street reflection layer
   }
   for (const br of map.bridges) {
-    const bt = groundTexture('brick').clone(); bt.repeat.set((br.x1 - br.x0) / 3, (br.z1 - br.z0) / 3); bt.needsUpdate = true;
-    const deck = mesh(box, new THREE.MeshStandardMaterial({ map: bt, color: 0xb09a88, roughness: 0.35, metalness: 0.1 }), group, (br.x0 + br.x1) / 2, 0.06, (br.z0 + br.z1) / 2, br.x1 - br.x0, 0.12, br.z1 - br.z0);
-    void deck;
+    // the street carries on over the water (same paving, a touch lighter), framed by granite kerbs along both sides;
+    // the parapets are the walls of the map. (The old half-cylinder arch poked up through the deck as a red slab.)
     const along = br.z1 - br.z0 > br.x1 - br.x0;
-    const arch = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 16, 1, true, 0, Math.PI), mat(0x7a3e2c, 0.9));
-    if (along) { arch.rotation.z = Math.PI / 2; arch.scale.set(0.8, br.x1 - br.x0, (br.z1 - br.z0) * 0.35); }
-    else { arch.rotation.x = Math.PI / 2; arch.rotation.z = 0; arch.scale.set((br.x1 - br.x0) * 0.35, br.z1 - br.z0, 0.8); }
-    arch.position.set((br.x0 + br.x1) / 2, 0.05, (br.z0 + br.z1) / 2); group.add(arch);
+    const bt = groundTexture(map.ground).clone(); bt.repeat.set((br.x1 - br.x0) / 4, (br.z1 - br.z0) / 4); bt.needsUpdate = true;
+    mesh(box, new THREE.MeshStandardMaterial({ map: bt, color: 0xd8cec4, roughness: 0.45, metalness: 0.05 }), group, (br.x0 + br.x1) / 2, 0.05, (br.z0 + br.z1) / 2, br.x1 - br.x0, 0.1, br.z1 - br.z0);
+    const kerb = mat(0x8c8a86, 0.7);
+    if (along) for (const x of [br.x0 + 0.18, br.x1 - 0.18]) mesh(box, kerb, group, x, 0.12, (br.z0 + br.z1) / 2, 0.36, 0.14, br.z1 - br.z0);
+    else for (const z of [br.z0 + 0.18, br.z1 - 0.18]) mesh(box, kerb, group, (br.x0 + br.x1) / 2, 0.12, z, br.x1 - br.x0, 0.14, 0.36);
+    // the bridge's brick face seen on the water at both canal edges, with a dark arch opening
+    for (const side of [-1, 1]) {
+      // (beside the bridge, on the water: a bridge along z has its faces on its x sides)
+      const wl = (along ? br.z1 - br.z0 : br.x1 - br.x0) - 1.2;
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(along ? 0.7 : wl, along ? wl : 0.7).rotateX(-Math.PI / 2), mat(0x6e3a2a, 0.85));
+      face.position.set(along ? (side < 0 ? br.x0 - 0.35 : br.x1 + 0.35) : (br.x0 + br.x1) / 2, 0.014, along ? (br.z0 + br.z1) / 2 : (side < 0 ? br.z0 - 0.35 : br.z1 + 0.35)); face.receiveShadow = true; group.add(face);
+    }
   }
   // planted islands
   for (const is of map.islands) {
