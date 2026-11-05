@@ -281,7 +281,7 @@ export class MatchView {
   private overlay: HTMLDivElement;
   private storeLabels: HTMLDivElement[] = [];
   private bars = new Map<string, HTMLDivElement>();
-  private floaters: { el: HTMLDivElement; x: number; z: number; t: number }[] = [];
+  private floaters: { el: HTMLDivElement; x: number; z: number; t: number; off: number }[] = [];
   private raycaster = new THREE.Raycaster();
   private groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private pointers = new Map<number, { x: number; y: number; sx: number; sy: number }>();
@@ -736,7 +736,9 @@ export class MatchView {
 
   floatText(x: number, z: number, text: string, cls: string) {
     const el = document.createElement('div'); el.className = 'floater ' + cls; el.textContent = text; this.overlay.appendChild(el);
-    this.floaters.push({ el, x, z, t: 0 });
+    // several at one spot at once (three teams bought in a row at the van): stacked, never printed over each other
+    const near = this.floaters.filter((f) => f.t < 1 && Math.hypot(f.x - x, f.z - z) < 2.5).length;
+    this.floaters.push({ el, x, z, t: 0, off: near * 22 });
   }
 
   // ---- background riot crowd in the side streets beyond the play area (scenery: no icons, no gameplay, never tappable)
@@ -1132,7 +1134,7 @@ export class MatchView {
     // floaters
     for (const f of this.floaters) {
       f.t += dt; const s = this.toScreen(f.x, 2.6 + f.t * 1.2, f.z);
-      f.el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -50%)`; f.el.style.opacity = String(Math.max(0, 1 - f.t / 1.8));
+      f.el.style.transform = `translate(${s.x}px, ${s.y - f.off}px) translate(-50%, -50%)`; f.el.style.opacity = String(Math.max(0, 1 - f.t / 1.8));
     }
     this.floaters = this.floaters.filter((f) => { if (f.t > 1.8) { f.el.remove(); return false; } return true; });
     for (const [k, el] of this.bars) { if (el.dataset.seen !== '1') { el.remove(); this.bars.delete(k); } else el.dataset.seen = '0'; }
