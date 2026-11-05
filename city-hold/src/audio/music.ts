@@ -10,7 +10,13 @@ export type Track = 'menu' | 'mission';
 /** the ElevenLabs tracks are mastered loud: this keeps the music under the effects and the riot ambience (offline-measured) */
 const MIX = 0.2;
 
-interface Voice { el: HTMLAudioElement; gain: GainNode | null; level: number; target: number; missing: boolean }
+interface Voice {
+  el: HTMLAudioElement; gain: GainNode | null; level: number; target: number; missing: boolean;
+  /** looping tracks: a second player that takes over at the end (an <audio loop> leaves a gap on Safari) */
+  alt?: HTMLAudioElement; xg?: Map<HTMLAudioElement, GainNode>; swapping?: boolean; altPrimed?: boolean;
+}
+/** hand-over between the two players: the files are cut to loop seamlessly, this only covers the start-up jitter */
+const XF = 0.2;
 
 class Music {
   private voices = new Map<string, Voice>();
@@ -30,15 +36,16 @@ class Music {
         try { this.ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)(); } catch { this.ctx = null; }
         if (this.ctx) for (const v of [...this.voices.values(), ...this.shots.values()]) this.route(v);
       }
-      this.primeShots();
+      this.primeShots(); this.primeAlts();
       if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume();
       this.unlocked = true; this.apply(true);
     };
     // every real tap retries: a play() refused once (iOS) is started on the next one
     for (const ev of ['touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, true);
     document.addEventListener('visibilitychange', () => {
-      for (const v of this.voices.values()) if (document.hidden) v.el.pause(); else if (v.target > 0 && this.unlocked && !v.missing) void v.el.play().catch(() => {});
+      for (const v of this.voices.values()) if (document.hidden) { v.el.pause(); v.alt?.pause(); } else if (v.target > 0 && this.unlocked && !v.missing) void v.el.play().catch(() => {});
     });
+    window.setInterval(() => this.handOver(), 50);
   }
 
   get isUnlocked() { return this.unlocked; }
@@ -46,16 +53,50 @@ class Music {
   private route(v: Voice) {
     if (!this.ctx || v.gain) return;
     try {
-      const src = this.ctx.createMediaElementSource(v.el); const g = this.ctx.createGain(); g.gain.value = v.level;
-      src.connect(g).connect(this.ctx.destination); v.el.volume = 1; v.gain = g;
+      const g = this.ctx.createGain(); g.gain.value = v.level; g.connect(this.ctx.destination);
+      if (v.alt) {
+        v.xg = new Map();
+        for (const el of [v.el, v.alt]) { const x = this.ctx.createGain(); x.gain.value = el === v.el ? 1 : 0; this.ctx.createMediaElementSource(el).connect(x).connect(g); el.volume = 1; v.xg.set(el, x); }
+      } else { this.ctx.createMediaElementSource(v.el).connect(g); v.el.volume = 1; }
+      v.gain = g;
     } catch { /* keep element volume */ }
+  }
+  /** iOS lets a player start without a tap only after it was started once inside one: do that, silently, for the spares */
+  private primeAlts() {
+    for (const v of this.voices.values()) {
+      const a = v.alt; if (!a || v.altPrimed || !v.xg || v.swapping) continue;
+      v.altPrimed = true; void a.play().then(() => { if (!v.swapping && a !== v.el) { a.pause(); a.currentTime = 0; } }).catch(() => { v.altPrimed = false; });
+    }
+  }
+  /** a looping track near its end: the spare player starts at 0 and takes over within XF seconds */
+  private handOver() {
+    if (!this.ctx) return;
+    for (const v of this.voices.values()) {
+      const a = v.el, b = v.alt; if (!b || !v.xg || v.swapping || a.paused || !isFinite(a.duration) || a.duration < 1) continue;
+      if (a.duration - a.currentTime > XF + 0.06) continue;
+      v.swapping = true;
+      try { b.currentTime = 0; } catch { /* ignore */ }
+      void b.play().then(() => {
+        const t = this.ctx!.currentTime; const ga = v.xg!.get(a)!.gain, gb = v.xg!.get(b)!.gain;
+        ga.cancelScheduledValues(t); gb.cancelScheduledValues(t);
+        ga.setValueAtTime(1, t); ga.linearRampToValueAtTime(0, t + XF); gb.setValueAtTime(0, t); gb.linearRampToValueAtTime(1, t + XF);
+        v.el = b; v.alt = a;
+        window.setTimeout(() => { a.pause(); try { a.currentTime = 0; } catch { /* ignore */ } v.swapping = false; }, XF * 1000 + 150);
+      }).catch(() => { v.swapping = false; v.altPrimed = false; }); // not allowed yet: the 'ended' restart below covers it
+    }
   }
   private voice(name: string, file: string): Voice {
     let v = this.voices.get(name);
     if (!v) {
-      const el = new Audio(file); el.loop = true; el.preload = 'auto'; el.volume = 0;
-      v = { el, gain: null, level: 0, target: 0, missing: false };
-      const vv = v; el.addEventListener('error', () => { vv.missing = true; });
+      const mk = () => { const e = new Audio(file); e.loop = false; e.preload = 'auto'; e.volume = 0; return e; };
+      const el = mk(), alt = mk();
+      v = { el, alt, gain: null, level: 0, target: 0, missing: false };
+      const vv = v;
+      for (const e of [el, alt]) {
+        e.addEventListener('error', () => { vv.missing = true; });
+        // safety net: if the hand-over did not happen, the track simply starts again on the same player
+        e.addEventListener('ended', () => { if (vv.el === e && vv.target > 0 && !vv.swapping) { try { e.currentTime = 0; } catch { /* ignore */ } void e.play().catch(() => {}); } });
+      }
       this.voices.set(name, v); this.route(v);
     }
     return v;
@@ -135,7 +176,7 @@ class Music {
       for (const v of this.voices.values()) {
         const d = v.target - v.level;
         if (Math.abs(d) > 0.004) { this.setLevel(v, v.level + Math.sign(d) * Math.min(Math.abs(d), 0.015)); busy = true; }
-        else { this.setLevel(v, v.target); if (v.target === 0 && !v.el.paused) v.el.pause(); }
+        else { this.setLevel(v, v.target); if (v.target === 0 && !v.el.paused) { v.el.pause(); v.alt?.pause(); } }
       }
       if (busy) this.raf = requestAnimationFrame(step);
     };

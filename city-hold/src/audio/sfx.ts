@@ -46,7 +46,7 @@ export class Sfx {
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
     'riot_loop', 'panic_loop', 'riot_yell', 'scream', 'cough', 'cough_2', 'cough_3', 'cough_loop', 'water_cannon_start', 'water_cannon_loop', 'gas_launch', 'gas_hiss', 'smash', 'baton',
     'victory_def', 'victory_def_nl', 'victory_loot', 'vo_wave_en', 'vo_wave_nl', 'flashbang', 'engine_arrive', 'pump_loop', 'sizzle_loop', 'hose_charge'] as const;
-  private buf = new Map<string, { b: AudioBuffer; norm: number }>();
+  private buf = new Map<string, { b: AudioBuffer; norm: number; ls: number; le: number }>();
   /** recordings are peak-normalised to 1, far hotter than the synthesis: these bring one-shots and loops back to its level */
   private static readonly REC_LEVEL = 0.28;
   private static readonly LOOP_LEVEL = 0.2;
@@ -126,7 +126,13 @@ export class Sfx {
         .then((ab) => new Promise<AudioBuffer>((res, rej) => { const pr = c.decodeAudioData(ab, res, rej) as unknown as Promise<AudioBuffer> | undefined; pr?.catch?.(rej); }))
         .then((b) => {
           let peak = 0; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
-          this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1 }); return true;
+          // decoder padding: Safari keeps the mp3 encoder's silent frames at both ends, which made every loop hiccup.
+          // Exact digital silence at the edges is padding (a recording is never exactly 0 for a millisecond): loop past it
+          const ch0 = b.getChannelData(0); const quiet = (i: number) => { for (let ch = 0; ch < b.numberOfChannels; ch++) if (Math.abs(b.getChannelData(ch)[i]) > 1e-5) return false; return true; };
+          let a0 = 0; while (a0 < ch0.length - 1 && quiet(a0)) a0++;
+          let a1 = ch0.length - 1; while (a1 > a0 && quiet(a1)) a1--;
+          const pad = (n: number) => (n > b.sampleRate * 0.001 ? n : 0);
+          this.buf.set(name, { b, norm: peak > 0.01 ? 1 / peak : 1, ls: pad(a0) / b.sampleRate, le: (ch0.length - 1 - a1 > b.sampleRate * 0.001 ? a1 + 1 : ch0.length) / b.sampleRate }); return true;
         })
         .catch((e) => { console.warn('sound not loaded', name, e); this.loadErr.set(name, String(e)); this.loading.delete(name); return false; });
       this.loading.set(name, p);
@@ -154,7 +160,8 @@ export class Sfx {
     const c = this.ctx; const g = c.createGain(); g.gain.value = 0; g.connect(dst);
     for (const rate of [0.94, 1.07]) {
       const src = c.createBufferSource(); src.buffer = e.b; src.loop = true; src.playbackRate.value = rate;
-      const sg = c.createGain(); sg.gain.value = e.norm * Sfx.LOOP_LEVEL; src.connect(sg).connect(g); src.start(0, Math.random() * e.b.duration);
+      src.loopStart = e.ls; src.loopEnd = e.le; // only the sound itself, never the decoder's silent padding
+      const sg = c.createGain(); sg.gain.value = e.norm * Sfx.LOOP_LEVEL; src.connect(sg).connect(g); src.start(0, e.ls + Math.random() * (e.le - e.ls));
     }
     this.loops.set(name, g); return g;
   }
