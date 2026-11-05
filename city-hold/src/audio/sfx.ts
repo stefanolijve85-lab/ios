@@ -38,6 +38,9 @@ export class Sfx {
   private master!: GainNode; private ui!: GainNode; private world!: GainNode; private amb!: GainNode;
   private noise!: AudioBuffer; private brown!: AudioBuffer; private pink!: AudioBuffer;
   private last = new Map<string, number>();
+  private recent: number[] = [];
+  private static readonly MAX_RECENT = 12;
+  private static readonly ALWAYS = new Set<Cue>(['click', 'buy', 'deny', 'upgrade', 'place', 'dispatch', 'wave', 'win', 'lose', 'supply', 'flashBang']);
   private bed: { crowd: GainNode; crowdF: BiquadFilterNode; hum: GainNode; roar: GainNode; roarP: StereoPannerNode; hiss: GainNode; hissP: StereoPannerNode; water: GainNode; waterP: StereoPannerNode } | null = null;
   /** recorded sounds (public/audio/*.mp3, generated with ElevenLabs); each falls back to the synthesis below if missing */
   static readonly SAMPLES = ['glass', 'barrier', 'wood_hit', 'whistle', 'shield', 'ignite', 'fire_loop', 'hose_loop', 'steam', 'crowd_loop', 'city_loop', 'siren', 'horn', 'rustle', 'molotov', 'shutter', 'fountain_loop', 'crowd_shout',
@@ -203,6 +206,9 @@ export class Sfx {
     if (c.state === 'suspended') void c.resume();
     const now = performance.now(); const key = cue + (at ? Math.round(at.pan * 4) : '');
     if ((this.last.get(key) ?? 0) > now - 60) return; this.last.set(key, now);
+    // in a big brawl dozens of hits can land in one second: past a dozen sounds in the last ~0.7 s the game sounds
+    // (never the buttons and the big moments) are skipped, so the audio thread on a tablet never falls behind and crackles
+    if (!Sfx.ALWAYS.has(cue)) { while (this.recent.length && this.recent[0] < now - 700) this.recent.shift(); if (this.recent.length >= Sfx.MAX_RECENT) return; this.recent.push(now); }
     const L = at ?? { pan: 0, gain: 1 };
     if (L.gain < 0.03) return;
     const isUi = cue === 'click' || cue === 'buy' || cue === 'deny' || cue === 'upgrade' || cue === 'place';
