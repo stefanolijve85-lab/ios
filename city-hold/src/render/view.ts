@@ -137,16 +137,20 @@ export class MatchView {
   // ---- police water cannon: the truck (image-to-3D, Paris pack) and its jet from the roof cannon
   private cannonG: THREE.Group | null = null;
   private cannonJet: THREE.Mesh[] = [];
-  private cannonKey = ''; private cannonOn = 0;
-  private stepCannonView(g: Game, dt: number) {
-    const c = g.cannon; if (!c) return;
+  /** the water cannon truck and its jet (built before the shaders are compiled, so its first drive-in does not stall) */
+  private ensureCannon() {
     if (!this.cannonG) {
       const m = vehicleModel('prop.water_cannon.paris', 8.6, 0, 2.55, 3.55); this.cannonG = new THREE.Group(); // its real proportions: the model came out much too fat
       if (m) this.cannonG.add(m); else { const b = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.2, 8.6).translate(0, 1.6, 0), new THREE.MeshStandardMaterial({ color: 0xe8e8ec })); this.cannonG.add(b); }
       noReflection(this.cannonG); this.scene.add(this.cannonG);
       for (const core of [true, false]) { const j = new THREE.Mesh(new THREE.BufferGeometry(), jetMaterial(core)); j.frustumCulled = false; j.visible = false; noReflection(j); this.scene.add(j); this.cannonJet.push(j); }
     }
-    const G = this.cannonG; G.position.set(c.x, 0, c.z); G.rotation.y = 0; // drives in nose first towards the square (+z)
+  }
+  private cannonKey = ''; private cannonOn = 0;
+  private stepCannonView(g: Game, dt: number) {
+    const c = g.cannon; if (!c) return;
+    this.ensureCannon();
+    const G = this.cannonG!; G.position.set(c.x, 0, c.z); G.rotation.y = 0; // drives in nose first towards the square (+z)
     const spraying = c.state === 'spraying';
     this.cannonOn = Math.max(0, Math.min(1, this.cannonOn + (spraying ? dt * 2.2 : -dt * 3)));
     for (const j of this.cannonJet) j.visible = this.cannonOn > 0;
@@ -203,9 +207,50 @@ export class MatchView {
       if (++n % 2 === 0) await new Promise((r) => requestAnimationFrame(() => r(null))); // two at a time: the film gets a frame in between
     }
     performance.mark('warm:textures-done');
+    if (this.map.waterCannon) this.ensureCannon();
+    this.ensureLitter();
+    // one figure of every kind and look stands in the scene while it is compiled and uploaded: the real ones are only
+    // created on the first frame, and their skinned shaders would compile there, freezing the end of the loading film
+    const stand: THREE.Object3D[] = [];
+    const kinds: AnyKind[] = ['security', 'shield', 'firefighter', 'runner', 'carrier', 'heavy', 'vandal', 'thrower', 'civilian', 'shopkeeper', 'helper'];
+    try {
+      for (const k of kinds) for (let v = 0; v < 3; v++) stand.push(createCharacter(k, v).root);
+      for (const sl of ['char.romeo', 'char.hacker.tablet', 'char.hacker.laptop', 'char.hacker.radio']) if (slotStatus(sl) === 'final') { const h = createCharacterFromSlot(sl, 'runner', 1); if (h) stand.push(h.root); }
+    } catch { /* compiled when they first appear */ }
+    stand.forEach((o, i) => { o.position.set(this.map.camera.x + (i % 8) - 4, 0, this.map.camera.z + Math.floor(i / 8)); o.visible = true; this.scene.add(o); });
+    // with post-processing the scene is drawn into a render target (linear colour, no tone mapping): compile those
+    // shader variants, not the screen ones, or every material compiles again on the first real frame
+    const rt = this.post ? new THREE.WebGLRenderTarget(16, 16) : null; const prev = this.renderer.getRenderTarget();
+    this.renderer.setRenderTarget(rt);
     try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
-    this.fireCrew.endPrewarm();
+    this.renderer.setRenderTarget(prev); rt?.dispose();
     performance.mark('warm:compiled');
+    await this.uploadGeometry();
+    for (const o of stand) this.scene.remove(o);
+    this.fireCrew.endPrewarm();
+    performance.mark('warm:uploaded');
+  }
+  /** the vertex buffers go to the GPU in slices, one slice per frame, each drawn once into a tiny target: the first
+   *  real frame would otherwise upload the whole street at once and the loading film would stop for it */
+  private async uploadGeometry() {
+    const r = this.renderer; const LAYER = 31; const BUDGET = 150_000; // vertices per frame
+    const rt = new THREE.WebGLRenderTarget(16, 16); const cam = this.camera.clone(); cam.layers.set(LAYER);
+    const meshes: THREE.Mesh[] = [];
+    this.scene.traverse((o) => { const m = o as THREE.Mesh; if ((m.isMesh || (o as THREE.Points).isPoints || (o as THREE.Line).isLine) && m.geometry && o.visible) meshes.push(m); });
+    const auto = r.shadowMap.autoUpdate; r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = false;
+    const prevTarget = r.getRenderTarget();
+    try {
+      let i = 0;
+      while (i < meshes.length) {
+        const batch: { m: THREE.Mesh; cull: boolean }[] = []; let verts = 0;
+        while (i < meshes.length && (verts < BUDGET || !batch.length)) { const m = meshes[i++]; verts += m.geometry.attributes.position?.count ?? 0; batch.push({ m, cull: m.frustumCulled }); m.layers.enable(LAYER); m.frustumCulled = false; }
+        r.setRenderTarget(rt); r.render(this.scene, cam);
+        for (const b of batch) { b.m.layers.disable(LAYER); b.m.frustumCulled = b.cull; }
+        await new Promise((res) => requestAnimationFrame(() => res(null)));
+      }
+      r.shadowMap.needsUpdate = true; r.setRenderTarget(rt); r.render(this.scene, this.camera); // everything once more with the real camera: the shadow map (its depth shaders and casters) and anything left
+    } catch { /* uploads on the first frame instead */ }
+    r.setRenderTarget(prevTarget); rt.dispose(); r.shadowMap.autoUpdate = auto; r.shadowMap.needsUpdate = true;
   }
   /** where the fire engine stands (null until a firefighter is on the team) */
   fireEnginePos() { return this.fireCrew.enginePos(); }
@@ -789,7 +834,8 @@ export class MatchView {
   // routes as the riot goes on; it stays for the rest of the match. Scenery only, instanced (4 draw calls).
   // (fallen barrier: a flat steel crowd fence, frame and bars, lying on the ground)
   private litter: { kinds: THREE.InstancedMesh[]; n: number[]; acc: number; seed: number; spilled: Set<number> } | null = null;
-  private stepLitter(g: Game, dt: number) {
+  /** the instanced litter meshes (built before the shaders are compiled: instanced variants of their own) */
+  private ensureLitter() {
     if (!this.litter) {
       const max = this.reducedFx ? 60 : 180; const LT = litterTextures();
       const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.InstancedMesh(geo, mat, max); m.count = 0; m.receiveShadow = true; m.frustumCulled = false; m.layers.set(NO_REFLECT_LAYER); this.scene.add(m); return m; };
@@ -807,7 +853,10 @@ export class MatchView {
       ], n: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], acc: 0, seed: 1, spilled: new Set() };
       for (const k of [4, 6]) { this.litter.kinds[k].instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(max * 3), 3); }
     }
-    const L = this.litter; const max = L.kinds[0].instanceMatrix.count;
+  }
+  private stepLitter(g: Game, dt: number) {
+    this.ensureLitter();
+    const L = this.litter!; const max = L.kinds[0].instanceMatrix.count;
     const rnd = () => { L.seed = (L.seed * 16807) % 2147483647; return L.seed / 2147483647; };
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3();
     const COL = [0xb8242c, 0x2a4fa8, 0xe8e3d0, 0x1d1f24, 0xc98a2a, 0x3d7a4a, 0x8a3fa0, 0xd8d0c0]; const col = new THREE.Color();
