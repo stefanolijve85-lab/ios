@@ -179,9 +179,16 @@ export function drawMinimap(cv: HTMLCanvasElement, m: MapDef, lang: Lang) {
     const horiz = Math.abs(st.normal.z) > 0.5;
     c.fillStyle = '#' + st.color.toString(16).padStart(6, '0'); c.strokeStyle = '#ffd38a'; c.lineWidth = 2 * dpr;
     if (horiz) { c.fillRect(x - w / 2, z - 3 * dpr, w, 6 * dpr); c.strokeRect(x - w / 2, z - 3 * dpr, w, 6 * dpr); } else { c.fillRect(x - 3 * dpr, z - w / 2, 6 * dpr, w); c.strokeRect(x - 3 * dpr, z - w / 2, 6 * dpr, w); }
-    const lx = x + st.normal.x * 14 * dpr, lz = z + st.normal.z * 14 * dpr;
-    c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle';
-    const label = `${i + 1} ${names[st.kind] ?? st.name}`; const tw = c.measureText(label).width;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    // fit between the neighbouring shops (a narrow phone map put "1 Juwelier" over "2 Elektronica"): smaller type,
+    // and when even that is too wide, the labels stand alternately one row further out
+    const room = Math.min(...m.stores.filter((o) => o !== st).map((o) => Math.hypot(X(o.front.x) - x, Z(o.front.z) - z)), 1e9) - 10 * dpr;
+    const label = `${i + 1} ${names[st.kind] ?? st.name}`; let px = 11; c.font = font(px);
+    while (c.measureText(label).width + 8 * dpr > room && px > 9) { px -= 0.5; c.font = font(px); }
+    const widest = Math.max(...m.stores.map((o, j) => c.measureText(`${j + 1} ${names[o.kind] ?? o.name}`).width));
+    const stagger = widest + 8 * dpr > room && i % 2 === 1 ? 17 * dpr : 0;
+    const lx = x + st.normal.x * (14 * dpr + stagger), lz = z + st.normal.z * (14 * dpr + stagger);
+    const tw = c.measureText(label).width;
     c.fillStyle = 'rgba(10,12,16,0.8)'; c.fillRect(lx - tw / 2 - 4 * dpr, lz - 8 * dpr, tw + 8 * dpr, 16 * dpr);
     c.fillStyle = '#ffd38a'; c.fillText(label, lx, lz);
   });
