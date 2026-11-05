@@ -54,3 +54,19 @@ nginx zoals de andere sites. Eenmalig op de server:
 sudo certbot --nginx -d riots.xitgames.com --force-renewal
 sudo certbot renew --dry-run
 ```
+
+## Bijwerken vanaf de server zelf (bijv. kantoor, PuTTY)
+
+Geen Mac of WireGuard nodig: de server haalt de code van GitHub, bouwt en zet het online.
+
+Eerste keer (in PuTTY, ingelogd als solotech):
+
+    git clone --depth 1 -b claude/happy-hypatia-1smfhz https://github.com/stefanolijve85-lab/ios.git ~/riots-src
+    bash ~/riots-src/city-hold/deploy/deploy-on-server.sh
+
+Daarna steeds alleen:
+
+    bash ~/riots-src/city-hold/deploy/deploy-on-server.sh
+
+Vereist Node.js 20.19 of nieuwer op de server (het script zegt hoe je het installeert als het ontbreekt).
+`~/riots-src` is alleen een bouwkopie: hij wordt elke keer gelijkgezet met GitHub.
