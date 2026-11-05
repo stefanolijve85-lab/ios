@@ -185,12 +185,14 @@ export class FireCrew {
   private started = false;
   private build() { this.engine = buildFireEngine(); const p = this.parking(); this.engine.g.rotation.y = (p.rot * Math.PI) / 180; this.engine.g.visible = false; for (const c of this.engine.body.children) noReflection(c); for (const w of this.engine.wheels) noReflection(w); this.scene.add(this.engine.g); }
   /** build the engine during loading and compile its shaders, so it does not hitch or show black when it first drives in */
-  prewarm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
+  /** the engine stands visible while the view compiles the scene (asynchronously, under the loading film), so its
+   *  shaders are ready before it first drives in; endPrewarm hides it again. (This used to call renderer.compile
+   *  here: that compiled the whole street synchronously and froze the loading film.) */
+  prewarm() {
     if (!this.engine) this.build();
     const e = this.engine!; const p = this.parking(); e.g.position.set(p.x, 0, p.z); e.g.visible = true;
-    try { renderer.compile(this.scene, camera); } catch { /* compiled on first draw instead */ }
-    e.g.visible = false;
   }
+  endPrewarm() { if (this.engine && !this.started) this.engine.g.visible = false; }
   enginePos(): { x: number; z: number } | null { return this.engine && this.started && this.engine.g.visible ? { x: this.engine.g.position.x, z: this.engine.g.position.z } : null; }
   private outletWorld(out: THREE.Vector3) { this.engine!.g.updateMatrixWorld(); return this.engine!.outlet.getWorldPosition(out); }
 

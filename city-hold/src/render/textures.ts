@@ -3,9 +3,11 @@ import type { BuildingStyle, StoreKind } from '../maps/types';
 
 // All textures are generated procedurally on canvas so the game needs no external downloads.
 
-function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+/** `read`: the pixels are read back later (getImageData): keep the canvas in CPU memory, a GPU canvas stalls the
+ *  whole page on readback (seconds on a slow GPU, with the loading film frozen) */
+function canvas(w: number, h: number, read = false): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
-  return [c, c.getContext('2d')!];
+  return [c, c.getContext('2d', read ? { willReadFrequently: true } : undefined)!];
 }
 
 function tex(c: HTMLCanvasElement, repeat = true): THREE.CanvasTexture {
@@ -46,7 +48,7 @@ export function groundNormal(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'p
 
 export function groundTexture(kind: 'cobble' | 'brick' | 'stone' | 'asphalt' | 'plaza' | 'copacabana'): THREE.Texture {
   return cached('ground-' + kind, () => {
-    const [c, g] = canvas(512, 512);
+    const [c, g] = canvas(512, 512, true); // groundNormal reads it back
     if (kind === 'copacabana') {
       // Copacabana promenade: black and white Portuguese stone in long waves, each wave a band of small square setts
       const N = 512, P = 128; // one wave period (tiles seamlessly)

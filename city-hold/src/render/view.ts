@@ -189,8 +189,10 @@ export class MatchView {
   }
   /** compile every shader and upload every texture before the player sees the street: on a first visit (empty shader
    *  cache, iPad) the models otherwise stayed black until their programs finished compiling */
+  private envReady: Promise<void> = Promise.resolve();
   async warm(): Promise<void> {
     performance.mark('warm:start');
+    await this.envReady; // the environment decides the shader variants: it must be in place before compiling
     // model textures still decoding: wait for them (up to 4 s) so they too are on the GPU before the cover lifts
     for (let i = 0; i < 40 && loadedTextures().some((t) => !texReady(t)); i++) await new Promise((r) => setTimeout(r, 100));
     // in small batches with a frame in between: the loading film keeps moving while the GPU is filled
@@ -202,6 +204,7 @@ export class MatchView {
     }
     performance.mark('warm:textures-done');
     try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* compiled on first draw instead */ }
+    this.fireCrew.endPrewarm();
     performance.mark('warm:compiled');
   }
   /** where the fire engine stands (null until a firefighter is on the team) */
@@ -264,16 +267,20 @@ export class MatchView {
     container.appendChild(this.renderer.domElement);
     this.pitch = THREE.MathUtils.degToRad(map.camera.pitch ?? 40);
     this.camera = new THREE.PerspectiveCamera(map.camera.fov ?? 36, 1, 0.5, 400);
+    // blue-hour HDRI (tools/make_hdri.py) as the environment light; the neutral room only if it cannot be loaded.
+    // One PMREM pass, and warm() waits for it: an environment arriving after the shaders were compiled would make
+    // every material recompile in the middle of play.
     const pm = new THREE.PMREMGenerator(this.renderer);
-    const env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environment = env; this.scene.environmentIntensity = timeOfDay === 'night' ? 0.1 : 0.25;
-    // blue-hour HDRI (tools/make_hdri.py) replaces the neutral room environment once loaded
-    new HDRLoader().loadAsync('env/blue_hour.hdr').then((hdr) => {
-      if (this.disposed) return;
-      hdr.mapping = THREE.EquirectangularReflectionMapping;
-      const t = pm.fromEquirectangular(hdr).texture; hdr.dispose();
-      this.scene.environment = t; this.scene.environmentIntensity = this.night ? 0.22 : this.day ? 0.9 : 0.55;
-    }).catch(() => { /* keep fallback */ });
+    const room = () => { this.scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; this.scene.environmentIntensity = this.night ? 0.1 : 0.25; };
+    this.envReady = Promise.race([
+      new HDRLoader().loadAsync('env/blue_hour.hdr').then((hdr) => {
+        if (this.disposed) return;
+        hdr.mapping = THREE.EquirectangularReflectionMapping;
+        const t = pm.fromEquirectangular(hdr).texture; hdr.dispose();
+        this.scene.environment = t; this.scene.environmentIntensity = this.night ? 0.22 : this.day ? 0.9 : 0.55;
+      }),
+      new Promise<void>((_, no) => setTimeout(() => no(new Error('slow')), 6000)),
+    ]).catch(() => { if (!this.disposed && !this.scene.environment) room(); });
     this.day = timeOfDay === 'day';
     this.scene.background = skyTexture(this.day);
     this.scene.fog = new THREE.Fog(0x2a3a5c, 115, 260); // haze only far down the side streets: the square itself stays clear (image 01)
@@ -327,7 +334,7 @@ export class MatchView {
     this.fx = new Effects(this.scene, reducedFx);
     setFireKit(map.id);
     this.fireCrew = new FireCrew(this.scene, map, this.fx);
-    this.fireCrew.prewarm(this.renderer, this.camera);
+    this.fireCrew.prewarm();
     if (!reducedFx) { this.flashLight = new THREE.PointLight(0xfff6e8, 0, 22, 1.6); this.scene.add(this.flashLight); }
     this.projPool = new IncendiaryPool(this.scene, reducedFx ? BALANCE.throw.maxActive.mobile : BALANCE.throw.maxActive.desktop);
     this.destMarker = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x36e0ff, transparent: true, opacity: 0.0, depthWrite: false }));

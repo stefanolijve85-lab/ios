@@ -390,7 +390,7 @@ function brightMask(map: THREE.Texture): THREE.Texture | null {
   const img = map.image as CanvasImageSource & { width: number; height: number } | undefined;
   if (!img || !img.width) return null;
   const c = document.createElement('canvas'); c.width = Math.min(512, img.width); c.height = Math.min(512, img.height);
-  const g = c.getContext('2d'); if (!g) return null;
+  const g = c.getContext('2d', { willReadFrequently: true }); if (!g) return null;
   g.drawImage(img, 0, 0, c.width, c.height);
   const d = g.getImageData(0, 0, c.width, c.height); const px = d.data;
   for (let i = 0; i < px.length; i += 4) {
