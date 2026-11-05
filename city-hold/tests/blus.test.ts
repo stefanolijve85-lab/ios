@@ -39,3 +39,22 @@ test('a fire out of reach is refused (no charge); a fire put out does no more da
   const st = s.structure, stock = s.stock; run(g, 10);
   expect(s.structure).toBe(st); expect(s.stock).toBe(stock);
 });
+
+test('the fire tender never stands in or drives through the fountain (any shop or car fire on the Paris square)', () => {
+  const fo = PARIS.fountain!;
+  const spots: [number, number, number][] = PARIS.stores.map((s, i) => [s.front.x, s.front.z, i]);
+  for (const p of PARIS.props) if (p.burnable) spots.push([p.x, p.z, -1]);
+  spots.push([0, -9, -1], [7, 3, -1], [-7, 3, -1], [0, 7, -1]); // fires right around the fountain too
+  for (const [x, z, st] of spots) {
+    const g = new Game(PARIS, 'defence', { seed: 4 }); g.budget = 5000;
+    burn(g, x, z, st);
+    if (!g.sendBlus(x, z).ok) continue;
+    let closest = Infinity;
+    for (let i = 0; i < 30 * 30; i++) {
+      g.step(1 / 30); const b = g.blus!; if (b.state === 'off') break;
+      // the body: centre line points 4 m ahead and behind, plus half the width
+      for (const k of [-4, -2, 0, 2, 4]) { const px = b.x + Math.sin(b.yaw) * k, pz = b.z + Math.cos(b.yaw) * k; closest = Math.min(closest, Math.hypot(px - fo.x, pz - fo.z) - fo.r - 1.25); }
+    }
+    expect(closest, `fire at ${x},${z}`).toBeGreaterThan(-0.3);
+  }
+});

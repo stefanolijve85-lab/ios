@@ -189,7 +189,8 @@ export class NavGrid {
    * A* over the grid. mode 'att': barrier cells are passable at high cost (units must break through).
    * mode 'def': barrier cells are passable (own staff can step past). mode 'solid': barriers are walls.
    */
-  findPath(from: Vec2, to: Vec2, mode: 'att' | 'def' | 'solid' = 'att', extraCost = 14): Vec2[] | null {
+  findPath(from: Vec2, to: Vec2, mode: 'att' | 'def' | 'solid' = 'att', extraCost = 14, clear = 0): Vec2[] | null {
+    const minC = clear > 0 ? clear / CELL : 0; const cl = minC ? this.clearance() : null;
     const s = this.nearestWalkable(from.x, from.z, 3); const t = this.nearestWalkable(to.x, to.z, 6);
     if (!s || !t) return null;
     const sk = this.idx(s.x, s.z), tk = this.idx(t.x, t.z);
@@ -214,6 +215,7 @@ export class NavGrid {
         if (ni < 0 || nj < 0 || ni >= W || nj >= H) continue;
         const nk = nj * W + ni;
         if (this.blocked[nk]) continue;
+        if (cl && cl[nk] < minC && cl[nk] < cl[k]) continue; // vehicles: never closer to a wall than half their width (unless already there: the start)
         if (d >= 4 && (this.blocked[j * W + ni] || this.blocked[nj * W + i])) continue; // no corner cutting
         let c = d >= 4 ? Math.SQRT2 : 1;
         if (this.barrier[nk] >= 0) { if (mode === 'solid') continue; c += mode === 'att' ? extraCost : 40; } // defenders walk around barriers and concrete too (through only if there is no way round)
@@ -227,15 +229,34 @@ export class NavGrid {
     cells.reverse();
     const pts = cells.map((k) => this.center(k));
     pts[pts.length - 1] = t;
-    return this.smooth([s, ...pts.slice(1)], mode);
+    return this.smooth([s, ...pts.slice(1)], mode, minC);
   }
+  private clr: Float32Array | null = null;
+  /** per cell: the distance (in cells) to the nearest blocked cell or the map edge; static obstacles only, computed once */
+  clearance(): Float32Array {
+    if (this.clr) return this.clr;
+    const W = this.w, H = this.h; const d = new Float32Array(W * H).fill(1e9);
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const k = j * W + i; if (this.blocked[k]) d[k] = 0; else d[k] = Math.min(d[k], i + 1, j + 1, W - i, H - j); }
+    // two-pass chamfer distance (1, sqrt 2)
+    const R = Math.SQRT2;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const k = j * W + i; let v = d[k];
+      if (i > 0) v = Math.min(v, d[k - 1] + 1); if (j > 0) v = Math.min(v, d[k - W] + 1);
+      if (i > 0 && j > 0) v = Math.min(v, d[k - W - 1] + R); if (i < W - 1 && j > 0) v = Math.min(v, d[k - W + 1] + R); d[k] = v; }
+    for (let j = H - 1; j >= 0; j--) for (let i = W - 1; i >= 0; i--) { const k = j * W + i; let v = d[k];
+      if (i < W - 1) v = Math.min(v, d[k + 1] + 1); if (j < H - 1) v = Math.min(v, d[k + W] + 1);
+      if (i < W - 1 && j < H - 1) v = Math.min(v, d[k + W + 1] + R); if (i > 0 && j < H - 1) v = Math.min(v, d[k + W - 1] + R); d[k] = v; }
+    this.clr = d; return d;
+  }
+  /** free room around a point in metres (static obstacles) */
+  roomAt(x: number, z: number): number { const k = this.idx(x, z); return k < 0 ? 0 : this.clearance()[k] * CELL; }
 
   /** line of sight across walkable cells (barriers interrupt for attackers so they still meet them) */
   /** line of sight on the grid: visits every cell the segment touches (grid traversal), so no corner is skipped */
-  los(a: Vec2, b: Vec2, mode: 'att' | 'def' | 'solid' = 'att'): boolean {
+  los(a: Vec2, b: Vec2, mode: 'att' | 'def' | 'solid' = 'att', minC = 0): boolean {
+    const cl = minC ? this.clearance() : null;
     const bad = (i: number, j: number) => {
       if (i < 0 || j < 0 || i >= this.w || j >= this.h) return true;
-      const k = j * this.w + i; return this.blocked[k] !== 0 || this.barrier[k] >= 0;
+      const k = j * this.w + i; return this.blocked[k] !== 0 || this.barrier[k] >= 0 || (!!cl && cl[k] < minC);
     };
     const fx = (a.x - this.ox) / CELL, fz = (a.z - this.oz) / CELL, tx = (b.x - this.ox) / CELL, tz = (b.z - this.oz) / CELL;
     let i = Math.floor(fx), j = Math.floor(fz); const ti = Math.floor(tx), tj = Math.floor(tz);
@@ -255,13 +276,13 @@ export class NavGrid {
     return true;
   }
 
-  private smooth(pts: Vec2[], mode: 'att' | 'def' | 'solid'): Vec2[] {
+  private smooth(pts: Vec2[], mode: 'att' | 'def' | 'solid', minC = 0): Vec2[] {
     if (pts.length <= 2) return pts;
     const out: Vec2[] = [pts[0]];
     let i = 0;
     while (i < pts.length - 1) {
       let j = pts.length - 1;
-      while (j > i + 1 && !this.los(pts[i], pts[j], mode)) j--;
+      while (j > i + 1 && !this.los(pts[i], pts[j], mode, minC)) j--;
       out.push(pts[j]); i = j;
     }
     return out;

@@ -669,9 +669,42 @@ export class Game {
     // the stop: a few metres from the fire on the open side (towards the middle of the map, where the camera looks)
     const bb = this.map.bounds; const cx = (bb.x0 + bb.x1) / 2, cz = (bb.z0 + bb.z1) / 2;
     const dx = cx - fire.x, dz = cz - fire.z, dl = Math.hypot(dx, dz) || 1;
-    const stop = this.nav.nearestWalkable(fire.x + (dx / dl) * B.stopFrom, fire.z + (dz / dl) * B.stopFrom, 3) ?? this.nav.nearestWalkable(fire.x, fire.z, 6);
-    const path = stop ? this.nav.findPath(from, stop, 'solid', 0) : null;
+    // the truck (8.6 x 2.5 m) parks where its whole body is free (never on the fountain, a planter or a wall): for a shop
+    // along the shopfront, else at any angle around the fire, as close as it fits; it drives in straight over the last
+    // 5 m so it arrives lined up, along a line that keeps half its width clear of everything
+    const fits = (x: number, z: number, yaw: number) => {
+      const sx = Math.sin(yaw), cz = Math.cos(yaw);
+      for (let a = -4.4; a <= 4.41; a += 1.1) for (const w of [-1.35, 0, 1.35]) if (!this.nav.walkable(x + sx * a + cz * w, z + cz * a - sx * w)) return false;
+      return true;
+    };
+    const cands: { x: number; z: number; yaw: number; sc: number }[] = [];
+    const sd = fire.store >= 0 ? this.map.stores[fire.store] : null;
+    if (sd) {
+      const n = sd.normal, t = { x: n.z, z: -n.x };
+      for (let d = 3; d <= 9; d += 0.5) for (let o = -10; o <= 10; o += 1) for (const yaw of [Math.atan2(t.x, t.z), Math.atan2(-t.x, -t.z)])
+        cands.push({ x: fire.x + n.x * d + t.x * o, z: fire.z + n.z * d + t.z * o, yaw, sc: Math.hypot(o, d - 3) });
+    } else {
+      for (let r = 3.5; r <= 10; r += 0.5) for (let a = 0; a < 24; a++) { const ang = (a / 24) * Math.PI * 2; for (let y = 0; y < 8; y++) cands.push({ x: fire.x + Math.sin(ang) * r, z: fire.z + Math.cos(ang) * r, yaw: (y / 8) * Math.PI * 2, sc: r + Math.hypot(Math.sin(ang) * r + fire.x - (fire.x + (dx / dl) * B.stopFrom), Math.cos(ang) * r + fire.z - (fire.z + (dz / dl) * B.stopFrom)) * 0.3 }); }
+    }
+    // drive in facing the way it comes from (no turning round on the square): the lead-in point on the near side
+    for (const c of cands) { const lx = c.x - Math.sin(c.yaw) * 5, lz = c.z - Math.cos(c.yaw) * 5; if (Math.hypot(lx - from.x, lz - from.z) > Math.hypot(c.x - from.x, c.z - from.z)) c.sc += 4; }
+    cands.sort((a, b) => a.sc - b.sc);
+    let stop: Vec2 | null = null; let path: Vec2[] | null = null;
+    for (const c of cands) {
+      if (!fits(c.x, c.z, c.yaw)) continue;
+      const lead = { x: c.x - Math.sin(c.yaw) * 5, z: c.z - Math.cos(c.yaw) * 5 };
+      if (!fits(lead.x, lead.z, c.yaw)) continue;
+      const p = this.nav.findPath(from, lead, 'solid', 0, B.halfWidth) ?? this.nav.findPath(from, lead, 'solid', 0);
+      if (!p) continue;
+      stop = { x: c.x, z: c.z }; path = [...p, stop]; break;
+    }
+    if (!stop) { // nowhere it fits: the old way, as close as it gets
+      stop = this.nav.nearestWalkable(fire.x + (dx / dl) * B.stopFrom, fire.z + (dz / dl) * B.stopFrom, 3) ?? this.nav.nearestWalkable(fire.x, fire.z, 6);
+      path = stop ? this.nav.findPath(from, stop, 'solid', 0) : null;
+    }
     if (!stop || !path) return this.deny('No way through to that fire');
+    // no kinks of a few decimetres (where two path pieces meet): a truck reversing over one swung its nose round
+    path = path.filter((q, i, a) => i === 0 || i === a.length - 1 || Math.hypot(q.x - a[i - 1].x, q.z - a[i - 1].z) > 1.5);
     this.budget -= BALANCE.defence.costs.blus;
     this.blus = { x: from.x, z: from.z, yaw: Math.atan2(path[1 % path.length].x - from.x, path[1 % path.length].z - from.z), state: 'driving', t: 0, path, pi: 1, fireId: fire.id, crew: -1 };
     this.emit({ type: 'purchase', text: `Fire tender on its way (-${BALANCE.defence.costs.blus})`, x: fire.x, z: fire.z, amount: BALANCE.defence.costs.blus });
@@ -686,7 +719,8 @@ export class Game {
       while (b.path && b.pi < b.path.length && step > 0) {
         const p = b.path[b.pi]; const ddx = p.x - b.x, ddz = p.z - b.z, d = Math.hypot(ddx, ddz);
         if (d < 1e-3) { b.pi++; continue; }
-        const want = Math.atan2(ddx, ddz) + (b.reverse ? Math.PI : 0); let dy = want - b.yaw; // reversing: the nose points away from where it goes while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; b.yaw += dy * Math.min(1, dt * 4);
+        // reversing: the nose points away from where it goes
+        const want = Math.atan2(ddx, ddz) + (b.reverse ? Math.PI : 0); let dy = want - b.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; b.yaw += dy * Math.min(1, dt * 4);
         const m = Math.min(step, d); b.x += (ddx / d) * m; b.z += (ddz / d) * m; step -= m; if (m >= d) b.pi++;
       }
       if (!b.path || b.pi >= b.path.length) { if (b.state === 'leaving') { b.state = 'off'; b.reverse = false; } else { b.state = 'prep'; b.t = 0; } }
