@@ -391,6 +391,12 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   display: grid; place-items: center; box-shadow: var(--shadow);
 }
 .about__photo-placeholder img { width: 46%; height: auto; opacity: 0.85; }
+.about__img {
+  width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 30%;
+  border-radius: 200px 200px var(--radius) var(--radius); box-shadow: var(--shadow);
+  background: var(--taupe);
+}
+@media (min-width: 900px) { .about__photo { max-width: 460px; } }
 .about__text p { max-width: 56ch; }
 
 /* Cadeaubon / contact / headspa */

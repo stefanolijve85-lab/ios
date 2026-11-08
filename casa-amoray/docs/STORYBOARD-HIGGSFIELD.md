@@ -5,7 +5,9 @@ Elke scène hieronder hoort bij een sectie in `src/content/scenes.ts`.
 
 > **Status:** alle beelden op de site zijn nu **tijdelijk**. Ze zijn gemaakt van de
 > mock-ups in `reference/` en op de site gemarkeerd met het label "Tijdelijk".
-> Beelden van Winnie maken we **pas** als er een echte referentiefoto van haar is.
+> Beelden van Winnie maken we alleen mét haar referentiefoto (R2, inmiddels ontvangen).
+> Houd haar gezicht, haar natuurlijke krullen en haar glimlach gelijk aan de foto. Kleding in
+> de salonscènes: een eenvoudige donkerbruine tuniek (zie scène 03), niet de outfit van de foto.
 
 ---
 
@@ -18,7 +20,7 @@ Lees dit vóór iedere generatie en plak het **consistentieblok** onder elke pro
 | # | Referentie | Waarvoor | Status |
 |---|------------|----------|--------|
 | R1 | Foto of mock-up van de **echte salon** (ontvangsthoek + massageruimte) | Indeling, meubels, materialen | Tijdelijk: `reference/mockup-lounge.jpg` |
-| R2 | Duidelijke **foto van Winnie** (gezicht en houding, natuurlijk licht) | Herkenbaarheid in scène 3 en 5 | **Ontbreekt** |
+| R2 | Duidelijke **foto van Winnie** (gezicht en houding, natuurlijk licht) | Herkenbaarheid in scène 3 en 5 | **Ontvangen** (selfie, natuurlijk licht, recht in de camera). Uitsnede op de site: `public/media/winnie/winnie-portret.webp`. Het origineel staat niet in de repository; upload dat bij het genereren rechtstreeks als referentie. |
 | R3 | Logo: woordmerk + ster | Muurlogo, flessen, handdoeken | `reference/logo-*.jpg` |
 
 **Vaste inrichting (mag niet veranderen tussen scènes)**
@@ -130,7 +132,7 @@ tekst onderin, dus houd de onderste 35% rustig.
   in a simple dark brown uniform tunic, standing beside a small round stone-mosaic table between
   two green velvet armchairs, calmly pouring herbal tea from a ceramic teapot into two cups,
   slow dolly-in toward the table, natural realistic hands, welcoming and personal.
-  Keep her face identical to the reference. [consistentieblok]
+  Keep her face, natural curly hair and smile identical to the reference photo. [consistentieblok]
   ```
 
 ### Scène 04: De massageruimte
@@ -201,5 +203,5 @@ tekst onderin, dus houd de onderste 35% rustig.
 De posterafbeelding (statische weergave, verminderde beweging, trage verbinding) is automatisch
 het eerste frame. Zorg dus dat frame 1 ook als losse foto mooi is.
 
-**Foto van Winnie (scène 08):** zet die op `public/media/winnie/winnie-portret.webp`
-(staand 4:5, min. 1200×1500) en vervang in `src/components/Sections.tsx` de placeholder door een `<img>`.
+**Foto van Winnie (scène 08):** staat op `public/media/winnie/winnie-portret.webp` (4:5, 640×800).
+Een nieuwere of scherpere foto? Overschrijf dit bestand (staand 4:5, liefst 1200×1500).

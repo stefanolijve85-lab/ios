@@ -116,7 +116,7 @@ schijnbevestiging**:
 
 ## 5. Nog aan te leveren (niet verzonnen)
 
-- Foto van Winnie + haar eigen tekst (scène 8)
+- Persoonlijke tekst van Winnie (scène 8); de foto is binnen
 - Adres, telefoon, e-mail, KvK, Instagram (`src/content/site.ts`)
 - Vaste avonden/tijden
 - Hoe cadeaubonnen besteld/betaald worden

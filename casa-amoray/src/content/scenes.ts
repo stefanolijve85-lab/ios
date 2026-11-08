@@ -109,7 +109,7 @@ export const scenes: Scene[] = [
       [32, 62],
     ),
     alt: "Twee comfortabele fauteuils en een klein tafeltje in de ontvangsthoek, klaar voor een kopje thee.",
-    placeholder: "Hier komt Winnie die thee inschenkt (clip 03). Pas maken mét echte referentiefoto van Winnie.",
+    placeholder: "Hier komt Winnie die thee inschenkt (clip 03). Referentiefoto is binnen; clip nog te genereren.",
   },
   {
     id: "ruimte",

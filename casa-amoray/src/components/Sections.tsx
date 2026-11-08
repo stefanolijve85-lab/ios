@@ -58,14 +58,16 @@ export function AboutWinnie() {
     <section className="section section--beige" id="over-winnie" aria-labelledby="winnie-titel">
       <div className="container about">
         <figure className="about__photo reveal">
-          {/* Vervang door de echte foto: /public/media/winnie/winnie-portret.webp */}
-          <div className="about__photo-placeholder" role="img" aria-label="Hier komt een foto van Winnie">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/media/brand/monogram-cream.png" alt="" width={677} height={352} />
-          </div>
-          <figcaption>
-            <Placeholder>Echte foto van Winnie volgt</Placeholder>
-          </figcaption>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="about__img"
+            src="/media/winnie/winnie-portret.webp"
+            alt="Winnie, eigenaresse van Casa Amoray, lacht vriendelijk in de camera."
+            width={640}
+            height={800}
+            loading="lazy"
+            decoding="async"
+          />
         </figure>
 
         <div className="about__text reveal" style={{ "--i": 1 } as React.CSSProperties}>
