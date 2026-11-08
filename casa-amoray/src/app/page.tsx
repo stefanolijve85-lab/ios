@@ -2,9 +2,9 @@ import { Header, StickyBooking } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { JourneyProgress, RevealObserver } from "@/components/scrolly/Ambient";
 import { SceneStage } from "@/components/scrolly/SceneStage";
-import { AboutWinnie, FinalCta, Footer, GiftAndContact, Treatments } from "@/components/Sections";
+import { AboutWinnie, Faq, FinalCta, Footer, GiftAndContact, Treatments } from "@/components/Sections";
 import { scenes } from "@/content/scenes";
-import { business, siteUrl, treatments } from "@/content/site";
+import { business, faqs, siteUrl, treatments } from "@/content/site";
 
 function JsonLd() {
   // Alleen feiten die vaststaan. Adres/telefoon worden toegevoegd zodra ze bekend zijn.
@@ -42,7 +42,17 @@ function JsonLd() {
         })),
     },
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+  };
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+    </>
+  );
 }
 
 export default function Home() {
@@ -68,6 +78,7 @@ export default function Home() {
         </section>
         <Treatments />
         <AboutWinnie />
+        <Faq />
         <GiftAndContact />
         <FinalCta />
       </main>

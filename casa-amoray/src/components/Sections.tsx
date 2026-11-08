@@ -1,4 +1,4 @@
-import { bookingHref, business, euro, giftCards, mapsHref, nav, treatmentNote, treatments } from "@/content/site";
+import { bookingHref, business, euro, faqs, giftCards, mapsHref, nav, treatmentNote, treatments, visitSteps } from "@/content/site";
 import { Placeholder } from "@/components/Placeholder";
 import { Star } from "@/components/Star";
 
@@ -34,6 +34,29 @@ export function Treatments() {
               </div>
               <p className="card__short">{t.short}</p>
               {t.description && <p className="card__text">{t.description}</p>}
+              {t.details && (
+                <details className="card__more">
+                  <summary>Meer over deze behandeling</summary>
+                  <div className="card__more-body">
+                    <h4>Voor wie</h4>
+                    <p>{t.details.forWhom}</p>
+                    <h4>Wat je kunt verwachten</h4>
+                    <p>{t.details.expect}</p>
+                    <h4>Wat het je kan geven</h4>
+                    <ul>
+                      {t.details.gives.map((g) => (
+                        <li key={g}>{g}</li>
+                      ))}
+                    </ul>
+                    {t.details.goodToKnow && (
+                      <>
+                        <h4>Goed om te weten</h4>
+                        <p>{t.details.goodToKnow}</p>
+                      </>
+                    )}
+                  </div>
+                </details>
+              )}
               {t.bookable && (
                 <a className="btn btn--outline" href={`${bookingHref}?behandeling=${t.id}`}>
                   Reserveer<span className="visually-hidden"> {t.name.toLowerCase()}</span>
@@ -42,6 +65,23 @@ export function Treatments() {
             </li>
           ))}
         </ul>
+
+        <div className="visit reveal" aria-labelledby="bezoek-titel">
+          <h3 id="bezoek-titel" className="visit__title">Zo verloopt je bezoek</h3>
+          <ol className="visit__steps">
+            {visitSteps.map((s, i) => (
+              <li key={s.title} className="visit__step">
+                <span className="visit__num" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <div>
+                  <h4>{s.title}</h4>
+                  <p>{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
 
         <p className="fine-print reveal">
           Ben je kort geleden bevallen, zwanger of heb je medische klachten? Overleg bij twijfel eerst met je
@@ -82,6 +122,28 @@ export function AboutWinnie() {
             je in alle rust en vertrouwen kunt ontspannen.
           </p>
           <Placeholder>Hier komt een persoonlijke tekst van Winnie zelf: waarom ze Casa Amoray begon en wat ze belangrijk vindt.</Placeholder>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Veelgestelde vragen (ook als FAQ-gegevens voor Google, zie page.tsx). */
+export function Faq() {
+  return (
+    <section className="section section--beige" id="vragen" aria-labelledby="vragen-titel">
+      <div className="container faq">
+        <header className="section__intro reveal">
+          <p className="eyebrow">Veelgestelde vragen</p>
+          <h2 id="vragen-titel">Goed om te weten</h2>
+        </header>
+        <div className="faq__list reveal">
+          {faqs.map((f) => (
+            <details key={f.q} className="faq__item">
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
