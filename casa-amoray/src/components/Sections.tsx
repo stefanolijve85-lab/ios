@@ -62,9 +62,9 @@ export function AboutWinnie() {
           <img
             className="about__img"
             src="/media/winnie/winnie-portret.webp"
-            alt="Winnie, eigenaresse van Casa Amoray, lacht vriendelijk in de camera."
-            width={640}
-            height={800}
+            alt="Winnie, eigenaresse van Casa Amoray, lacht vriendelijk in de camera, in de salon."
+            width={1024}
+            height={1280}
             loading="lazy"
             decoding="async"
           />

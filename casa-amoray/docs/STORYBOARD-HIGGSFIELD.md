@@ -210,7 +210,7 @@ tekst onderin, dus houd de onderste 35% rustig.
 De posterafbeelding (statische weergave, verminderde beweging, trage verbinding) is automatisch
 het eerste frame. Zorg dus dat frame 1 ook als losse foto mooi is.
 
-**Foto van Winnie (scène 08):** staat op `public/media/winnie/winnie-portret.webp` (4:5, 640×800).
+**Foto van Winnie (scène 08):** staat op `public/media/winnie/winnie-portret.webp` (4:5, 1024×1280; salonfoto in tuniek).
 Een nieuwere of scherpere foto? Overschrijf dit bestand (staand 4:5, liefst 1200×1500).
 
 
