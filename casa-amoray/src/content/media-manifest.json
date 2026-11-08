@@ -5,7 +5,7 @@
       "path": "/media/scenes/binnenkomst/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794136262
+      "v": 1794151854
     },
     "placeholder": false,
     "desktop": {
@@ -13,7 +13,7 @@
       "path": "/media/scenes/binnenkomst/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794150793
+      "v": 1794151883
     }
   },
   "welkom": {
@@ -30,7 +30,7 @@
       "path": "/media/scenes/welkom/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794151147
+      "v": 1794151923
     }
   },
   "ruimte": {

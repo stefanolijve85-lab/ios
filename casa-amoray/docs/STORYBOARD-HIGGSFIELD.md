@@ -343,3 +343,23 @@ npm run frames -- $H/06-nagevoel-16x9.mp4 nagevoel desktop 72 "eq=gamma=1.14"
 
 Kosten deze ronde: 7 clips × 4 + beeldbewerking 2,75 ≈ 31 credits. Totaal aan clips/beelden/muziek
 sinds de start: ± 68 credits.
+
+
+## 6. Bord rechtsonder weg en gelijke tegels
+
+Het donkere staande bord met "casa amoray" rechtsonder in de ontvangsthoek is weggehaald, zodat de
+naam niet te vaak in beeld komt. Bron: `reference/nl/mockup-lounge-clean.png` (bewerkt met GPT Image 2.6,
+alleen het bord en het witte kaartje verwijderd; 2,75 credits). Daaruit zijn de stills/OG opnieuw gemaakt
+(`make-placeholders.py`) en drie clips opnieuw gegenereerd met dezelfde prompts (+ "do not add any signs
+or boards"): 02 staand, 02 liggend en 03 liggend (3 × 4 credits).
+
+```bash
+H=reference/higgsfield
+npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 96
+python3 scripts/match-color.py public/media/scenes/binnenkomst/mobile public/media/stills/lounge-mobile.webp
+npm run frames -- $H/02-binnenkomst-16x9.mp4 binnenkomst desktop 72
+python3 scripts/match-color.py public/media/scenes/binnenkomst/desktop public/media/stills/lounge-desktop.webp
+npm run frames -- $H/03-welkom-16x9.mp4 welkom desktop 72
+```
+
+Kosten deze ronde: ± 14,75 credits.

@@ -52,8 +52,9 @@ def crop_to(im, ratio, fx=0.5, fy=0.5, zoom=1.0):
 
 STILLS = {
     # naam: (bron in reference/nl, focus mobiel x, focus desktop x)
-    "lounge": ("mockup-lounge.png", 0.42, 0.5),
-    "welkom": ("mockup-lounge.png", 0.30, 0.38),
+    # lounge-clean: zonder het bruine 'casa amoray'-bord rechtsonder (bewerkt met GPT Image)
+    "lounge": ("mockup-lounge-clean.png", 0.42, 0.5),
+    "welkom": ("mockup-lounge-clean.png", 0.30, 0.38),
     "ruimte": ("mockup-producten.png", 0.48, 0.5),
     "behandeling": ("mockup-voetmassage.png", 0.52, 0.5),
     "nagevoel": ("mockup-ontspanning.png", 0.62, 0.5),
@@ -68,7 +69,7 @@ for name, (src, fxm, fxd) in STILLS.items():
     d.save(out("stills", f"{name}-desktop.webp"), quality=74, method=6)
 
 # OG-afbeelding
-og = crop_to(Image.open(os.path.join(REF_NL, "mockup-lounge.png")).convert("RGB"), 1200 / 630).resize((1200, 630), Image.LANCZOS)
+og = crop_to(Image.open(os.path.join(REF_NL, "mockup-lounge-clean.png")).convert("RGB"), 1200 / 630).resize((1200, 630), Image.LANCZOS)
 og.save(out("og-casa-amoray.jpg"), quality=82)
 
 # De beeldreeksen zelf komen nu uit de Higgsfield-clips: zie scripts/video-to-frames.sh.
