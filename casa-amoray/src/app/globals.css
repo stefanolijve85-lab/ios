@@ -410,7 +410,10 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .panel__star { width: 22px; color: var(--rose); margin-bottom: 18px; }
 .panel--soon { background: transparent; border-style: dashed; }
 .panel--soon .badge { margin-bottom: 18px; }
-.contact-list { list-style: none; padding: 0; margin: 0 0 1em; }
+.contact-list { font-style: normal; display: grid; gap: 10px; margin: 0 0 1em; }
+.contact-list a { font-weight: 600; text-decoration: none; display: inline-block; padding: 4px 0; }
+.contact-list a:hover { text-decoration: underline; }
+.site-footer__address { font-style: normal; font-size: 0.95rem; line-height: 1.6; }
 
 /* Scène 9 — afsluitende uitnodiging */
 .final-cta {
@@ -499,3 +502,5 @@ textarea.input { min-height: 120px; resize: vertical; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   .hero__scroll { display: none; }
 }
+.booking__contact { margin: 18px 0 0; font-size: 0.95rem; }
+.booking__aside a { font-weight: 600; }

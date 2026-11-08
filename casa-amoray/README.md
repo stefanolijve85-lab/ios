@@ -57,7 +57,8 @@ src/components/scrolly/SceneStage.tsx   scènes 2–6
 src/components/Sections.tsx   scènes 7–9: behandelingen, Over Winnie, cadeaubon/contact, reserveren
 src/components/BookingForm.tsx + src/app/api/reservering/route.ts   reserveringsaanvraag
 scripts/video-to-frames.sh    Higgsfield-clip → geoptimaliseerde frames + manifest
-scripts/make-placeholders.py  maakt de huidige tijdelijke beelden uit reference/
+scripts/fix-mockup-text.py    vervangt de Portugese teksten in de mock-ups door Nederlandse (reference/nl/)
+scripts/make-placeholders.py  maakt de huidige tijdelijke beelden uit reference/nl/
 docs/STORYBOARD-HIGGSFIELD.md storyboard + prompts
 ```
 
@@ -114,12 +115,27 @@ schijnbevestiging**:
   `NEXT_PUBLIC_BOOKING_URL` en de reserveringspagina toont die knop bovenaan; het formulier blijft
   als terugvaloptie.
 
+## 4b. Cadeaubonnen
+
+Op `/cadeaubon` kiest de koper een bon (de behandelingen met hun vaste prijs), vult haar gegevens
+en eventueel een persoonlijke boodschap in, en betaalt via **Mollie** (iDEAL e.d.). Kopen kan ook
+gewoon in de salon.
+
+- De bestelgegevens gaan mee als metadata van de Mollie-betaling; er is geen database nodig.
+- Pas als Mollie de betaling als **betaald** meldt (webhook `/api/cadeaubon/webhook`), krijgt Winnie
+  de bestelling per e-mail en de koper een bevestiging.
+- De bedankpagina haalt de **echte status** op bij Mollie (betaald / in behandeling / mislukt).
+- Instellen: `MOLLIE_API_KEY` (eerst `test_...`, daarna `live_...`) plus de e-mailinstellingen
+  hierboven, en `NEXT_PUBLIC_SITE_URL` op het echte domein (Mollie kan `localhost` niet bereiken).
+- Zonder `MOLLIE_API_KEY` wordt er niets afgerekend en ziet de koper eerlijk dat online betalen nog
+  niet actief is, met het adres en telefoonnummer van de salon.
+
 ## 5. Nog aan te leveren (niet verzonnen)
 
 - Persoonlijke tekst van Winnie (scène 8); de foto is binnen
-- Adres, telefoon, e-mail, KvK, Instagram (`src/content/site.ts`)
+- E-mailadres, KvK-nummer, Instagram (`src/content/site.ts`); adres en telefoon zijn ingevuld
 - Vaste avonden/tijden
-- Hoe cadeaubonnen besteld/betaald worden
+- Hoe de cadeaubon bij de koper komt (digitaal of ophalen in de salon); de bestelling en betaling zijn gebouwd
 - Domeinnaam
 - Controle van de privacyverklaring (`/privacy`) en van de voorzorgstekst bij de behandelingen
 - Definitieve Higgsfield-clips (zie storyboard)

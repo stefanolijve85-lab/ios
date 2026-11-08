@@ -1,29 +1,12 @@
 import { NextResponse } from "next/server";
-import { treatments } from "@/content/site";
+import { business, treatments } from "@/content/site";
+import { clean, EMAIL_RE, mailConfigured, rateLimited, sendMail } from "@/lib/server/mail";
 
 /**
- * Ontvangt een reserveringsaanvraag en mailt die naar Casa Amoray.
- *
- * Verzending via Resend (https://resend.com). Benodigde omgevingsvariabelen:
- *   RESEND_API_KEY       API-sleutel van Resend
- *   BOOKING_EMAIL_TO     e-mailadres van Winnie
- *   BOOKING_EMAIL_FROM   afzender op een geverifieerd domein, bv. "Casa Amoray <reserveren@jouwdomein.nl>"
- *
- * Zonder deze instellingen wordt NIETS opgeslagen of verstuurd en krijgt de
- * bezoekster dat eerlijk te zien. Er is dus nooit een schijnbevestiging.
+ * Ontvangt een reserveringsaanvraag en mailt die naar Casa Amoray (zie lib/server/mail.ts).
+ * Zonder e-mailinstellingen wordt NIETS opgeslagen of verstuurd en krijgt de
+ * bezoekster dat eerlijk te zien, met het telefoonnummer als alternatief.
  */
-
-const hits = new Map<string, number[]>();
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > 5;
-}
-
-const clean = (v: unknown, max = 200) => String(v ?? "").replace(/[\u0000-\u0008\u000B-\u001F]/g, "").trim().slice(0, max);
-
 export async function POST(req: Request) {
   let body: Record<string, unknown>;
   try {
@@ -35,8 +18,7 @@ export async function POST(req: Request) {
   // Honeypot: doe alsof het gelukt is, maar verstuur niets.
   if (clean(body.website)) return NextResponse.json({ ok: true });
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "onbekend";
-  if (rateLimited(ip)) {
+  if (rateLimited(req)) {
     return NextResponse.json({ ok: false, message: "Te veel aanvragen achter elkaar. Probeer het later opnieuw." }, { status: 429 });
   }
 
@@ -54,20 +36,18 @@ export async function POST(req: Request) {
     /^\d{4}-\d{2}-\d{2}$/.test(data.datum) &&
     (!data.tijd || /^\d{2}:\d{2}$/.test(data.tijd)) &&
     data.naam.length >= 2 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email) &&
+    EMAIL_RE.test(data.email) &&
     data.telefoon.replace(/\D/g, "").length >= 9 &&
     body.toestemming;
   if (!valid) {
     return NextResponse.json({ ok: false, message: "Niet alle gegevens zijn correct ingevuld." }, { status: 422 });
   }
 
-  const { RESEND_API_KEY, BOOKING_EMAIL_TO, BOOKING_EMAIL_FROM } = process.env;
-  if (!RESEND_API_KEY || !BOOKING_EMAIL_TO || !BOOKING_EMAIL_FROM) {
+  if (!mailConfigured()) {
     return NextResponse.json(
       {
         ok: false,
-        message:
-          "Online aanvragen is nog niet geactiveerd. Je gegevens zijn niet verstuurd of opgeslagen. Neem voorlopig rechtstreeks contact op met Casa Amoray.",
+        message: `Online aanvragen is nog niet geactiveerd. Je gegevens zijn niet verstuurd of opgeslagen. Bel of app Casa Amoray voorlopig op ${business.phone}.`,
       },
       { status: 503 },
     );
@@ -97,22 +77,11 @@ export async function POST(req: Request) {
   ].join("\n");
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: BOOKING_EMAIL_FROM,
-        to: [BOOKING_EMAIL_TO],
-        reply_to: data.email,
-        subject: `Aanvraag: ${treatment!.name} op ${datumNl} (${data.naam})`,
-        text,
-      }),
-    });
-    if (!res.ok) throw new Error(`Resend ${res.status}`);
+    await sendMail({ replyTo: data.email, subject: `Aanvraag: ${treatment!.name} op ${datumNl} (${data.naam})`, text });
   } catch (e) {
     console.error("Reservering versturen mislukt", e);
     return NextResponse.json(
-      { ok: false, message: "Het versturen is mislukt. Probeer het later opnieuw of neem rechtstreeks contact op." },
+      { ok: false, message: `Het versturen is mislukt. Probeer het later opnieuw of bel ${business.phone}.` },
       { status: 502 },
     );
   }

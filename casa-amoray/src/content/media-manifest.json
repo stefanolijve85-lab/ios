@@ -5,14 +5,14 @@
       "path": "/media/scenes/binnenkomst/mobile",
       "width": 630,
       "height": 1120,
-      "v": 1794129405
+      "v": 1794130094
     },
     "desktop": {
       "frames": 60,
       "path": "/media/scenes/binnenkomst/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794129405
+      "v": 1794130094
     },
     "placeholder": true
   }

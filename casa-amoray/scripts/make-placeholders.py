@@ -10,6 +10,8 @@ from PIL import Image, ImageOps
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 REF = os.path.join(ROOT, "reference")
+# Mock-ups met Nederlandse tekst (gemaakt door scripts/fix-mockup-text.py)
+REF_NL = os.path.join(REF, "nl")
 PUB = os.path.join(ROOT, "public", "media")
 
 def out(*p):
@@ -49,15 +51,15 @@ def crop_to(im, ratio, fx=0.5, fy=0.5, zoom=1.0):
     return im.crop((int(cx - w / 2), int(cy - h / 2), int(cx + w / 2), int(cy + h / 2)))
 
 STILLS = {
-    # naam: (bron, focus mobiel x, focus desktop x)
-    "lounge": ("mockup-lounge.jpg", 0.42, 0.5),
-    "welkom": ("mockup-lounge.jpg", 0.30, 0.38),
+    # naam: (bron in reference/nl, focus mobiel x, focus desktop x)
+    "lounge": ("mockup-lounge.png", 0.42, 0.5),
+    "welkom": ("mockup-lounge.png", 0.30, 0.38),
     "ruimte": ("mockup-producten.png", 0.48, 0.5),
     "behandeling": ("mockup-voetmassage.png", 0.52, 0.5),
     "nagevoel": ("mockup-ontspanning.png", 0.62, 0.5),
 }
 for name, (src, fxm, fxd) in STILLS.items():
-    im = Image.open(os.path.join(REF, src)).convert("RGB")
+    im = Image.open(os.path.join(REF_NL, src)).convert("RGB")
     zoom = 1.25 if name == "welkom" else 1.0
     fy = 0.62 if name == "welkom" else 0.5
     m = crop_to(im, 9 / 16, fxm, fy, zoom).resize((630, 1120), Image.LANCZOS)
@@ -66,7 +68,7 @@ for name, (src, fxm, fxd) in STILLS.items():
     d.save(out("stills", f"{name}-desktop.webp"), quality=74, method=6)
 
 # OG-afbeelding
-og = crop_to(Image.open(os.path.join(REF, "mockup-lounge.jpg")).convert("RGB"), 1200 / 630).resize((1200, 630), Image.LANCZOS)
+og = crop_to(Image.open(os.path.join(REF_NL, "mockup-lounge.png")).convert("RGB"), 1200 / 630).resize((1200, 630), Image.LANCZOS)
 og.save(out("og-casa-amoray.jpg"), quality=82)
 
 # ---------- 3. Beeldreeks scène 2 'Binnenkomst' (camera beweegt de salon in) ----------
@@ -74,7 +76,7 @@ def smooth(t):
     return t * t * (3 - 2 * t)
 
 def sequence(scene, src, variant, ratio, size, start, end, frames):
-    im = Image.open(os.path.join(REF, src)).convert("RGB")
+    im = Image.open(os.path.join(REF_NL, src)).convert("RGB")
     W, H = im.size
     folder = out("scenes", scene, variant, "x")
     folder = os.path.dirname(folder)
@@ -91,9 +93,9 @@ def sequence(scene, src, variant, ratio, size, start, end, frames):
 
 manifest_path = os.path.join(ROOT, "src", "content", "media-manifest.json")
 manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
-n_m = sequence("binnenkomst", "mockup-lounge.jpg", "mobile", 9 / 16, (630, 1120),
+n_m = sequence("binnenkomst", "mockup-lounge.png", "mobile", 9 / 16, (630, 1120),
                (0.42, 0.5, 1.0), (0.80, 0.42, 1.55), 48)
-n_d = sequence("binnenkomst", "mockup-lounge.jpg", "desktop", 16 / 9, (1280, 720),
+n_d = sequence("binnenkomst", "mockup-lounge.png", "desktop", 16 / 9, (1280, 720),
                (0.5, 0.5, 1.0), (0.80, 0.42, 1.9), 60)
 v = int(time.time())  # cache-busting na opnieuw genereren
 manifest["binnenkomst"] = {

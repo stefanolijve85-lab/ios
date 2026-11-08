@@ -19,7 +19,7 @@ export default function Privacy() {
           <p className="eyebrow">Privacy</p>
           <h1>Privacyverklaring</h1>
           <Placeholder>
-            Concepttekst. Laat deze controleren en vul de bedrijfsgegevens (adres, KvK, contact) aan vóór livegang.
+            Concepttekst. Laat deze controleren en vul KvK-nummer en e-mailadres aan vóór livegang.
           </Placeholder>
 
           <h2>Welke gegevens</h2>
@@ -30,16 +30,22 @@ export default function Privacy() {
             af te stemmen.
           </p>
 
+          <p>
+            Bestel je een cadeaubon, dan ontvangen we je naam, e-mailadres, eventueel je telefoonnummer, voor wie de
+            bon is en je persoonlijke boodschap. De betaling loopt via betaaldienst Mollie; je betaalgegevens
+            (zoals je bankrekening) worden door Mollie verwerkt en niet door deze website opgeslagen.
+          </p>
+
           <h2>Waarvoor</h2>
           <p>
-            Uitsluitend om je aanvraag af te handelen, je afspraak te bevestigen en contact met je op te nemen over
-            die afspraak. We gebruiken je gegevens niet voor nieuwsbrieven of reclame en verkopen ze nooit aan
+            Uitsluitend om je aanvraag of bestelling af te handelen: je afspraak bevestigen, je cadeaubon leveren en
+            contact met je opnemen daarover. We gebruiken je gegevens niet voor nieuwsbrieven of reclame en verkopen ze nooit aan
             derden.
           </p>
 
           <h2>Hoe</h2>
           <p>
-            Je aanvraag wordt per e-mail naar {business.name} gestuurd. De website zelf slaat je gegevens niet op in
+            Je aanvraag of bestelling wordt per e-mail naar {business.name} gestuurd. De website zelf slaat je gegevens niet op in
             een database en gebruikt geen tracking- of advertentiecookies.
           </p>
 
@@ -47,7 +53,11 @@ export default function Privacy() {
           <p>
             Je mag altijd vragen welke gegevens we van je hebben, en vragen om ze aan te passen of te verwijderen.
           </p>
-          <Placeholder>Bewaartermijn, contactgegevens voor privacyvragen en verwerker (e-maildienst) invullen.</Placeholder>
+          <p>
+            Vragen over privacy? Neem contact op met {business.name}, {business.street}, {business.postalCode}{" "}
+            {business.city}, telefoon {business.phone}.
+          </p>
+          <Placeholder>Bewaartermijn, e-mailadres en KvK-nummer aanvullen; verwerkers: Resend (e-mail) en Mollie (betalingen).</Placeholder>
         </div>
       </main>
       <Footer />

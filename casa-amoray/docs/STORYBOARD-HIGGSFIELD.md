@@ -19,7 +19,7 @@ Lees dit vóór iedere generatie en plak het **consistentieblok** onder elke pro
 
 | # | Referentie | Waarvoor | Status |
 |---|------------|----------|--------|
-| R1 | Foto of mock-up van de **echte salon** (ontvangsthoek + massageruimte) | Indeling, meubels, materialen | Tijdelijk: `reference/mockup-lounge.jpg` |
+| R1 | Foto of mock-up van de **echte salon** (ontvangsthoek + massageruimte) | Indeling, meubels, materialen | Tijdelijk: `reference/nl/mockup-lounge.png` (Nederlandse tekst) |
 | R2 | Duidelijke **foto van Winnie** (gezicht en houding, natuurlijk licht) | Herkenbaarheid in scène 3 en 5 | **Ontvangen** (selfie, natuurlijk licht, recht in de camera). Uitsnede op de site: `public/media/winnie/winnie-portret.webp`. Het origineel staat niet in de repository; upload dat bij het genereren rechtstreeks als referentie. |
 | R3 | Logo: woordmerk + ster | Muurlogo, flessen, handdoeken | `reference/logo-*.jpg` |
 
@@ -38,9 +38,16 @@ Lees dit vóór iedere generatie en plak het **consistentieblok** onder elke pro
 **Licht en kleur:** avond, warm (2700K), kaarslicht en indirect licht, zachte schaduwen.
 Palet: crème `#F8F1EB`, warm beige `#E8D6C8`, dusty rose `#C99288`, taupe `#A78B7B`, donkerbruin `#49352E`.
 
-**Tekst in beeld:** de mock-ups bevatten Portugese tekst ("Massagem · bem-estar · conexão",
-"Óleo de massagem"). In de definitieve beelden: **geen** tekst behalve het logo, óf Nederlands
-("Massage · Ontspanning · Aandacht"). Liever geen tekst. Die zetten we in de website zelf.
+**Tekst in beeld: alleen Nederlands.** De Portugese teksten uit de mock-ups zijn vervangen
+(`scripts/fix-mockup-text.py`, resultaat in `reference/nl/`). Gebruik die Nederlandse versies als
+referentie. Vaste teksten in de salon:
+- muur onder het logo: **"MASSAGE · WELZIJN · VERBINDING"**
+- etiket van de olie: **"MASSAGEOLIE"** en **"LAVENDEL"**
+- kaartje: **"Bedankt dat je voor Casa Amoray kiest."**
+
+AI-modellen maken vaak fouten in tekst. Vraag daarom liefst om **geen tekst** behalve het logo
+("no text, no lettering, only the Casa Amoray logo"). Controleer elke clip op spelling en zet een
+foute tekst niet op de site.
 
 **Camera:** 35 mm-look, ooghoogte (± 1,40 m), rustige dolly/gimbal, geen snelle bewegingen,
 geen zoom-effecten, geen cuts binnen een clip. Begin- en eindframe van opeenvolgende scènes

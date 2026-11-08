@@ -16,10 +16,13 @@ export const business = {
   owner: "Winnie",
   city: "Emmen",
   country: "NL",
+  street: "Hunenoord 20" as string | null,
+  postalCode: "7822 BP" as string | null,
+  /** Zoals getoond op de site */
+  phone: "+31 6 15 28 45 47" as string | null,
+  /** Voor tel:-links (zonder spaties) */
+  phoneHref: "tel:+31615284547",
   // Nog onbekend: niet verzinnen. Vul in zodra bekend.
-  street: null as string | null,
-  postalCode: null as string | null,
-  phone: null as string | null,
   email: null as string | null,
   instagram: null as string | null,
   /** "Ongeveer vier avonden per week" — exacte tijden volgen. */
@@ -87,12 +90,25 @@ export const treatments: Treatment[] = [
 export const treatmentNote =
   "Je wordt persoonlijk ontvangen met een kopje thee en een rustig moment om je wensen te bespreken. Die kennismaking komt bovenop de massagetijd.";
 
+/**
+ * Cadeaubonnen: online bestellen en betalen (Mollie), of in de salon.
+ * Waarden = de behandelingen met een vaste prijs, zodat er niets verzonnen wordt.
+ */
+export const giftCards = {
+  intro:
+    "Gun iemand anders een moment voor zichzelf. Een cadeaubon van Casa Amoray is een warm cadeau voor een nieuwe moeder, een vriendin of je eigen moeder.",
+  ways: "Je bestelt en betaalt een cadeaubon hier online, of gewoon in de salon.",
+  options: () => treatments.filter((t) => t.bookable && t.price !== null),
+};
+
+export const mapsHref = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Hunenoord 20, 7822 BP Emmen");
+
 export const nav = [
   { label: "Home", href: "/#top" },
   { label: "Behandelingen", href: "/#behandelingen" },
   { label: "De beleving", href: "/#beleving" },
   { label: "Over Winnie", href: "/#over-winnie" },
-  { label: "Cadeaubon", href: "/#cadeaubon" },
+  { label: "Cadeaubon", href: "/cadeaubon" },
   { label: "Contact", href: "/#contact" },
 ];
 

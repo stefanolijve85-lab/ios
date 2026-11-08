@@ -1,4 +1,4 @@
-import { bookingHref, business, euro, nav, treatmentNote, treatments } from "@/content/site";
+import { bookingHref, business, euro, giftCards, mapsHref, nav, treatmentNote, treatments } from "@/content/site";
 import { Placeholder } from "@/components/Placeholder";
 import { Star } from "@/components/Star";
 
@@ -90,37 +90,32 @@ export function AboutWinnie() {
 
 /** Cadeaubon en contact. */
 export function GiftAndContact() {
-  const contact = [
-    business.street && `${business.street}, ${business.postalCode ?? ""} ${business.city}`,
-    business.phone,
-    business.email,
-  ].filter(Boolean);
-
   return (
     <section className="section section--cream" aria-label="Cadeaubon en contact">
       <div className="container split">
         <div id="cadeaubon" className="panel reveal">
           <Star className="panel__star" />
           <h2>Cadeaubon</h2>
-          <p>Gun iemand anders een moment voor zichzelf. Een cadeaubon van {business.name} is een warm cadeau voor een nieuwe moeder, een vriendin of je eigen moeder.</p>
-          <Placeholder>Hoe je een cadeaubon bestelt, volgt. Tot die tijd kun je contact opnemen.</Placeholder>
+          <p>{giftCards.intro}</p>
+          <p>{giftCards.ways}</p>
+          <a className="btn btn--outline" href="/cadeaubon">
+            Bestel een cadeaubon
+          </a>
         </div>
 
         <div id="contact" className="panel reveal" style={{ "--i": 1 } as React.CSSProperties}>
           <Star className="panel__star" />
           <h2>Contact</h2>
-          <p>
-            {business.name} ligt in {business.city}. {business.availabilityNote}
-          </p>
-          {contact.length > 0 ? (
-            <ul className="contact-list">
-              {contact.map((c) => (
-                <li key={c as string}>{c}</li>
-              ))}
-            </ul>
-          ) : (
-            <Placeholder>Adres, telefoonnummer en e-mailadres volgen.</Placeholder>
-          )}
+          <address className="contact-list">
+            <a href={mapsHref} rel="noopener" target="_blank">
+              {business.street}
+              <br />
+              {business.postalCode} {business.city}
+              <span className="visually-hidden"> (opent Google Maps)</span>
+            </a>
+            <a href={business.phoneHref}>{business.phone}</a>
+          </address>
+          <p>{business.availabilityNote}</p>
           <a className="text-link" href={bookingHref}>
             Een afspraak aanvragen
           </a>
@@ -161,6 +156,11 @@ export function Footer() {
         <p className="site-footer__tag">
           {business.slogan}. {business.tagline}, in {business.city}.
         </p>
+        <address className="site-footer__address">
+          {business.street}, {business.postalCode} {business.city}
+          <br />
+          <a href={business.phoneHref}>{business.phone}</a>
+        </address>
         <nav aria-label="Footer">
           <ul>
             {nav.map((n) => (

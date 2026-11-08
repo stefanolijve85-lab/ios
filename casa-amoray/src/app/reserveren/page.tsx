@@ -43,6 +43,11 @@ export default function Reserveren({ searchParams }: { searchParams: { behandeli
               <li>{business.availabilityNote}</li>
               <li>{business.name} is er uitsluitend voor vrouwen.</li>
             </ul>
+            <p className="booking__contact">
+              Liever bellen of appen? <a href={business.phoneHref}>{business.phone}</a>
+              <br />
+              {business.street}, {business.postalCode} {business.city}
+            </p>
           </aside>
         </div>
       </main>
