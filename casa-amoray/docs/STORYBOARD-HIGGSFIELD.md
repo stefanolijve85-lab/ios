@@ -256,9 +256,9 @@ npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 96 "crop=iw-110:ih:110
 - **Helderheid:** de clips waren donkerder dan de opening (54–66 tegen 71). Met `eq=gamma` is elke
   scène op ongeveer dezelfde helderheid gebracht (± 73).
 
-**AI-vermelding:** scène 03 toont Winnie als AI-beeld. Op de site staat daarom een vaste vermelding
-("Beeld gemaakt met AI, op basis van een foto van Winnie"); in de footer staat dat de sfeerbeelden
-met AI zijn gemaakt (EU AI-verordening, art. 50). **Laat Winnie de clip goedkeuren.**
+**AI-vermelding:** op verzoek staat er géén label meer in beeld bij scène 03. De vermelding staat in
+de footer ("Sfeerbeelden van de salon en de video van Winnie zijn met AI gemaakt."). Een label in
+beeld kan altijd terug via `aiNote` in `src/content/scenes.ts`. **Laat Winnie de clip goedkeuren.**
 
 **Desktop (16:9) later:** dezelfde prompts en beginframes in 16:9 (uitsnede uit dezelfde mock-ups),
 ook met Mini: 5 × 4 = 20 credits. Daarna `npm run frames -- <clip> <scene> desktop` en klaar;

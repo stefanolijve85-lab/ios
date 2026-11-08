@@ -155,7 +155,6 @@ export const scenes: Scene[] = [
       ),
     },
     alt: "Winnie schenkt in de ontvangsthoek een kopje thee in en lacht je vriendelijk toe.",
-    aiNote: "Beeld gemaakt met AI, op basis van een foto van Winnie.",
   },
   {
     id: "ruimte",
