@@ -58,7 +58,7 @@ export function Hero() {
         </div>
 
         <div className="hero__content">
-          <p className="eyebrow eyebrow--light hero__reveal">Massage voor vrouwen in {business.city}</p>
+          <p className="eyebrow eyebrow--light hero__reveal">Massages voor vrouwen</p>
           <h1 id="hero-titel" className="hero__title hero__reveal">
             {business.slogan}
           </h1>
