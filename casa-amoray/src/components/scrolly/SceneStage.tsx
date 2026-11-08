@@ -66,21 +66,21 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     if (seqEntry && useSequence && canvasRef.current) {
       const canvas = canvasRef.current;
       seq = new FrameSequence(canvas, seqEntry, () => canvas.classList.add("is-ready"));
-      // Laad als de scène binnen ~1,5 scherm komt; ruim op als hij ver weg is.
-      // Wacht tot de pagina zelf geladen is, zodat de hero (LCP) voorrang krijgt.
-      let pageReady = document.readyState === "complete";
+      // Laad als de scène binnen ~1 scherm komt; ruim op als hij ver weg is.
+      // Start zodra de openingsfoto (LCP) binnen is, niet pas na de hele pagina:
+      // dan staan de frames van scène 2 klaar vóór de eerste scroll.
+      const heroImg = document.querySelector<HTMLImageElement>(".hero__picture img");
+      let pageReady = !heroImg || heroImg.complete;
       let wanted = false;
       const startLoad = () => pageReady && wanted && seq?.load();
-      if (!pageReady)
-        window.addEventListener(
-          "load",
-          () => {
-            pageReady = true;
-            const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
-            idle ? idle(startLoad) : setTimeout(startLoad, 200);
-          },
-          { once: true },
-        );
+      if (!pageReady) {
+        const go = () => {
+          pageReady = true;
+          startLoad();
+        };
+        heroImg!.addEventListener("load", go, { once: true });
+        heroImg!.addEventListener("error", go, { once: true });
+      }
       const near = new IntersectionObserver(
         (e) => {
           wanted = e[0].isIntersecting;

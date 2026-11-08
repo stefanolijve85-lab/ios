@@ -3,9 +3,9 @@
     "mobile": {
       "frames": 72,
       "path": "/media/scenes/binnenkomst/mobile",
-      "width": 720,
-      "height": 1280,
-      "v": 1794132832
+      "width": 576,
+      "height": 1024,
+      "v": 1794134320
     },
     "placeholder": false
   },
@@ -13,9 +13,9 @@
     "mobile": {
       "frames": 72,
       "path": "/media/scenes/welkom/mobile",
-      "width": 720,
-      "height": 1280,
-      "v": 1794133905
+      "width": 576,
+      "height": 1024,
+      "v": 1794134330
     },
     "placeholder": false
   },
@@ -23,9 +23,9 @@
     "mobile": {
       "frames": 72,
       "path": "/media/scenes/ruimte/mobile",
-      "width": 720,
-      "height": 1280,
-      "v": 1794133853
+      "width": 576,
+      "height": 1024,
+      "v": 1794134337
     },
     "placeholder": false
   },
@@ -33,9 +33,9 @@
     "mobile": {
       "frames": 72,
       "path": "/media/scenes/behandeling/mobile",
-      "width": 720,
-      "height": 1280,
-      "v": 1794133861
+      "width": 576,
+      "height": 1024,
+      "v": 1794134347
     },
     "placeholder": false
   },
@@ -43,9 +43,9 @@
     "mobile": {
       "frames": 72,
       "path": "/media/scenes/nagevoel/mobile",
-      "width": 720,
-      "height": 1280,
-      "v": 1794133869
+      "width": 576,
+      "height": 1024,
+      "v": 1794134353
     },
     "placeholder": false
   }

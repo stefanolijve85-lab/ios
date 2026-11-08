@@ -63,7 +63,10 @@ export function Header({ overlay = false }: { overlay?: boolean }) {
       <div className="site-header__bar">
         <a className="site-header__logo" href="/#top" aria-label="Casa Amoray, naar de homepage">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={light ? "/media/brand/wordmark-cream.png" : "/media/brand/wordmark-dark.png"} alt="" width={591} height={253} />
+          {/* Beide varianten staan klaar; wisselen gebeurt met CSS (geen laden tijdens het scrollen). */}
+          <img className="logo-light" src="/media/brand/wordmark-cream.png" alt="" width={591} height={253} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="logo-dark" src="/media/brand/wordmark-dark.png" alt="" width={591} height={253} />
         </a>
 
         <nav className="site-nav" aria-label="Hoofdmenu">

@@ -14,6 +14,18 @@ import { frameUrl, type SequenceEntry, type SequenceVariant } from "@/content/sc
  * - `unload()` geeft het geheugen vrij als de scène ver buiten beeld is.
  */
 export class FrameSequence {
+  /**
+   * Eén beeldreeks tegelijk laden (in scrollvolgorde): zo heeft de scène die je
+   * als eerste ziet alle bandbreedte en decodeerkracht, en concurreren scènes niet.
+   */
+  private static active: FrameSequence | null = null;
+  private static waiting: FrameSequence[] = [];
+  private static release(seq: FrameSequence) {
+    if (FrameSequence.active === seq) FrameSequence.active = null;
+    FrameSequence.waiting = FrameSequence.waiting.filter((s) => s !== seq);
+    if (!FrameSequence.active) FrameSequence.waiting.shift()?.load();
+  }
+
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private entry: SequenceEntry;
@@ -24,6 +36,8 @@ export class FrameSequence {
   private pos = 0;
   /** Sleutel van wat er nu op het canvas staat, om dubbel tekenen te voorkomen. */
   private drawnKey = "";
+  /** Vorige positie, om de scrollsnelheid te bepalen. */
+  private lastPos = 0;
   private raf = 0;
   private loadingToken = 0;
   private onFirstFrame?: () => void;
@@ -55,7 +69,8 @@ export class FrameSequence {
   }
 
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // 1,5x is scherp genoeg voor bewegend beeld en scheelt veel tekenwerk op telefoons.
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const w = Math.round(this.canvas.clientWidth * dpr);
     const h = Math.round(this.canvas.clientHeight * dpr);
     if (w && h && (w !== this.canvas.width || h !== this.canvas.height)) {
@@ -80,14 +95,25 @@ export class FrameSequence {
     return Array.from(new Set(order));
   }
 
-  load(concurrency = 4) {
-    const token = ++this.loadingToken;
+  load(concurrency = 6) {
     const queue = this.loadOrder().filter((i) => !this.requested.has(i));
+    if (!queue.length) return;
+    if (FrameSequence.active && FrameSequence.active !== this) {
+      if (!FrameSequence.waiting.includes(this)) FrameSequence.waiting.push(this);
+      return;
+    }
+    FrameSequence.active = this;
+    const token = ++this.loadingToken;
+    let inflight = 0;
     const next = () => {
       if (token !== this.loadingToken) return;
       const i = queue.shift();
-      if (i === undefined) return;
+      if (i === undefined) {
+        if (inflight === 0) FrameSequence.release(this); // alles binnen: volgende scène
+        return;
+      }
       this.requested.add(i);
+      inflight++;
       const img = new Image();
       img.decoding = "async";
       img.src = this.src(i);
@@ -96,6 +122,7 @@ export class FrameSequence {
         .decode()
         .catch(() => undefined)
         .then(() => {
+          inflight--;
           if (token !== this.loadingToken || !img.naturalWidth) return next();
           this.frames[i] = img;
           if (i === 0) this.onFirstFrame?.();
@@ -111,6 +138,7 @@ export class FrameSequence {
   }
 
   unload() {
+    FrameSequence.release(this);
     this.loadingToken++;
     this.frames = this.frames.map(() => null);
     this.requested.clear();
@@ -157,11 +185,20 @@ export class FrameSequence {
     const f = Math.round((this.pos - i0) * 32) / 32;
     const a = this.frames[i0];
     const b = this.frames[i1];
+    // Overvloeien alleen bij langzaam scrollen (daar zie je stapjes); bij snel scrollen
+    // één beeld per frame: halve tekenlast, en de beweging zelf maskeert de stapjes.
+    const speed = Math.abs(this.pos - this.lastPos);
+    this.lastPos = this.pos;
+    const blend = speed < 0.6;
     if (a && b) {
-      const key = `${i0}:${f}`;
+      const key = blend ? `${i0}:${f}` : `${f < 0.5 ? i0 : i1}`;
       if (key === this.drawnKey) return;
-      this.paint(a, 1);
-      if (f > 0 && i1 !== i0) this.paint(b, f); // overvloeien naar het volgende frame
+      if (blend) {
+        this.paint(a, 1);
+        if (f > 0 && i1 !== i0) this.paint(b, f); // overvloeien naar het volgende frame
+      } else {
+        this.paint(f < 0.5 ? a : b, 1);
+      }
       this.drawnKey = key;
       return;
     }

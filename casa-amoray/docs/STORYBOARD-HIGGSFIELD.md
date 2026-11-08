@@ -224,7 +224,7 @@ Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één b
 |---|---|---|
 | Model | Seedance 2.0 **Mini** | 4 credits per clip; de proef was al vloeiend en consistent |
 | Duur | 4 s | Genoeg voor 48 scrollframes; korter = goedkoper |
-| Resolutie | 720p (720×1280) | Precies de resolutie van de mobiele beeldreeks |
+| Resolutie | 720p (720×1280) | Bron; de site gebruikt frames van 576×1024 (lichter te tekenen) |
 | Geluid | uit | Niet nodig op de site |
 | Beginframe | 9:16-uitsnede van de Nederlandse mock-up (`reference/nl/`) | Salon blijft exact gelijk; geen extra beeldgeneratie nodig |
 | Scène 02 | ook een **eindframe** (massagetafel) | Camerabeweging eindigt precies waar het storyboard wil |
@@ -232,15 +232,15 @@ Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één b
 
 Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfield/*.mp4`.
 
-**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (72 frames per scène):
+**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (72 frames per scène, 576×1024):
 
 ```bash
 H=reference/higgsfield
 npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 72
-python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 88 374 210 398 --extend-left
+python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 70 299 168 318 --extend-left
 npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 72 "crop=iw:ih-210:0:210,eq=gamma=1.16"
 npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 72 "eq=gamma=1.23"
-python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 300 145 328 --extend-left
+python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 240 116 262 --extend-left
 npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 72 "eq=gamma=1.08"
 npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 72 "crop=iw-110:ih:110:0,eq=gamma=1.15"
 ```

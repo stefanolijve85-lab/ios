@@ -17,8 +17,8 @@ export function Hero() {
       if (cancelled || !ref.current) return;
       const ctx = gsap.context(() => {
         // Rustige binnenkomst bij openen
-        gsap.from(".hero__reveal", { opacity: 0, y: 18, duration: 1.1, ease: "power2.out", stagger: 0.12, delay: 0.1 });
-        gsap.fromTo(".hero__picture", { scale: 1.08 }, { scale: 1, duration: 2.4, ease: "power2.out" });
+        // Alleen de tekst komt rustig in beeld; het beeld staat stil zodat de eerste scroll vrij is.
+        gsap.from(".hero__reveal", { opacity: 0, y: 14, duration: 0.8, ease: "power2.out", stagger: 0.08 });
         // Bij scrollen: de tekst trekt zich terug en het beeld komt vrij.
         // Het podium blijft staan; daarna vloeit 'Binnenkomst' (zelfde beeld) eroverheen.
         const firstScreen = () => `+=${window.innerHeight * 0.45}`;

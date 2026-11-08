@@ -156,7 +156,11 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   box-shadow: 0 1px 0 var(--line);
 }
 .site-header.is-light { color: var(--cream); }
-.site-header__logo { margin-right: auto; display: block; }
+.site-header__logo { margin-right: auto; display: grid; }
+.site-header__logo img { grid-area: 1 / 1; transition: opacity 0.3s var(--ease); }
+.site-header .logo-light { opacity: 0; }
+.site-header.is-light .logo-light { opacity: 1; }
+.site-header.is-light .logo-dark { opacity: 0; }
 .site-header__logo img { height: 38px; width: auto; }
 @media (min-width: 768px) { .site-header__logo img { height: 46px; } }
 
