@@ -24,7 +24,7 @@
   --gutter: 20px;
   --header-h: 64px;
   --vh: 100vh;
-  --overlap: 0.5; /* gelijk aan OVERLAP in src/content/scenes.ts */
+  --overlap: 0.2; /* gelijk aan OVERLAP in src/content/scenes.ts */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
   color-scheme: light;
@@ -321,7 +321,10 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   html.js .journey__anchor { top: calc((var(--overlap) + 0.35) * var(--vh) + var(--header-h)); }
   html.js .scene { height: calc(var(--len, 2.4) * var(--vh)); margin-top: calc(-1 * (1 + var(--overlap)) * var(--vh)); }
   html.js .scene__stage { position: sticky; top: 0; height: var(--vh); }
-  html.js .scene__media { position: absolute; inset: 0; aspect-ratio: auto; }
+  /* Het beeld begint onder de (effen) menubalk: niets van de video verdwijnt erachter. */
+  html.js .scene__media {
+    position: absolute; inset: calc(var(--header-h) + env(safe-area-inset-top, 0px)) 0 0 0; aspect-ratio: auto;
+  }
   html.js .scene__picture img { object-position: 50% 50%; }
   html.js .scene__media::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;

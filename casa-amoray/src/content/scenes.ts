@@ -65,7 +65,7 @@ export type SceneMedia =
  * staan beide stil en vloeit de volgende scène over de vorige heen (dissolve).
  * Moet overeenkomen met --overlap in globals.css.
  */
-export const OVERLAP = 0.5;
+export const OVERLAP = 0.2; // kort: geen lang dubbelbeeld tijdens het scrollen
 
 export type Scene = {
   id: string;
@@ -138,7 +138,7 @@ export const scenes: Scene[] = [
     media: {
       kind: "sequence",
       id: "welkom",
-      posterFrame: 47, // Winnie lacht je toe
+      posterFrame: 95, // laatste frame: Winnie lacht je toe
       landscape: still(
         "welkom",
         [

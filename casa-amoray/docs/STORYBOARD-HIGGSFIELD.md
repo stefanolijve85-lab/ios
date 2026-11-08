@@ -238,7 +238,7 @@ Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfi
 H=reference/higgsfield
 npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 96
 python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 70 299 168 318 --extend-left
-npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 96 "crop=iw:ih-210:0:210,eq=gamma=1.16"
+npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 96 "eq=gamma=1.06"
 npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 96 "eq=gamma=1.23"
 python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 240 116 262 --extend-left
 npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 96 "eq=gamma=1.08"
@@ -246,8 +246,8 @@ npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 96 "crop=iw-110:ih:110
 ```
 
 - **Muurtekst:** AI verbasterde "VERBINDING" tot "VERBINOING". In 02 en 04 is de regel per frame
-  gevolgd en weggewerkt (`clean-wall-text.py`); in 03 loopt Winnie erdoor, daar is de bovenrand
-  weggesneden; in 06 de linkerrand. De muur in de hero toont daarom ook alleen het logo.
+  gevolgd en weggewerkt (`clean-wall-text.py`); 03 is opnieuw gemaakt (zie hieronder); in 06 is de
+  linkerrand weggesneden. De muur in de hero toont daarom ook alleen het logo.
 - **Helderheid:** de clips waren donkerder dan de opening (54–66 tegen 71). Met `eq=gamma` is elke
   scène op ongeveer dezelfde helderheid gebracht (± 73).
 
@@ -292,3 +292,21 @@ de `landscape`-still in `scenes.ts` wordt dan automatisch niet meer gebruikt.
 > warm compress over her eyes, breathing slowly and peacefully. The camera very slowly pulls back and
 > gently comes to rest. Candle flames flicker softly. Very calm, serene, minimal motion. Keep everything
 > exactly as in the start image; do not add or change any text. Photorealistic, cinematic.
+
+
+### 03 Het welkom, versie 2 (4 credits)
+
+De eerste versie verbasterde de muurtekst en Winnies hoofd viel na het wegsnijden deels buiten beeld.
+Versie 2 start op de ontvangsthoek **zonder muurregel** (alleen het logo; `reference/nl/mockup-lounge.png`,
+uitsnede x 30%, y 55%, zoom 1,15) met dezelfde referentiefoto. Niets weggesneden; gamma 1,06.
+
+> In this exact reception corner of a warm boutique massage salon, the woman from the reference photo
+> (same face, same natural curly hair, warm smile) walks in from the side wearing a simple dark brown
+> salon tunic and soft slippers, and calmly pours herbal tea from a ceramic teapot into a cup on the
+> small round stone-mosaic table between the green velvet armchairs. She smiles warmly toward the
+> camera, welcoming the guest. Medium-wide framing: her whole head and shoulders always stay fully in
+> frame with generous space above her head; the camera stays at a steady distance with a very slight,
+> gentle drift. Natural realistic hands with five fingers. Keep the wall, logo, furniture, colours and
+> lighting exactly as in the start image; do not add any text on the wall. Photorealistic, calm, cinematic.
+
+Totaal verbruikt aan clips: 24 credits.

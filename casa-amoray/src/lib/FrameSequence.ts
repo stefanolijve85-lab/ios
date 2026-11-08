@@ -174,7 +174,8 @@ export class FrameSequence {
     const w = img.naturalWidth * scale;
     const h = img.naturalHeight * scale;
     this.ctx.globalAlpha = alpha;
-    this.ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+    // Horizontaal centreren; verticaal vooral onderaan bijsnijden, zodat hoofden bovenin blijven.
+    this.ctx.drawImage(img, (cw - w) / 2, (ch - h) * 0.25, w, h);
     this.ctx.globalAlpha = 1;
   }
 
