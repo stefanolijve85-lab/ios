@@ -7,7 +7,10 @@ import { frameUrl, type SequenceEntry, type SequenceVariant } from "@/content/sc
  * - Laadt progressief: eerst een grove verdeling van frames, daarna de
  *   tussenliggende. Zo werkt scrubben al vóór alles binnen is (er wordt het
  *   dichtstbijzijnde geladen frame getoond).
- * - Tekent alleen in requestAnimationFrame en alleen als het frame verandert.
+ * - Vloeiend: tussen twee frames wordt overgevloeid op basis van de exacte
+ *   scrollpositie, zodat er geen zichtbare 'stapjes' zijn.
+ * - Frames worden vooraf gedecodeerd (img.decode), zodat tekenen niet hapert.
+ * - Tekent alleen in requestAnimationFrame en alleen als de positie verandert.
  * - `unload()` geeft het geheugen vrij als de scène ver buiten beeld is.
  */
 export class FrameSequence {
@@ -17,8 +20,10 @@ export class FrameSequence {
   private variant!: SequenceVariant;
   private frames: (HTMLImageElement | null)[] = [];
   private requested = new Set<number>();
-  private target = 0;
-  private drawn = -1;
+  /** Gewenste positie in frames, met fractie (bv. 12.4). */
+  private pos = 0;
+  /** Sleutel van wat er nu op het canvas staat, om dubbel tekenen te voorkomen. */
+  private drawnKey = "";
   private raf = 0;
   private loadingToken = 0;
   private onFirstFrame?: () => void;
@@ -56,7 +61,7 @@ export class FrameSequence {
     if (w && h && (w !== this.canvas.width || h !== this.canvas.height)) {
       this.canvas.width = w;
       this.canvas.height = h;
-      this.drawn = -1;
+      this.drawnKey = "";
       this.schedule();
     }
   }
@@ -85,19 +90,22 @@ export class FrameSequence {
       this.requested.add(i);
       const img = new Image();
       img.decoding = "async";
-      img.onload = () => {
-        if (token !== this.loadingToken) return;
-        this.frames[i] = img;
-        if (i === 0) this.onFirstFrame?.();
-        // Opnieuw tekenen als dit frame dichter bij het doel ligt
-        if (Math.abs(i - this.target) < Math.abs(this.drawn - this.target) || this.drawn < 0) {
-          this.drawn = -1;
-          this.schedule();
-        }
-        next();
-      };
-      img.onerror = () => next();
       img.src = this.src(i);
+      // Eerst volledig decoderen; pas dan telt het frame als 'geladen'.
+      img
+        .decode()
+        .catch(() => undefined)
+        .then(() => {
+          if (token !== this.loadingToken || !img.naturalWidth) return next();
+          this.frames[i] = img;
+          if (i === 0) this.onFirstFrame?.();
+          // Opnieuw tekenen als dit frame rond de huidige positie ligt
+          if (Math.abs(i - this.pos) < 2 || !this.drawnKey) {
+            this.drawnKey = "";
+            this.schedule();
+          }
+          next();
+        });
     };
     for (let k = 0; k < concurrency; k++) next();
   }
@@ -106,12 +114,12 @@ export class FrameSequence {
     this.loadingToken++;
     this.frames = this.frames.map(() => null);
     this.requested.clear();
-    this.drawn = -1;
+    this.drawnKey = "";
   }
 
   setProgress(p: number) {
     const n = this.variant.frames;
-    this.target = Math.min(n - 1, Math.max(0, Math.round(p * (n - 1))));
+    this.pos = Math.min(n - 1, Math.max(0, p * (n - 1)));
     this.schedule();
   }
 
@@ -131,17 +139,39 @@ export class FrameSequence {
     return -1;
   }
 
-  private draw() {
-    const idx = this.nearestLoaded(this.target);
-    if (idx < 0 || idx === this.drawn) return;
-    const img = this.frames[idx]!;
+  private paint(img: HTMLImageElement, alpha: number) {
     const { width: cw, height: ch } = this.canvas;
     // object-fit: cover
     const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
     const w = img.naturalWidth * scale;
     const h = img.naturalHeight * scale;
+    this.ctx.globalAlpha = alpha;
     this.ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
-    this.drawn = idx;
+    this.ctx.globalAlpha = 1;
+  }
+
+  private draw() {
+    const i0 = Math.floor(this.pos);
+    const i1 = Math.min(i0 + 1, this.frames.length - 1);
+    // Afronden op 1/32 frame: kleiner verschil is niet zichtbaar.
+    const f = Math.round((this.pos - i0) * 32) / 32;
+    const a = this.frames[i0];
+    const b = this.frames[i1];
+    if (a && b) {
+      const key = `${i0}:${f}`;
+      if (key === this.drawnKey) return;
+      this.paint(a, 1);
+      if (f > 0 && i1 !== i0) this.paint(b, f); // overvloeien naar het volgende frame
+      this.drawnKey = key;
+      return;
+    }
+    // Nog niet alles geladen: toon het dichtstbijzijnde frame.
+    const idx = this.nearestLoaded(Math.round(this.pos));
+    if (idx < 0) return;
+    const key = `n${idx}`;
+    if (key === this.drawnKey) return;
+    this.paint(this.frames[idx]!, 1);
+    this.drawnKey = key;
   }
 
   destroy() {

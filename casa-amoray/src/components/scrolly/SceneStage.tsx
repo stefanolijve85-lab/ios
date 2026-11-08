@@ -89,7 +89,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
         { rootMargin: "150% 0px" },
       );
       const far = new IntersectionObserver((e) => !e[0].isIntersecting && seq?.unload(), {
-        rootMargin: "500% 0px",
+        rootMargin: "300% 0px",
       });
       near.observe(section);
       far.observe(section);
@@ -143,7 +143,8 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
           p: 1,
           ease: "none",
           onUpdate: () => apply(state.p),
-          scrollTrigger: { trigger: section, start: "top top", end: "bottom bottom", scrub: 0.5 },
+          // Iets meer naijlen: vangt de schokkerige touch-events van iOS op.
+          scrollTrigger: { trigger: section, start: "top top", end: "bottom bottom", scrub: 0.8 },
         });
 
         // 3. Tekst: eerst het hoofdstuk, dan woord voor woord de kop, dan de rest.

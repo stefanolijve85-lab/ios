@@ -1,51 +1,51 @@
 {
   "binnenkomst": {
     "mobile": {
-      "frames": 48,
+      "frames": 72,
       "path": "/media/scenes/binnenkomst/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794131090
+      "v": 1794132832
     },
     "placeholder": false
   },
   "welkom": {
     "mobile": {
-      "frames": 48,
+      "frames": 72,
       "path": "/media/scenes/welkom/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794131287
+      "v": 1794132841
     },
     "placeholder": false
   },
   "ruimte": {
     "mobile": {
-      "frames": 48,
+      "frames": 72,
       "path": "/media/scenes/ruimte/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794131293
+      "v": 1794132849
     },
     "placeholder": false
   },
   "behandeling": {
     "mobile": {
-      "frames": 48,
+      "frames": 72,
       "path": "/media/scenes/behandeling/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794131299
+      "v": 1794132857
     },
     "placeholder": false
   },
   "nagevoel": {
     "mobile": {
-      "frames": 48,
+      "frames": 72,
       "path": "/media/scenes/nagevoel/mobile",
       "width": 720,
       "height": 1280,
-      "v": 1794131305
+      "v": 1794132865
     },
     "placeholder": false
   }
