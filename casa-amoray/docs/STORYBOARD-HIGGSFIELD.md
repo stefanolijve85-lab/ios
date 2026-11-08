@@ -232,18 +232,23 @@ Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één b
 
 Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfield/*.mp4`.
 
-**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (96 frames per scène, 576×1024):
+**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten
+(96 frames per scène, 720×1280, licht verscherpt):
 
 ```bash
 H=reference/higgsfield
 npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 96
-python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 70 299 168 318 --extend-left
+python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 88 374 210 398 --extend-left
+python3 scripts/match-color.py public/media/scenes/binnenkomst/mobile public/media/stills/lounge-mobile.webp
 npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 96 "eq=gamma=1.06"
 npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 96 "eq=gamma=1.23"
-python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 240 116 262 --extend-left
+python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 300 145 328 --extend-left
 npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 96 "eq=gamma=1.08"
 npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 96 "crop=iw-110:ih:110:0,eq=gamma=1.15"
 ```
+
+- **Aansluiting op de hero:** `match-color.py` stemt kleur en belichting van scène 02 af op de
+  hero-foto (gemeten op frame 1, toegepast op alle frames), zodat de overgang van foto naar video niet opvalt.
 
 - **Muurtekst:** AI verbasterde "VERBINDING" tot "VERBINOING". In 02 en 04 is de regel per frame
   gevolgd en weggewerkt (`clean-wall-text.py`); 03 is opnieuw gemaakt (zie hieronder); in 06 is de

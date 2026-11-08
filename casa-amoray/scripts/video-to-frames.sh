@@ -13,7 +13,7 @@
 # Het optionele 5e argument is een ffmpeg-filter dat vóór het schalen wordt toegepast,
 # bijvoorbeeld om een rand met een AI-tekstfout weg te snijden.
 #
-# Standaard: mobiel 96 frames op 576x1024 (licht genoeg om soepel te tekenen op telefoons), desktop 72 frames op 1600x900, WebP.
+# Standaard: mobiel 96 frames op 720x1280 (volle clipresolutie, licht verscherpt), desktop 72 frames op 1600x900, WebP.
 # Meer frames = vloeiender, maar zwaarder. Houd mobiel rond 2-3 MB per scène.
 set -euo pipefail
 
@@ -21,7 +21,7 @@ VIDEO="${1:?Geef het pad naar de video op}"
 SCENE="${2:?Geef de scene-id op (bv. binnenkomst)}"
 VARIANT="${3:?Geef mobile of desktop op}"
 case "$VARIANT" in
-  mobile)  W=576;  H=1024; N="${4:-96}"; Q=50 ;;
+  mobile)  W=720;  H=1280; N="${4:-96}"; Q=52 ;;
   desktop) W=1600; H=900;  N="${4:-72}"; Q=62 ;;
   *) echo "Variant moet 'mobile' of 'desktop' zijn"; exit 1 ;;
 esac
@@ -38,7 +38,7 @@ FPS=$(python3 -c "print(max(1e-3, $N / float('$DUR')))")
 
 # Schaal + bijsnijden naar de juiste compositie (cover), gelijkmatig N frames.
 ffmpeg -loglevel error -y -i "$VIDEO" \
-  -vf "${PRE}fps=$FPS,scale=$W:$H:force_original_aspect_ratio=increase,crop=$W:$H" \
+  -vf "${PRE}fps=$FPS,scale=$W:$H:force_original_aspect_ratio=increase:flags=lanczos,crop=$W:$H,unsharp=5:5:0.55:5:5:0" \
   -frames:v "$N" -c:v libwebp -quality "$Q" -compression_level 6 \
   "$OUT/f_%04d.webp"
 

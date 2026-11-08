@@ -73,6 +73,6 @@ for f in files:
     cx, cy, cs = bx, by, s
     box = (0 if extend_left else int(bx) - 6, int(by) - 4, int(bx + tw * s) + 8, int(by + th * s) + 4)
     refill(rgb, box)
-    Image.fromarray(rgb).save(f, quality=50, method=6)
+    Image.fromarray(rgb).save(f, quality=52, method=6)
     cleaned += 1
 print(f"✓ {cleaned} frames schoongemaakt in {folder}")

@@ -69,7 +69,8 @@ export class FrameSequence {
   }
 
   resize() {
-    // 1,5x is scherp genoeg voor bewegend beeld en scheelt veel tekenwerk op telefoons.
+    // 1,5x: de scherpe 720-frames worden iets verkleind getekend (blijft scherp),
+    // met veel minder tekenwerk dan 2x.
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const w = Math.round(this.canvas.clientWidth * dpr);
     const h = Math.round(this.canvas.clientHeight * dpr);
