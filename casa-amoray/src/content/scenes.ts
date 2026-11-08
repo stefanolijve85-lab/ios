@@ -92,11 +92,14 @@ export type Scene = {
 
 export const sequences = manifest as Record<string, SequenceEntry>;
 
+/** Ophogen als de stills veranderen, zodat browsers niet de oude foto uit hun cache tonen. */
+const STILL_V = 2;
+
 const still = (name: string, camera?: CameraKey[], origin?: [number, number]) =>
   ({
     kind: "still",
-    mobile: `/media/stills/${name}-mobile.webp`,
-    desktop: `/media/stills/${name}-desktop.webp`,
+    mobile: `/media/stills/${name}-mobile.webp?v=${STILL_V}`,
+    desktop: `/media/stills/${name}-desktop.webp?v=${STILL_V}`,
     camera,
     origin,
   }) as StillMedia;

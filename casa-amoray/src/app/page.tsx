@@ -14,7 +14,7 @@ function JsonLd() {
     name: business.name,
     slogan: business.slogan,
     url: siteUrl,
-    image: `${siteUrl}/media/og-casa-amoray.jpg`,
+    image: `${siteUrl}/media/og-casa-amoray.jpg?v=2`,
     address: {
       "@type": "PostalAddress",
       addressLocality: business.city,

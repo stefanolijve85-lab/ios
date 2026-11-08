@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: business.name,
     title,
     description,
-    images: [{ url: "/media/og-casa-amoray.jpg", width: 1200, height: 630, alt: "De salon van Casa Amoray" }],
+    images: [{ url: "/media/og-casa-amoray.jpg?v=2", width: 1200, height: 630, alt: "De salon van Casa Amoray" }],
   },
   robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
 };
