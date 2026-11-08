@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isOn, start, subscribe, toggle, wantsMusic } from "@/lib/ambientMusic";
+import { autoStartAllowed, isOn, start, subscribe, toggle } from "@/lib/ambientMusic";
 
 function useMusic() {
   const [on, setOn] = useState(false);
@@ -18,21 +18,24 @@ function useMusic() {
 export function MusicButton() {
   const on = useMusic();
 
-  // Koos de bezoeker eerder voor muziek? Start dan bij de eerste tik ergens op de pagina
-  // (browsers staan geluid pas na een gebruikersactie toe).
+  // Start de muziek bij de eerste tik ergens op de pagina (tenzij de bezoeker hem eerder
+  // zelf uitzette). Scrollen telt niet: browsers staan geluid pas toe na een echte tik/klik
+  // of toetsaanslag. Op iOS geldt dat bij het loslaten (touchend/pointerup), niet bij aanraken.
   useEffect(() => {
-    if (!wantsMusic()) return;
-    const resume = (e: Event) => {
+    if (!autoStartAllowed()) return;
+    const events = ["pointerup", "touchend", "click", "keydown"] as const;
+    let busy = false;
+    const off = () => events.forEach((ev) => window.removeEventListener(ev, tryStart, true));
+    const tryStart = (e: Event) => {
+      if (busy || isOn()) return off();
       if ((e.target as HTMLElement | null)?.closest?.("[data-music-toggle]")) return;
-      if (!isOn()) start();
-      off();
+      busy = true;
+      start(true).then((ok) => {
+        busy = false;
+        if (ok) off(); // gelukt; anders blijven luisteren (bv. na een veeg in plaats van een tik)
+      });
     };
-    const off = () => {
-      window.removeEventListener("pointerdown", resume, true);
-      window.removeEventListener("keydown", resume, true);
-    };
-    window.addEventListener("pointerdown", resume, true);
-    window.addEventListener("keydown", resume, true);
+    events.forEach((ev) => window.addEventListener(ev, tryStart, true));
     return off;
   }, []);
 

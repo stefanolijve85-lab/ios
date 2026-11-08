@@ -35,11 +35,12 @@ export function subscribe(l: Listener) {
 
 export const isOn = () => on;
 
-export function wantsMusic() {
+/** Muziek starten bij de eerste tik, tenzij de bezoeker hem eerder zelf heeft uitgezet. */
+export function autoStartAllowed() {
   try {
-    return localStorage.getItem(KEY) === "on";
+    return localStorage.getItem(KEY) !== "off";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -90,21 +91,29 @@ function fadeTo(target: number, seconds: number) {
   gain.gain.linearRampToValueAtTime(target, now + seconds);
 }
 
-/** Moet vanuit een tik/klik worden aangeroepen (gebruikersactie). */
-export async function start() {
+/**
+ * Moet vanuit een tik/klik worden aangeroepen (gebruikersactie).
+ * Geeft true terug als het geluid echt mag spelen (AudioContext draait).
+ * `auto`: gestart door een willekeurige tik op de pagina, niet door de muziekknop
+ * (dan wordt de voorkeur niet opgeslagen).
+ */
+export async function start(auto = false): Promise<boolean> {
   const c = ensureContext(); // synchroon binnen de tik: vereist door iOS
+  const resumed = c.state === "running" ? Promise.resolve() : c.resume(); // ook synchroon aangeroepen
+  // Zonder toestemming kan resume() blijven wachten: kort wachten en dan opgeven (volgende tik opnieuw).
+  await Promise.race([resumed.catch(() => undefined), new Promise((r) => setTimeout(r, 400))]);
+  if (c.state !== "running") return false; // deze actie gaf (nog) geen toestemming voor geluid
   on = true;
-  remember(true);
+  if (!auto) remember(true);
   emit();
-  if (c.state !== "running") await c.resume().catch(() => undefined);
   try {
     await load();
   } catch {
     on = false;
     emit();
-    return;
+    return false;
   }
-  if (!on) return; // intussen weer uitgezet
+  if (!on) return true; // intussen weer uitgezet
   if (!source) {
     source = c.createBufferSource();
     source.buffer = buffer;
@@ -113,6 +122,7 @@ export async function start() {
     source.start();
   }
   fadeTo(VOLUME, 2.5);
+  return true;
 }
 
 export function stop() {
@@ -126,7 +136,8 @@ export function stop() {
 }
 
 export function toggle() {
-  return on ? stop() : start();
+  if (on) stop();
+  else void start();
 }
 
 // Pagina verborgen (andere app/tab): zacht stil; terug: zacht verder.

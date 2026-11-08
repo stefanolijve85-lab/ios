@@ -114,11 +114,12 @@ Alle tijdelijke onderdelen tonen het label **"Tijdelijk"**. Zet `showPlaceholder
 Rustige spamuziek (`public/media/audio/spa-ambient.m4a`, 88 s naadloze lus, 1,1 MB), gemaakt met
 ElevenLabs Music v2.5 via Higgsfield (13 credits; bron: `reference/higgsfield/spa-ambient-bron.mp3`).
 
-- Speelt pas na een tik op het muziekknopje in de menubalk of "Rustige muziek" in de opening
-  (browsers staan automatisch afspelen niet toe). Het bestand laadt ook pas dan.
+- Start bij de **eerste tik ergens op de pagina** (scrollen telt niet: browsers staan geluid pas
+  toe na een echte tik/klik). Uitzetten kan altijd met het knopje in de menubalk; wie de muziek
+  zelf uitzet, krijgt hem daarna niet meer automatisch. Het bestand laadt pas bij de eerste tik.
 - Web Audio: naadloze lus, zacht in-/uitfaden, speelt ook als de iPhone op stil staat
   (de bezoeker vroeg er zelf om), pauzeert als de pagina verborgen is.
-- De keuze wordt onthouden (localStorage); bij een volgend bezoek start de muziek bij de eerste tik.
+- De keuze "uit" wordt onthouden (localStorage).
 - Volume en bestand aanpassen: `src/lib/ambientMusic.ts` (`VOLUME`, `SRC`).
 
 ## 4. Reserveren
