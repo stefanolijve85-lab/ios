@@ -348,7 +348,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
    Sticky is op iOS Safari stabieler dan het pinnen van elementen via JS. */
 @media (prefers-reduced-motion: no-preference) {
   /* Hero: podium blijft staan terwijl de tekst wegtrekt; daarna vloeit scène 2 erover. */
-  html.js .hero { height: calc(2 * var(--vh)); }
+  html.js .hero { height: calc(1.6 * var(--vh)); } /* korte aanloop: geen lange stilstand */
   html.js .hero__stage { position: sticky; top: 0; height: var(--vh); min-height: 0; }
 
   /* Elke scène begint (1 + overlap) scherm vóór het einde van de vorige:
@@ -368,6 +368,16 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   }
   /* Eerste scène: exact dezelfde maat en uitsnede als de hero-foto (naadloze overgang). */
   html.js .scene--full .scene__media { inset: 0; }
+
+  /* Paneel-weergave (liggend, alleen staande video): video rechts, still wazig erachter. */
+  html.js .scene__stage.is-panel .scene__picture img { filter: blur(22px) brightness(0.55) saturate(1.05); transform: scale(1.12); }
+  html.js .scene__stage.is-panel .scene__canvas {
+    left: auto; top: 50%; bottom: auto;
+    right: max(4vw, calc((100vw - 1180px) / 2));
+    height: calc(100% - 48px); width: auto; aspect-ratio: 9 / 16;
+    transform: translateY(-50%);
+    border-radius: 18px; box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+  }
   html.js .scene__picture img { object-position: 50% 50%; }
   html.js .scene__media::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;

@@ -21,7 +21,7 @@ export function Hero() {
         gsap.from(".hero__reveal", { opacity: 0, y: 14, duration: 0.8, ease: "power2.out", stagger: 0.08 });
         // Bij scrollen: de tekst trekt zich terug en het beeld komt vrij.
         // Het podium blijft staan; daarna vloeit 'Binnenkomst' (zelfde beeld) eroverheen.
-        const firstScreen = () => `+=${window.innerHeight * 0.45}`;
+        const firstScreen = () => `+=${window.innerHeight * 0.32}`;
         gsap.to(".hero__content", {
           opacity: 0,
           y: -48,

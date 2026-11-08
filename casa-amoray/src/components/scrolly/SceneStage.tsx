@@ -61,8 +61,13 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     const observers: IntersectionObserver[] = [];
 
     // Alleen een staande reeks en een breed scherm? Dan de liggende still met camerapad.
-    const useSequence = Boolean(seqEntry && (!landscape || seqEntry.desktop || !landscapeStill));
+    // Liggend scherm zonder liggende video: toon de staande video als paneel rechts, met de
+    // still wazig als achtergrond (zo is bv. Winnie ook op iPad/desktop te zien, zonder uitrekken).
+    // De eerste scène (fullBleed) houdt de still: die moet naadloos op de hero-foto aansluiten.
+    const panel = Boolean(landscape && seqEntry && !seqEntry.desktop && !scene.fullBleed);
+    const useSequence = Boolean(seqEntry && (!landscape || seqEntry.desktop || panel || !landscapeStill));
     canvasRef.current?.classList.toggle("is-off", !useSequence);
+    stage.classList.toggle("is-panel", panel);
     if (seqEntry && useSequence && canvasRef.current) {
       const canvas = canvasRef.current;
       seq = new FrameSequence(canvas, seqEntry, () => canvas.classList.add("is-ready"), scene.fullBleed ? 0.5 : 0.25);
