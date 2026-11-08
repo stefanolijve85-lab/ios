@@ -232,17 +232,17 @@ Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één b
 
 Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfield/*.mp4`.
 
-**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (72 frames per scène, 576×1024):
+**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (96 frames per scène, 576×1024):
 
 ```bash
 H=reference/higgsfield
-npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 72
+npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 96
 python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 70 299 168 318 --extend-left
-npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 72 "crop=iw:ih-210:0:210,eq=gamma=1.16"
-npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 72 "eq=gamma=1.23"
+npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 96 "crop=iw:ih-210:0:210,eq=gamma=1.16"
+npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 96 "eq=gamma=1.23"
 python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 240 116 262 --extend-left
-npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 72 "eq=gamma=1.08"
-npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 72 "crop=iw-110:ih:110:0,eq=gamma=1.15"
+npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 96 "eq=gamma=1.08"
+npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 96 "crop=iw-110:ih:110:0,eq=gamma=1.15"
 ```
 
 - **Muurtekst:** AI verbasterde "VERBINDING" tot "VERBINOING". In 02 en 04 is de regel per frame
