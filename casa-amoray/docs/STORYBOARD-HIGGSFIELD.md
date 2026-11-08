@@ -3,8 +3,8 @@
 Dit document stuurt de beeldproductie voor de video-scrollytelling op de homepage.
 Elke scène hieronder hoort bij een sectie in `src/content/scenes.ts`.
 
-> **Status:** alle beelden op de site zijn nu **tijdelijk**. Ze zijn gemaakt van de
-> mock-ups in `reference/` en op de site gemarkeerd met het label "Tijdelijk".
+> **Status (november 2026):** de **mobiele clips voor scène 02 t/m 06 zijn gemaakt** en staan op
+> de site (zie §4). Desktop gebruikt nog de stills met camerapad. Totaal verbruikt: 20 credits.
 > Beelden van Winnie maken we alleen mét haar referentiefoto (R2, inmiddels ontvangen).
 > Houd haar gezicht, haar natuurlijke krullen en haar glimlach gelijk aan de foto. Kleding in
 > de salonscènes: een eenvoudige donkerbruine tuniek (zie scène 03), niet de outfit van de foto.
@@ -212,3 +212,70 @@ het eerste frame. Zorg dus dat frame 1 ook als losse foto mooi is.
 
 **Foto van Winnie (scène 08):** staat op `public/media/winnie/winnie-portret.webp` (4:5, 640×800).
 Een nieuwere of scherpere foto? Overschrijf dit bestand (staand 4:5, liefst 1200×1500).
+
+
+---
+
+## 4. Gemaakt: mobiele clips (9:16)
+
+Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één batch.
+
+| Instelling | Waarde | Waarom |
+|---|---|---|
+| Model | Seedance 2.0 **Mini** | 4 credits per clip; de proef was al vloeiend en consistent |
+| Duur | 4 s | Genoeg voor 48 scrollframes; korter = goedkoper |
+| Resolutie | 720p (720×1280) | Precies de resolutie van de mobiele beeldreeks |
+| Geluid | uit | Niet nodig op de site |
+| Beginframe | 9:16-uitsnede van de Nederlandse mock-up (`reference/nl/`) | Salon blijft exact gelijk; geen extra beeldgeneratie nodig |
+| Scène 02 | ook een **eindframe** (massagetafel) | Camerabeweging eindigt precies waar het storyboard wil |
+| Scène 03 | **referentiefoto van Winnie** als `image_references` | Herkenbaar gezicht, krullen en glimlach |
+
+Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfield/*.mp4`.
+
+**Nabewerking (gratis, in `npm run frames`):**
+- 03 welkom: AI maakte aan het eind "VERBINOING" van de muurtekst. Bovenste 140 px weggesneden
+  (`"crop=iw:ih-140:0:140"`), de tekst valt buiten beeld.
+- 06 nagevoel: onleesbare AI-tekst aan de linkerrand. Linker 110 px weggesneden
+  (`"crop=iw-110:ih:110:0"`).
+
+**AI-vermelding:** scène 03 toont Winnie als AI-beeld. Op de site staat daarom een vaste vermelding
+("Beeld gemaakt met AI, op basis van een foto van Winnie"); in de footer staat dat de sfeerbeelden
+met AI zijn gemaakt (EU AI-verordening, art. 50). **Laat Winnie de clip goedkeuren.**
+
+**Desktop (16:9) later:** dezelfde prompts en beginframes in 16:9 (uitsnede uit dezelfde mock-ups),
+ook met Mini: 5 × 4 = 20 credits. Daarna `npm run frames -- <clip> <scene> desktop` en klaar;
+de `landscape`-still in `scenes.ts` wordt dan automatisch niet meer gebruikt.
+
+### Gebruikte prompts
+
+**02 Binnenkomst** (begin = ontvangsthoek, eind = massagetafel):
+> One continuous, very slow and smooth gimbal dolly forward at eye level through a warm, candle-lit
+> boutique massage salon: past the green velvet armchairs and the brass sunburst room divider, gliding
+> toward the softly lit massage table in the arched niche. Steady camera, no cuts, no zoom, no people.
+> Keep all furniture, colours and the wall logo exactly as in the start image. Calm, cinematic, photorealistic.
+
+**03 Het welkom** (+ referentiefoto Winnie):
+> In this exact reception corner of a warm boutique massage salon, the woman from the reference photo
+> (same face, same natural curly hair, warm smile) walks in from the side wearing a simple dark brown
+> salon tunic, and calmly pours herbal tea from a ceramic teapot into a cup on the small round
+> stone-mosaic table between the green velvet armchairs. She smiles warmly toward the camera, welcoming
+> the guest. Very slow gentle dolly-in toward the table. Natural realistic hands with five fingers. Keep
+> furniture, colours and lighting exactly as in the start image. No text. Photorealistic, calm, cinematic.
+
+**04 De massageruimte:**
+> Very slow, smooth lateral tracking shot gliding past this still life in a candle-lit massage room: the
+> amber massage oil bottle, the small ceramic bowls, the wooden massage tools, the rolled towel and the
+> olive branches. Candle flames flicker softly, gentle shallow depth of field. No people. Keep all objects,
+> labels and colours exactly as in the start image; do not add or change any text. Calm, warm, cinematic, photorealistic.
+
+**05 De behandeling:**
+> A calm, professional foot massage continues exactly as in the start image: the therapist's oiled hands
+> make one slow, long, gentle gliding stroke along the foot. Very slow push-in toward the hands.
+> Anatomically correct hands with five fingers each, natural skin, soft candlelight. Respectful and
+> luxurious. Keep everything else exactly as in the start image; do not add or change any text. Photorealistic, cinematic.
+
+**06 Na afloop:**
+> After the massage: the woman rests completely relaxed on the massage table under the towel with the
+> warm compress over her eyes, breathing slowly and peacefully. The camera very slowly pulls back and
+> gently comes to rest. Candle flames flicker softly. Very calm, serene, minimal motion. Keep everything
+> exactly as in the start image; do not add or change any text. Photorealistic, cinematic.

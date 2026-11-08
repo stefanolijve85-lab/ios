@@ -182,7 +182,9 @@ export function Footer() {
             </li>
           </ul>
         </nav>
-        <p className="site-footer__small">© {new Date().getFullYear()} {business.name}</p>
+        <p className="site-footer__small">
+          © {new Date().getFullYear()} {business.name}. Sfeerbeelden van de salon zijn met AI gemaakt.
+        </p>
       </div>
     </footer>
   );

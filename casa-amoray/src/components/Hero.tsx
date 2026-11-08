@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { heroAlt, heroMedia } from "@/content/scenes";
 import { bookingHref, business } from "@/content/site";
 import { loadGsap, motionAllowed } from "@/lib/gsap";
-import { Placeholder } from "@/components/Placeholder";
 
 /** Scène 1 — De uitnodiging. Alle kerninformatie en de boekknop direct in beeld. */
 export function Hero() {
@@ -78,8 +77,7 @@ export function Hero() {
               Bekijk behandelingen
             </a>
           </div>
-          <Placeholder className="hero__placeholder">Mock-up van de salon, wordt Higgsfield-clip 01.</Placeholder>
-        </div>
+          </div>
 
         <a className="hero__scroll" href="#beleving" aria-label="Scroll naar de beleving">
           <span aria-hidden="true" />

@@ -73,20 +73,21 @@ npm run frames -- clip-16x9.mp4 welkom desktop
 
 Daarna in `src/content/scenes.ts` voor die scène: `media: { kind: "sequence", id: "welkom" }`
 en de `placeholder`-regel weghalen. Er hoeft geen code te veranderen.
-Nu is alleen scène 02 (`binnenkomst`) al een echte beeldreeks (de proefscène). Scènes 03–06
-gebruiken een still met een scrollgestuurd **camerapad** (sleutelposities in `scenes.ts`) tot hun
-clip klaar is.
+**Mobiel:** scène 02–06 zijn echte Higgsfield-clips (Seedance 2.0 Mini, 9:16, 4 s; 20 credits
+in totaal), zie `docs/STORYBOARD-HIGGSFIELD.md` §4. **Desktop:** zolang er geen 16:9-clips zijn,
+toont elke scène de `landscape`-still met een scrollgestuurd **camerapad**; de staande video wordt
+nooit uitgerekt.
 
 ### De klantreis (fase 6)
 
 | Scène | Duur (scherm) | Beeld nu | Camera | Overgang naar volgende |
 |---|---|---|---|---|
 | 01 Uitnodiging | 2,0 | still (= frame 1 van 02) | stil; tekst trekt weg | naadloos: zelfde beeld |
-| 02 Binnenkomst | 2,8 | **beeldreeks** | dolly de salon in | dissolve |
-| 03 Het welkom | 2,8 | still | dolly naar tafeltje, boog rechts | dissolve |
-| 04 Massageruimte | 2,6 | still | zijwaartse track | dissolve |
-| 05 Behandeling | 2,8 | still | trage push-in op handen | dissolve |
-| 06 Na afloop | 3,2 | still | trekt terug en komt tot rust | crème vel met behandelingen schuift eroverheen |
+| 02 Binnenkomst | 2,8 | clip (mobiel) / still (desktop) | dolly de salon in | dissolve |
+| 03 Het welkom | 2,8 | clip met Winnie (mobiel) / still (desktop) | dolly naar tafeltje, boog rechts | dissolve |
+| 04 Massageruimte | 2,6 | clip (mobiel) / still (desktop) | zijwaartse track | dissolve |
+| 05 Behandeling | 2,8 | clip (mobiel) / still (desktop) | trage push-in op handen | dissolve |
+| 06 Na afloop | 3,2 | clip (mobiel) / still (desktop) | trekt terug en komt tot rust | crème vel met behandelingen schuift eroverheen |
 
 Koppen verschijnen woord voor woord, gekoppeld aan het scrollen. Een dunne roze lijn onder de
 navigatie toont de voortgang door de beleving. Behandelkaarten en blokken komen rustig in beeld.
@@ -137,7 +138,7 @@ gewoon in de salon.
 - KvK-nummer, Instagram (`src/content/site.ts`); adres, telefoon, e-mail en openingstijden zijn ingevuld
 - Domeinnaam
 - Controle van de privacyverklaring (`/privacy`) en van de voorzorgstekst bij de behandelingen
-- Definitieve Higgsfield-clips (zie storyboard)
+- Goedkeuring van Winnie voor de AI-clip van scène 03; desktopclips (16:9) als je die wilt (± 20 credits)
 
 ## 6. Getest
 

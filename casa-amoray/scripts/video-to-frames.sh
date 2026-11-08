@@ -8,6 +8,10 @@
 # Voorbeelden:
 #   npm run frames -- ~/Downloads/02-binnenkomst-9x16.mp4 binnenkomst mobile
 #   npm run frames -- ~/Downloads/02-binnenkomst-16x9.mp4 binnenkomst desktop 72
+#   npm run frames -- clip.mp4 welkom mobile 48 "crop=iw:ih-140:0:140"
+#
+# Het optionele 5e argument is een ffmpeg-filter dat vóór het schalen wordt toegepast,
+# bijvoorbeeld om een rand met een AI-tekstfout weg te snijden.
 #
 # Standaard: mobiel 48 frames op 720x1280, desktop 72 frames op 1600x900, WebP.
 # Meer frames = vloeiender, maar zwaarder. Houd mobiel rond 2-3 MB per scène.
@@ -21,6 +25,8 @@ case "$VARIANT" in
   desktop) W=1600; H=900;  N="${4:-72}"; Q=62 ;;
   *) echo "Variant moet 'mobile' of 'desktop' zijn"; exit 1 ;;
 esac
+PRE="${5:-}"
+[ -n "$PRE" ] && PRE="$PRE,"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/public/media/scenes/$SCENE/$VARIANT"
@@ -32,7 +38,7 @@ FPS=$(python3 -c "print(max(1e-3, $N / float('$DUR')))")
 
 # Schaal + bijsnijden naar de juiste compositie (cover), gelijkmatig N frames.
 ffmpeg -loglevel error -y -i "$VIDEO" \
-  -vf "fps=$FPS,scale=$W:$H:force_original_aspect_ratio=increase,crop=$W:$H" \
+  -vf "${PRE}fps=$FPS,scale=$W:$H:force_original_aspect_ratio=increase,crop=$W:$H" \
   -frames:v "$N" -c:v libwebp -quality "$Q" -compression_level 6 \
   "$OUT/f_%04d.webp"
 

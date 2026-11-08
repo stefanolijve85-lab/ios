@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { frameUrl, OVERLAP, sequences, type Scene } from "@/content/scenes";
 import { cameraTransform } from "@/lib/camera";
 import { FrameSequence } from "@/lib/FrameSequence";
@@ -28,18 +28,31 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
   const captionRef = useRef<HTMLDivElement>(null);
 
   const seqEntry = scene.media.kind === "sequence" ? sequences[scene.media.id] : undefined;
+  const landscapeStill = scene.media.kind === "sequence" ? scene.media.landscape : undefined;
   const poster =
     scene.media.kind === "sequence" && seqEntry
       ? {
-          mobile: frameUrl((seqEntry.mobile ?? seqEntry.desktop)!, 0),
-          desktop: frameUrl((seqEntry.desktop ?? seqEntry.mobile)!, 0),
+          mobile: frameUrl((seqEntry.mobile ?? seqEntry.desktop)!, scene.media.posterFrame ?? 0),
+          desktop: seqEntry.desktop
+            ? frameUrl(seqEntry.desktop, 0)
+            : (landscapeStill?.desktop ?? frameUrl(seqEntry.mobile!, 0)),
         }
       : scene.media.kind === "still"
         ? { mobile: scene.media.mobile, desktop: scene.media.desktop }
         : null;
 
+  // Staand of liggend scherm: bepaalt of de beeldreeks of de liggende still wordt gebruikt.
+  const [landscape, setLandscape] = useState<boolean | null>(null);
   useEffect(() => {
-    if (!motionAllowed()) return;
+    const mql = window.matchMedia("(min-aspect-ratio: 1/1)");
+    const update = () => setLandscape(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!motionAllowed() || landscape === null) return;
     const section = sectionRef.current!;
     const stage = stageRef.current!;
     let cancelled = false;
@@ -47,7 +60,10 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     let revert: (() => void) | null = null;
     const observers: IntersectionObserver[] = [];
 
-    if (seqEntry && canvasRef.current) {
+    // Alleen een staande reeks en een breed scherm? Dan de liggende still met camerapad.
+    const useSequence = Boolean(seqEntry && (!landscape || seqEntry.desktop || !landscapeStill));
+    canvasRef.current?.classList.toggle("is-off", !useSequence);
+    if (seqEntry && useSequence && canvasRef.current) {
       const canvas = canvasRef.current;
       seq = new FrameSequence(canvas, seqEntry, () => canvas.classList.add("is-ready"));
       // Laad als de scène binnen ~1,5 scherm komt; ruim op als hij ver weg is.
@@ -80,24 +96,21 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
       observers.push(near, far);
     }
 
-    const media = scene.media;
+    const still = scene.media.kind === "still" ? scene.media : !useSequence ? landscapeStill : undefined;
+    const pic = pictureRef.current;
+    if (pic) {
+      pic.style.transform = "";
+      pic.style.transformOrigin = still?.origin ? `${still.origin[0]}% ${still.origin[1]}%` : "";
+    }
     const apply = (p: number) => {
       seq?.setProgress(p);
-      const pic = pictureRef.current;
-      if (pic && media.kind === "still") {
-        const t = cameraTransform(media.camera, p);
+      if (pic && still) {
+        const t = cameraTransform(still.camera, p);
         if (t) pic.style.transform = t;
       }
     };
 
-    const onResize = () => {
-      if (!seq) return;
-      if (seq.pickVariant()) {
-        canvasRef.current?.classList.remove("is-ready");
-        seq.load();
-      }
-      seq.resize();
-    };
+    const onResize = () => seq?.resize();
     window.addEventListener("resize", onResize);
 
     loadGsap().then(({ gsap }) => {
@@ -171,7 +184,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
       revert?.();
       seq?.destroy();
     };
-  }, [scene, seqEntry, isLast]);
+  }, [scene, seqEntry, landscapeStill, isLast, landscape]);
 
   const origin = scene.media.kind === "still" && scene.media.origin;
   const headingId = `${scene.id}-titel`;
@@ -218,6 +231,12 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
         </div>
 
         {scene.placeholder && <Placeholder className="scene__placeholder">{scene.placeholder}</Placeholder>}
+        {scene.aiNote && (
+          // Alleen tonen waar het AI-beeld van een persoon ook echt in beeld is.
+          <p className={`scene__ai-note ${seqEntry && !seqEntry.desktop && landscapeStill ? "scene__ai-note--portrait" : ""}`}>
+            {scene.aiNote}
+          </p>
+        )}
       </div>
     </section>
   );

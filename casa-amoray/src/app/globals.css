@@ -278,13 +278,23 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .scene__picture, .scene__picture picture, .scene__canvas { position: absolute; inset: 0; }
 .scene__picture { will-change: transform; }
 .scene__picture img { width: 100%; height: 100%; object-fit: cover; }
+/* Statische weergave (4:5-kader): iets hoger uitsnijden, zodat gezichten niet wegvallen. */
+.scene__picture img { object-position: 50% 22%; }
 .scene__canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s linear; }
 .scene__canvas.is-ready { opacity: 1; }
+.scene__canvas.is-off { display: none; }
 .scene__caption { position: relative; padding: 28px var(--gutter) 56px; max-width: 640px; }
 .scene__heading { font-size: clamp(2.3rem, 9vw, 4.2rem); line-height: 1.02; color: var(--cream); }
 .word { display: inline-block; white-space: pre; will-change: transform, opacity; }
 .scene__body { font-size: 1.1rem; color: rgba(248, 241, 235, 0.9); max-width: 34ch; }
 .scene__placeholder { position: absolute; top: 12px; right: var(--gutter); max-width: 70%; z-index: 2; }
+.scene__ai-note {
+  position: absolute; right: var(--gutter); top: 12px; z-index: 2; margin: 0;
+  padding: 0.3em 0.7em; border-radius: 999px;
+  background: rgba(29, 20, 17, 0.55); color: rgba(248, 241, 235, 0.9);
+  font-size: 0.7rem; letter-spacing: 0.02em;
+}
+@media (min-aspect-ratio: 1/1) { .scene__ai-note--portrait { display: none; } }
 @media (min-aspect-ratio: 1/1) { .scene__media { aspect-ratio: 16 / 9; } }
 
 /* Met JavaScript en beweging: lange secties met een vast 'podium' (CSS sticky).
@@ -301,6 +311,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   html.js .scene { height: calc(var(--len, 2.4) * var(--vh)); margin-top: calc(-1 * (1 + var(--overlap)) * var(--vh)); }
   html.js .scene__stage { position: sticky; top: 0; height: var(--vh); }
   html.js .scene__media { position: absolute; inset: 0; aspect-ratio: auto; }
+  html.js .scene__picture img { object-position: 50% 50%; }
   html.js .scene__media::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background:
@@ -330,6 +341,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   html.js .scene__caption > * { max-width: 620px; }
   html.js .scene__caption .text-link { align-self: flex-start; }
   html.js .scene__placeholder { top: calc(var(--header-h) + 12px); }
+  html.js .scene__ai-note { top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 14px); }
 }
 @media (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 1/1) and (min-width: 768px) {
   html.js .scene__media::after {
