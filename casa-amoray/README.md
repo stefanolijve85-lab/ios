@@ -12,7 +12,18 @@ npm run build && npm start
 ```
 
 > Deze app staat in een eigen map naast de bestaande verlichtingsapp in deze repository en
-> verandert daar niets aan. Op Vercel: nieuw project, **Root Directory = `casa-amoray`**.
+> verandert daar niets aan.
+
+### Online zetten op Vercel (kan vanaf de telefoon)
+
+1. Vercel → **Add New… → Project** → repository **`ios`** → **Import** → **Deploy**
+   (de eerste build is van `main`; dat wordt hieronder vervangen).
+2. **Settings → Build and Deployment → Root Directory** = `casa-amoray` → **Save**.
+3. **Settings → Environments → Production → Branch Tracking** = de branch met de site
+   (nu `claude/quirky-shannon-8xzvhx`) → **Save**.
+4. Elke push naar die branch zet daarna automatisch een nieuwe versie online.
+5. Formulieren en betalingen activeren: **Settings → Environment Variables**
+   (`RESEND_API_KEY`, `BOOKING_EMAIL_FROM`, `MOLLIE_API_KEY`, `NEXT_PUBLIC_SITE_URL`), daarna **Redeploy**.
 
 ---
 
