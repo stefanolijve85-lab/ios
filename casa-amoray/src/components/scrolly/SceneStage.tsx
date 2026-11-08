@@ -86,10 +86,10 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
           wanted = e[0].isIntersecting;
           startLoad();
         },
-        { rootMargin: "150% 0px" },
+        { rootMargin: "100% 0px" },
       );
       const far = new IntersectionObserver((e) => !e[0].isIntersecting && seq?.unload(), {
-        rootMargin: "300% 0px",
+        rootMargin: "180% 0px",
       });
       near.observe(section);
       far.observe(section);
@@ -99,6 +99,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     const still = scene.media.kind === "still" ? scene.media : !useSequence ? landscapeStill : undefined;
     const pic = pictureRef.current;
     if (pic) {
+      pic.style.willChange = still?.camera ? "transform" : "";
       pic.style.transform = "";
       pic.style.transformOrigin = still?.origin ? `${still.origin[0]}% ${still.origin[1]}%` : "";
     }

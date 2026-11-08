@@ -113,7 +113,7 @@ export const scenes: Scene[] = [
   {
     id: "binnenkomst",
     label: "Binnenkomst",
-    length: 2.8,
+    length: 3.2,
     heading: "Laat de drukte van de dag achter je.",
     media: {
       kind: "sequence",
@@ -132,7 +132,7 @@ export const scenes: Scene[] = [
   {
     id: "welkom",
     label: "Het welkom",
-    length: 2.8,
+    length: 3.1,
     heading: "Hier draait het even helemaal om jou.",
     body: "Je wordt persoonlijk ontvangen met een kopje thee en een rustig moment om je wensen te bespreken.",
     media: {
@@ -154,7 +154,7 @@ export const scenes: Scene[] = [
   {
     id: "ruimte",
     label: "De massageruimte",
-    length: 2.6,
+    length: 2.9,
     heading: "Ontspan. Laat los. Geniet.",
     body: "Een rustige ruimte met zachte handdoeken, massageolie en gedempt licht.",
     media: {
@@ -174,7 +174,7 @@ export const scenes: Scene[] = [
   {
     id: "behandeling",
     label: "De behandeling",
-    length: 2.8,
+    length: 3.1,
     heading: "Een behandeling afgestemd op jouw wensen.",
     body: "Of je nu net moeder bent geworden of gewoon even toe bent aan rust: je kiest voor een postpartummassage of een ontspanningsmassage.",
     link: { label: "Bekijk de behandelingen", href: "#behandelingen" },
@@ -195,7 +195,7 @@ export const scenes: Scene[] = [
   {
     id: "nagevoel",
     label: "Na afloop",
-    length: 3.2,
+    length: 3.4,
     heading: "Neem dat ontspannen gevoel mee naar huis.",
     media: {
       kind: "sequence",
