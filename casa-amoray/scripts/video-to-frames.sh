@@ -13,7 +13,7 @@
 # Het optionele 5e argument is een ffmpeg-filter dat vóór het schalen wordt toegepast,
 # bijvoorbeeld om een rand met een AI-tekstfout weg te snijden.
 #
-# Standaard: mobiel 96 frames op 720x1280 (volle clipresolutie, licht verscherpt), desktop 72 frames op 1600x900, WebP.
+# Standaard: mobiel 96 frames op 720x1280 (volle clipresolutie, licht verscherpt), desktop 72 frames op 1280x720, WebP.
 # Meer frames = vloeiender, maar zwaarder. Houd mobiel rond 2-3 MB per scène.
 set -euo pipefail
 
@@ -22,7 +22,7 @@ SCENE="${2:?Geef de scene-id op (bv. binnenkomst)}"
 VARIANT="${3:?Geef mobile of desktop op}"
 case "$VARIANT" in
   mobile)  W=720;  H=1280; N="${4:-96}"; Q=52 ;;
-  desktop) W=1600; H=900;  N="${4:-72}"; Q=62 ;;
+  desktop) W=1280; H=720;  N="${4:-72}"; Q=52 ;;
   *) echo "Variant moet 'mobile' of 'desktop' zijn"; exit 1 ;;
 esac
 PRE="${5:-}"

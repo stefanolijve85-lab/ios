@@ -120,7 +120,7 @@ def process(src, dst, jobs):
 SANS_TAG = dict(kind="sans", weight=500, tracking=0.16)
 
 process("mockup-lounge.jpg", "mockup-lounge.png", [
-    # Muurregel weggewerkt (niet vervangen): de Higgsfield-clip van scène 02 verbasterde hem,
+    # Muurregels weggewerkt (niet vervangen) in alle mock-ups: de Higgsfield-clip van scène 02 verbasterde hem,
     # en de hero moet gelijk blijven aan frame 1 van die clip.
     dict(box=(158, 322, 462, 354), dark=True, text="", **SANS_TAG, blur=0.6),
     dict(box=(1110, 970, 1322, 996), dark=False, text=TAGLINE, **SANS_TAG, blur=0.4, alpha=1.0, fill=0.97, dx=-2, color_override=(226, 214, 198)),
@@ -128,17 +128,17 @@ process("mockup-lounge.jpg", "mockup-lounge.png", [
          kind="serif", weight=500, tracking=0.0, leading=1.25, blur=0.4, fill=0.9),
 ])
 process("mockup-producten.png", "mockup-producten.png", [
-    dict(box=(56, 254, 496, 290), dark=True, text=TAGLINE, **SANS_TAG, blur=1.6, alpha=0.8),
+    dict(box=(56, 254, 496, 290), dark=True, text="", **SANS_TAG, blur=1.6, alpha=0.8),
     dict(box=(592, 630, 756, 660), dark=False, text="MASSAGEOLIE", kind="sans", weight=500, tracking=0.12, fill=0.8, blur=0.5),
     dict(box=(626, 676, 716, 699), dark=False, text="LAVENDEL", kind="sans", weight=500, tracking=0.14, fill=0.95, blur=0.5),
 ])
 process("mockup-voetmassage.png", "mockup-voetmassage.png", [
-    dict(box=(74, 234, 480, 264), dark=True, text=TAGLINE, **SANS_TAG, blur=0.7),
+    dict(box=(74, 234, 480, 264), dark=True, text="", **SANS_TAG, blur=0.7),
     dict(box=(1028, 903, 1152, 927), dark=False, text="MASSAGEOLIE", kind="sans", weight=500, tracking=0.1, fill=0.85, blur=0.5),
     dict(box=(1054, 940, 1126, 961), dark=False, text="LAVENDEL", kind="sans", weight=500, tracking=0.12, fill=0.85, blur=0.5),
 ])
 process("mockup-ontspanning.png", "mockup-ontspanning.png", [
-    dict(box=(276, 206, 576, 234), dark=True, text=TAGLINE, **SANS_TAG, blur=0.6),
+    dict(box=(276, 206, 576, 234), dark=True, text="", **SANS_TAG, blur=0.6),
     dict(box=(1081, 896, 1180, 917), dark=False, text="MASSAGEOLIE", kind="sans", weight=500, tracking=0.08, fill=0.85, blur=0.5),
     dict(box=(1103, 923, 1155, 942), dark=False, text="LAVENDEL", kind="sans", weight=500, tracking=0.1, fill=1.15, blur=0.5),
 ])

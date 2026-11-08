@@ -86,10 +86,9 @@ npm run frames -- clip-16x9.mp4 welkom desktop
 
 Daarna in `src/content/scenes.ts` voor die scène: `media: { kind: "sequence", id: "welkom" }`
 en de `placeholder`-regel weghalen. Er hoeft geen code te veranderen.
-**Mobiel:** scène 02–06 zijn echte Higgsfield-clips (Seedance 2.0 Mini, 9:16, 4 s; 20 credits
-in totaal), zie `docs/STORYBOARD-HIGGSFIELD.md` §4. **Desktop:** zolang er geen 16:9-clips zijn,
-toont elke scène de `landscape`-still met een scrollgestuurd **camerapad**; de staande video wordt
-nooit uitgerekt.
+**Mobiel én liggend (iPad/desktop):** scène 02–06 zijn echte Higgsfield-clips, staand (9:16) en
+liggend (16:9), zie `docs/STORYBOARD-HIGGSFIELD.md` §4–5. Ontbreekt voor een scène een liggende
+versie, dan toont de site de staande video als paneel (of de still met camerapad); nooit uitgerekt.
 
 ### De klantreis (fase 6)
 
