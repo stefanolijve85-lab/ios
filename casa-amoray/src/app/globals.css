@@ -252,6 +252,11 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .sticky-booking.is-visible .btn { pointer-events: auto; }
 .sticky-booking .btn { box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5); }
 @media (min-width: 1080px) { .sticky-booking { display: none; } }
+/* Tablet staand: geen balk over de hele breedte, maar een gecentreerde knop. */
+@media (min-width: 600px) and (max-width: 1079px) {
+  .sticky-booking { background: none; }
+  .sticky-booking .btn { max-width: 420px; margin: 0 auto; }
+}
 
 /* =========================================================================
    Scène 1 — Hero
@@ -491,6 +496,11 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 /* Over Winnie */
 .about { display: grid; gap: 40px; align-items: center; }
 @media (min-width: 900px) { .about { grid-template-columns: 5fr 6fr; gap: 72px; } }
+/* Tablet staand: foto niet schermbreed */
+@media (min-width: 600px) and (max-width: 899px) {
+  .about__photo { max-width: 440px; width: 100%; margin: 0 auto; }
+  .about__text { max-width: 620px; margin: 0 auto; }
+}
 .about__photo { margin: 0; }
 .about__photo-placeholder {
   aspect-ratio: 4 / 5; border-radius: 200px 200px var(--radius) var(--radius);
