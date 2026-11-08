@@ -102,6 +102,8 @@ def process(src, dst, jobs):
         refill(rgb, j["box"], seed=i)
     out = Image.fromarray(rgb).convert("RGBA")
     for j in jobs:
+        if not j["text"]:
+            continue  # alleen wegwerken, geen nieuwe tekst
         x0, y0, x1, y1 = j["box"]
         width = (x1 - x0) * j.get("fill", 0.96)
         lines = j["text"].split("\n")
@@ -118,7 +120,9 @@ def process(src, dst, jobs):
 SANS_TAG = dict(kind="sans", weight=500, tracking=0.16)
 
 process("mockup-lounge.jpg", "mockup-lounge.png", [
-    dict(box=(158, 322, 462, 354), dark=True, text=TAGLINE, **SANS_TAG, blur=0.6),
+    # Muurregel weggewerkt (niet vervangen): de Higgsfield-clip van scène 02 verbasterde hem,
+    # en de hero moet gelijk blijven aan frame 1 van die clip.
+    dict(box=(158, 322, 462, 354), dark=True, text="", **SANS_TAG, blur=0.6),
     dict(box=(1110, 970, 1322, 996), dark=False, text=TAGLINE, **SANS_TAG, blur=0.4, alpha=1.0, fill=0.97, dx=-2, color_override=(226, 214, 198)),
     dict(box=(934, 993, 1090, 1045), dark=True, text="Bedankt dat je voor\nCasa Amoray kiest.",
          kind="serif", weight=500, tracking=0.0, leading=1.25, blur=0.4, fill=0.9),

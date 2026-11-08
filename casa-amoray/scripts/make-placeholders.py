@@ -1,6 +1,6 @@
 """
-Genereert TIJDELIJKE beelden voor de scrollytelling uit de aangeleverde
-mock-ups (map ./reference). Wordt vervangen zodra de Higgsfield-assets klaar zijn
+Maakt de logo's, de stills (mobiel + desktop) en het OG-beeld uit de Nederlandse
+mock-ups (reference/nl). De beeldreeksen komen uit de Higgsfield-clips
 (zie scripts/video-to-frames.sh en docs/STORYBOARD-HIGGSFIELD.md).
 
 Gebruik:  python3 -I scripts/make-placeholders.py   (vanuit de map casa-amoray)
@@ -71,38 +71,5 @@ for name, (src, fxm, fxd) in STILLS.items():
 og = crop_to(Image.open(os.path.join(REF_NL, "mockup-lounge.png")).convert("RGB"), 1200 / 630).resize((1200, 630), Image.LANCZOS)
 og.save(out("og-casa-amoray.jpg"), quality=82)
 
-# ---------- 3. Beeldreeks scène 2 'Binnenkomst' (camera beweegt de salon in) ----------
-def smooth(t):
-    return t * t * (3 - 2 * t)
-
-def sequence(scene, src, variant, ratio, size, start, end, frames):
-    im = Image.open(os.path.join(REF_NL, src)).convert("RGB")
-    W, H = im.size
-    folder = out("scenes", scene, variant, "x")
-    folder = os.path.dirname(folder)
-    for f in os.listdir(folder):
-        os.remove(os.path.join(folder, f))
-    for i in range(frames):
-        t = smooth(i / (frames - 1))
-        fx = start[0] + (end[0] - start[0]) * t
-        fy = start[1] + (end[1] - start[1]) * t
-        z = start[2] + (end[2] - start[2]) * t
-        crop_to(im, ratio, fx, fy, z).resize(size, Image.LANCZOS).save(
-            os.path.join(folder, f"f_{i + 1:04d}.webp"), quality=60, method=6)
-    return frames
-
-manifest_path = os.path.join(ROOT, "src", "content", "media-manifest.json")
-manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
-n_m = sequence("binnenkomst", "mockup-lounge.png", "mobile", 9 / 16, (630, 1120),
-               (0.42, 0.5, 1.0), (0.80, 0.42, 1.55), 48)
-n_d = sequence("binnenkomst", "mockup-lounge.png", "desktop", 16 / 9, (1280, 720),
-               (0.5, 0.5, 1.0), (0.80, 0.42, 1.9), 60)
-v = int(time.time())  # cache-busting na opnieuw genereren
-manifest["binnenkomst"] = {
-    "mobile": {"frames": n_m, "path": "/media/scenes/binnenkomst/mobile", "width": 630, "height": 1120, "v": v},
-    "desktop": {"frames": n_d, "path": "/media/scenes/binnenkomst/desktop", "width": 1280, "height": 720, "v": v},
-    "placeholder": True,
-}
-os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
-json.dump(manifest, open(manifest_path, "w"), indent=2)
+# De beeldreeksen zelf komen nu uit de Higgsfield-clips: zie scripts/video-to-frames.sh.
 print("klaar")

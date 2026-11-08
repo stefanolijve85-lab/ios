@@ -232,11 +232,24 @@ Gekozen voor **zo min mogelijk credits**: één proef, daarna de rest in één b
 
 Kosten: 5 clips × 4 credits = **20 credits**. Bronbestanden: `reference/higgsfield/*.mp4`.
 
-**Nabewerking (gratis, in `npm run frames`):**
-- 03 welkom: AI maakte aan het eind "VERBINOING" van de muurtekst. Bovenste 140 px weggesneden
-  (`"crop=iw:ih-140:0:140"`), de tekst valt buiten beeld.
-- 06 nagevoel: onleesbare AI-tekst aan de linkerrand. Linker 110 px weggesneden
-  (`"crop=iw-110:ih:110:0"`).
+**Nabewerking (gratis).** Opnieuw omzetten? Gebruik precies deze opdrachten (72 frames per scène):
+
+```bash
+H=reference/higgsfield
+npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 72
+python3 scripts/clean-wall-text.py public/media/scenes/binnenkomst/mobile 88 374 210 398 --extend-left
+npm run frames -- $H/03-welkom-9x16.mp4 welkom mobile 72 "crop=iw:ih-210:0:210,eq=gamma=1.16"
+npm run frames -- $H/04-ruimte-9x16.mp4 ruimte mobile 72 "eq=gamma=1.23"
+python3 scripts/clean-wall-text.py public/media/scenes/ruimte/mobile 0 300 145 328 --extend-left
+npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 72 "eq=gamma=1.08"
+npm run frames -- $H/06-nagevoel-9x16.mp4 nagevoel mobile 72 "crop=iw-110:ih:110:0,eq=gamma=1.15"
+```
+
+- **Muurtekst:** AI verbasterde "VERBINDING" tot "VERBINOING". In 02 en 04 is de regel per frame
+  gevolgd en weggewerkt (`clean-wall-text.py`); in 03 loopt Winnie erdoor, daar is de bovenrand
+  weggesneden; in 06 de linkerrand. De muur in de hero toont daarom ook alleen het logo.
+- **Helderheid:** de clips waren donkerder dan de opening (54–66 tegen 71). Met `eq=gamma` is elke
+  scène op ongeveer dezelfde helderheid gebracht (± 73).
 
 **AI-vermelding:** scène 03 toont Winnie als AI-beeld. Op de site staat daarom een vaste vermelding
 ("Beeld gemaakt met AI, op basis van een foto van Winnie"); in de footer staat dat de sfeerbeelden

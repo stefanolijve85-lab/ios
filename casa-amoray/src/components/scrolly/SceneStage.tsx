@@ -114,13 +114,21 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     const onResize = () => seq?.resize();
     window.addEventListener("resize", onResize);
 
-    loadGsap().then(({ gsap }) => {
+    loadGsap().then(({ gsap, ScrollTrigger }) => {
       if (cancelled) return;
       const span = Math.max(0.5, scene.length - 1); // scrollafstand waarin het podium vaststaat
       const fIn = OVERLAP / span; // deel van de scène waarin hij over de vorige heen vloeit
       const fOut = OVERLAP / span; // deel waarin de volgende eroverheen vloeit
 
       const ctx = gsap.context(() => {
+        // 0. Alleen een actief podium vangt tikken op (zie globals.css).
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top top",
+          end: "bottom bottom",
+          onToggle: (self) => stage.classList.toggle("is-live", self.isActive),
+        });
+
         // 1. Overgang: deze scène vloeit over de vorige heen (beide staan stil).
         gsap.fromTo(
           stage,
