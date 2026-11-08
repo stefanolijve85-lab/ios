@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
-import { business, siteUrl } from "@/content/site";
+import { business, indexable, siteUrl } from "@/content/site";
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     description,
     images: [{ url: "/media/og-casa-amoray.jpg", width: 1200, height: 630, alt: "De salon van Casa Amoray" }],
   },
-  robots: { index: true, follow: true },
+  robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

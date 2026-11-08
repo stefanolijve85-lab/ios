@@ -122,9 +122,13 @@ export const bookingHref = "/reserveren";
 
 /**
  * Basis-URL voor SEO (canonical, sitemap, Open Graph).
- * Stel NEXT_PUBLIC_SITE_URL in op het echte domein zodra dat bekend is.
+ * - NEXT_PUBLIC_SITE_URL ingesteld (echt domein) -> die wordt gebruikt en de site mag in Google.
+ * - Anders op Vercel het projectadres (bv. casa-amoray.vercel.app), maar NIET indexeren:
+ *   zo komt de testversie met tijdelijke teksten niet in zoekresultaten.
  */
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || vercelUrl || "http://localhost:3000").replace(/\/$/, "");
+export const indexable = Boolean(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);

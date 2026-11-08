@@ -24,6 +24,8 @@ npm run build && npm start
 4. Elke push naar die branch zet daarna automatisch een nieuwe versie online.
 5. Formulieren en betalingen activeren: **Settings → Environment Variables**
    (`RESEND_API_KEY`, `BOOKING_EMAIL_FROM`, `MOLLIE_API_KEY`, `NEXT_PUBLIC_SITE_URL`), daarna **Redeploy**.
+6. Zolang `NEXT_PUBLIC_SITE_URL` niet is ingesteld, staat de site op **niet indexeren** (testversie).
+   Zet hem op het echte domein (bv. `https://casaamoray.nl`) zodra de site live gaat.
 
 ---
 
