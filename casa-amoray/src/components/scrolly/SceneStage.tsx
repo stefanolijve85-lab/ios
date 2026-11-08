@@ -65,7 +65,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     canvasRef.current?.classList.toggle("is-off", !useSequence);
     if (seqEntry && useSequence && canvasRef.current) {
       const canvas = canvasRef.current;
-      seq = new FrameSequence(canvas, seqEntry, () => canvas.classList.add("is-ready"));
+      seq = new FrameSequence(canvas, seqEntry, () => canvas.classList.add("is-ready"), scene.fullBleed ? 0.5 : 0.25);
       // Laad als de scène binnen ~1 scherm komt; ruim op als hij ver weg is.
       // Start zodra de openingsfoto (LCP) binnen is, niet pas na de hele pagina:
       // dan staan de frames van scène 2 klaar vóór de eerste scroll.
@@ -103,7 +103,11 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
       pic.style.transform = "";
       pic.style.transformOrigin = still?.origin ? `${still.origin[0]}% ${still.origin[1]}%` : "";
     }
-    const apply = (p: number) => {
+    // De camera staat stil zolang de scène nog overvloeit; pas daarna beweegt hij.
+    // Zo vloeien er nooit twee bewegende beelden door elkaar (geen dubbelbeeld).
+    const hold = OVERLAP / Math.max(0.5, scene.length - 1);
+    const apply = (raw: number) => {
+      const p = Math.max(0, (raw - hold) / (1 - hold));
       seq?.setProgress(p);
       if (pic && still) {
         const t = cameraTransform(still.camera, p);
@@ -203,7 +207,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
     <section
       ref={sectionRef}
       id={scene.id}
-      className={`scene ${isLast ? "scene--last" : ""}`}
+      className={`scene ${isLast ? "scene--last" : ""} ${scene.fullBleed ? "scene--full" : ""}`}
       style={{ "--len": scene.length } as React.CSSProperties}
       aria-labelledby={headingId}
     >

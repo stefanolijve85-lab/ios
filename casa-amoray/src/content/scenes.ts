@@ -83,6 +83,11 @@ export type Scene = {
   placeholder?: string;
   /** Vaste, zichtbare vermelding bij AI-beelden van echte personen (EU AI-verordening, art. 50). */
   aiNote?: string;
+  /**
+   * Schermvullend achter de menubalk, precies zoals de hero-foto. Voor de eerste scène:
+   * dan ligt frame 1 exact over de foto en lijkt de foto vanzelf in beweging te komen.
+   */
+  fullBleed?: boolean;
 };
 
 export const sequences = manifest as Record<string, SequenceEntry>;
@@ -113,6 +118,7 @@ export const scenes: Scene[] = [
   {
     id: "binnenkomst",
     label: "Binnenkomst",
+    fullBleed: true,
     length: 3.2,
     heading: "Laat de drukte van de dag achter je.",
     media: {

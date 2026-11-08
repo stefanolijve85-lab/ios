@@ -42,7 +42,11 @@ export class FrameSequence {
   private loadingToken = 0;
   private onFirstFrame?: () => void;
 
-  constructor(canvas: HTMLCanvasElement, entry: SequenceEntry, onFirstFrame?: () => void) {
+  /** Verticale uitlijning bij bijsnijden: 0 = boven vasthouden, 0.5 = midden (zoals object-fit: cover). */
+  private alignY: number;
+
+  constructor(canvas: HTMLCanvasElement, entry: SequenceEntry, onFirstFrame?: () => void, alignY = 0.25) {
+    this.alignY = alignY;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d", { alpha: false })!;
     this.entry = entry;
@@ -176,7 +180,7 @@ export class FrameSequence {
     const h = img.naturalHeight * scale;
     this.ctx.globalAlpha = alpha;
     // Horizontaal centreren; verticaal vooral onderaan bijsnijden, zodat hoofden bovenin blijven.
-    this.ctx.drawImage(img, (cw - w) / 2, (ch - h) * 0.25, w, h);
+    this.ctx.drawImage(img, (cw - w) / 2, (ch - h) * this.alignY, w, h);
     this.ctx.globalAlpha = 1;
   }
 
