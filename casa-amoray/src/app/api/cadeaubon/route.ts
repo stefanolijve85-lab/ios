@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   }
 
   const option = giftCards.options().find((t) => t.id === clean(body.bon));
+  const delivery = giftCards.delivery.find((d) => d.id === clean(body.levering));
   const data = {
     naam: clean(body.naam, 100),
     email: clean(body.email, 150),
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     voor: clean(body.voor, 80),
     boodschap: clean(body.boodschap, 300),
   };
-  if (!option || data.naam.length < 2 || !EMAIL_RE.test(data.email) || !body.toestemming) {
+  if (!option || !delivery || data.naam.length < 2 || !EMAIL_RE.test(data.email) || !body.toestemming) {
     return NextResponse.json({ ok: false, message: "Niet alle gegevens zijn correct ingevuld." }, { status: 422 });
   }
 
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
       metadata: {
         type: "cadeaubon",
         bon: option.id,
+        levering: delivery.id,
         naam: data.naam,
         email: data.email,
         telefoon: data.telefoon,

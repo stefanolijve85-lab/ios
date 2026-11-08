@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { euro, type Treatment } from "@/content/site";
+import { euro, giftCards, type Treatment } from "@/content/site";
 
-type Errors = Partial<Record<"bon" | "naam" | "email" | "toestemming", string>>;
+type Errors = Partial<Record<"bon" | "levering" | "naam" | "email" | "toestemming", string>>;
 
 /**
  * Cadeaubon bestellen. Na verzenden gaat de bezoekster naar de beveiligde
@@ -24,6 +24,7 @@ export function GiftCardForm({ options, initial }: { options: Treatment[]; initi
     const s = (k: string) => String(data.get(k) ?? "").trim();
     const e: Errors = {};
     if (!options.some((o) => o.id === s("bon"))) e.bon = "Kies een cadeaubon.";
+    if (!giftCards.delivery.some((d) => d.id === s("levering"))) e.levering = "Kies hoe je de cadeaubon wilt ontvangen.";
     if (s("naam").length < 2) e.naam = "Vul je naam in.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s("email"))) e.email = "Vul een geldig e-mailadres in, bijvoorbeeld naam@voorbeeld.nl.";
     if (!data.get("toestemming")) e.toestemming = "Geef toestemming om je gegevens voor deze bestelling te gebruiken.";
@@ -102,6 +103,22 @@ export function GiftCardForm({ options, initial }: { options: Treatment[]; initi
           ))}
         </div>
         {err("bon")}
+      </fieldset>
+
+      <fieldset className="fieldset" aria-describedby={errors.levering ? "levering-fout" : undefined}>
+        <legend id="bon-levering" tabIndex={-1}>Hoe wil je de cadeaubon ontvangen? *</legend>
+        <div className="choice-list">
+          {giftCards.delivery.map((d) => (
+            <label key={d.id} className="choice">
+              <input type="radio" name="levering" value={d.id} />
+              <span className="choice__box choice__box--stack">
+                <span className="choice__name">{d.label}</span>
+                <span className="choice__meta">{d.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {err("levering")}
       </fieldset>
 
       <div className="row-2">

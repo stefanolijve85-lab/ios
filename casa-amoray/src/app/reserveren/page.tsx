@@ -46,6 +46,8 @@ export default function Reserveren({ searchParams }: { searchParams: { behandeli
             <p className="booking__contact">
               Liever bellen of appen? <a href={business.phoneHref}>{business.phone}</a>
               <br />
+              Of mail: <a href={`mailto:${business.email}`}>{business.email}</a>
+              <br />
               {business.street}, {business.postalCode} {business.city}
             </p>
           </aside>

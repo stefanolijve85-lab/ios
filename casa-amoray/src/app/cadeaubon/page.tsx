@@ -34,8 +34,11 @@ export default function Cadeaubon({ searchParams }: { searchParams: { bon?: stri
                 {business.postalCode} {business.city}
               </a>
             </p>
+            <p>Elke avond van {business.hours.opens} tot {business.hours.closes}.</p>
             <p>
               Of bel of app: <a href={business.phoneHref}>{business.phone}</a>
+              <br />
+              Mail: <a href={`mailto:${business.email}`}>{business.email}</a>
             </p>
           </aside>
         </div>

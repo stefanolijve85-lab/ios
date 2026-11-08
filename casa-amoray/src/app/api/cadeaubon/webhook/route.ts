@@ -30,6 +30,8 @@ export async function POST(req: Request) {
 
   const option = giftCards.options().find((t) => t.id === m.bon);
   const bon = option ? `${option.name} (${euro(option.price!)})` : payment.description;
+  const delivery = giftCards.delivery.find((d) => d.id === m.levering);
+  const digital = m.levering === "digitaal";
   try {
     await sendMail({
       replyTo: m.email,
@@ -45,11 +47,14 @@ export async function POST(req: Request) {
         `E-mail:         ${m.email}`,
         `Telefoon:       ${m.telefoon || "-"}`,
         `Voor:           ${m.voor || "-"}`,
+        `Ontvangen:      ${delivery?.label ?? "onbekend"}${digital ? ` (naar ${m.email})` : ""}`,
         ``,
         `Persoonlijke boodschap:`,
         m.boodschap || "-",
         ``,
-        `Neem contact op met de koper over het overhandigen of versturen van de cadeaubon.`,
+        digital
+          ? `Stuur de cadeaubon digitaal naar ${m.email}.`
+          : `De koper haalt de cadeaubon op in de salon. Leg hem klaar.`,
       ].join("\n"),
     });
   } catch (e) {
@@ -65,7 +70,9 @@ export async function POST(req: Request) {
         `Hoi ${m.naam.split(" ")[0]},`,
         ``,
         `Bedankt voor je bestelling. Je betaling voor de cadeaubon "${bon}" is ontvangen.`,
-        `Winnie neemt contact met je op over het ontvangen van de cadeaubon.`,
+        digital
+          ? `Winnie stuurt de cadeaubon digitaal naar dit e-mailadres.`
+          : `Je kunt de cadeaubon ophalen in de salon, elke avond tussen ${business.hours.opens} en ${business.hours.closes}.`,
         ``,
         `Hartelijke groet,`,
         `${business.name}`,

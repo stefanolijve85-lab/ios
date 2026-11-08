@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Sections";
-import { business } from "@/content/site";
+import { business, giftCards } from "@/content/site";
 import { getPayment, isPaymentId, mollieConfigured, type MolliePayment } from "@/lib/server/mollie";
 
 export const metadata: Metadata = { title: "Cadeaubon", robots: { index: false } };
@@ -11,9 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function Bedankt({ searchParams }: { searchParams: { id?: string } }) {
   const id = searchParams.id ?? "";
   let status: MolliePayment["status"] | "unknown" = "unknown";
+  let levering: string | undefined;
   if (isPaymentId(id) && mollieConfigured()) {
     try {
-      status = (await getPayment(id)).status;
+      const p = await getPayment(id);
+      status = p.status;
+      levering = p.metadata?.levering;
     } catch {
       status = "unknown";
     }
@@ -23,7 +26,9 @@ export default async function Bedankt({ searchParams }: { searchParams: { id?: s
     status === "paid"
       ? {
           title: "Dank je wel!",
-          text: "Je betaling is gelukt en je cadeaubon is besteld. Je ontvangt een bevestiging per e-mail en Winnie neemt contact met je op over het ontvangen van de cadeaubon.",
+          text: `Je betaling is gelukt en je cadeaubon is besteld. Je ontvangt een bevestiging per e-mail. ${
+            giftCards.delivery.find((d) => d.id === levering)?.hint ?? ""
+          }`,
         }
       : status === "open" || status === "pending" || status === "authorized"
         ? {

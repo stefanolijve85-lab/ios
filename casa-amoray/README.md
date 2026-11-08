@@ -105,9 +105,9 @@ schijnbevestiging**:
 - De aanvraag wordt per e-mail naar Winnie gestuurd via [Resend](https://resend.com). Zet daarvoor:
   ```
   RESEND_API_KEY=...
-  BOOKING_EMAIL_TO=adres-van-winnie@...
-  BOOKING_EMAIL_FROM="Casa Amoray <reserveren@jouwdomein.nl>"
-  NEXT_PUBLIC_SITE_URL=https://jouwdomein.nl
+  BOOKING_EMAIL_FROM="Casa Amoray <reserveren@casaamoray.nl>"   # domein eerst verifiëren in Resend
+  NEXT_PUBLIC_SITE_URL=https://casaamoray.nl                      # het echte domein van de site
+  # BOOKING_EMAIL_TO is optioneel; standaard winnie@casaamoray.nl
   ```
   **Zonder deze instellingen wordt niets verstuurd**, en de bezoekster ziet dat eerlijk.
 - **Advies voor later**, zodra de vaste avonden bekend zijn: een salonagenda zoals Salonized of
@@ -117,8 +117,9 @@ schijnbevestiging**:
 
 ## 4b. Cadeaubonnen
 
-Op `/cadeaubon` kiest de koper een bon (de behandelingen met hun vaste prijs), vult haar gegevens
-en eventueel een persoonlijke boodschap in, en betaalt via **Mollie** (iDEAL e.d.). Kopen kan ook
+Op `/cadeaubon` kiest de koper een bon (de behandelingen met hun vaste prijs), kiest of ze de bon
+**digitaal per e-mail** ontvangt of **ophaalt in de salon**, vult haar gegevens en eventueel een
+persoonlijke boodschap in, en betaalt via **Mollie** (iDEAL e.d.). Kopen kan ook
 gewoon in de salon.
 
 - De bestelgegevens gaan mee als metadata van de Mollie-betaling; er is geen database nodig.
@@ -133,9 +134,7 @@ gewoon in de salon.
 ## 5. Nog aan te leveren (niet verzonnen)
 
 - Persoonlijke tekst van Winnie (scène 8); de foto is binnen
-- E-mailadres, KvK-nummer, Instagram (`src/content/site.ts`); adres en telefoon zijn ingevuld
-- Vaste avonden/tijden
-- Hoe de cadeaubon bij de koper komt (digitaal of ophalen in de salon); de bestelling en betaling zijn gebouwd
+- KvK-nummer, Instagram (`src/content/site.ts`); adres, telefoon, e-mail en openingstijden zijn ingevuld
 - Domeinnaam
 - Controle van de privacyverklaring (`/privacy`) en van de voorzorgstekst bij de behandelingen
 - Definitieve Higgsfield-clips (zie storyboard)

@@ -22,6 +22,13 @@ function JsonLd() {
       ...(business.street ? { streetAddress: business.street, postalCode: business.postalCode } : {}),
     },
     ...(business.phone ? { telephone: business.phone } : {}),
+    ...(business.email ? { email: business.email } : {}),
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: business.hours.days,
+      opens: business.hours.opens,
+      closes: business.hours.closes,
+    },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Massages",

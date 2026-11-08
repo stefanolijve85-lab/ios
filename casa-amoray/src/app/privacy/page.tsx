@@ -19,7 +19,7 @@ export default function Privacy() {
           <p className="eyebrow">Privacy</p>
           <h1>Privacyverklaring</h1>
           <Placeholder>
-            Concepttekst. Laat deze controleren en vul KvK-nummer en e-mailadres aan vóór livegang.
+            Concepttekst. Laat deze controleren en vul het KvK-nummer aan vóór livegang.
           </Placeholder>
 
           <h2>Welke gegevens</h2>
@@ -55,9 +55,9 @@ export default function Privacy() {
           </p>
           <p>
             Vragen over privacy? Neem contact op met {business.name}, {business.street}, {business.postalCode}{" "}
-            {business.city}, telefoon {business.phone}.
+            {business.city}, telefoon {business.phone}, e-mail {business.email}.
           </p>
-          <Placeholder>Bewaartermijn, e-mailadres en KvK-nummer aanvullen; verwerkers: Resend (e-mail) en Mollie (betalingen).</Placeholder>
+          <Placeholder>Bewaartermijn en KvK-nummer aanvullen; verwerkers: Resend (e-mail) en Mollie (betalingen).</Placeholder>
         </div>
       </main>
       <Footer />

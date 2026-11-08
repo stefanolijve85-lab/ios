@@ -114,6 +114,7 @@ export function GiftAndContact() {
               <span className="visually-hidden"> (opent Google Maps)</span>
             </a>
             <a href={business.phoneHref}>{business.phone}</a>
+            {business.email && <a href={`mailto:${business.email}`}>{business.email}</a>}
           </address>
           <p>{business.availabilityNote}</p>
           <a className="text-link" href={bookingHref}>
@@ -160,6 +161,14 @@ export function Footer() {
           {business.street}, {business.postalCode} {business.city}
           <br />
           <a href={business.phoneHref}>{business.phone}</a>
+          {business.email && (
+            <>
+              {" · "}
+              <a href={`mailto:${business.email}`}>{business.email}</a>
+            </>
+          )}
+          <br />
+          Elke avond 18:00 – 21:00
         </address>
         <nav aria-label="Footer">
           <ul>

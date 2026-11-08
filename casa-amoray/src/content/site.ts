@@ -23,10 +23,11 @@ export const business = {
   /** Voor tel:-links (zonder spaties) */
   phoneHref: "tel:+31615284547",
   // Nog onbekend: niet verzinnen. Vul in zodra bekend.
-  email: null as string | null,
+  email: "winnie@casaamoray.nl" as string | null,
   instagram: null as string | null,
-  /** "Ongeveer vier avonden per week" — exacte tijden volgen. */
-  availabilityNote: "Casa Amoray is ongeveer vier avonden per week geopend. De exacte openingstijden volgen binnenkort.",
+  availabilityNote: "Casa Amoray is elke avond geopend van 18:00 tot 21:00.",
+  /** Openingstijden: elke dag, 18:00–21:00. Gebruikt voor het formulier en Google (JSON-LD). */
+  hours: { opens: "18:00", closes: "21:00", days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
 };
 
 export type Treatment = {
@@ -98,6 +99,11 @@ export const giftCards = {
   intro:
     "Gun iemand anders een moment voor zichzelf. Een cadeaubon van Casa Amoray is een warm cadeau voor een nieuwe moeder, een vriendin of je eigen moeder.",
   ways: "Je bestelt en betaalt een cadeaubon hier online, of gewoon in de salon.",
+  /** Hoe de koper de bon ontvangt. */
+  delivery: [
+    { id: "digitaal", label: "Digitaal per e-mail", hint: "Winnie stuurt de cadeaubon naar jouw e-mailadres." },
+    { id: "salon", label: "Ophalen in de salon", hint: "Haal de cadeaubon op in de salon, elke avond tussen 18:00 en 21:00." },
+  ],
   options: () => treatments.filter((t) => t.bookable && t.price !== null),
 };
 

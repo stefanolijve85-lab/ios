@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { euro, treatments } from "@/content/site";
+import { business, euro, treatments } from "@/content/site";
 
-type Errors = Partial<Record<"behandeling" | "datum" | "naam" | "email" | "telefoon" | "toestemming", string>>;
+type Errors = Partial<Record<"behandeling" | "datum" | "tijd" | "naam" | "email" | "telefoon" | "toestemming", string>>;
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
@@ -22,6 +22,9 @@ function validate(f: FormData): Errors {
   if (!treatments.some((t) => t.bookable && t.id === s("behandeling"))) e.behandeling = "Kies een behandeling.";
   if (!s("datum")) e.datum = "Kies een voorkeursdatum.";
   else if (s("datum") < today()) e.datum = "Kies een datum vanaf vandaag.";
+  const { opens, closes } = business.hours;
+  if (s("tijd") && (s("tijd") < opens || s("tijd") > closes))
+    e.tijd = `Kies een tijd tussen ${opens} en ${closes}; dan is Casa Amoray open.`;
   if (s("naam").length < 2) e.naam = "Vul je naam in.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s("email"))) e.email = "Vul een geldig e-mailadres in, bijvoorbeeld naam@voorbeeld.nl.";
   if (s("telefoon").replace(/[^\d]/g, "").length < 9) e.telefoon = "Vul een geldig telefoonnummer in.";
@@ -162,9 +165,20 @@ export function BookingForm({ initialTreatment }: { initialTreatment?: string })
         <div className="field">
           <label className="label" htmlFor="veld-tijd">Voorkeurstijd</label>
           <p className="hint" id="tijd-hint">
-            Optioneel. Winnie stemt de precieze tijd met je af.
+            Optioneel, tussen {business.hours.opens} en {business.hours.closes}. Winnie stemt de precieze tijd met je af.
           </p>
-          <input className="input" id="veld-tijd" name="tijd" type="time" aria-describedby="tijd-hint" />
+          <input
+            className="input"
+            id="veld-tijd"
+            name="tijd"
+            type="time"
+            min={business.hours.opens}
+            max={business.hours.closes}
+            step={900}
+            aria-invalid={errors.tijd ? true : undefined}
+            aria-describedby={`tijd-hint${errors.tijd ? " tijd-fout" : ""}`}
+          />
+          {err("tijd")}
         </div>
       </div>
 

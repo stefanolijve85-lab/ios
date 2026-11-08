@@ -34,7 +34,8 @@ export async function POST(req: Request) {
   const valid =
     treatment &&
     /^\d{4}-\d{2}-\d{2}$/.test(data.datum) &&
-    (!data.tijd || /^\d{2}:\d{2}$/.test(data.tijd)) &&
+    (!data.tijd ||
+      (/^\d{2}:\d{2}$/.test(data.tijd) && data.tijd >= business.hours.opens && data.tijd <= business.hours.closes)) &&
     data.naam.length >= 2 &&
     EMAIL_RE.test(data.email) &&
     data.telefoon.replace(/\D/g, "").length >= 9 &&
