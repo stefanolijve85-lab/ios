@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { bookingHref, nav } from "@/content/site";
 import { MusicButton } from "@/components/Music";
+import { AutoPlayButton } from "@/components/AutoPlay";
 
 /**
  * Navigatie. Op de homepage ligt hij transparant over de hero en wordt hij
  * na het scrollen crèmekleurig. De knop "Reserveren" is altijd bereikbaar.
  */
 export function Header({ overlay = false }: { overlay?: boolean }) {
+  // overlay = homepage: alleen daar is er een intro om af te spelen
   const [solid, setSolid] = useState(!overlay);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -83,6 +85,7 @@ export function Header({ overlay = false }: { overlay?: boolean }) {
         <a className={`btn btn--small ${light ? "btn--light" : ""}`} href={bookingHref}>
           Reserveren
         </a>
+        {overlay && <AutoPlayButton />}
         <MusicButton />
         <button
           ref={buttonRef}

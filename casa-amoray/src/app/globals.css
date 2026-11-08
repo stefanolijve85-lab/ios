@@ -228,6 +228,11 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .music-button.is-on .music-button__bars i:nth-child(2) { animation-delay: -0.5s; }
 .music-button.is-on .music-button__bars i:nth-child(3) { animation-delay: -1s; }
 @keyframes music-bar { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+/* Afspeelknop (intro vanzelf laten doorlopen): zelfde ronde vorm als de muziekknop */
+.play-button__play { width: 0; height: 0; margin-left: 3px; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent currentColor; }
+.play-button__pause { width: 10px; height: 12px; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+.site-header__bar .play-button { margin-left: -4px; }
+@media (max-width: 380px) { .site-header__bar .music-button { width: 36px; height: 36px; } }
 @media (max-width: 380px) { .site-header__bar .btn--small { padding: 0.55em 0.85em; } }
 
 /* Uitnodiging in de opening */
