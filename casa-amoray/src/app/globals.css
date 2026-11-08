@@ -24,6 +24,7 @@
   --gutter: 20px;
   --header-h: 64px;
   --vh: 100vh;
+  --overlap: 0.5; /* gelijk aan OVERLAP in src/content/scenes.ts */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
   color-scheme: light;
@@ -221,13 +222,13 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 /* =========================================================================
    Scène 1 — Hero
    ========================================================================= */
-.hero {
+.hero { position: relative; color: var(--cream); background: var(--brown-deep); }
+.hero__stage {
   position: relative; min-height: var(--vh);
-  display: flex; align-items: flex-end;
-  color: var(--cream); background: var(--brown-deep); overflow: hidden;
+  display: flex; align-items: flex-end; overflow: hidden;
 }
 .hero__media, .hero__picture, .hero__picture picture, .hero__shade { position: absolute; inset: 0; }
-.hero__picture img { width: 100%; height: 100%; object-fit: cover; object-position: 35% 50%; }
+.hero__picture img { width: 100%; height: 100%; object-fit: cover; }
 .hero__shade {
   background:
     linear-gradient(to top, rgba(32, 22, 18, 0.88) 0%, rgba(32, 22, 18, 0.45) 45%, rgba(32, 22, 18, 0.15) 70%, rgba(32, 22, 18, 0.35) 100%);
@@ -253,10 +254,9 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 @keyframes scrollhint { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
 .hero__placeholder { margin-top: 20px; }
 @media (min-aspect-ratio: 1/1) and (min-width: 768px) {
-  .hero { align-items: center; }
+  .hero__stage { align-items: center; }
   .hero__shade { background: linear-gradient(90deg, rgba(32, 22, 18, 0.82) 0%, rgba(32, 22, 18, 0.45) 45%, rgba(32, 22, 18, 0.1) 75%); }
   .hero__content { padding-bottom: var(--header-h); }
-  .hero__picture img { object-position: 50% 50%; }
 }
 
 /* =========================================================================
@@ -264,6 +264,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
    Standaard (geen JS of verminderde beweging): rustige, statische opmaak.
    ========================================================================= */
 .journey { background: var(--brown-deep); position: relative; }
+.journey__anchor { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
 .journey__intro { position: absolute; top: 0; left: 0; right: 0; z-index: 3; }
 .skip-journey {
   position: absolute; left: var(--gutter); top: 12px; padding: 0.6em 1em; border-radius: 8px;
@@ -274,14 +275,14 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .scene { position: relative; color: var(--cream); }
 .scene__stage { position: relative; overflow: hidden; }
 .scene__media { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--brown-deep); }
-.scene__picture, .scene__picture picture, .scene__canvas, .scene__shade { position: absolute; inset: 0; }
+.scene__picture, .scene__picture picture, .scene__canvas { position: absolute; inset: 0; }
 .scene__picture { will-change: transform; }
 .scene__picture img { width: 100%; height: 100%; object-fit: cover; }
 .scene__canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s linear; }
 .scene__canvas.is-ready { opacity: 1; }
-.scene__shade { background: #1d1411; opacity: 0; pointer-events: none; }
 .scene__caption { position: relative; padding: 28px var(--gutter) 56px; max-width: 640px; }
 .scene__heading { font-size: clamp(2.3rem, 9vw, 4.2rem); line-height: 1.02; color: var(--cream); }
+.word { display: inline-block; white-space: pre; will-change: transform, opacity; }
 .scene__body { font-size: 1.1rem; color: rgba(248, 241, 235, 0.9); max-width: 34ch; }
 .scene__placeholder { position: absolute; top: 12px; right: var(--gutter); max-width: 70%; z-index: 2; }
 @media (min-aspect-ratio: 1/1) { .scene__media { aspect-ratio: 16 / 9; } }
@@ -289,27 +290,65 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 /* Met JavaScript en beweging: lange secties met een vast 'podium' (CSS sticky).
    Sticky is op iOS Safari stabieler dan het pinnen van elementen via JS. */
 @media (prefers-reduced-motion: no-preference) {
-  html.js .scene { height: calc(var(--len, 2.4) * var(--vh)); }
+  /* Hero: podium blijft staan terwijl de tekst wegtrekt; daarna vloeit scène 2 erover. */
+  html.js .hero { height: calc(2 * var(--vh)); }
+  html.js .hero__stage { position: sticky; top: 0; height: var(--vh); min-height: 0; }
+
+  /* Elke scène begint (1 + overlap) scherm vóór het einde van de vorige:
+     zo staan beide even stil en vloeit de nieuwe over de oude heen. */
+  html.js .journey { background: transparent; }
+  html.js .journey__anchor { top: calc((var(--overlap) + 0.35) * var(--vh) + var(--header-h)); }
+  html.js .scene { height: calc(var(--len, 2.4) * var(--vh)); margin-top: calc(-1 * (1 + var(--overlap)) * var(--vh)); }
   html.js .scene__stage { position: sticky; top: 0; height: var(--vh); }
   html.js .scene__media { position: absolute; inset: 0; aspect-ratio: auto; }
   html.js .scene__media::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(to top, rgba(29, 20, 17, 0.85) 0%, rgba(29, 20, 17, 0.35) 38%, rgba(29, 20, 17, 0) 62%);
+    background:
+      radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(29, 20, 17, 0.45) 100%),
+      linear-gradient(to top, rgba(29, 20, 17, 0.85) 0%, rgba(29, 20, 17, 0.35) 38%, rgba(29, 20, 17, 0) 62%);
   }
+
+  /* Van film naar behandelingen: een crème 'vel' schuift over de laatste scène. */
+  html.js .section--sheet {
+    position: relative; z-index: 2; margin-top: calc(-1 * var(--vh));
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -24px 60px -20px rgba(29, 20, 17, 0.55);
+  }
+
+  /* Rustig in beeld komen van kaarten en blokken */
+  html.js .reveal {
+    opacity: 0; transform: translate3d(0, 28px, 0);
+    transition: opacity 0.9s var(--ease), transform 1.1s var(--ease);
+    transition-delay: calc(var(--i, 0) * 110ms);
+  }
+  html.js .reveal.is-in { opacity: 1; transform: none; }
   html.js .scene__caption {
     position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0 auto;
     max-width: 1180px; padding: 0 var(--gutter) calc(56px + var(--safe-bottom));
     will-change: transform, opacity;
   }
   html.js .scene__caption > * { max-width: 620px; }
+  html.js .scene__caption .text-link { align-self: flex-start; }
   html.js .scene__placeholder { top: calc(var(--header-h) + 12px); }
 }
 @media (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 1/1) and (min-width: 768px) {
   html.js .scene__media::after {
-    background: linear-gradient(90deg, rgba(29, 20, 17, 0.78) 0%, rgba(29, 20, 17, 0.3) 40%, rgba(29, 20, 17, 0) 65%);
+    background:
+      radial-gradient(120% 100% at 60% 50%, transparent 55%, rgba(29, 20, 17, 0.45) 100%),
+      linear-gradient(90deg, rgba(29, 20, 17, 0.78) 0%, rgba(29, 20, 17, 0.3) 40%, rgba(29, 20, 17, 0) 65%);
   }
   html.js .scene__caption { top: 0; display: flex; flex-direction: column; justify-content: center; padding-bottom: 0; }
 }
+
+/* Voortgangslijn tijdens de beleving */
+.journey-progress {
+  position: fixed; left: 0; right: 0; z-index: 49;
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  height: 2px; background: rgba(73, 53, 46, 0.12);
+  opacity: 0; transition: opacity 0.4s var(--ease); pointer-events: none;
+}
+.journey-progress.is-visible { opacity: 1; }
+.journey-progress__bar { height: 100%; background: var(--rose); transform: scaleX(0); transform-origin: left; }
 
 /* =========================================================================
    Secties

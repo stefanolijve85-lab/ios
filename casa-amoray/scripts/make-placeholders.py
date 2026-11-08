@@ -5,7 +5,7 @@ mock-ups (map ./reference). Wordt vervangen zodra de Higgsfield-assets klaar zij
 
 Gebruik:  python3 -I scripts/make-placeholders.py   (vanuit de map casa-amoray)
 """
-import json, os
+import json, os, time
 from PIL import Image, ImageOps
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -92,12 +92,13 @@ def sequence(scene, src, variant, ratio, size, start, end, frames):
 manifest_path = os.path.join(ROOT, "src", "content", "media-manifest.json")
 manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
 n_m = sequence("binnenkomst", "mockup-lounge.jpg", "mobile", 9 / 16, (630, 1120),
-               (0.22, 0.5, 1.0), (0.80, 0.42, 1.55), 48)
+               (0.42, 0.5, 1.0), (0.80, 0.42, 1.55), 48)
 n_d = sequence("binnenkomst", "mockup-lounge.jpg", "desktop", 16 / 9, (1280, 720),
-               (0.45, 0.5, 1.0), (0.80, 0.42, 1.9), 60)
+               (0.5, 0.5, 1.0), (0.80, 0.42, 1.9), 60)
+v = int(time.time())  # cache-busting na opnieuw genereren
 manifest["binnenkomst"] = {
-    "mobile": {"frames": n_m, "path": "/media/scenes/binnenkomst/mobile", "width": 630, "height": 1120},
-    "desktop": {"frames": n_d, "path": "/media/scenes/binnenkomst/desktop", "width": 1280, "height": 720},
+    "mobile": {"frames": n_m, "path": "/media/scenes/binnenkomst/mobile", "width": 630, "height": 1120, "v": v},
+    "desktop": {"frames": n_d, "path": "/media/scenes/binnenkomst/desktop", "width": 1280, "height": 720, "v": v},
     "placeholder": True,
 }
 os.makedirs(os.path.dirname(manifest_path), exist_ok=True)

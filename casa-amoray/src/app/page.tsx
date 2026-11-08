@@ -1,5 +1,6 @@
 import { Header, StickyBooking } from "@/components/Header";
 import { Hero } from "@/components/Hero";
+import { JourneyProgress, RevealObserver } from "@/components/scrolly/Ambient";
 import { SceneStage } from "@/components/scrolly/SceneStage";
 import { AboutWinnie, FinalCta, Footer, GiftAndContact, Treatments } from "@/components/Sections";
 import { scenes } from "@/content/scenes";
@@ -43,7 +44,9 @@ export default function Home() {
       <Header overlay />
       <main id="inhoud">
         <Hero />
-        <section id="beleving" className="journey" aria-labelledby="beleving-titel">
+        <section className="journey" aria-labelledby="beleving-titel">
+          {/* Anker valt op het moment dat scène 2 volledig in beeld is (na de overgang). */}
+          <span id="beleving" className="journey__anchor" aria-hidden="true" />
           <div className="journey__intro container">
             <h2 id="beleving-titel" className="visually-hidden">
               De beleving: een bezoek aan Casa Amoray
@@ -53,7 +56,7 @@ export default function Home() {
             </a>
           </div>
           {scenes.map((scene, i) => (
-            <SceneStage key={scene.id} scene={scene} index={i} />
+            <SceneStage key={scene.id} scene={scene} index={i} isLast={i === scenes.length - 1} />
           ))}
         </section>
         <Treatments />
@@ -63,6 +66,8 @@ export default function Home() {
       </main>
       <Footer />
       <StickyBooking />
+      <JourneyProgress />
+      <RevealObserver />
       <JsonLd />
     </>
   );

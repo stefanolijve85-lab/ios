@@ -40,6 +40,8 @@ npm run build && npm start
 | Teken-loop | `requestAnimationFrame`, alleen tekenen als het frame verandert; dichtstbijzijnde geladen frame tijdens het laden | Soepel, ook op trage verbinding |
 | Minder beweging | `prefers-reduced-motion` → **GSAP wordt niet eens geladen**, statische opmaak | Volwaardige statische ervaring |
 | Zonder JS / video faalt | Standaard-HTML = statisch beeld + tekst; JS verrijkt pas daarna | Altijd bruikbaar |
+| Overgangen | Scènes overlappen een halve schermhoogte (`OVERLAP`): beide staan stil en de nieuwe vloeit over de oude heen | Filmisch, zonder harde "schuif"-beweging |
+| Camerapaden | Per scène sleutelposities (`camera` in `scenes.ts`) zolang er nog geen clip is | Storyboardbeweging nu al voelbaar; later 1-op-1 vervangen door frames |
 | Fonts | Cormorant Garamond (koppen) + Manrope (tekst) via `next/font` (zelf gehost) | Geen layout-verspringing, geen externe requests |
 
 ### Opbouw
@@ -71,7 +73,23 @@ npm run frames -- clip-16x9.mp4 welkom desktop
 Daarna in `src/content/scenes.ts` voor die scène: `media: { kind: "sequence", id: "welkom" }`
 en de `placeholder`-regel weghalen. Er hoeft geen code te veranderen.
 Nu is alleen scène 02 (`binnenkomst`) al een echte beeldreeks (de proefscène). Scènes 03–06
-gebruiken een still met een scrollgestuurde camerabeweging tot hun clip klaar is.
+gebruiken een still met een scrollgestuurd **camerapad** (sleutelposities in `scenes.ts`) tot hun
+clip klaar is.
+
+### De klantreis (fase 6)
+
+| Scène | Duur (scherm) | Beeld nu | Camera | Overgang naar volgende |
+|---|---|---|---|---|
+| 01 Uitnodiging | 2,0 | still (= frame 1 van 02) | stil; tekst trekt weg | naadloos: zelfde beeld |
+| 02 Binnenkomst | 2,8 | **beeldreeks** | dolly de salon in | dissolve |
+| 03 Het welkom | 2,8 | still | dolly naar tafeltje, boog rechts | dissolve |
+| 04 Massageruimte | 2,6 | still | zijwaartse track | dissolve |
+| 05 Behandeling | 2,8 | still | trage push-in op handen | dissolve |
+| 06 Na afloop | 3,2 | still | trekt terug en komt tot rust | crème vel met behandelingen schuift eroverheen |
+
+Koppen verschijnen woord voor woord, gekoppeld aan het scrollen. Een dunne roze lijn onder de
+navigatie toont de voortgang door de beleving. Behandelkaarten en blokken komen rustig in beeld.
+"De beleving" in het menu springt naar het moment dat scène 02 volledig in beeld is.
 
 Alle tijdelijke onderdelen tonen het label **"Tijdelijk"**. Zet `showPlaceholderLabels` in
 `src/content/site.ts` op `false` als alles is vervangen.
@@ -112,5 +130,8 @@ schijnbevestiging**:
 - Playwright (Chromium) met iPhone 13-emulatie: scrubben vooruit en terug, juiste frames,
   geen horizontale scroll, geen console-fouten, menu, verminderde beweging (statisch, geen
   frames geladen) en desktop 1440×900.
+- Fase 6: volledige scroll door de klantreis op iPhone 13-emulatie: mediane frametijd 16,7 ms
+  (60 fps), geen dubbele teksten in overgangen, terugscrollen correct, ankerlinks correct;
+  verminderde beweging toont alles statisch en zichtbaar; desktop 1440×900 gecontroleerd.
 - **Nog te doen:** test op een echte iPhone (Safari) en een Android-toestel. Dat kon in deze
   omgeving niet; WebKit-emulatie is geen vervanging.

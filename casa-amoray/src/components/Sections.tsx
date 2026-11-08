@@ -5,17 +5,21 @@ import { Star } from "@/components/Star";
 /** Scène 7 — Behandelingen. */
 export function Treatments() {
   return (
-    <section className="section section--cream" id="behandelingen" aria-labelledby="behandelingen-titel">
+    <section className="section section--cream section--sheet" id="behandelingen" aria-labelledby="behandelingen-titel">
       <div className="container">
-        <header className="section__intro">
+        <header className="section__intro reveal">
           <p className="eyebrow">07 · Behandelingen</p>
           <h2 id="behandelingen-titel">Kies jouw moment</h2>
           <p className="lead">{treatmentNote}</p>
         </header>
 
         <ul className="cards" role="list">
-          {treatments.map((t) => (
-            <li key={t.id} className={`card ${t.comingSoon ? "card--soon" : ""}`}>
+          {treatments.map((t, i) => (
+            <li
+              key={t.id}
+              className={`card reveal ${t.comingSoon ? "card--soon" : ""}`}
+              style={{ "--i": i } as React.CSSProperties}
+            >
               <div className="card__top">
                 <h3 className="card__title">{t.name}</h3>
                 {t.comingSoon ? (
@@ -39,7 +43,7 @@ export function Treatments() {
           ))}
         </ul>
 
-        <p className="fine-print">
+        <p className="fine-print reveal">
           Ben je kort geleden bevallen, zwanger of heb je medische klachten? Overleg bij twijfel eerst met je
           verloskundige of huisarts, en vertel het Winnie vooraf.
         </p>
@@ -53,7 +57,7 @@ export function AboutWinnie() {
   return (
     <section className="section section--beige" id="over-winnie" aria-labelledby="winnie-titel">
       <div className="container about">
-        <figure className="about__photo">
+        <figure className="about__photo reveal">
           {/* Vervang door de echte foto: /public/media/winnie/winnie-portret.webp */}
           <div className="about__photo-placeholder" role="img" aria-label="Hier komt een foto van Winnie">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -64,7 +68,7 @@ export function AboutWinnie() {
           </figcaption>
         </figure>
 
-        <div className="about__text">
+        <div className="about__text reveal" style={{ "--i": 1 } as React.CSSProperties}>
           <p className="eyebrow">08 · Over Winnie</p>
           <h2 id="winnie-titel">Persoonlijk ontvangen door Winnie</h2>
           <p className="lead">
@@ -93,14 +97,14 @@ export function GiftAndContact() {
   return (
     <section className="section section--cream" aria-label="Cadeaubon en contact">
       <div className="container split">
-        <div id="cadeaubon" className="panel">
+        <div id="cadeaubon" className="panel reveal">
           <Star className="panel__star" />
           <h2>Cadeaubon</h2>
           <p>Gun iemand anders een moment voor zichzelf. Een cadeaubon van {business.name} is een warm cadeau voor een nieuwe moeder, een vriendin of je eigen moeder.</p>
           <Placeholder>Hoe je een cadeaubon bestelt, volgt. Tot die tijd kun je contact opnemen.</Placeholder>
         </div>
 
-        <div id="contact" className="panel">
+        <div id="contact" className="panel reveal" style={{ "--i": 1 } as React.CSSProperties}>
           <Star className="panel__star" />
           <h2>Contact</h2>
           <p>
@@ -120,7 +124,7 @@ export function GiftAndContact() {
           </a>
         </div>
 
-        <div className="panel panel--soon">
+        <div className="panel panel--soon reveal" style={{ "--i": 2 } as React.CSSProperties}>
           <span className="badge">Binnenkort</span>
           <h2>Headspa</h2>
           <p>Er komt een nieuwe behandeling aan bij {business.name}. Meer informatie volgt.</p>
@@ -134,7 +138,7 @@ export function GiftAndContact() {
 export function FinalCta() {
   return (
     <section className="final-cta" id="reserveren" aria-labelledby="reserveren-titel">
-      <div className="container final-cta__inner">
+      <div className="container final-cta__inner reveal">
         <Star className="final-cta__star" />
         <h2 id="reserveren-titel">Gun jezelf een moment van rust.</h2>
         <p>Kies je behandeling en een voorkeursmoment. Winnie bevestigt je afspraak persoonlijk.</p>
