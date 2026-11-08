@@ -102,6 +102,9 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .btn:active { transform: scale(0.98); }
 .btn--light { background: var(--cream); color: var(--brown); border-color: var(--cream); }
 .btn--light:hover { background: #fff; }
+/* Tweede knop: zelfde vorm, zacht roze uit de huisstijl (donkerbruine tekst: contrast ~6:1) */
+.btn--rose { background: var(--rose); color: var(--brown-deep); border-color: var(--rose); }
+.btn--rose:hover { background: #d4a198; border-color: #d4a198; }
 .btn--outline { background: transparent; color: var(--brown); }
 .btn--outline:hover { background: var(--brown); color: var(--cream); }
 .btn--small { min-height: 40px; padding: 0.55em 1.1em; font-size: 0.85rem; }
@@ -271,7 +274,15 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .hero__title { font-size: clamp(3.1rem, 14vw, 6.4rem); line-height: 0.98; margin-bottom: 0.3em; max-width: 9ch; }
 .hero__lead { font-size: 1.2rem; max-width: 30ch; color: rgba(248, 241, 235, 0.92); }
 .hero__meta { font-size: 0.9rem; color: rgba(248, 241, 235, 0.8); margin-bottom: 1.6rem; }
-.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+/* Korte schermen (bv. iPhone SE): alles moet onder de menubalk passen. */
+@media (max-height: 700px) and (max-width: 600px) {
+  .hero__content { padding-top: calc(var(--header-h) + 20px); padding-bottom: calc(64px + var(--safe-bottom)); }
+  .hero__title { font-size: clamp(2.3rem, 8.2vh, 3.6rem); }
+  .hero__lead { font-size: 1.05rem; margin-bottom: 0.8em; }
+  .hero__meta { display: none; }
+  .hero__actions .btn { min-height: 46px; }
+}
 .hero__actions .btn { flex: 1 1 100%; }
 @media (min-width: 480px) { .hero__actions .btn { flex: 0 0 auto; } }
 .hero__scroll {
