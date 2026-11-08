@@ -9,11 +9,11 @@
     },
     "placeholder": false,
     "desktop": {
-      "frames": 72,
+      "frames": 96,
       "path": "/media/scenes/binnenkomst/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794151883
+      "v": 1794162651
     }
   },
   "welkom": {
@@ -26,11 +26,11 @@
     },
     "placeholder": false,
     "desktop": {
-      "frames": 72,
+      "frames": 96,
       "path": "/media/scenes/welkom/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794151923
+      "v": 1794162686
     }
   },
   "ruimte": {
@@ -43,11 +43,11 @@
     },
     "placeholder": false,
     "desktop": {
-      "frames": 72,
+      "frames": 96,
       "path": "/media/scenes/ruimte/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794150911
+      "v": 1794162700
     }
   },
   "behandeling": {
@@ -60,11 +60,11 @@
     },
     "placeholder": false,
     "desktop": {
-      "frames": 72,
+      "frames": 96,
       "path": "/media/scenes/behandeling/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794151085
+      "v": 1794162711
     }
   },
   "nagevoel": {
@@ -77,11 +77,11 @@
     },
     "placeholder": false,
     "desktop": {
-      "frames": 72,
+      "frames": 96,
       "path": "/media/scenes/nagevoel/desktop",
       "width": 1280,
       "height": 720,
-      "v": 1794150933
+      "v": 1794162723
     }
   }
 }

@@ -75,7 +75,12 @@ export class FrameSequence {
   resize() {
     // 1,5x: de scherpe 720-frames worden iets verkleind getekend (blijft scherp),
     // met veel minder tekenwerk dan 2x.
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    // Nooit (veel) groter dan de frames zelf: op een groot scherm (iPad liggend) levert een groter
+    // canvas geen extra scherpte op, alleen meer tekenwerk per beeld (= haperen).
+    const cw0 = this.canvas.clientWidth || 1;
+    const ch0 = this.canvas.clientHeight || 1;
+    const fit = 1.1 * Math.min(this.variant.width / cw0, this.variant.height / ch0);
+    const dpr = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 1.5, fit));
     const w = Math.round(this.canvas.clientWidth * dpr);
     const h = Math.round(this.canvas.clientHeight * dpr);
     if (w && h && (w !== this.canvas.width || h !== this.canvas.height)) {

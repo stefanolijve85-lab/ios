@@ -24,12 +24,18 @@ export function AutoPlayButton() {
     if (window.scrollY >= end() - 2) window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
 
     let pos = window.scrollY;
-    let last = performance.now();
+    const t0 = performance.now();
+    let last = t0;
     const step = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000); // na een haperend frame niet ineens springen
+      const dt = Math.min(0.05, (now - last) / 1000); // na een haperend frame niet ineens springen
       last = now;
-      pos += SPEED_VH_PER_S * window.innerHeight * dt;
+      const vh = window.innerHeight;
       const target = end();
+      // Zacht op gang komen (1,5 s) en zacht uitlopen (laatste halve scherm): geen schok.
+      const easeIn = Math.min(1, (now - t0) / 1500);
+      const easeOut = Math.min(1, Math.max(0.15, (target - pos) / (0.5 * vh)));
+      const k = Math.min(easeIn * easeIn * (3 - 2 * easeIn), easeOut);
+      pos += SPEED_VH_PER_S * vh * dt * k;
       if (pos >= target) {
         window.scrollTo({ top: target, behavior: "instant" as ScrollBehavior });
         setPlaying(false);

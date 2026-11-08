@@ -94,7 +94,7 @@ export function SceneStage({ scene, index, isLast = false }: { scene: Scene; ind
         { rootMargin: "100% 0px" },
       );
       const far = new IntersectionObserver((e) => !e[0].isIntersecting && seq?.unload(), {
-        rootMargin: "180% 0px",
+        rootMargin: "60% 0px", // krap: minder beelden tegelijk in het geheugen (iPad Safari hapert anders)
       });
       near.observe(section);
       far.observe(section);

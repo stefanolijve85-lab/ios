@@ -320,7 +320,7 @@ Totaal verbruikt aan clips: 24 credits.
 ## 5. Liggende clips (16:9) en Winnies handen
 
 Liggende schermen (iPad liggend, desktop) krijgen nu dezelfde doorlopende film als mobiel:
-5 clips in 16:9 (Seedance 2.0 Mini, 720p, 4 s), omgezet naar 72 frames van 1280×720.
+5 clips in 16:9 (Seedance 2.0 Mini, 720p, 4 s), omgezet naar 96 frames van 1280×720.
 Beginbeelden: 16:9-uitsnedes van de Nederlandse mock-ups **zonder muurtekst** (alleen het logo),
 zodat er geen tekst te verbasteren valt. Scène 02 begint exact op de liggende hero-foto en eindigt
 bij de massagetafel; kleur afgestemd met `match-color.py` op `lounge-desktop.webp`.
@@ -332,12 +332,12 @@ bij de massagetafel; kleur afgestemd met `match-color.py` op `lounge-desktop.web
 Omzetten (liggend):
 ```bash
 H=reference/higgsfield
-npm run frames -- $H/02-binnenkomst-16x9.mp4 binnenkomst desktop 72
+npm run frames -- $H/02-binnenkomst-16x9.mp4 binnenkomst desktop 96
 python3 scripts/match-color.py public/media/scenes/binnenkomst/desktop public/media/stills/lounge-desktop.webp
-npm run frames -- $H/03-welkom-16x9.mp4 welkom desktop 72
-npm run frames -- $H/04-ruimte-16x9.mp4 ruimte desktop 72 "eq=gamma=1.14"
-npm run frames -- $H/05-behandeling-16x9.mp4 behandeling desktop 72 "eq=gamma=1.14"
-npm run frames -- $H/06-nagevoel-16x9.mp4 nagevoel desktop 72 "eq=gamma=1.14"
+npm run frames -- $H/03-welkom-16x9.mp4 welkom desktop 96
+npm run frames -- $H/04-ruimte-16x9.mp4 ruimte desktop 96 "eq=gamma=1.14"
+npm run frames -- $H/05-behandeling-16x9.mp4 behandeling desktop 96 "eq=gamma=1.14"
+npm run frames -- $H/06-nagevoel-16x9.mp4 nagevoel desktop 96 "eq=gamma=1.14"
 # staand scène 05 (nieuw): npm run frames -- $H/05-behandeling-9x16.mp4 behandeling mobile 96
 ```
 
@@ -357,9 +357,9 @@ or boards"): 02 staand, 02 liggend en 03 liggend (3 × 4 credits).
 H=reference/higgsfield
 npm run frames -- $H/02-binnenkomst-9x16.mp4 binnenkomst mobile 96
 python3 scripts/match-color.py public/media/scenes/binnenkomst/mobile public/media/stills/lounge-mobile.webp
-npm run frames -- $H/02-binnenkomst-16x9.mp4 binnenkomst desktop 72
+npm run frames -- $H/02-binnenkomst-16x9.mp4 binnenkomst desktop 96
 python3 scripts/match-color.py public/media/scenes/binnenkomst/desktop public/media/stills/lounge-desktop.webp
-npm run frames -- $H/03-welkom-16x9.mp4 welkom desktop 72
+npm run frames -- $H/03-welkom-16x9.mp4 welkom desktop 96
 ```
 
 Kosten deze ronde: ± 14,75 credits.

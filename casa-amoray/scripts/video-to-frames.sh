@@ -22,7 +22,7 @@ SCENE="${2:?Geef de scene-id op (bv. binnenkomst)}"
 VARIANT="${3:?Geef mobile of desktop op}"
 case "$VARIANT" in
   mobile)  W=720;  H=1280; N="${4:-96}"; Q=52 ;;
-  desktop) W=1280; H=720;  N="${4:-72}"; Q=52 ;;
+  desktop) W=1280; H=720;  N="${4:-96}"; Q=52 ;;
   *) echo "Variant moet 'mobile' of 'desktop' zijn"; exit 1 ;;
 esac
 PRE="${5:-}"
