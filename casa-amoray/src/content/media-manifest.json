@@ -1,0 +1,17 @@
+{
+  "binnenkomst": {
+    "mobile": {
+      "frames": 48,
+      "path": "/media/scenes/binnenkomst/mobile",
+      "width": 630,
+      "height": 1120
+    },
+    "desktop": {
+      "frames": 60,
+      "path": "/media/scenes/binnenkomst/desktop",
+      "width": 1280,
+      "height": 720
+    },
+    "placeholder": true
+  }
+}

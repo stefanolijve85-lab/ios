@@ -1,0 +1,108 @@
+/**
+ * Centrale bedrijfs- en inhoudsgegevens van Casa Amoray.
+ *
+ * Alles wat nog niet bekend is staat op `null` of is gemarkeerd met
+ * `placeholder: true`. Zulke onderdelen tonen een zichtbaar label "Tijdelijk"
+ * zolang `showPlaceholderLabels` aan staat. Zet dat uit vlak voor livegang,
+ * nadat alle tijdelijke teksten zijn vervangen.
+ */
+
+export const showPlaceholderLabels = true;
+
+export const business = {
+  name: "Casa Amoray",
+  slogan: "Een moment voor jezelf",
+  tagline: "Speciaal voor vrouwen en moeders",
+  owner: "Winnie",
+  city: "Emmen",
+  country: "NL",
+  // Nog onbekend: niet verzinnen. Vul in zodra bekend.
+  street: null as string | null,
+  postalCode: null as string | null,
+  phone: null as string | null,
+  email: null as string | null,
+  instagram: null as string | null,
+  /** "Ongeveer vier avonden per week" — exacte tijden volgen. */
+  availabilityNote: "Casa Amoray is ongeveer vier avonden per week geopend. De exacte openingstijden volgen binnenkort.",
+};
+
+export type Treatment = {
+  id: string;
+  name: string;
+  minutes: number;
+  price: number | null;
+  short: string;
+  description: string;
+  bookable: boolean;
+  comingSoon?: boolean;
+};
+
+/**
+ * Behandelingen. Nieuwe behandelingen (zoals headspa) voeg je hier toe;
+ * zet `bookable: true` en `comingSoon: false` zodra ze reserveerbaar zijn.
+ */
+export const treatments: Treatment[] = [
+  {
+    id: "postpartum",
+    name: "Postpartummassage",
+    minutes: 60,
+    price: 60,
+    short: "Een rustig moment voor jou, in de periode na je bevalling.",
+    description:
+      "Een zachte, ontspannende massage voor moeders. Je ligt comfortabel en Winnie stemt de behandeling af op wat jij op dat moment prettig vindt. Even geen zorgen, alleen tijd voor jezelf.",
+    bookable: true,
+  },
+  {
+    id: "ontspanning",
+    name: "Ontspanningsmassage",
+    minutes: 60,
+    price: 60,
+    short: "Laat de drukte van de dag van je afglijden.",
+    description:
+      "Een weldadige massage in een rustige en warme ruimte. Vooraf bespreken jullie samen je wensen, zodat de massage helemaal bij jou past.",
+    bookable: true,
+  },
+  {
+    id: "deluxe",
+    name: "Deluxe ontspanningsmassage",
+    minutes: 90,
+    price: 85,
+    short: "Extra tijd om echt tot rust te komen.",
+    description:
+      "De uitgebreide variant van de ontspanningsmassage. Met een half uur extra is er alle ruimte om te vertragen en het moment echt te beleven.",
+    bookable: true,
+  },
+  {
+    id: "headspa",
+    name: "Headspa",
+    minutes: 0,
+    price: null,
+    short: "Een nieuwe behandeling, binnenkort bij Casa Amoray.",
+    description: "",
+    bookable: false,
+    comingSoon: true,
+  },
+];
+
+export const treatmentNote =
+  "Je wordt persoonlijk ontvangen met een kopje thee en een rustig moment om je wensen te bespreken. Die kennismaking komt bovenop de massagetijd.";
+
+export const nav = [
+  { label: "Home", href: "/#top" },
+  { label: "Behandelingen", href: "/#behandelingen" },
+  { label: "De beleving", href: "/#beleving" },
+  { label: "Over Winnie", href: "/#over-winnie" },
+  { label: "Cadeaubon", href: "/#cadeaubon" },
+  { label: "Contact", href: "/#contact" },
+];
+
+export const bookingHref = "/reserveren";
+
+/**
+ * Basis-URL voor SEO (canonical, sitemap, Open Graph).
+ * Stel NEXT_PUBLIC_SITE_URL in op het echte domein zodra dat bekend is.
+ */
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+
+export const euro = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
