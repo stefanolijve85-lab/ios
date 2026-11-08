@@ -109,6 +109,18 @@ navigatie toont de voortgang door de beleving. Behandelkaarten en blokken komen 
 Alle tijdelijke onderdelen tonen het label **"Tijdelijk"**. Zet `showPlaceholderLabels` in
 `src/content/site.ts` op `false` als alles is vervangen.
 
+## 3b. Achtergrondmuziek
+
+Rustige spamuziek (`public/media/audio/spa-ambient.m4a`, 88 s naadloze lus, 1,1 MB), gemaakt met
+ElevenLabs Music v2.5 via Higgsfield (13 credits; bron: `reference/higgsfield/spa-ambient-bron.mp3`).
+
+- Speelt pas na een tik op het muziekknopje in de menubalk of "Rustige muziek" in de opening
+  (browsers staan automatisch afspelen niet toe). Het bestand laadt ook pas dan.
+- Web Audio: naadloze lus, zacht in-/uitfaden, speelt ook als de iPhone op stil staat
+  (de bezoeker vroeg er zelf om), pauzeert als de pagina verborgen is.
+- De keuze wordt onthouden (localStorage); bij een volgend bezoek start de muziek bij de eerste tik.
+- Volume en bestand aanpassen: `src/lib/ambientMusic.ts` (`VOLUME`, `SRC`).
+
 ## 4. Reserveren
 
 Er bestond nog geen boekingssysteem. Er worden **geen tijdsloten verzonnen** en er is **geen

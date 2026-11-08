@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { heroAlt, heroMedia } from "@/content/scenes";
 import { bookingHref, business } from "@/content/site";
 import { loadGsap, motionAllowed } from "@/lib/gsap";
+import { MusicInvite } from "@/components/Music";
 
 /** Scène 1 — De uitnodiging. Alle kerninformatie en de boekknop direct in beeld. */
 export function Hero() {
@@ -76,6 +77,7 @@ export function Hero() {
             <a className="text-link text-link--light" href="#behandelingen">
               Bekijk behandelingen
             </a>
+            <MusicInvite />
           </div>
           </div>
 

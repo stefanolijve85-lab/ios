@@ -211,6 +211,31 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   background: none; border: 0; color: var(--ink-soft); font: inherit; text-decoration: underline; cursor: pointer;
 }
 
+/* Muziekknop in de menubalk */
+.music-button {
+  width: 40px; height: 40px; flex: none; display: grid; place-items: center;
+  border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit;
+  cursor: pointer; opacity: 0.85; -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.3s var(--ease), background 0.3s var(--ease);
+}
+.music-button:hover { opacity: 1; }
+.music-button__bars { display: flex; align-items: flex-end; gap: 3px; height: 14px; }
+.music-button__bars i { display: block; width: 2px; height: 4px; background: currentColor; border-radius: 1px; transition: height 0.3s var(--ease); }
+.music-button.is-on .music-button__bars i { animation: music-bar 1.6s ease-in-out infinite; }
+.music-button.is-on .music-button__bars i:nth-child(2) { animation-delay: -0.5s; }
+.music-button.is-on .music-button__bars i:nth-child(3) { animation-delay: -1s; }
+@keyframes music-bar { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+@media (max-width: 380px) { .site-header__bar .btn--small { padding: 0.55em 0.85em; } }
+
+/* Uitnodiging in de opening */
+.music-invite {
+  padding: 8px 0; min-height: 44px;
+  background: none; border: 0; color: rgba(248, 241, 235, 0.85);
+  font: 500 0.9rem/1.2 var(--sans); letter-spacing: 0.02em; cursor: pointer;
+  text-decoration: underline; text-decoration-color: rgba(248, 241, 235, 0.35); text-underline-offset: 4px;
+}
+.music-invite:hover { color: var(--cream); }
+
 /* Zwevende boekknop (alleen mobiel) */
 .sticky-booking {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;

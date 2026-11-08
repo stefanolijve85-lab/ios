@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { bookingHref, nav } from "@/content/site";
+import { MusicButton } from "@/components/Music";
 
 /**
  * Navigatie. Op de homepage ligt hij transparant over de hero en wordt hij
@@ -82,6 +83,7 @@ export function Header({ overlay = false }: { overlay?: boolean }) {
         <a className={`btn btn--small ${light ? "btn--light" : ""}`} href={bookingHref}>
           Reserveren
         </a>
+        <MusicButton />
         <button
           ref={buttonRef}
           className="menu-button"
