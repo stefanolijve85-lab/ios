@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Lnk";
 import { Logo } from "./Logo";
 import { navigatie } from "./nav";
 import { winkel, adresRegel, routeUrl } from "@/content/winkel";

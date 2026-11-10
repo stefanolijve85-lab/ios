@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Lnk";
 import { Check } from "lucide-react";
 import { PaginaKop } from "@/components/PaginaKop";
 import { Foto } from "@/components/Foto";

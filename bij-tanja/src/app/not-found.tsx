@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Lnk";
 import { KaasMerk } from "@/components/Logo";
 
 export default function NietGevonden() {

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Lnk";
 import { Foto } from "./Foto";
 
 /** Openingsbeeld voor de subpagina's */

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Lnk";
 import { Gift } from "lucide-react";
 import { Foto } from "../Foto";
 import { Reveal } from "../Reveal";
