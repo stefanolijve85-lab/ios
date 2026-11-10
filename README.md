@@ -135,3 +135,10 @@ src/
 - Lampen slepen tussen kamers, kamer-iconen kiezen in de UI.
 - Widgets/scènes op tijd (timers), en groepen over kamers heen.
 - Optioneel lokale Tuya-besturing (LocalTuya) voor snelheid zonder cloud.
+
+---
+
+## 🧀 Ook in deze repository: de website van Bij Tanja
+
+In de map [`bij-tanja/`](bij-tanja/) staat een losse Next.js-website voor de winkel
+Bij Tanja (Emmen). Zie [`bij-tanja/README.md`](bij-tanja/README.md).

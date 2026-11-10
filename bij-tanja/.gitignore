@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+*.log
+.DS_Store
+.env*
+.vercel
+*.tsbuildinfo
+# Originele (grote) foto's blijven lokaal; de web-versies staan in public/fotos/bij-tanja
+fotos/origineel/*
+!fotos/origineel/LEESMIJ.md
