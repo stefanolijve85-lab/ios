@@ -1,0 +1,36 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Detepo — conceptontwerp</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#0b1626;background:#fff;-webkit-font-smoothing:antialiased}
+header{display:flex;align-items:center;gap:36px;padding:18px 64px;border-bottom:1px solid #e6ebf2}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em;margin-right:auto}
+.logo img{width:44px;height:44px}
+nav{display:flex;gap:30px;font-size:15px;font-weight:500;color:#33435c}
+.btn{background:#009fe3;color:#fff;padding:13px 22px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block}
+.btn.ghost{background:transparent;border:1.5px solid rgba(255,255,255,.4)}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;min-height:640px}
+.hero .l{background:#0b1626;color:#fff;padding:88px 64px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{color:#4cc3f5;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;margin-bottom:22px}
+h1{font-size:64px;line-height:1.02;letter-spacing:-.035em;margin:0 0 22px;max-width:11ch}
+.hero p{font-size:19px;line-height:1.55;color:#b8c6da;max-width:44ch;margin:0 0 34px}
+.row{display:flex;gap:12px}
+.hero .r{background:linear-gradient(160deg,#f3f7fb,#dfeaf5);display:grid;place-items:center;position:relative;overflow:hidden}
+.hero .r::before{content:"";position:absolute;width:560px;height:560px;border-radius:50%;border:1px solid #bcd3e8;box-shadow:0 0 0 70px rgba(0,159,227,.05),0 0 0 150px rgba(0,159,227,.04)}
+.hero .r img{position:relative;width:78%;mix-blend-mode:multiply}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #e6ebf2}
+.strip div{padding:34px 64px;border-right:1px solid #e6ebf2}.strip b{display:block;font-size:20px;margin-bottom:6px;letter-spacing:-.01em}.strip span{color:#52627a;font-size:15px;line-height:1.5}
+.dash{padding:80px 64px;display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;align-items:center;background:#f7f9fc}
+.dash h2{font-size:40px;letter-spacing:-.03em;line-height:1.08;margin:0 0 16px}.dash p{color:#52627a;font-size:17px;line-height:1.6;margin:0}
+.panel{background:#0b1626;border-radius:16px;padding:28px;color:#fff}
+.panel small{color:#8ea3bf;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.bars{display:flex;align-items:flex-end;gap:10px;height:210px;margin-top:22px;border-bottom:1px solid #2a3a52}
+.bars i{flex:1;border-radius:5px 5px 0 0;background:linear-gradient(#4cc3f5,#009fe3)}
+.x{display:flex;justify-content:space-between;color:#8ea3bf;font-size:12px;margin-top:8px}
+.tag{font-size:12px;color:#8ea3bf;margin-top:14px}
+@media(max-width:760px){header{padding:14px 20px}nav{display:none}header .btn{padding:10px 14px;font-size:14px}.hero{grid-template-columns:1fr;min-height:0}.hero .l{padding:44px 20px}h1{font-size:40px}.hero p{font-size:17px}.hero .r{min-height:300px}.hero .r::before{width:260px;height:260px}.strip{grid-template-columns:1fr}.strip div{padding:22px 20px;border-right:0;border-bottom:1px solid #e6ebf2}.dash{grid-template-columns:1fr;padding:44px 20px;gap:28px}.dash h2{font-size:30px}}
+</style></head><body>
+<header><div class="logo"><img src="logo.png" alt="">Detepo</div><nav><span>Klantenteller</span><span>Dashboard</span><span>Voor winkels</span><span>Contact</span></nav><span class="btn">Neem contact op</span></header>
+<section class="hero"><div class="l"><div class="eyebrow">Klantentelling</div><h1>Weet hoeveel bezoekers er binnenkomen.</h1><p>Een compacte teller bij de ingang en een overzichtelijk dashboard. Zo zie je wanneer het druk is in je winkel.</p><div class="row"><span class="btn">Bekijk de klantenteller</span><span class="btn ghost">Naar het dashboard</span></div></div><div class="r"><img src="teller.png" alt=""></div></section>
+<section class="strip"><div><b>Tellen</b><span>In en uit, per ingang.</span></div><div><b>Inzicht</b><span>Drukte per uur en per dag in één overzicht.</span></div><div><b>Rapportage</b><span>Cijfers om je bezetting op af te stemmen.</span></div></section>
+<section class="dash"><div><h2>Je drukte in één oogopslag.</h2><p>Het dashboard zet de tellingen om in een helder beeld van je dag.</p></div><div class="panel"><small>Bezoekers per uur</small><div class="bars"><i style="height:22%"></i><i style="height:38%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:72%"></i><i style="height:94%"></i><i style="height:80%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:46%"></i><i style="height:30%"></i></div><div class="x"><span>09:00</span><span>12:00</span><span>15:00</span><span>18:00</span></div><div class="tag">Voorbeeldweergave</div></div></section>
+</body></html>

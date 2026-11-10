@@ -14,6 +14,7 @@ export function ProjectCards() {
           <h3><TrackLink href={`/voorbeelden/${p.slug}`} event="example_view" project={p.slug}>{p.name}</TrackLink></h3>
           <p className="kind">{p.kind}</p>
           <p>{p.summary}</p>
+          <TrackLink href={`/voorbeelden/${p.slug}`} event="example_view" project={p.slug} className="more">Bekijk dit voorbeeld<span className="sr-only">: {p.name}</span> →</TrackLink>
         </article>
       ))}
     </div>

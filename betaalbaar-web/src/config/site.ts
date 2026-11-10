@@ -116,6 +116,12 @@ export type Project = {
   visual: string[];
   functional: string[];
   theme: "detepo" | "casa" | "tanja";
+  /** Beschrijving van het schermbeeld (alt-tekst). */
+  imageAlt: string;
+  /** Hoogte van het hele-pagina-beeld bij 1100px breed. */
+  fullHeight: number;
+  /** Eerlijke herkomst van het beeld. */
+  imageNote: string;
   /** Alleen een bevestigde, echte URL. Nooit verzinnen. */
   liveUrl: string | null;
 };
@@ -142,6 +148,9 @@ export const projects: Project[] = [
       "Eén primaire actie per scherm: contact opnemen.",
     ],
     theme: "detepo",
+    imageAlt: "Conceptwebsite van Detepo met de klantenteller naast de kop 'Weet hoeveel bezoekers er binnenkomen'",
+    fullHeight: 1041,
+    imageNote: "Conceptontwerp met het echte logo en de productfoto van Detepo. De teksten en de grafiek zijn voorbeeldinhoud.",
     liveUrl: null,
   },
   {
@@ -165,6 +174,9 @@ export const projects: Project[] = [
       "De reserveerknop blijft op mobiel in beeld.",
     ],
     theme: "casa",
+    imageAlt: "Conceptwebsite van Casa Amoray in zachte zandtinten met de kop 'Even tijd voor jezelf'",
+    fullHeight: 994,
+    imageNote: "Conceptontwerp zonder foto's: er is nog geen beeldmateriaal van de salon aangeleverd. De teksten zijn voorbeeldinhoud.",
     liveUrl: null,
   },
   {
@@ -188,6 +200,9 @@ export const projects: Project[] = [
       "Assortiment in duidelijke groepen, zonder webshop.",
     ],
     theme: "tanja",
+    imageAlt: "Conceptwebsite van Bij Tanja met een foto van Tanja in de deuropening van haar winkel",
+    fullHeight: 3972,
+    imageNote: "Schermbeeld van de conceptwebsite, gebouwd met eigen foto's van de winkel.",
     liveUrl: null,
   },
 ];

@@ -56,7 +56,7 @@ Omgevingsvariabelen (zie `.env.example`):
 - **Analytics**: events zijn aanwezig (`src/lib/analytics.ts`) maar er is geen provider of toestemmingsbanner; `flags.analyticsEnabled = false`.
 - **Optionele AI-verfijning van de bouwprompt**: niet gebouwd; de export is de deterministische template.
 - **Ophalen van inspiratielinks/bestaande website**: gebeurt bewust niet.
-- **Portfoliobeelden**: CSS-schetsen met het label "Conceptvoorbeeld" tot echte beelden zijn aangeleverd.
+- **Portfoliobeelden** (`public/portfolio/`): Bij Tanja is een schermbeeld van de conceptsite met eigen winkelfoto's (branch `claude/bij-tanja-website-rl0cwl`). Detepo en Casa Amoray zijn conceptontwerpen uit `portfolio-src/`; Detepo gebruikt het echte logo en de productfoto, Casa Amoray heeft nog geen foto's. Alles draagt het label "Conceptvoorbeeld" tot realisatie is bevestigd.
 - **Pagina "website laten maken Emmen"**: niet gemaakt; er is geen echte lokale informatie aangeleverd.
 - **Briefing bewerken in beheer** gaat via een JSON-veld (met servervalidatie), nog niet via een formulier.
 - **Rate limiting** is per proces in het geheugen; bij meerdere instanties is gedeelde opslag nodig.

@@ -1,62 +1,58 @@
 import type { Project } from "@/config/site";
 
 /**
- * CSS-getekend conceptvoorbeeld. Dit zijn bewust géén screenshots: zolang er
- * geen aangeleverde beelden zijn, tonen we een gelabelde schets met
- * fotoplaatshouders in plaats van verzonnen 'echt werk'.
+ * Schermbeelden van de voorbeeldsites in een browser- of telefoonkader.
+ * De beelden staan in /public/portfolio en zijn vooraf geoptimaliseerd (WebP),
+ * met vaste afmetingen zodat de pagina niet verspringt tijdens het laden.
  */
-function Body({ theme, compact }: { theme: Project["theme"]; compact?: boolean }) {
-  if (theme === "detepo")
-    return (
-      <div className="mock-body">
-        <div className="mock-nav"><span>DETEPO</span>{!compact && <span><i>Product</i><i>Contact</i></span>}</div>
-        <div className="mock-title">Weet hoeveel bezoekers er binnenkomen.</div>
-        <div className="bars">{[35, 55, 42, 70, 88, 64, 78, 50].map((h, k) => <i key={k} style={{ height: `${h}%` }} />)}</div>
-        <div className="cols"><span>Tellen</span>{!compact && <><span>Inzicht</span><span>Rapport</span></>}</div>
-        <span className="mock-btn">Neem contact op</span>
-      </div>
-    );
-  if (theme === "casa")
-    return (
-      <div className="mock-body">
-        <div className="mock-nav"><span>Casa Amoray</span>{!compact && <span><i>Behandelingen</i><i>Reserveren</i></span>}</div>
-        <div className="arch ph">foto volgt</div>
-        <div className="mock-title">Even tijd voor jezelf</div>
-        {!compact && <div className="treat"><span><i>Behandeling</i><i>—</i></span><span><i>Behandeling</i><i>—</i></span></div>}
-        <span className="mock-btn">Reserveer</span>
-      </div>
-    );
+const base = (slug: string) => `/portfolio/${slug}`;
+
+export function Desktop({ project, eager, sizes = "(min-width: 960px) 560px, 92vw" }: { project: Project; eager?: boolean; sizes?: string }) {
   return (
-    <div className="mock-body">
-      <div className="mock-nav"><span>Bij Tanja</span>{!compact && <span><i>Assortiment</i><i>Contact</i></span>}</div>
-      <div className="inner">
-        <div className="mock-title">Kaas &amp; delicatessen</div>
-        <div className="tiles">{(compact ? [0, 1] : [0, 1, 2, 3]).map((k) => <span key={k} className="ph">foto</span>)}</div>
-        <span className="hours">Openingstijden</span>
+    <div className="mock">
+      <div className="mock-bar" aria-hidden="true"><i /><i /><i /><span>{project.name}</span></div>
+      <img
+        src={`${base(project.slug)}-desktop.webp`}
+        srcSet={`${base(project.slug)}-desktop-800.webp 800w, ${base(project.slug)}-desktop.webp 1440w`}
+        sizes={sizes}
+        width={1440} height={900}
+        alt={`${project.imageAlt} (desktop)`}
+        loading={eager ? "eager" : "lazy"} decoding="async"
+        {...(eager ? { fetchPriority: "high" as const } : {})}
+      />
+    </div>
+  );
+}
+
+export function Phone({ project, eager }: { project: Project; eager?: boolean }) {
+  return (
+    <div className="phone">
+      <img src={`${base(project.slug)}-mobile.webp`} width={520} height={1125} alt={`${project.imageAlt} (mobiel)`} loading={eager ? "eager" : "lazy"} decoding="async" />
+    </div>
+  );
+}
+
+export function Pair({ project }: { project: Project }) {
+  return (
+    <div className="pair">
+      <Desktop project={project} sizes="(min-width: 900px) 420px, 88vw" />
+      <Phone project={project} />
+    </div>
+  );
+}
+
+/** Hele pagina in een kader waarin je kunt scrollen. */
+export function FullPage({ project }: { project: Project }) {
+  return (
+    <div className="mock full">
+      <div className="mock-bar" aria-hidden="true"><i /><i /><i /><span>{project.name}</span></div>
+      <div className="full-scroll" tabIndex={0} role="group" aria-label={`Hele pagina van ${project.name}, scrolbaar`}>
+        <img src={`${base(project.slug)}-full.webp`} width={1100} height={project.fullHeight} alt={`${project.imageAlt}, hele pagina`} loading="lazy" decoding="async" />
       </div>
     </div>
   );
 }
 
-export function Desktop({ theme }: { theme: Project["theme"] }) {
-  return (
-    <div className={`mock t-${theme}`}>
-      <div className="mock-bar"><i /><i /><i /></div>
-      <Body theme={theme} />
-    </div>
-  );
-}
-export function Phone({ theme }: { theme: Project["theme"] }) {
-  return <div className={`phone t-${theme}`}><Body theme={theme} compact /></div>;
-}
-export function Pair({ project }: { project: Project }) {
-  return (
-    <div className="pair" role="img" aria-label={`Schets van de ${project.status === "concept" ? "conceptwebsite" : "website"} van ${project.name}, op desktop en mobiel`}>
-      <Desktop theme={project.theme} />
-      <Phone theme={project.theme} />
-    </div>
-  );
-}
 export function StatusBadge({ status }: { status: Project["status"] }) {
   return <span className={`badge${status === "gerealiseerd" ? " real" : ""}`}>{status === "gerealiseerd" ? "Gerealiseerd" : "Conceptvoorbeeld"}</span>;
 }

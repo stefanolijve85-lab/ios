@@ -1,0 +1,33 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Amoray — conceptontwerp</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6eee7;color:#3d2a25;font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;-webkit-font-smoothing:antialiased}
+.sans{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 72px}
+.logo{font-size:26px;font-style:italic;letter-spacing:.01em}
+nav{display:flex;gap:34px;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
+.btn{background:#3d2a25;color:#f6eee7;padding:14px 28px;border-radius:999px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;display:inline-block}
+.btn.o{background:transparent;color:#3d2a25;border:1px solid #3d2a25}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:36px 72px 0;align-items:end;min-height:690px}
+.hero .t{padding-bottom:96px}
+.eyebrow{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:#a3745f;margin-bottom:26px}
+h1{font-weight:400;font-size:92px;line-height:.98;letter-spacing:-.02em;margin:0 0 28px}h1 i{color:#a3745f}
+.hero p{font-size:20px;line-height:1.6;max-width:36ch;margin:0 0 36px;color:#6a5148}
+.row{display:flex;gap:14px}
+.arches{display:flex;gap:22px;align-items:flex-end;justify-content:flex-end;height:640px}
+.arch{border-radius:999px 999px 0 0;position:relative;overflow:hidden}
+.a1{width:300px;height:600px;background:linear-gradient(170deg,#e9c9b7,#c98f78 70%,#a3745f)}
+.a2{width:200px;height:420px;background:linear-gradient(170deg,#f1dfd2,#dcb9a5)}
+.arch::after{content:"";position:absolute;inset:auto -30% -18% -30%;height:55%;border-radius:50%;background:rgba(255,255,255,.22)}
+.a1::before{content:"";position:absolute;left:50%;top:22%;width:120px;height:120px;margin-left:-60px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6ee,#f1d7c4);opacity:.85}
+.treat{padding:96px 72px;display:grid;grid-template-columns:.7fr 1.3fr;gap:72px;background:#fbf6f1}
+.treat h2{font-weight:400;font-size:52px;line-height:1.05;margin:0 0 18px;font-style:italic}
+.treat p{color:#6a5148;font-size:18px;line-height:1.6;margin:0}
+.list div{display:flex;justify-content:space-between;align-items:baseline;padding:24px 0;border-bottom:1px solid #dcc7ba;font-size:28px}
+.list span{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#a3745f}
+@media(max-width:760px){header{padding:18px 22px}nav{display:none}header .btn{padding:10px 18px;font-size:11px}.hero{grid-template-columns:1fr;padding:18px 22px 0;min-height:0;gap:26px}.hero .t{padding-bottom:0}h1{font-size:54px}.hero p{font-size:17px}.arches{height:330px;justify-content:center}.a1{width:170px;height:320px}.a2{width:116px;height:230px}.a1::before{width:70px;height:70px;margin-left:-35px}.treat{grid-template-columns:1fr;padding:48px 22px;gap:24px}.treat h2{font-size:36px}.list div{font-size:21px;padding:18px 0}}
+</style></head><body>
+<header><div class="logo">Casa Amoray</div><nav class="sans"><span>Behandelingen</span><span>De salon</span><span>Contact</span></nav><span class="btn sans">Reserveer</span></header>
+<section class="hero"><div class="t"><div class="eyebrow sans">Salon</div><h1>Even tijd <i>voor jezelf.</i></h1><p>Een rustige plek waar je in alle aandacht wordt verzorgd.</p><div class="row"><span class="btn sans">Reserveer een afspraak</span><span class="btn o sans">Bekijk behandelingen</span></div></div><div class="arches"><div class="arch a2"></div><div class="arch a1"></div></div></section>
+<section class="treat"><div><h2>Behandelingen</h2><p>Kies wat bij je past. Per behandeling lees je wat je kunt verwachten.</p></div><div class="list"><div>Gezicht<span class="sans">Bekijk</span></div><div>Handen &amp; voeten<span class="sans">Bekijk</span></div><div>Lichaam<span class="sans">Bekijk</span></div><div>Arrangementen<span class="sans">Bekijk</span></div></div></section>
+</body></html>

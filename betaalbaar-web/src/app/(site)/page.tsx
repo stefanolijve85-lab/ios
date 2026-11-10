@@ -40,17 +40,17 @@ export default function Home() {
             <p className="process-line">Vertel ons wat je nodig hebt. Wij bouwen jouw website.</p>
           </div>
           <div className="rise d1">
-            <div className="stack" role="img" aria-label="Schetsen van drie conceptvoorbeelden: Bij Tanja, Detepo en Casa Amoray">
-              <Desktop theme={projects[2].theme} />
-              <Desktop theme={projects[0].theme} />
-              <div className="stack-phone"><Phone theme={projects[1].theme} /></div>
+            <div className="stage">
+              <div className="s-main"><Desktop project={projects[2]} eager sizes="(min-width: 960px) 620px, 82vw" /></div>
+              <div className="s-second"><Desktop project={projects[0]} eager sizes="(min-width: 960px) 330px, 46vw" /></div>
+              <div className="s-phone"><Phone project={projects[1]} eager /></div>
             </div>
-            <p className="small muted" style={{ marginTop: 12 }}>Conceptvoorbeelden. Echte beelden volgen zodra ze zijn aangeleverd.</p>
+            <p className="stage-note">Conceptvoorbeelden: Bij Tanja, Detepo en Casa Amoray.</p>
           </div>
         </div>
       </section>
 
-      <section className="section" id="voorbeelden">
+      <section className="section dark" id="voorbeelden">
         <div className="wrap">
           <div className="head">
             <p className="eyebrow">Voorbeelden</p>
@@ -67,8 +67,14 @@ export default function Home() {
             <p className="eyebrow">Wat je krijgt</p>
             <h2>Gemaakt vanuit jouw bedrijf.</h2>
           </div>
-          <div className="rows">
-            {benefits.map((b) => <div key={b.t}><h3>{b.t}</h3><p>{b.p}</p></div>)}
+          <div className="benefits">
+            <div className="benefit-list">
+              {benefits.map((b, k) => <div key={b.t}><span>0{k + 1}</span><h3>{b.t}</h3><p>{b.p}</p></div>)}
+            </div>
+            <div>
+              <div className="phones">{projects.map((p) => <Phone key={p.slug} project={p} />)}</div>
+              <p className="figure-note" style={{ textAlign: "center" }}>De mobiele weergave van de drie conceptvoorbeelden.</p>
+            </div>
           </div>
         </div>
       </section>

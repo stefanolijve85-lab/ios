@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { projects } from "@/config/site";
-import { Pair, StatusBadge } from "@/components/Mockup";
+import { FullPage, Pair, StatusBadge } from "@/components/Mockup";
 import { Closing } from "@/components/Sections";
 
 export function generateStaticParams() {
@@ -33,11 +33,17 @@ export default function Page({ params }: { params: { slug: string } }) {
             <p><StatusBadge status={p.status} /></p>
             <p className="lead">{p.summary}</p>
             {p.status === "concept" && (
-              <p className="note">Dit is een conceptvoorbeeld. De schets laat de ontwerprichting zien; het is geen afbeelding van een opgeleverde website en fotovlakken zijn plaatshouders.</p>
+              <p className="note">Dit is een conceptvoorbeeld: het laat de ontwerprichting zien en is geen opgeleverde, live website. {p.imageNote}</p>
             )}
             {p.liveUrl && <p><a href={p.liveUrl} rel="noopener">Bekijk de website</a></p>}
           </div>
           <Pair project={p} />
+        </div>
+      </section>
+      <section className="section dark">
+        <div className="wrap" style={{ maxWidth: 1000 }}>
+          <div className="head"><p className="eyebrow">De hele pagina</p><h2>Scrol door het ontwerp.</h2></div>
+          <FullPage project={p} />
         </div>
       </section>
       <section className="section">
