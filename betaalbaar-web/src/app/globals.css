@@ -122,7 +122,7 @@ img, svg { max-width: 100%; }
 .stage { position: relative; background: linear-gradient(155deg, #12305c 0%, var(--ink) 55%, #071528 100%); border-radius: 22px; padding: 9% 7% 16%; isolation: isolate; }
 .stage::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(60% 50% at 78% 12%, rgba(64, 140, 255, 0.38), transparent 70%); z-index: -1; }
 .stage .s-main { width: 100%; }
-.stage .s-second { position: absolute; width: 52%; left: -5%; bottom: 6%; }
+.stage .s-second { position: absolute; width: 44%; left: -5%; bottom: 5%; }
 .stage .s-phone { position: absolute; width: 21%; right: 6%; bottom: -5%; }
 @media (min-width: 960px) {
   .stage { margin-right: calc((100vw - min(100vw, var(--wrap))) / -2 - 20px); border-radius: 22px 0 0 22px; padding: 9% calc((100vw - min(100vw, var(--wrap))) / 2 + 40px) 17% 8%; }
