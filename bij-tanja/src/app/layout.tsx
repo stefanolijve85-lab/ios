@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Providers } from "@/components/Providers";
 import { Greeting } from "@/components/Greeting";
+import { ConceptBadge } from "@/components/ConceptBadge";
 import { winkel } from "@/content/winkel";
 import { basisUrl, localBusinessJsonLd, paginaMeta } from "@/lib/seo";
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
           <Greeting />
+          <ConceptBadge />
         </Providers>
         <script
           type="application/ld+json"
